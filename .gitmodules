@@ -1,6 +1,6 @@
 [submodule "cinch"]
 	path = cinch
-	url = https://bitbucket.org/tuxfan/cinch.git
+	url = git@gitlab.lanl.gov:csse/flexi.git
 [submodule "flexi"]
 	path = flexi
 	url = git@gitlab.lanl.gov:csse/flexi.git
