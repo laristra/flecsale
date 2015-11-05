@@ -3,7 +3,7 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-project(ngc-ale)
+project(ale)
 
 
 #------------------------------------------------------------------------------#
@@ -22,7 +22,7 @@ cinch_add_application_directory("examples")
 # Add library targets
 #------------------------------------------------------------------------------#
 
-cinch_add_library_target(ngc-ale src)
+cinch_add_library_target(ale src)
 
 #------------------------------------------------------------------------------#
 # Set header suffix regular expression
