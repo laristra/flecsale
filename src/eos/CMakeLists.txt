@@ -5,6 +5,7 @@
 
 set(eos_HEADERS
   eos_base.h
+  ideal_gas.h
   PARENT_SCOPE
 )
 
@@ -13,15 +14,10 @@ set(eos_HEADERS
 #  PARENT_SCOPE
 #)
 
-#if(ENABLE_UNIT_TESTS)
-#  cinch_add_unit(casename
-#    SOURCES testfile.cc
-#    LIBRARIES list
-#    INCLUDES list
-#    POLICY MPI
-#    THREADS 1 2 4
-#  )
-#endif(ENABLE_UNIT_TESTS)
+cinch_add_unit(
+  ideal_gas
+  SOURCES test/ideal_gas.cc
+)
 
 #----------------------------------------------------------------------------~-#
 # Formatting options for vim.

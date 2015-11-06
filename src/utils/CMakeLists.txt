@@ -3,9 +3,10 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-#set(utils_HEADERS
-#  PARENT_SCOPE
-#)
+set(utils_HEADERS
+  zip.h
+  PARENT_SCOPE
+)
 
 set(utils_SOURCES
   dummy.c

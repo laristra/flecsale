@@ -3,10 +3,7 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-configure_file( config.h.in config.h )
-
 set(common_HEADERS
-  config.h
   types.h
   PARENT_SCOPE
 )
