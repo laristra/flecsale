@@ -1,10 +1,12 @@
 // system includes
 #include <cinchtest.h>
 #include <iostream>
+#include <utility>
 #include <vector>
 
 // user includes
 #include "ale/eos/ideal_gas.h"
+#include "ale/eos/eos_utils.h"
 
 
 // explicitly use some stuff
@@ -15,6 +17,7 @@ using ale::common::real_t;
 
 using namespace ale::eos;
 
+    
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test of the ideal gas state class
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,10 +35,10 @@ TEST(eos, ideal_gas) {
 
   vector<real_t> e(n), ss(n), t(n);
 
-  eos.compute_internal_energy( d, p, e );
-  eos.compute_pressure( d, e, p );
-  eos.compute_sound_speed( d, e, ss );
-  eos.compute_temperature( d, e, t );
+  compute_internal_energy(eos, d, p, e );
+  compute_pressure( eos, d, e, p );
+  compute_sound_speed( eos, d, e, ss );
+  compute_temperature( eos, d, e, t );
 
   for ( size_t i = 0; i<n; i++ ) {
     std::cout <<   "d=" <<  d[i] 
