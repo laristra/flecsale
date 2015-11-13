@@ -4,7 +4,6 @@
 #~----------------------------------------------------------------------------~#
 
 set(eos_HEADERS
-  eos_base.h
   eos_utils.h
   ideal_gas.h
   PARENT_SCOPE
