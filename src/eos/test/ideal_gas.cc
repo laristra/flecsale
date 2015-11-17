@@ -15,7 +15,6 @@
  * \brief Tests related to the ideal gas.
  *
  ******************************************************************************/
-#pragma once
 
 // system includes
 #include <cinchtest.h>

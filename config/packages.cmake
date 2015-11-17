@@ -51,8 +51,89 @@ endif()
 # Thirdparty libraries
 #------------------------------------------------------------------------------#
 
+set( TPL_INSTALL_PREFIX /path/to/third/party/install 
+                        CACHE PATH
+                        "path to thirdparty install" )
+if (NOT TPL_INSTALL_PREFIX STREQUAL "")
+  set(EXODUS_ROOT  ${TPL_INSTALL_PREFIX})
+endif()
+
+
 find_package(Boost 1.47 REQUIRED)
 include_directories( ${Boost_INCLUDE_DIRS} )
+
+
+#------------------------------------------------------------------------------#
+# Enable IO with exodus
+#------------------------------------------------------------------------------#
+
+option(ENABLE_IO "Enable I/O with third party libraries." OFF)
+if(ENABLE_IO)
+
+  set( IO_LIBRARIES )
+
+  find_library ( EXODUS_LIBRARY 
+                 NAMES exodus 
+                 PATHS ${EXODUS_ROOT} 
+                 PATH_SUFFIXES lib
+                 NO_DEFAULT_PATH )
+
+  find_path    ( EXODUS_INCLUDE_DIR 
+                 NAMES exodusII.h
+                 PATHS ${EXODUS_ROOT} 
+                 PATH_SUFFIXES include
+                 NO_DEFAULT_PATH )
+
+  find_library ( NETCDF_LIBRARY 
+                 NAMES netcdf 
+                 PATHS ${EXODUS_ROOT} 
+                 PATH_SUFFIXES lib
+                 NO_DEFAULT_PATH )
+
+  find_library ( HDF5_LIBRARY 
+                 NAMES hdf5 
+                 PATHS ${EXODUS_ROOT} 
+                 PATH_SUFFIXES lib
+                 NO_DEFAULT_PATH )
+
+  find_library ( HDF5_HL_LIBRARY 
+                 NAMES hdf5_hl 
+                 PATHS ${EXODUS_ROOT} 
+                 PATH_SUFFIXES lib
+                 NO_DEFAULT_PATH )
+
+  find_library ( SZIP_LIBRARY 
+                 NAMES szip 
+                 PATHS ${EXODUS_ROOT} 
+                 PATH_SUFFIXES lib
+                 NO_DEFAULT_PATH )
+
+  find_library ( Z_LIBRARY 
+                 NAMES z
+                 PATHS ${EXODUS_ROOT} 
+                 PATH_SUFFIXES lib
+                 NO_DEFAULT_PATH )
+
+  if (EXODUS_LIBRARY AND EXODUS_INCLUDE_DIR) 
+     message(STATUS "Found Exodus: ${EXODUS_ROOT}")
+     set( EXODUS_FOUND TRUE )
+     list( APPEND IO_LIBRARIES ${EXODUS_LIBRARY}
+                               ${NETCDF_LIBRARY}
+                               ${HDF5_HL_LIBRARY}
+                               ${HDF5_LIBRARY}
+                               ${SZIP_LIBRARY}
+                               ${Z_LIBRARY}
+                               -ldl )
+     include_directories( ${EXODUS_INCLUDE_DIR} )
+     add_definitions( -DHAVE_EXODUS )
+  endif()
+
+  if ( NOT IO_LIBRARIES )
+     MESSAGE( FATAL_ERROR "Need to specify EXODUS" )
+  endif()
+
+endif(ENABLE_IO)
+
 
 #~---------------------------------------------------------------------------~-#
 # Formatting options for vim.
