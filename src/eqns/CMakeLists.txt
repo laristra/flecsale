@@ -3,26 +3,20 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-set(utils_HEADERS
-  vector.h
-  zip.h
+set(eos_HEADERS
+  euler_eqns.h
   PARENT_SCOPE
 )
 
-set(utils_SOURCES
-  dummy.c
-  PARENT_SCOPE
-)
+#set(eos_SOURCES
+#  dummy.c
+#  PARENT_SCOPE
+#)
 
-#if(ENABLE_UNIT_TESTS)
-#  cinch_add_unit(casename
-#    SOURCES testfile.cc
-#    LIBRARIES list
-#    INCLUDES list
-#    POLICY MPI
-#    THREADS 1 2 4
-#  )
-#endif(ENABLE_UNIT_TESTS)
+cinch_add_unit(
+  euler_eqns
+  SOURCES test/euler_eqns.cc
+)
 
 #----------------------------------------------------------------------------~-#
 # Formatting options for vim.
