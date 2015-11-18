@@ -45,20 +45,31 @@ TEST(eqns, euler) {
   using eos_t = ideal_gas_t;
 
   eos_t eos;
-  euler_eqns_t<3> eqns;  
+  eqns_t eqns;  
+
+  using   real_t = eqns_t::real_t;
+  using vector_t = eqns_t::vector_t;
 
   auto get_pressure         = std::bind( &eos_t::compute_pressure,        std::cref(eos), _1, _2 );
   auto get_internal_energy  = std::bind( &eos_t::compute_internal_energy, std::cref(eos), _1, _2 );
 
   eqns_t::primitive_state_t w{
-    1.0, 
-    1.0, 0.5,.75, 
-    2.0 };
-  eqns_t::primitive_state_t w_new;
-  eqns_t::conserved_state_t u;
+    real_t{1.0}, 
+    vector_t{1.0, 0.5,.75}, 
+    real_t{2.0} };
 
-  eqns_t::primitive_to_conserved( w, u, get_pressure );
-  eqns_t::conserved_to_primitive( u, w_new, get_internal_energy );
+  eqns_t::conserved_state_t u     = w.to_conserved( get_pressure );
+  eqns_t::primitive_state_t w_new = u.to_primitive( get_internal_energy );
+
+  eqns_t::conserved_state_t u_cpy(u);
+
+  cout << w     << endl;
+  cout << u     << endl;
+  cout << w_new << endl;
+
+  ASSERT_TRUE( w == w_new );
+  ASSERT_TRUE( u == u_cpy );
+
     
 } // TEST_F
 

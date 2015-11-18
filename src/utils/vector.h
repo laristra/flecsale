@@ -93,7 +93,7 @@ public:
 
 
   //===========================================================================
-  // Constructors / Destructors
+  // Accessors
   //===========================================================================
 
 
@@ -227,6 +227,19 @@ public:
       data_[i] /= val;    
     return *this;
   }
+
+  //! \brief Equivalence operator
+  //! \param[in] lhs The quantity on the rhs.
+  //! \param[in] rhs The quantity on the rhs.
+  //! \return true if equality.
+  friend bool operator==(const vector_t& lhs, const vector_t& rhs)
+  {
+    for ( size_t i=0; i<D; i++ ) 
+      if ( lhs.data_[i] != rhs.data_[i] )
+        return false;
+    return true;
+  }
+
 
 private:
 

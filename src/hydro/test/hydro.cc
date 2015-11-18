@@ -33,6 +33,7 @@
 
 // explicitly use some stuff
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::vector;
 
@@ -78,7 +79,7 @@ TEST(hydro, simple) {
   // mesh and some underlying data types
   using mesh_t = flexi::burton_mesh_t;
 
-  using eqns_t = euler_eqns_t<mesh_t::dimensions>;
+  using eqns_t = eqns::euler_eqns_t<mesh_t::dimension()>;
   using eos_t = eos::ideal_gas_t;
 
 
@@ -137,7 +138,9 @@ TEST(hydro, simple) {
 
 
   // setup eos
-  eos_t eos;
+  eos_t eos( /* gamma */ 1.4, /* cv */ 1.0);
+  eos.set_ref_state_dp(1.0, 2.5);
+
   auto get_pressure         = std::bind( &eos_t::compute_pressure,        std::cref(eos), _1, _2 );
   auto get_internal_energy  = std::bind( &eos_t::compute_internal_energy, std::cref(eos), _1, _2 );
 
@@ -181,14 +184,34 @@ TEST(hydro, simple) {
     // get the cell neighbors
     auto c = mesh.cells(e).toVec();
     
-    auto cell_id = c[0]->id();
+    auto left_cell_id = c[0]->id();
 
-    auto dl = density[cell_id];
-    auto pl = pressure[cell_id];
-    auto vl = velocity[cell_id];
-
-    eqns_t::primitive_state_t left(dl,vl,pl);
+    auto dl = density [ left_cell_id ];
+    auto pl = pressure[ left_cell_id ];
+    auto vl = velocity[ left_cell_id ];
     
+    eqns_t::primitive_state_t w_left{dl,vl,pl};    
+    eqns_t::conserved_state_t u_left = w_left.to_conserved( get_pressure ); 
+
+    eqns_t::state_data_t flux;
+
+    if ( c.size == 2 ) {
+      auto right_cell_id = c[1]->id();
+      auto dr = density [ right_cell_id ];
+      auto pr = pressure[ right_cell_id ];
+      auto vr = velocity[ right_cell_id ];
+      eqns_t::primitive_state_t w_right{dr,vr,pr};
+      vector_t normal;
+      flux = flux_function( w_left, w_right, normal );
+    } 
+    else if (c.size == 1) {
+      vector_t normal;
+      flux = w_left.flux( normal );
+    }
+    else {
+      cerr << "edge " << edge_id << " has " << c.size << " neighbors!!!!\n";
+      exit(-1);
+    }
 
   }
 
@@ -199,7 +222,7 @@ TEST(hydro, simple) {
   flexi::write_mesh(name, mesh);
 
     
-} // TEST_F
+}
 
 
 

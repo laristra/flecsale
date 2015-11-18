@@ -19,6 +19,8 @@
 
 //! system includes
 #include <functional>
+#include <iostream>
+#include <tuple>
 
 //! user includes
 #include "ale/common/types.h"
@@ -27,11 +29,12 @@
 namespace ale {
 namespace eqns {
 
+
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Specialization of the euler equations
 ////////////////////////////////////////////////////////////////////////////////
 template<size_t N>
-class euler_eqns_t {
+struct euler_eqns_t {
 
 
 public:
@@ -64,19 +67,84 @@ public:
   using eqns_t = euler_eqns_t;
 
 
+  //! \brief  the type for holding the state data
+  using state_data_t = std::tuple<real_t,vector_t,real_t>;
+
+
+private:
+
+  //============================================================================
+  //! \brief The base state class
+  //============================================================================
+  class base_state_t {
+  public:
+
+
+    //! \brief Constructor with initializer list
+    //! \param[in] list the initializer list of values
+    template <typename... Args>
+    base_state_t(Args&&... args) : data_(std::forward<Args>(args)...) 
+    { }
+
+    //! \brief brackets operator
+    //! \param [in] i the index
+    //! \return the data
+    template<size_t i>
+    auto & get() 
+    { return std::get<i>(data_); }
+
+    template<size_t i>
+    auto get() const 
+    { return std::get<i>(data_); }
+
+
+    //! \brief Output operator
+    //! \param[in,out] os  The ostream to dump output to.
+    //! \param[in]     rhs The vector_t on the right hand side of the operator.
+    //! \return A reference to the current ostream.
+    friend auto & operator<<(std::ostream& os, const base_state_t& a)
+    {
+      os << "{";
+      os << " "  << a.template get<0>();
+      os << ", " << a.template get<1>();
+      os << ", " << a.template get<2>();
+      os << " }";
+      return os;
+    }
+
+
+
+  protected:
+
+    //! \brief the data storage
+    state_data_t data_;
+
+  };
+
+public:
+
+  //! forward decares
+  class conserved_state_t;
+  class primitive_state_t;
+  
+
   //============================================================================
   //! \brief The conserved state class
   //============================================================================
-  class conserved_state_t {
+  class conserved_state_t : public base_state_t {
   public:
 
     //! \brief the variables in the conserved state
-    enum variables
+    enum variables : size_t
     { 
       density = 0, 
       momentum, 
       total_energy,
-      num_variables };
+      number };
+
+    //! \brief the number of variables
+    static constexpr size_t num_variables(void)
+    {  return variables::number; }
     
     //! \brief return the variable name for a specific component
     //! \param [in] i the component
@@ -113,46 +181,45 @@ public:
       }
     }
 
-    //! \brief Default  constructor
-    conserved_state_t() {}
-
     //! \brief Constructor with initializer list
     //! \param[in] list the initializer list of values
-    conserved_state_t(std::initializer_list<real_t> list) {
-      assert(list.size() == variables::num_variables && "dimension size mismatch");
-      std::copy(list.begin(), list.end(), data_.begin());
-    }
+    template <typename... Args,
+              typename = typename std::enable_if<sizeof...(Args) == num_variables()>::type>
+    conserved_state_t(Args&&... args) : base_state_t(std::forward<Args>(args)...) 
+    { }
 
-    //! \brief Constructor with initializer list
+    //! \brief Constructor with state_data_
     //! \param[in] list the initializer list of values
-    template <typename... A> 
-    conserved_state_t(A... args) {
-      static_assert( (sizeof...(A) == variables::num_variables),
-                     "dimension size mismatch" );
-      data_ = {args...};
+    conserved_state_t(const state_data_t & other) : base_state_t( other ) 
+    {  }
+    
+    //! \brief conserved to primitive conversion
+    //! \param [in]  get_pressure A function to return the pressure.
+    //! \return the primitive state
+    primitive_state_t to_primitive( function_t get_pressure ) const 
+    {
+      auto rho = base_state_t::template get<variables::density>();
+      auto mom = base_state_t::template get<variables::momentum>();
+      auto et  = base_state_t::template get<variables::total_energy>();
+      
+      assert( rho > 0  );
+      
+      auto vel = mom / rho;
+      auto e   = et/rho - 0.5 * utils::dot(vel,vel);
+      auto p   = get_pressure( rho, e );
+      
+      return primitive_state_t{rho,vel,p};
     }
 
+    //! \brief Equivalence operator
+    //! \param[in] lhs The quantity on the rhs.
+    //! \param[in] rhs The quantity on the rhs.
+    //! \return true if equality.
+    friend bool operator==(const conserved_state_t& lhs, const conserved_state_t& rhs)
+    { 
+      return (lhs.data_ == rhs.data_); 
+    }
 
-    //! \brief brackets operator
-    //! \param [in] i the index
-    //! \return the data
-    auto &operator[](size_t i)       { return data_[i]; }
-    auto  operator[](size_t i) const { return data_[i]; }
-
-
-    //! \brief Default  constructor (disabled)
-    //conserved_state_t() = delete;
-
-    //! \brief Copy constructor (disabled)
-    conserved_state_t(const conserved_state_t &) = delete;
-
-    //! \brief Assignment operator (disabled)
-    conserved_state_t &operator=(const conserved_state_t &) = delete;
-
-  private:
-
-    //! \brief the data storage
-    std::tupel<real_t,vector_t,real_t> data_;
 
   };
   
@@ -160,17 +227,21 @@ public:
   //============================================================================
   //! \brief The primitive state class
   //============================================================================
-  class primitive_state_t {
+  class primitive_state_t : public base_state_t {
   public:
 
     //! \brief the variables in the primitive state
-    enum variables
+    enum variables : size_t
     { 
       density = 0, 
       velocity, 
       pressure,
-      num_variables 
+      number
     };
+
+    //! \brief the number of variables
+    static constexpr size_t num_variables(void)
+    {  return variables::number; }
     
     //! \brief return the variable name for a specific component
     //! \param [in] i the component
@@ -206,133 +277,73 @@ public:
       }
     }
 
-
-    //! \brief Default  constructor
-    primitive_state_t() {}
-
     //! \brief Constructor with initializer list
     //! \param[in] list the initializer list of values
-    primitive_state_t(std::initializer_list<real_t> list) {
-      assert(list.size() == variables::num_variables && "dimension size mismatch");
-      std::copy(list.begin(), list.end(), data_.begin());
-    }
+    template <typename... Args,
+              typename = typename std::enable_if<sizeof...(Args) == num_variables()>::type>
+    primitive_state_t(Args&&... args) : base_state_t(std::forward<Args>(args)...) 
+    {  }
 
-    //! \brief Constructor with initializer list
+    //! \brief Constructor with state_data_
     //! \param[in] list the initializer list of values
-    template <typename... A> 
-    primitive_state_t(A... args) {
-      static_assert( (sizeof...(A) == variables::num_variables),
-                     "dimension size mismatch" );
-      data_ = {args...};
+    primitive_state_t(const state_data_t & other) : base_state_t( other ) 
+    {  }
+
+
+    //! \brief primitive to conserved conversion
+    //! \param [in]  get_pressure A function to return the internal energy.
+    //! \return the conserved state
+    conserved_state_t to_conserved( function_t get_internal_energy ) const
+    {
+      
+      auto rho = base_state_t::template get<variables::density >();
+      auto vel = base_state_t::template get<variables::velocity>();
+      auto p   = base_state_t::template get<variables::pressure>();
+      
+      assert( rho > 0  );
+      
+      auto mom = rho * vel;     
+      auto e  = get_internal_energy( rho, p );
+      auto et = e + 0.5 * utils::dot(vel, vel);
+      
+      return conserved_state_t{rho, mom, et};
+    }
+    
+
+    //! \brief compute the flux in the normal direction
+    //! \param [in] normal The normal direction
+    //! \return the flux alligned with the normal direction
+    state_data_t flux( const vector_t normal ) const
+    {
+      
+      auto rho = base_state_t::template get<variables::density >();
+      auto vel = base_state_t::template get<variables::velocity>();
+      auto p   = base_state_t::template get<variables::pressure>();
+      
+      assert( rho > 0  );
+
+      auto v_dot_n = utils::dot(vel, normal);
+      
+      auto mass_flux = rho * v_dot_n;     
+      auto mom_flux  = mass_flux * vel;
+      auto ener_flux = mom_flux + p;
+      
+      return std::make_tuple(mass_flux, mom_flux, ener_flux);
     }
 
-    //! \brief brackets operator
-    //! \param [in] i the index
-    //! \return the data
-    template<size_t i>
-    auto & get() 
-    { return get<i>(data_); }
-
-    template<size_t i>
-    auto get() const 
-    { return get<i>(data_); }
-
-    //! \brief Default  constructor (disabled)    
-    primitive_state_t() = delete;
-
-    //! \brief Copy constructor (disabled)
-    primitive_state_t(const primitive_state_t &) = delete;
-
-    //! \brief Assignment operator (disabled)
-    primitive_state_t &operator=(const primitive_state_t &) = delete;
-
-
-  private:
-
-    //! \brief the data storage
-    std::tupel<real_t,vector_t,real_t> data_;
+    //! \brief Equivalence operator
+    //! \param[in] lhs The quantity on the rhs.
+    //! \param[in] rhs The quantity on the rhs.
+    //! \return true if equality.
+    friend bool operator==(const primitive_state_t& lhs, const primitive_state_t& rhs)
+    { 
+      return (lhs.data_ == rhs.data_); 
+    }
 
   };
 
-
-  //============================================================================
-  //! \brief default constructor
-  //============================================================================
-  euler_eqns_t() {}
-
-
-  //============================================================================
-  //! \brief conserved to primitive conversion
-  //! \param [in]  u the conserved state
-  //! \param [out] w the primitive state
-  //! \param [in]  get_pressure A function to return the pressure.
-  //============================================================================
-  void conserved_to_primitive( const conserved_state_t &u, 
-                               primitive_state_t &w, 
-                               function_t get_pressure ) const 
-  {
-
-    const auto & rho = u[conserved_state_t::variables::density];
-    const auto & mom = u[conserved_state_t::variables::momentum];
-    const auto & et  = u[conserved_state_t::variables::total_energy];
-
-    assert( rho > 0  );
-
-    w[primitive_state_t::variables::density] = rho;
-    auto & vel = w[primitive_state_t::variables::velocity];
-    auto & p   = w[primitive_state_t::variables::pressure];
- 
-   
-    vel = mom / rho;
-
-    auto e = et/rho - 0.5 * dot(vel,vel);
-    p = get_pressure( rho, e );
-
-    
-  }
-
-  //============================================================================
-  //! \brief primitive to conserved conversion
-  //! \param [in]  w the primitive state
-  //! \param [out] u the conserved state
-  //! \param [in]  get_pressure A function to return the internal energy.
-  //============================================================================
-  void primitive_to_conserved( const primitive_state_t &w, 
-                               conserved_state_t &u,                                
-                               function_t get_internal_energy ) const
-  {
-    
-    const auto & rho = w[primitive_state_t::variables::density];
-    const auto & vel = w[primitive_state_t::variables::velocity];
-    const auto & p   = w[primitive_state_t::variables::pressure];
-
-    assert( rho > 0  );
-
-    u[conserved_state_t::variables::density] = rho;
-    auto & mom = u[conserved_state_t::variables::momentum];
-    auto & et  = u[conserved_state_t::variables::total_energy];
-
-    mom = rho * vel;
-
-    auto e = get_internal_energy( rho, p );
-    et = e + 0.5 * dot(vel, vel);
-
-  }
-
-  //============================================================================
-  // Deleted functions
-  //============================================================================
-
-
-  //! \brief disallow copy constructor
-  euler_eqns_t(const euler_eqns_t&) = delete;
-  
-  //! \brief Disallow copying
-  euler_eqns_t& operator=(const euler_eqns_t&) = delete;
-
-
-
 };
+
 
 } // namespace
 } // namespace
