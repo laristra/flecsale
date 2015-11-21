@@ -10,50 +10,35 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file tasks.h
+ * \file check_types.h
  * 
- * \brief Utilities for creating simple tasks from iterators.
+ * \brief Some helper functions to check variable types.
  *
  ******************************************************************************/
 #pragma once
-
-
-//! user includes
-#include "ale/utils/zip.h"
 
 namespace ale {
 namespace utils {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief generate a simple tasks from a function and iterator
-//!
-//!
-//! sample usage:
-//! 
-//!   auto internal_energy = [&](const real_t & a, const real_t & b, auto & c) 
-//!     { c = eos.compute_internal_energy(a, b); };
-//!   simple_task( internal_energy, d, p, e );
+//! \brief Test to see if all variadic template arguments are of type T
 ////////////////////////////////////////////////////////////////////////////////
 
+template<typename... Conds>
+struct and_ : std::true_type {};
 
-// helper function that actually calls the tasks
-template<class Func, class Iterator, std::size_t... I>
-void simple_task_impl( Func & func, Iterator &tup, std::index_sequence<I...> )
-{
-  for ( auto it : tup ) {
-     func( get<I>(it)... );
-  }
-}
+// combine conditions
+template<typename Cond, typename... Conds>
+struct and_<Cond, Conds...> : 
+  std::conditional< Cond::value, 
+                    and_<Conds...>,
+                    std::false_type >::type 
+{};
 
-// main interface
-template<class Func, class... Args>
-void simple_task( Func & func, Args&&... args )
-{
-  constexpr size_t N = sizeof...(Args);
-  auto tup = zip( args... );
-  simple_task_impl( func, tup, std::make_index_sequence<N>() );
-}
+// This is the exposed function!!
+template<typename Target, typename... Ts>
+using are_type_t = and_<std::is_same<Ts,Target>...>;
 
 
 } // namespace

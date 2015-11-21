@@ -55,7 +55,7 @@ TEST(hydro, simple) {
   // Case Parameters
   //===========================================================================
 
-  using size_t = common::size_t;
+  using size_t = std::size_t;
   using real_t = common::real_t;
   using vector_t = utils::vector_t<real_t,2>;
 
@@ -69,18 +69,36 @@ TEST(hydro, simple) {
   constexpr real_t x0 = -length_x/2.0;
   constexpr real_t y0 = -length_y/2.0;
 
-  auto solution = [=](const auto &x, auto t) { 
-    if ( x[0] < 0.0 ) 
-      return std::make_tuple( real_t(1.0),   real_t(1.0), vector_t{0.0,0.0} ); 
-    else 
-      return std::make_tuple( real_t(0.125), real_t(0.1), vector_t{0.0,0.0} ); 
-  };
-
   // mesh and some underlying data types
   using mesh_t = flexi::burton_mesh_t;
 
-  using eqns_t = eqns::euler_eqns_t<mesh_t::dimension()>;
-  using eos_t = eos::ideal_gas_t;
+  using eqns_t = eqns::euler_eqns_t<real_t, mesh_t::dimension()>;
+  using eos_t = eos::ideal_gas_t<real_t>;
+
+  // set the initial conditions
+  auto solution = [](const auto &x, auto t) { 
+    eos_t eos( /* gamma */ 1.4, /* cv */ 1.0);
+    real_t d, p;
+    if ( x[0] < 0.0 ) {
+      d = 1.0;
+      p = 1.0;
+    }
+    else {
+      d = 0.125;
+      p = 0.1;
+    }    
+    eos.set_ref_state_dp(d, 2.5);
+    return std::make_tuple( d, p, vector_t{0.0,0.0}, eos ); 
+  };
+
+  // the flux function
+  auto flux_function = [](const auto &wl, const auto &wr, const auto &n) { 
+    eqns_t::flux_data_t f;
+    eqns_t::flux_data_t fl = wl.flux(n);
+    eqns_t::flux_data_t fr = wr.flux(n);
+    return fl;
+  };
+
 
 
   //===========================================================================
@@ -136,90 +154,134 @@ TEST(hydro, simple) {
   auto pressure = register_state(mesh, "pressure",     cells,   real_t, persistent);
   auto velocity = register_state(mesh, "velocity",     cells, vector_t, persistent);
 
+  auto energy      = register_state(mesh, "internal_energy", cells, real_t, persistent);
+  auto temperature = register_state(mesh, "temperature",     cells, real_t, persistent);
+  auto sound_speed = register_state(mesh, "sound_speed",     cells, real_t, persistent);
 
-  // setup eos
-  eos_t eos( /* gamma */ 1.4, /* cv */ 1.0);
-  eos.set_ref_state_dp(1.0, 2.5);
+  auto eos_data = register_state(mesh, "eos", cells, eos_t);
 
-  auto get_pressure         = std::bind( &eos_t::compute_pressure,        std::cref(eos), _1, _2 );
-  auto get_internal_energy  = std::bind( &eos_t::compute_internal_energy, std::cref(eos), _1, _2 );
+  //===========================================================================
+  // Initial conditions
+  //===========================================================================
 
   // set the intial conditions
   for ( auto c : mesh.cells() ) {
     auto cell_id = c->id();
     auto cell_center = mesh.centroid(c);
 
-    std::tie( density [cell_id], 
-              pressure[cell_id], 
-              velocity[cell_id] ) = solution( cell_center, 0.0 );    
+
+    auto & d = density [cell_id];
+    auto & p = pressure[cell_id];
+    auto & v = velocity[cell_id];
+    auto & e = energy  [cell_id];
+    auto & t = temperature[cell_id];
+    auto & a = sound_speed[cell_id];
+    auto & eos = eos_data [cell_id];
+
+    std::tie( d, p, v, eos ) = solution( cell_center, 0.0 );    
+    
+    e = eos.compute_internal_energy_dp( d, p );
+    t = eos.compute_temperature_de( d, e );
+    a = eos.compute_sound_speed_de( d, e );
+
   }
 
 
+  // now output the solution
+  flexi::write_mesh("test/hydro_0.exo", mesh);
 
-  // compute the conserved quantities
-  auto momentum     = register_state(mesh, "momentum",     cells, vector_t);
-  auto total_energy = register_state(mesh, "total_energy", cells,   real_t);
 
-  for ( auto c : mesh.cells() ) {
-    auto cell_id = c->id();
+  //===========================================================================
+  // Flux Evaluation
+  //===========================================================================
 
-    auto &d = density[cell_id];
-    auto &p = pressure[cell_id];
-    auto &v = velocity[cell_id];
+  // a lambda function to get the state
+  auto get_state = [&](auto cell_id) { 
+    auto d = density [ cell_id ];
+    auto p = pressure[ cell_id ];
+    auto v = velocity[ cell_id ];
+    auto e = energy  [ cell_id ];
+    auto t = temperature[ cell_id ];
+    auto a = sound_speed[ cell_id ];
+    return eqns_t::state_t{d,v,p,e,t,a}; 
+  };
 
-    auto e = get_internal_energy( d, p );
-    total_energy[cell_id] = e + 0.5 * dot( v, v );
-    momentum[cell_id] = d * v;
-  }
 
 
   // compute the fluxes
-  auto     mass_flux = register_state(mesh,     "mass_flux", edges,   real_t, temporary);
-  auto momentum_flux = register_state(mesh, "momentum_flux", edges, vector_t, temporary);
-  auto   energy_flux = register_state(mesh,   "energy_flux", edges,   real_t, temporary);
+  using flux_data_t = eqns_t::flux_data_t;
+  auto flux = register_state(mesh, "flux", edges, flux_data_t, temporary);
+
+  //---------------------------------------------------------------------------
+  // loop over each edge and compute/store the flux
+  // fluxes are stored on each edge
 
   for ( auto e : mesh.edges() ) {
     auto edge_id = e->id();
 
     // get the cell neighbors
     auto c = mesh.cells(e).toVec();
-    
+    auto cells = c.size();
+
+    // get the left state
     auto left_cell_id = c[0]->id();
+    auto w_left = get_state( left_cell_id );    
 
-    auto dl = density [ left_cell_id ];
-    auto pl = pressure[ left_cell_id ];
-    auto vl = velocity[ left_cell_id ];
-    
-    eqns_t::primitive_state_t w_left{dl,vl,pl};    
-    eqns_t::conserved_state_t u_left = w_left.to_conserved( get_pressure ); 
-
-    eqns_t::state_data_t flux;
-
-    if ( c.size == 2 ) {
+    // interior cell
+    if ( cells == 2 ) {
       auto right_cell_id = c[1]->id();
-      auto dr = density [ right_cell_id ];
-      auto pr = pressure[ right_cell_id ];
-      auto vr = velocity[ right_cell_id ];
-      eqns_t::primitive_state_t w_right{dr,vr,pr};
+      auto w_right = get_state( right_cell_id );
       vector_t normal;
-      flux = flux_function( w_left, w_right, normal );
+      flux[edge_id] = flux_function( w_left, w_right, normal );
     } 
-    else if (c.size == 1) {
-      vector_t normal;
-      flux = w_left.flux( normal );
-    }
+    // boundary cell
     else {
-      cerr << "edge " << edge_id << " has " << c.size << " neighbors!!!!\n";
-      exit(-1);
+      vector_t normal;
+      flux[edge_id] = w_left.flux( normal );
     }
+    
 
   }
 
+  //===========================================================================
+  // Residual evaluation
+  //===========================================================================
+    
+  // Loop over each cell, scattering the fluxes to the cell
+  for ( auto cell : mesh.cells() ) {
+    auto cell_id = cell->id();
 
+    flux_data_t delta_u(0.0);
+
+    // loop over each connected edge
+    for ( auto edge : mesh.edges(cell) ) {
+      auto edge_id = edge->id();
+      
+      // get the cell neighbors
+      auto neigh = mesh.cells(edge).toVec();
+      auto num_neigh = neigh.size();
+
+      // figure out the sign
+      decltype(neigh) dir;
+      if ( cells == 2 ) 
+        dir = ( neigh[0]->id() == cell_id ) ? -1 : 0;
+      else
+        dir = 1;
+      
+      // add the contribution to this cell only
+      delta_u += dir * flux[edge_id];
+      
+    }
+
+    
+
+  }
 
   // now output the solution
-  std::string name("test/hydro.exo");
-  flexi::write_mesh(name, mesh);
+  flexi::write_mesh("test/hydro_1.exo", mesh);
+
+
+
 
     
 }

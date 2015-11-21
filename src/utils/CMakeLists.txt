@@ -4,6 +4,12 @@
 #~----------------------------------------------------------------------------~#
 
 set(utils_HEADERS
+  check_types.h
+  static_for_each.h
+  tasks.h
+  template_helpers.h
+  tuple.h
+  tuple_zip.h
   vector.h
   zip.h
   PARENT_SCOPE
@@ -14,15 +20,23 @@ set(utils_SOURCES
   PARENT_SCOPE
 )
 
-#if(ENABLE_UNIT_TESTS)
-#  cinch_add_unit(casename
-#    SOURCES testfile.cc
-#    LIBRARIES list
-#    INCLUDES list
-#    POLICY MPI
-#    THREADS 1 2 4
-#  )
-#endif(ENABLE_UNIT_TESTS)
+cinch_add_unit(vector
+    SOURCES test/vector.cc
+)
+
+cinch_add_unit(tuple
+    SOURCES test/tuple.cc
+)
+
+cinch_add_unit(zip_iterator
+    SOURCES test/zip.cc
+)
+
+
+cinch_add_unit(tasks
+    SOURCES test/tasks.cc
+)
+
 
 #----------------------------------------------------------------------------~-#
 # Formatting options for vim.

@@ -21,7 +21,7 @@
 #include <array>
 
 //! user includes
-#include "ale/common/types.h"
+#include "ale/utils/check_types.h"
 
 namespace ale {
 namespace utils {
@@ -43,7 +43,7 @@ public:
   //===========================================================================
 
   //! \brief the size_t type
-  using size_t = common::size_t;
+  using size_t = std::size_t;
 
 
   //! \brief The value type.
@@ -57,39 +57,49 @@ public:
   // Constructors / Destructors
   //===========================================================================
 
-  //! \brief Default constructor
-  //! \remark Without this, the vector_t(A... args) args will get 
-  //!         called with zero args!
-  vector_t() {} // vector_t
+  //! \brief force the default constructor
+  vector_t() = default;
 
-  //! \brief Default copy constructor
-  vector_t(const vector_t &a) : data_(a.data_) {}
-
+  //! \brief force the default copy constructor
+  vector_t(const vector_t &) = default;
 
   //! \brief Constructor with initializer list
   //! \param[in] list the initializer list of values
+  template <
+    typename = typename std::enable_if< D /= 1 >::type
+  >
   vector_t(std::initializer_list<T> list) {
-    assert(list.size() == D && "dimension size mismatch");
-    std::copy(list.begin(), list.end(), data_.begin());
+    //std::cout << "vector_t (list constructor)\n";
+    if ( list.size() == 1 )
+      data_.fill(*list.begin());
+    else {
+      assert( list.size() == D  && " dimension size mismatch");
+      std::copy(list.begin(), list.end(), data_.begin());
+    }
   }
 
   //! \brief Constructor with initializer list
   //! \param[in] list the initializer list of values
-  template <typename... A> vector_t(A... args) {
-    static_assert( (sizeof...(A) == D),
-                   "dimension size mismatch" );
-    data_ = {args...};
+  template <
+    typename... Args,
+    typename = typename std::enable_if< 
+      sizeof...(Args) == D &&
+      utils::are_type_t<T,Args...>::value 
+    >::type
+  >
+  vector_t(Args&&... args)
+  { 
+    //std::cout << "vector_t (variadic constructor)\n";
+    data_ = { args... };
   }
-
+ 
   //! \brief Constructor with one value.
   //! \param[in] val The value to set the array to
-  vector_t(const T & val) {
-    for ( size_t i=0; i<D; i++ ) 
-      data_[i] = val;
+  vector_t(const T & val) 
+  { 
+    //std::cout << "vector_t (single value constructor)\n";
+    data_.fill( val ); 
   }
-
-  //! \brief Destructor
-  ~vector_t() {}
 
 
   //===========================================================================
@@ -213,18 +223,9 @@ public:
   //! \brief Division operator involving a constant.
   //! \param[in] val The constant on the right hand side of the operator.
   //! \return A reference to the current object.
-  auto & operator/(const T &val) {
+  auto & operator/=(const T &val) {
     for ( size_t i=0; i<D; i++ )
       data_[i] /= val;
-    return *this;
-  }
-
-  //! \brief Division binary operator involving a constant.
-  //! \param[in] val The constant on the right hand side of the operator.
-  //! \return A reference to the current object.
-  auto & operator/=(const T &val) {
-    for ( size_t i=0; i<D; i++ ) 
-      data_[i] /= val;    
     return *this;
   }
 
@@ -234,9 +235,11 @@ public:
   //! \return true if equality.
   friend bool operator==(const vector_t& lhs, const vector_t& rhs)
   {
-    for ( size_t i=0; i<D; i++ ) 
-      if ( lhs.data_[i] != rhs.data_[i] )
-        return false;
+    if ( &lhs != &rhs ) {
+      for ( size_t i=0; i<D; i++ ) 
+        if ( lhs.data_[i] != rhs.data_[i] )
+          return false;
+    }
     return true;
   }
 
@@ -268,6 +271,30 @@ auto operator+( const vector_t<T,D>& lhs,
   return tmp;
 }
 
+//! \brief Addition operator involving one vector_t and a scalar.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The vector_t on the left hand side of the operator.
+//! \param[in] rhs The scalar on the right hand side of the operator.
+//! \return A reference to the current object.
+template <typename T, size_t D>
+auto operator+( const vector_t<T,D>& lhs, 
+                const T& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp += rhs;
+  return tmp;
+}
+
+template <typename T, size_t D>
+auto operator+( const T& lhs, 
+                const vector_t<T,D>& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp += rhs;
+  return tmp;
+}
+
 //! \brief Subtraction operator involving two vector_ts.
 //! \tparam T  The array base value type.
 //! \tparam D  The array dimension.
@@ -276,6 +303,30 @@ auto operator+( const vector_t<T,D>& lhs,
 //! \return A reference to the current object.
 template <typename T, size_t D>
 auto operator-( const vector_t<T,D>& lhs, 
+                const vector_t<T,D>& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp -= rhs;
+  return tmp;
+}
+
+//! \brief Subtraction operator involving one vector_t and a scalar.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The vector_t on the left hand side of the operator.
+//! \param[in] rhs The scalar on the right hand side of the operator.
+//! \return A reference to the current object.
+template <typename T, size_t D>
+auto operator-( const vector_t<T,D>& lhs, 
+                const T& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp -= rhs;
+  return tmp;
+}
+
+template <typename T, size_t D>
+auto operator-( const T& lhs, 
                 const vector_t<T,D>& rhs )
 {
   vector_t<T,D> tmp(lhs);
@@ -318,8 +369,8 @@ template <typename T, size_t D>
 auto operator*( const T& lhs,
                 const vector_t<T,D>& rhs )
 {
-  vector_t<T,D> tmp(rhs);
-  tmp *= lhs;
+  vector_t<T,D> tmp(lhs);
+  tmp *= rhs;
   return tmp;
 }
 
@@ -359,8 +410,8 @@ template <typename T, size_t D>
 auto operator/( const T& lhs, 
                 const vector_t<T,D>& rhs )
 {
-  vector_t<T,D> tmp(rhs);
-  tmp /= lhs;
+  vector_t<T,D> tmp(lhs);
+  tmp /= rhs;
   return tmp;
 }
 
@@ -373,10 +424,10 @@ auto operator/( const T& lhs,
 template <typename T, size_t D>
 auto & operator<<(std::ostream& os, const vector_t<T,D>& a)
 {
-  os << "[";
+  os << "(";
   for ( size_t i=0; i<D; i++ ) 
     os << " " << a[i];
-  os << " ]";
+  os << " )";
   return os;
 }
 

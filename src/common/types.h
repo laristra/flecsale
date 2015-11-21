@@ -40,9 +40,6 @@ using index_t = uint64_t;
   using index_t = uint32_t;
 #endif
 
-// use the size type
-using size_t = std::size_t;
-
 } // namespace
 } // namespace
 

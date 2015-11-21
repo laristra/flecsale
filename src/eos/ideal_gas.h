@@ -19,8 +19,6 @@
 
 //! system includes
 
-//! user includes
-#include "ale/common/types.h"
 
 namespace ale {
 namespace eos {
@@ -28,17 +26,12 @@ namespace eos {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Ideal gas specialization of the equation of state
 ////////////////////////////////////////////////////////////////////////////////
+template <typename real_t>
 class ideal_gas_t {
 
 
 public:
 
-  //============================================================================
-  // Typedefs
-  //============================================================================
-
-  //! \brief the real precision type
-  using real_t = common::real_t;
 
   //============================================================================
   // Constructors / Destructors
@@ -99,7 +92,7 @@ public:
   //virtual void initialize( const common::NodeType &input ) = 0;
 
   //! \brief Main driver to setup the eos object
-  void setup( void ) {};
+  //void setup( void ) {};
 
 
   //! \brief return the density
@@ -115,12 +108,12 @@ public:
   //! \brief return the reference temperature
   //! \return the reference temperature
   real_t get_ref_temperature( void ) const 
-  { return compute_temperature( density_, internal_energy_ ); }
+  { return compute_temperature_de( density_, internal_energy_ ); }
 
   //! \brief return the reference pressure
   //! \return the reference pressure
   real_t get_ref_pressure( void ) const 
-  { return compute_pressure( density_, internal_energy_ ); }
+  { return compute_pressure_de( density_, internal_energy_ ); }
 
 
   //! \brief set the reference state via density and energy
@@ -183,8 +176,8 @@ public:
   //! \param[in] density the density
   //! \param[in] pressure the pressure
   //! \return the internal energy
-  real_t compute_internal_energy( real_t density, 
-                                  real_t pressure ) const
+  real_t compute_internal_energy_dp( real_t density, 
+                                     real_t pressure ) const
   { return pressure / ( density*(gamma_-1.0) ); }
 
 
@@ -197,8 +190,8 @@ public:
   //! \param[in] density the density
   //! \param[in] internal_energy the internal energy
   //! \return the pressure
-  real_t compute_pressure( real_t density, 
-                           real_t internal_energy ) const
+  real_t compute_pressure_de( real_t density, 
+                              real_t internal_energy ) const
   { return (gamma_-1.0) * density * internal_energy; }
 
   //! \brief comput the sound speed
@@ -209,8 +202,8 @@ public:
   //! \param[in] density the density
   //! \param[in] internal_energy the internal energy
   //! \return the sound speed
-  real_t compute_sound_speed( real_t density, 
-                              real_t internal_energy ) const
+  real_t compute_sound_speed_de( real_t density, 
+                                 real_t internal_energy ) const
   {
     assert( internal_energy>0.0 );
     return std::sqrt( gamma_ * (gamma_-1.0) * internal_energy );
@@ -224,8 +217,8 @@ public:
   //! \param[in] density the density
   //! \param[in] internal_energy the internal energy
   //! \return the temperature
-  real_t compute_temperature( real_t density, 
-                              real_t internal_energy ) const
+  real_t compute_temperature_de( real_t density, 
+                                 real_t internal_energy ) const
   { return internal_energy / specific_heat_v_; }
 
 

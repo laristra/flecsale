@@ -10,51 +10,36 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file tasks.h
+ * \file template_helpers.h
  * 
- * \brief Utilities for creating simple tasks from iterators.
+ * \brief Some helper functions for template foo magic.
  *
  ******************************************************************************/
 #pragma once
-
-
-//! user includes
-#include "ale/utils/zip.h"
 
 namespace ale {
 namespace utils {
 
 
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief generate a simple tasks from a function and iterator
-//!
-//!
-//! sample usage:
-//! 
-//!   auto internal_energy = [&](const real_t & a, const real_t & b, auto & c) 
-//!     { c = eos.compute_internal_energy(a, b); };
-//!   simple_task( internal_energy, d, p, e );
+//! \brief random junk
 ////////////////////////////////////////////////////////////////////////////////
 
 
-// helper function that actually calls the tasks
-template<class Func, class Iterator, std::size_t... I>
-void simple_task_impl( Func & func, Iterator &tup, std::index_sequence<I...> )
+template < typename T, typename... Ts >
+std::tuple<T&, const Ts&...> ctie( T& first, const Ts&... rest )
 {
-  for ( auto it : tup ) {
-     func( get<I>(it)... );
-  }
+  return std::make_tuple( std::ref(first), std::cref(rest)... );
 }
 
-// main interface
-template<class Func, class... Args>
-void simple_task( Func & func, Args&&... args )
-{
-  constexpr size_t N = sizeof...(Args);
-  auto tup = zip( args... );
-  simple_task_impl( func, tup, std::make_index_sequence<N>() );
-}
 
+template<typename T>
+T &as_lvalue(T &&val) {
+  return val;
+}
 
 } // namespace
 } // namespace
