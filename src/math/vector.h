@@ -24,7 +24,7 @@
 #include "ale/utils/check_types.h"
 
 namespace ale {
-namespace utils {
+namespace math {
 
 ////////////////////////////////////////////////////////////////////////////////
 //!  \brief The dimensioned_array type provides a general base for defining
@@ -116,16 +116,12 @@ public:
   //===========================================================================
 
   //! \brief index operator
-  template< typename E >
-  auto & operator[](E e) {
-    return data_[static_cast<size_t>(e)];
-  }
+  auto & operator[](size_t i) 
+  { return data_[i]; }
 
   //! \brief index operator (const version)
-  template< typename E >
-  const auto & operator[](E e) const {
-    return data_[static_cast<size_t>(e)];
-  }
+  const auto & operator[](size_t i) const 
+  { return data_[i]; }
 
 
   //! \brief Assignment operator to another array.
@@ -442,13 +438,18 @@ auto & operator<<(std::ostream& os, const vector_t<T,D>& a)
 //! \param[in] b  The other vector
 //! \return The result of the operation
 template <typename T, size_t D>
-auto dot(const vector_t<T, D> &a, const vector_t<T, D> &b) {
+auto dot_product(const vector_t<T, D> &a, const vector_t<T, D> &b) {
 
   T sum(0);
   for (size_t d = 0; d < D; ++d)
     sum += a[d] * b[d];
 
   return sum;
+}
+
+template <typename T>
+auto dot_product(const vector_t<T, 1> &a, const vector_t<T, 1> &b) {
+  return a[0] * b[0];
 }
 
 //! \brief Compute the magnitude of the vector
@@ -459,7 +460,12 @@ auto dot(const vector_t<T, D> &a, const vector_t<T, D> &b) {
 //! \return The result of the operation
 template <typename T, size_t D> 
 auto magnitude(const vector_t<T, D> &a) {
-  return std::sqrt( dot(a,a) );
+  return std::sqrt( dot_product(a,a) );
+}
+
+template <typename T> 
+auto magnitude(const vector_t<T, 1> &a) {
+  return std::sqrt( dot_product(a,a) );
 }
 
 } // namespace

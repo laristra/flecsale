@@ -21,9 +21,9 @@
 #include <iostream>
 
 // user includes
+#include <ale/common/types.h>
 #include <ale/eqns/euler_eqns.h>
 #include <ale/eos/ideal_gas.h>
-#include <ale/utils/vector.h>
 #include <ale/utils/zip.h>
 
 #include <flexi/io/io.h>
@@ -40,9 +40,6 @@ using std::vector;
 using flexi::dot;
 using flexi::persistent;
 using flexi::temporary;
-    
-using std::placeholders::_1;
-using std::placeholders::_2;
 
 using namespace ale;
 
@@ -57,7 +54,7 @@ TEST(hydro, simple) {
 
   using size_t = std::size_t;
   using real_t = common::real_t;
-  using vector_t = utils::vector_t<real_t,2>;
+  using vector_t = math::vector_t<real_t,2>;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 10;
@@ -72,8 +69,11 @@ TEST(hydro, simple) {
   // mesh and some underlying data types
   using mesh_t = flexi::burton_mesh_t;
 
-  using eqns_t = eqns::euler_eqns_t<real_t, mesh_t::dimension()>;
   using eos_t = eos::ideal_gas_t<real_t>;
+
+  using eqns_t = eqns::euler_eqns_t<real_t, mesh_t::dimension()>;
+  using state_data_t = eqns_t::state_data_t;
+  using flux_data_t = eqns_t::flux_data_t;
 
   // set the initial conditions
   auto solution = [](const auto &x, auto t) { 
@@ -93,10 +93,10 @@ TEST(hydro, simple) {
 
   // the flux function
   auto flux_function = [](const auto &wl, const auto &wr, const auto &n) { 
-    eqns_t::flux_data_t f;
-    eqns_t::flux_data_t fl = wl.flux(n);
-    eqns_t::flux_data_t fr = wr.flux(n);
-    return fl;
+    auto fl = eqns_t::flux(wl, n);
+    auto fr = eqns_t::flux(wr, n);
+    auto f = 0.5 * ( fl + fr );
+    return f;
   };
 
 
@@ -195,6 +195,7 @@ TEST(hydro, simple) {
   // Flux Evaluation
   //===========================================================================
 
+
   // a lambda function to get the state
   auto get_state = [&](auto cell_id) { 
     auto d = density [ cell_id ];
@@ -203,13 +204,12 @@ TEST(hydro, simple) {
     auto e = energy  [ cell_id ];
     auto t = temperature[ cell_id ];
     auto a = sound_speed[ cell_id ];
-    return eqns_t::state_t{d,v,p,e,t,a}; 
+    return state_data_t{d,v,p,e,t,a}; 
   };
 
 
 
   // compute the fluxes
-  using flux_data_t = eqns_t::flux_data_t;
   auto flux = register_state(mesh, "flux", edges, flux_data_t, temporary);
 
   //---------------------------------------------------------------------------
@@ -237,7 +237,7 @@ TEST(hydro, simple) {
     // boundary cell
     else {
       vector_t normal;
-      flux[edge_id] = w_left.flux( normal );
+      flux[edge_id] = eqns_t::flux( w_left, normal );
     }
     
 
@@ -262,8 +262,8 @@ TEST(hydro, simple) {
       auto num_neigh = neigh.size();
 
       // figure out the sign
-      decltype(neigh) dir;
-      if ( cells == 2 ) 
+      int dir;
+      if ( num_neigh == 2 ) 
         dir = ( neigh[0]->id() == cell_id ) ? -1 : 0;
       else
         dir = 1;

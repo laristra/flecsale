@@ -23,7 +23,8 @@
 #include <tuple>
 
 //! user includes
-#include "ale/utils/vector.h"
+#include "ale/math/tuple.h"
+#include "ale/math/vector.h"
 
 namespace ale {
 namespace eqns {
@@ -32,7 +33,7 @@ namespace eqns {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Specialization of the euler equations
 ////////////////////////////////////////////////////////////////////////////////
-template<typename real_t, size_t N>
+template<typename T, size_t N>
 struct euler_eqns_t {
 
 
@@ -45,6 +46,9 @@ public:
   //! \brief the size type
   using size_t = std::size_t;
 
+  // \brief the real type
+  using real_t = T;
+
   //! \brief a function template for the eos closure
   using function_t = std::function<real_t(real_t, real_t)>;
 
@@ -56,13 +60,13 @@ public:
   using eqns_t = euler_eqns_t;
 
   //! \brief the vector_type
-  using vector_t = utils::vector_t<real_t,N>;
+  using vector_t = math::vector_t<real_t,N>;
 
   //! \brief  the type for holding the state data
-  using state_data_t = std::tuple<real_t,vector_t,real_t,real_t,real_t,real_t>;
+  using state_data_t = math::tuple_t<real_t,vector_t,real_t,real_t,real_t,real_t>;
 
   //! \brief  the type for holding the state data
-  using flux_data_t = std::tuple<real_t,vector_t,real_t>;
+  using flux_data_t = math::tuple_t<real_t,vector_t,real_t>;
 
 
   //! \brief the variables in the primitive state
@@ -179,84 +183,34 @@ public:
       }
     }
 
-    //! \brief Constructor with initializer list
-    //! \param[in] list the initializer list of values
-    template <typename... Args,
-              typename = typename std::enable_if<sizeof...(Args) == num_variables()>::type>
-    state_t(Args&&... args) : data_(std::forward<Args>(args)...) 
-    { }
-
-    //! \brief brackets operator
-    //! \param [in] i the index
-    //! \return the data
-    template<size_t i>
-    auto & get() 
-    { return std::get<i>(data_); }
-
-    template<size_t i>
-    auto get() const 
-    { return std::get<i>(data_); }
-
-
-    //! \brief compute the flux in the normal direction
-    //! \param [in] normal The normal direction
-    //! \return the flux alligned with the normal direction
-    flux_data_t flux( const vector_t normal ) const
-    {
-      
-      auto rho = this->template get<variables::density >();
-      auto vel = this->template get<variables::velocity>();
-      auto p   = this->template get<variables::pressure>();
-      auto ie  = this->template get<variables::internal_energy>();
-      
-      assert( rho > 0  );
-
-      auto v_dot_n = utils::dot(vel, normal);
-      auto pn = p*normal;
-      auto et = ie + 0.5 * utils::dot(vel, vel);
-      
-      auto mass_flux = rho * v_dot_n;     
-      auto mom_flux  = mass_flux * vel + pn;
-      auto ener_flux = (rho*et + p) * v_dot_n;
-
-      return flux_data_t{mass_flux, mom_flux, ener_flux};
-    }
-
-
-    //! \brief Output operator
-    //! \param[in,out] os  The ostream to dump output to.
-    //! \param[in]     rhs The vector_t on the right hand side of the operator.
-    //! \return A reference to the current ostream.
-    friend auto & operator<<(std::ostream& os, const state_t& a)
-    {
-      os << "{";
-      os << " "  << a.template get<0>();
-      os << ", " << a.template get<1>();
-      os << ", " << a.template get<2>();
-      os << ", " << a.template get<3>();
-      os << ", " << a.template get<4>();
-      os << ", " << a.template get<5>();
-      os << " }";
-      return os;
-    }
-
-
-    //! \brief Equivalence operator
-    //! \param[in] lhs The quantity on the rhs.
-    //! \param[in] rhs The quantity on the rhs.
-    //! \return true if equality.
-    friend bool operator==(const state_t& lhs, const state_t& rhs)
-    { 
-      return (lhs.data_ == rhs.data_); 
-    }
-
-
-  protected:
-
-    //! \brief the data storage
-    state_data_t data_;
-
   };
+
+
+
+  //! \brief compute the flux in the normal direction
+  //! \param [in] normal The normal direction
+  //! \return the flux alligned with the normal direction
+  static flux_data_t flux( const state_data_t& u, const vector_t& normal )
+  {
+      
+    auto rho = u.template get<state_t::variables::density >();
+    auto vel = u.template get<state_t::variables::velocity>();
+    auto p   = u.template get<state_t::variables::pressure>();
+    auto ie  = u.template get<state_t::variables::internal_energy>();
+      
+    assert( rho > 0  );
+
+    using math::dot_product;
+    auto v_dot_n = dot_product(vel, normal);
+    auto pn = p*normal;
+    auto et = ie + 0.5 * dot_product(vel, vel);
+      
+    auto mass_flux = rho * v_dot_n;     
+    auto mom_flux  = mass_flux * vel + pn;
+    auto ener_flux = (rho*et + p) * v_dot_n;
+
+    return flux_data_t{mass_flux, mom_flux, ener_flux};
+  }
 
 
 };

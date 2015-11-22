@@ -29,7 +29,7 @@
 using std::cout;
 using std::endl;
 using std::vector;
-using ale::common::real_t;
+using real_t = double;
 
 using namespace std::placeholders;
 
@@ -41,8 +41,8 @@ using namespace ale::eos;
 ///////////////////////////////////////////////////////////////////////////////
 TEST(eqns, euler) {
 
-  using eqns_t = euler_eqns_t<3>;
-  using eos_t = ideal_gas_t;
+  using eqns_t = euler_eqns_t<real_t,3>;
+  using eos_t = ideal_gas_t<real_t>;
 
   eos_t eos;
   eqns_t eqns;  
@@ -50,8 +50,8 @@ TEST(eqns, euler) {
   using   real_t = eqns_t::real_t;
   using vector_t = eqns_t::vector_t;
 
-  auto get_pressure         = std::bind( &eos_t::compute_pressure,        std::cref(eos), _1, _2 );
-  auto get_internal_energy  = std::bind( &eos_t::compute_internal_energy, std::cref(eos), _1, _2 );
+  auto get_pressure         = std::bind( &eos_t::compute_pressure_de,        std::cref(eos), _1, _2 );
+  auto get_internal_energy  = std::bind( &eos_t::compute_internal_energy_dp, std::cref(eos), _1, _2 );
 
   eqns_t::primitive_state_t w{
     real_t{1.0}, 

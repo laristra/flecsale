@@ -25,7 +25,7 @@
 #include "ale/utils/tuple_zip.h"
 
 namespace ale {
-namespace utils {
+namespace math {
 
 ////////////////////////////////////////////////////////////////////////////////
 //!  \brief The dimensioned_array type provides a general base for defining
@@ -81,7 +81,7 @@ public:
   tuple_t(const auto & val) 
   { 
     //std::cout << "tuple_t (single value constructor)\n";
-    static_for_each( data_, [&](auto & tup) { tup = val; } );
+    utils::static_for_each( data_, [&](auto & tup) { tup = val; } );
   }
 
 
@@ -91,15 +91,17 @@ public:
 
   //! \brief index operator
   template<size_t I>
-  auto & get() {
-    return std::get<I>(data_);
-  }
+  auto & get()
+  { return std::get<I>(data_); }
+
+  //! \brief index operator (forwarding version)
+  template<size_t I, class... ArgTypes>
+  friend auto && get( tuple_t<ArgTypes...> && tup );
 
   //! \brief index operator (const version)
   template<size_t I>
-  const auto & get() {
-    return std::get<I>(data_);
-  }
+  const auto & get() const 
+  {  return std::get<I>(data_); }
 
 
   //! \brief Assignment operator to another array.
@@ -114,7 +116,7 @@ public:
   //! \param[in] val The constant on the right hand side of the '='.
   //! \return A reference to the current object.
   tuple_t & operator=(const auto & val) {
-    static_for_each( data_, [&](auto & tup) { tup = val; } );
+    utils::static_for_each( data_, [&](auto & tup) { tup = val; } );
     return *this;
   }
   
@@ -123,7 +125,7 @@ public:
   //! \return A reference to the current object.
   auto & operator+=(const tuple_t &rhs) {
     if ( this != &rhs ) {
-      static_for_each( tuple_tie( data_, rhs.data_ ),
+      utils::static_for_each( utils::tuple_tie( data_, rhs.data_ ),
                        [](auto && tup) { 
                          std::get<0>(tup) += std::get<1>(tup);
                        } );
@@ -135,7 +137,7 @@ public:
   //! \param[in] val The constant on the right hand side of the operator.
   //! \return A reference to the current object.
   tuple_t & operator+=(const auto &val) {
-    static_for_each( data_,
+    utils::static_for_each( data_,
                      [&](auto && tup) { tup += val; } );
     return *this;
   }
@@ -145,7 +147,7 @@ public:
   //! \return A reference to the current object.
   auto & operator-=(const tuple_t &rhs) {
     if ( this != &rhs ) {
-      static_for_each( tuple_tie( data_, rhs.data_ ),
+      utils::static_for_each( utils::tuple_tie( data_, rhs.data_ ),
                        [](auto && tup) { 
                          std::get<0>(tup) -= std::get<1>(tup);
                        } );
@@ -157,7 +159,7 @@ public:
   //! \param[in] val The constant on the right hand side of the operator.
   //! \return A reference to the current object.
   tuple_t & operator-=(const auto &val) {
-    static_for_each( data_,
+    utils::static_for_each( data_,
                      [&](auto && tup) { tup -= val; } );
     return *this;
   }
@@ -168,7 +170,7 @@ public:
   //! \return A reference to the current object.
   auto & operator*=(const tuple_t &rhs) {
     if ( this != &rhs ) {
-      static_for_each( tuple_tie( data_, rhs.data_ ),
+      utils::static_for_each( utils::tuple_tie( data_, rhs.data_ ),
                        [](auto && tup) { 
                          std::get<0>(tup) *= std::get<1>(tup);
                        } );
@@ -180,7 +182,7 @@ public:
   //! \param[in] val The constant on the right hand side of the operator.
   //! \return A reference to the current object.
   tuple_t & operator*=(const auto &val) {
-    static_for_each( data_,
+    utils::static_for_each( data_,
                      [&](auto && tup) { tup *= val; } );
     return *this;
   }
@@ -190,7 +192,7 @@ public:
   //! \return A reference to the current object.
   auto & operator/=(const tuple_t &rhs) {
     if ( this != &rhs ) {
-      static_for_each( tuple_tie( data_, rhs.data_ ),
+      utils::static_for_each( utils::tuple_tie( data_, rhs.data_ ),
                        [](auto && tup) { 
                          std::get<0>(tup) /= std::get<1>(tup);
                        } );
@@ -202,7 +204,7 @@ public:
   //! \param[in] val The constant on the right hand side of the operator.
   //! \return A reference to the current object.
   tuple_t & operator/=(const auto &val) {
-    static_for_each( data_,
+    utils::static_for_each( data_,
                      [&](auto && tup) { tup /= val; } );
     return *this;
   }
@@ -215,7 +217,7 @@ public:
   {
     bool result = true;
     if ( &lhs != &rhs ) {
-      static_for_each( tuple_tie( lhs.data_, rhs.data_ ),
+      utils::static_for_each( utils::tuple_tie( lhs.data_, rhs.data_ ),
                        [&](auto && tup) { 
                          if ( std::get<0>(tup) != std::get<1>(tup) )
                            result = false;
@@ -235,7 +237,7 @@ public:
   friend auto & operator<<(std::ostream& os, const tuple_t& a)
   {
     os << "{";
-    static_for_each( a.data_, 
+    utils::static_for_each( a.data_, 
                      [](auto & tup) { std::cout << " [ " << tup << " ]"; } );
     os << " }";
     return os;
@@ -252,7 +254,8 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 // Friend functions
 ////////////////////////////////////////////////////////////////////////////////
-  
+ 
+ 
 //! \brief Addition operator involving two tuple_ts.
 //! \param[in] lhs The tuple_t on the left hand side of the operator.
 //! \param[in] rhs The tuple_t on the right hand side of the operator.
