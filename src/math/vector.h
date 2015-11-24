@@ -34,7 +34,234 @@ namespace math {
 //!  \tparam D The dimension of the array, i.e., the number of elements
 //!    to be stored in the array.
 ////////////////////////////////////////////////////////////////////////////////
-template <typename T, size_t D> class vector_t {
+template <typename T, size_t D> 
+using vector_t = std::array<T,D>;
+
+
+
+//! \brief Addition operator involving two vector_ts.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The vector_t on the left hand side of the operator.
+//! \param[in] rhs The vector_t on the right hand side of the operator.
+//! \return A reference to the current object.
+template <typename T, size_t D>
+auto operator+( const vector_t<T,D>& lhs, 
+                const vector_t<T,D>& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp += rhs;
+  return tmp;
+}
+
+//! \brief Addition operator involving one vector_t and a scalar.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The vector_t on the left hand side of the operator.
+//! \param[in] rhs The scalar on the right hand side of the operator.
+//! \return A reference to the current object.
+template <typename T, size_t D>
+auto operator+( const vector_t<T,D>& lhs, 
+                const T& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp += rhs;
+  return tmp;
+}
+
+template <typename T, size_t D>
+auto operator+( const T& lhs, 
+                const vector_t<T,D>& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp += rhs;
+  return tmp;
+}
+
+//! \brief Subtraction operator involving two vector_ts.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The vector_t on the left hand side of the operator.
+//! \param[in] rhs The vector_t on the right hand side of the operator.
+//! \return A reference to the current object.
+template <typename T, size_t D>
+auto operator-( const vector_t<T,D>& lhs, 
+                const vector_t<T,D>& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp -= rhs;
+  return tmp;
+}
+
+//! \brief Subtraction operator involving one vector_t and a scalar.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The vector_t on the left hand side of the operator.
+//! \param[in] rhs The scalar on the right hand side of the operator.
+//! \return A reference to the current object.
+template <typename T, size_t D>
+auto operator-( const vector_t<T,D>& lhs, 
+                const T& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp -= rhs;
+  return tmp;
+}
+
+template <typename T, size_t D>
+auto operator-( const T& lhs, 
+                const vector_t<T,D>& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp -= rhs;
+  return tmp;
+}
+
+//! \brief Multiplication operator involving two vector_ts.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The vector_t on the left hand side of the operator.
+//! \param[in] rhs The vector_t on the right hand side of the operator.
+//! \return A reference to the current object.
+template <typename T, size_t D>
+auto operator*( const vector_t<T,D>& lhs, 
+                const vector_t<T,D>& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp *= rhs;
+  return tmp;
+}
+
+
+//! \brief Multiplication operator involving one vector_t and a scalar.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The vector_t on the left hand side of the operator.
+//! \param[in] rhs The scalar on the right hand side of the operator.
+//! \return A reference to the current object.
+template <typename T, size_t D>
+auto operator*( const vector_t<T,D>& lhs, 
+                const T& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp *= rhs;
+  return tmp;
+}
+
+template <typename T, size_t D>
+auto operator*( const T& lhs,
+                const vector_t<T,D>& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp *= rhs;
+  return tmp;
+}
+
+//! \brief Division operator involving two vector_ts.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The vector_t on the left hand side of the operator.
+//! \param[in] rhs The vector_t on the right hand side of the operator.
+//! \return A reference to the current object.
+template <typename T, size_t D>
+auto operator/( const vector_t<T,D>& lhs, 
+                const vector_t<T,D>& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp /= rhs;
+  return tmp;
+}
+
+
+
+//! \brief Division operator involving one vector_t and a scalar.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The vector_t on the left hand side of the operator.
+//! \param[in] rhs The scalar on the right hand side of the operator.
+//! \return A reference to the current object.
+template <typename T, size_t D>
+auto operator/( const vector_t<T,D>& lhs, 
+                const T& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp /= rhs;
+  return tmp;
+}
+
+template <typename T, size_t D>
+auto operator/( const T& lhs, 
+                const vector_t<T,D>& rhs )
+{
+  vector_t<T,D> tmp(lhs);
+  tmp /= rhs;
+  return tmp;
+}
+
+
+
+
+//! \brief Output operator for vector_t.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in,out] os  The ostream to dump output to.
+//! \param[in]     rhs The vector_t on the right hand side of the operator.
+//! \return A reference to the current ostream.
+template <typename T, size_t D>
+auto & operator<<(std::ostream& os, const vector_t<T,D>& a)
+{
+  os << "(";
+  for ( size_t i=0; i<D; i++ ) 
+    os << " " << a[i];
+  os << " )";
+  return os;
+}
+
+
+
+
+
+//! \brief Compute the dot product
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template <typename T, size_t D>
+auto dot_product(const vector_t<T, D> &a, const vector_t<T, D> &b) {
+
+  T sum(0);
+  for (size_t d = 0; d < D; ++d)
+    sum += a[d] * b[d];
+
+  return sum;
+}
+
+template <typename T>
+auto dot_product(const vector_t<T, 1> &a, const vector_t<T, 1> &b) {
+  return a[0] * b[0];
+}
+
+//! \brief Compute the magnitude of the vector
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template <typename T, size_t D> 
+auto magnitude(const vector_t<T, D> &a) {
+  return std::sqrt( dot_product(a,a) );
+}
+
+template <typename T> 
+auto magnitude(const vector_t<T, 1> &a) {
+  return a[0];
+}
+
+
+
+
+#if 0
 
 public:
 
@@ -230,226 +457,12 @@ private:
 
 };
 
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // Friend functions
 ////////////////////////////////////////////////////////////////////////////////
   
-//! \brief Addition operator involving two vector_ts.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The vector_t on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename T, size_t D>
-auto operator+( const vector_t<T,D>& lhs, 
-                const vector_t<T,D>& rhs )
-{
-  vector_t<T,D> tmp(lhs);
-  tmp += rhs;
-  return tmp;
-}
-
-//! \brief Addition operator involving one vector_t and a scalar.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The scalar on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename T, size_t D>
-auto operator+( const vector_t<T,D>& lhs, 
-                const T& rhs )
-{
-  vector_t<T,D> tmp(lhs);
-  tmp += rhs;
-  return tmp;
-}
-
-template <typename T, size_t D>
-auto operator+( const T& lhs, 
-                const vector_t<T,D>& rhs )
-{
-  vector_t<T,D> tmp(lhs);
-  tmp += rhs;
-  return tmp;
-}
-
-//! \brief Subtraction operator involving two vector_ts.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The vector_t on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename T, size_t D>
-auto operator-( const vector_t<T,D>& lhs, 
-                const vector_t<T,D>& rhs )
-{
-  vector_t<T,D> tmp(lhs);
-  tmp -= rhs;
-  return tmp;
-}
-
-//! \brief Subtraction operator involving one vector_t and a scalar.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The scalar on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename T, size_t D>
-auto operator-( const vector_t<T,D>& lhs, 
-                const T& rhs )
-{
-  vector_t<T,D> tmp(lhs);
-  tmp -= rhs;
-  return tmp;
-}
-
-template <typename T, size_t D>
-auto operator-( const T& lhs, 
-                const vector_t<T,D>& rhs )
-{
-  vector_t<T,D> tmp(lhs);
-  tmp -= rhs;
-  return tmp;
-}
-
-//! \brief Multiplication operator involving two vector_ts.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The vector_t on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename T, size_t D>
-auto operator*( const vector_t<T,D>& lhs, 
-                const vector_t<T,D>& rhs )
-{
-  vector_t<T,D> tmp(lhs);
-  tmp *= rhs;
-  return tmp;
-}
-
-
-//! \brief Multiplication operator involving one vector_t and a scalar.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The scalar on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename T, size_t D>
-auto operator*( const vector_t<T,D>& lhs, 
-                const T& rhs )
-{
-  vector_t<T,D> tmp(lhs);
-  tmp *= rhs;
-  return tmp;
-}
-
-template <typename T, size_t D>
-auto operator*( const T& lhs,
-                const vector_t<T,D>& rhs )
-{
-  vector_t<T,D> tmp(lhs);
-  tmp *= rhs;
-  return tmp;
-}
-
-//! \brief Division operator involving two vector_ts.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The vector_t on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename T, size_t D>
-auto operator/( const vector_t<T,D>& lhs, 
-                const vector_t<T,D>& rhs )
-{
-  vector_t<T,D> tmp(lhs);
-  tmp /= rhs;
-  return tmp;
-}
-
-
-
-//! \brief Division operator involving one vector_t and a scalar.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The scalar on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename T, size_t D>
-auto operator/( const vector_t<T,D>& lhs, 
-                const T& rhs )
-{
-  vector_t<T,D> tmp(lhs);
-  tmp /= rhs;
-  return tmp;
-}
-
-template <typename T, size_t D>
-auto operator/( const T& lhs, 
-                const vector_t<T,D>& rhs )
-{
-  vector_t<T,D> tmp(lhs);
-  tmp /= rhs;
-  return tmp;
-}
-
-//! \brief Output operator for vector_t.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in,out] os  The ostream to dump output to.
-//! \param[in]     rhs The vector_t on the right hand side of the operator.
-//! \return A reference to the current ostream.
-template <typename T, size_t D>
-auto & operator<<(std::ostream& os, const vector_t<T,D>& a)
-{
-  os << "(";
-  for ( size_t i=0; i<D; i++ ) 
-    os << " " << a[i];
-  os << " )";
-  return os;
-}
-
-
-
-
-
-//! \brief Compute the dot product
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] a  The first vector
-//! \param[in] b  The other vector
-//! \return The result of the operation
-template <typename T, size_t D>
-auto dot_product(const vector_t<T, D> &a, const vector_t<T, D> &b) {
-
-  T sum(0);
-  for (size_t d = 0; d < D; ++d)
-    sum += a[d] * b[d];
-
-  return sum;
-}
-
-template <typename T>
-auto dot_product(const vector_t<T, 1> &a, const vector_t<T, 1> &b) {
-  return a[0] * b[0];
-}
-
-//! \brief Compute the magnitude of the vector
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] a  The first vector
-//! \param[in] b  The other vector
-//! \return The result of the operation
-template <typename T, size_t D> 
-auto magnitude(const vector_t<T, D> &a) {
-  return std::sqrt( dot_product(a,a) );
-}
-
-template <typename T> 
-auto magnitude(const vector_t<T, 1> &a) {
-  return std::sqrt( dot_product(a,a) );
-}
 
 } // namespace
 } // namespace
