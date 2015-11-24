@@ -124,23 +124,6 @@ public:
   { return data_[i]; }
 
 
-  //! \brief Assignment operator to another array.
-  //! \param[in] rhs The array on the right hand side of the '='.
-  //! \return A reference to the current object.
-  auto & operator=(const vector_t &rhs) {
-    if ( this != &rhs ) data_ = rhs.data_;
-    return *this;
-  }
-
-  //! \brief Assignment operator to a constant.
-  //! \param[in] val The constant on the right hand side of the '='.
-  //! \return A reference to the current object.
-  auto & operator=(const T &val) {
-    for ( size_t i=0; i<D; i++ ) 
-      data_[i] = val;    
-    return *this;
-  }
-
   // use std::move
   // http://stackoverflow.com/questions/11726171/numeric-vector-operator-overload-rvalue-reference-parameter
   

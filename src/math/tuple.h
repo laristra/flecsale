@@ -50,7 +50,7 @@ public:
   static constexpr size_t size = sizeof...(Types);
 
   //! alias the tuple data type
-  using tuple_data_t = std::tuple<Types...>;
+  using data_t = std::tuple<Types...>;
 
   //===========================================================================
   // Constructors / Destructors
@@ -75,10 +75,35 @@ public:
     //std::cout << "tuple_t (variadic constructor)\n";
   }
 
+  //! \brief Constructor with a std::tuple.
+  //! \param[in] val The value to set the array to
+  template < typename... UTypes >
+  tuple_t(const std::tuple<UTypes...> & val) : data_( val )
+  { 
+    std::cout << "tuple_t (tuple std::tuple constructor)\n";
+  }
+
+  //! \brief need this friendship for the next constructor
+  template < typename... UTypes>
+  friend class tuple_t;
+
+  //! \brief Constructor with a tuple of references.
+  //! \param[in] other The other tuple of references
+  template < typename... UTypes>
+  tuple_t(const tuple_t<UTypes&...> & other) : 
+    data_( other.data_  )
+  { 
+    //std::cout << "tuple_t (tuple reference constructor)\n";
+  }
+
 
   //! \brief Constructor with one value.
   //! \param[in] val The value to set the array to
-  tuple_t(const auto & val) 
+  template < typename T,
+             typename = typename std::enable_if< 
+               std::is_fundamental<T>::value >::type
+           >
+  tuple_t(const T& val) 
   { 
     //std::cout << "tuple_t (single value constructor)\n";
     utils::static_for_each( data_, [&](auto & tup) { tup = val; } );
@@ -89,36 +114,31 @@ public:
   // Operators
   //===========================================================================
 
+
+  // \brief conversion to std::tuple (type-cast operator)
+  operator std::tuple<Types...>() 
+  { 
+    //std::cout << "tuple_t conversion to std::tuple\n";
+    return data_; 
+  }
+
   //! \brief index operator
   template<size_t I>
   auto & get()
   { return std::get<I>(data_); }
-
-  //! \brief index operator (forwarding version)
-  template<size_t I, class... ArgTypes>
-  friend auto && get( tuple_t<ArgTypes...> && tup );
+  
+  template<size_t I, class... UTypes>
+  friend auto & get ( tuple_t<UTypes...> & tup );
+    
 
   //! \brief index operator (const version)
   template<size_t I>
   const auto & get() const 
   {  return std::get<I>(data_); }
 
+  template<size_t I, class... UTypes>
+  friend const auto & get ( const tuple_t<UTypes...> & tup );
 
-  //! \brief Assignment operator to another array.
-  //! \param[in] rhs The array on the right hand side of the '='.
-  //! \return A reference to the current object.
-  auto & operator=(const tuple_t &rhs) {
-    if ( this != &rhs ) data_ = rhs.data_;
-    return *this;
-  }
-
-  //! \brief Assignment operator to a constant.
-  //! \param[in] val The constant on the right hand side of the '='.
-  //! \return A reference to the current object.
-  tuple_t & operator=(const auto & val) {
-    utils::static_for_each( data_, [&](auto & tup) { tup = val; } );
-    return *this;
-  }
   
   //! \brief Addition binary operator involving another array.
   //! \param[in] rhs The array on the right hand side of the operator.
@@ -247,7 +267,7 @@ public:
 private:
 
   //! \brief The main data container, which is just a std::tuple.
-  tuple_data_t data_;
+  data_t data_;
 
 };
 
@@ -401,7 +421,56 @@ auto operator/( const auto & lhs,
 }
 
 
+//! \brief index operator
+template<size_t I, class... UTypes>
+auto & get ( tuple_t<UTypes...> & tup ) 
+{ return std::get<I>(tup.data_); }
+  
 
+//! \brief index operator (const version)
+template<size_t I, class... UTypes>
+const auto & get ( const tuple_t<UTypes...> & tup ) 
+{ return std::get<I>(tup.data_); }
+
+
+//! \brief Extract the tuple element type.
+//! \remark undefined
+template <size_t I, class T>
+struct tuple_element;
+
+//! \brief Extract the tuple element type.
+template <size_t I, class... Types>
+struct tuple_element<I, tuple_t<Types...>> 
+{
+private:
+  using data_t = typename tuple_t<Types...>::data_t;
+public:
+  using type = typename std::tuple_element<I, data_t>::type;
+};
+
+//! \brief Extract the tuple element size.
+//! \remark undefined
+template <class T>
+struct tuple_size;
+
+//! \brief Extract the tuple size.
+template <class... Types>
+struct tuple_size<tuple_t<Types...>> 
+{
+private:
+  using data_t = typename tuple_t<Types...>::data_t;
+public:
+  using value = typename std::tuple_size<data_t>::value;
+};
+
+
+
+//! \brief Copy tuple's forward_as_tuple functionality.
+template<class... Types>
+tuple_t<Types&&...> forward_as_tuple (Types&&... args) noexcept
+{
+  return tuple_t<Types&&...>(std::forward<Types>(args)...);
+}
 
 
 } // namespace

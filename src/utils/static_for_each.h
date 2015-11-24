@@ -20,11 +20,30 @@
 namespace ale {
 namespace utils {
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Exectute something for each element of a tuple
+//! \remark this is ben's version
+////////////////////////////////////////////////////////////////////////////////
+
+
+// actuall call to functions
+template<size_t... Is, class F>
+void static_for( std::index_sequence<Is...>, F&& f ) {
+  int unused[] = { 0, ( (void)f(Is), 0 )... };
+}
+
+// This is the exposed function!!
+template<size_t N, class F>
+void static_for(  F&& f ) {
+  auto indexes = std::make_index_sequence<N>();
+  static_for(indexes, std::forward<F>(f) );
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Exectute something for each element of a tuple
-//! \remark this is ben's version
+//! \remark this is my version
 ////////////////////////////////////////////////////////////////////////////////
 
 #if 1

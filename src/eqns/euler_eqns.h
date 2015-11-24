@@ -68,61 +68,66 @@ public:
   //! \brief  the type for holding the state data
   using flux_data_t = math::tuple_t<real_t,vector_t,real_t>;
 
-
-  //! \brief the variables in the primitive state
-  enum equations : size_t { 
-    mass = 0, 
-    momentum, 
-    energy,
-    number
-  };
-
-  //! \brief the number of equations
-  static constexpr size_t num_equations(void)
-  {  return equations::number; }
-  
-  //! \brief return the equation name for a specific component
-  //! \param [in] i the component
-  //! \return a string with the variable name
-  static constexpr std::string eqn_name(auto i) 
-  {
-    switch ( i ) {
-    case equations::mass:
-      return "mass";
-    case equations::momentum:
-      return "momentum";
-    case equations::energy:
-      return "energy";
-    default:
-      assert(false && "invalid equation id");
-    }
-  }
-  
-  //! \brief return the number of components for the variable
-  //! \param [in] i the component
-  //! \return the number a components for this variable (1 for scalar, N for vector)    
-  static constexpr size_t eqn_components(auto i) 
-  {
-    switch ( i ) {
-    case equations::mass:
-      return 1;
-    case equations::momentum:
-      return dimensions;
-    case equations::energy:
-      return 1;
-    default:
-      assert(false && "invalid equation id");
-    }
-  }
-  
   //============================================================================
-  //! \brief The primitive state class
+  // \brief The equations struct
   //============================================================================
-  class state_t {
-  public:
+  struct equations {
 
     //! \brief the variables in the primitive state
-    enum variables : size_t
+    enum index : size_t { 
+      mass = 0, 
+      momentum, 
+      energy,
+      total
+    };
+
+    //! \brief the number of equations
+    static constexpr size_t number(void)
+    {  return index::total; }
+  
+    //! \brief return the equation name for a specific component
+    //! \param [in] i the component
+    //! \return a string with the variable name
+    static constexpr std::string name(auto i) 
+    {
+      switch ( i ) {
+      case index::mass:
+        return "mass";
+      case index::momentum:
+        return "momentum";
+      case index::energy:
+        return "energy";
+      default:
+        assert(false && "invalid equation id");
+      }
+    }
+  
+    //! \brief return the number of components for the variable
+    //! \param [in] i the component
+    //! \return the number a components for this variable (1 for scalar, N for vector)    
+    static constexpr size_t components(auto i) 
+    {
+      switch ( i ) {
+      case index::mass:
+        return 1;
+      case index::momentum:
+        return dimensions;
+      case index::energy:
+        return 1;
+      default:
+        assert(false && "invalid equation id");
+      }
+    }
+    
+  };
+
+  //============================================================================
+  // \brief The variables struct
+  //============================================================================
+  struct variables {
+
+    //! \brief the variables in the primitive state
+    enum index : size_t
     { 
       density = 0, 
       velocity, 
@@ -130,30 +135,30 @@ public:
       internal_energy,
       temperature,
       sound_speed,
-      number
+      total
     };
 
     //! \brief the number of variables
-    static constexpr size_t num_variables(void)
-    {  return variables::number; }
+    static constexpr size_t number(void)
+    {  return index::total; }
     
     //! \brief return the variable name for a specific component
     //! \param [in] i the component
     //! \return a string with the variable name
-    static constexpr std::string var_name(auto i) 
+    static constexpr std::string name(auto i) 
     {
       switch ( i ) {
-      case variables::density:
+      case index::density:
         return "density";
-      case variables::velocity:
+      case index::velocity:
         return "velocity";
-      case variables::pressure:
+      case index::pressure:
         return "pressure";
-      case variables::internal_energy:
+      case index::internal_energy:
         return "internal_energy";
-      case variables::temperature:
+      case index::temperature:
         return "temperature";
-      case variables::sound_speed:
+      case index::sound_speed:
         return "sound_speed";
       default:
         assert(false && "invalid state variable id");
@@ -163,20 +168,20 @@ public:
     //! \brief return the number of components for the variable
     //! \param [in] i the component
     //! \return the number a components for this variable (1 for scalar, N for vector)    
-    static constexpr size_t var_components(auto i) 
+    static constexpr size_t components(auto i) 
     {
       switch ( i ) {
-      case variables::density:
+      case index::density:
         return 1;
-      case variables::velocity:
+      case index::velocity:
         return eqns_t::dimensions;
-      case variables::pressure:
+      case index::pressure:
         return 1;
-      case variables::internal_energy:
+      case index::internal_energy:
         return 1;
-      case variables::temperature:
+      case index::temperature:
         return 1;
-      case variables::sound_speed:
+      case index::sound_speed:
         return 1;
       default:
         assert(false && "invalid state variable id");
@@ -185,18 +190,16 @@ public:
 
   };
 
-
-
   //! \brief compute the flux in the normal direction
   //! \param [in] normal The normal direction
   //! \return the flux alligned with the normal direction
-  static flux_data_t flux( const state_data_t& u, const vector_t& normal )
+  static flux_data_t flux( const auto & u, const vector_t& normal )
   {
-      
-    auto rho = u.template get<state_t::variables::density >();
-    auto vel = u.template get<state_t::variables::velocity>();
-    auto p   = u.template get<state_t::variables::pressure>();
-    auto ie  = u.template get<state_t::variables::internal_energy>();
+
+    auto rho = math::get<variables::index::density >( u );
+    auto vel = math::get<variables::index::velocity>( u );
+    auto p   = math::get<variables::index::pressure>( u );
+    auto ie  = math::get<variables::index::internal_energy>( u );
       
     assert( rho > 0  );
 
@@ -209,7 +212,29 @@ public:
     auto mom_flux  = mass_flux * vel + pn;
     auto ener_flux = (rho*et + p) * v_dot_n;
 
-    return flux_data_t{mass_flux, mom_flux, ener_flux};
+    return flux_data_t(mass_flux, mom_flux, ener_flux);
+  }
+
+
+  //! \brief update the state from the pressure
+  //! \param [in,out] u   The state to update
+  //! \param [in]     eos The state to update
+  static void update_state_from_pressure( auto & u, 
+                                          const auto& eos )
+  {
+
+    auto &d   = math::get<variables::index::density >( u );
+    auto &p   = math::get<variables::index::pressure>( u );
+    auto &ie  = math::get<variables::index::internal_energy>( u );
+    auto &t   = math::get<variables::index::temperature>( u );
+    auto &ss  = math::get<variables::index::sound_speed>( u );
+      
+    assert( d > 0  );
+    assert( p > 0  );
+
+    ie = eos.compute_internal_energy_dp( d, p );
+    t  = eos.compute_temperature_de( d, ie );
+    ss = eos.compute_sound_speed_de( d, ie );
   }
 
 

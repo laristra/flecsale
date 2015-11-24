@@ -29,6 +29,7 @@ using namespace ale::math;
 
 using tuple_1d_t = tuple_t<double>;
 using tuple_2d_t = tuple_t<double,double>;
+using std_tuple_2d = std::tuple<double,double>;
 
 
 
@@ -65,6 +66,9 @@ TEST(tuple, init) {
   tuple_2d_t b7{ 1.0 };    ASSERT_TRUE( b7 == ans_2d );
   tuple_2d_t b8 = {1.0};   ASSERT_TRUE( b8 == 1.0 );
  
+
+  std_tuple_2d c1;
+  c1 = b6;
 }
 
 
