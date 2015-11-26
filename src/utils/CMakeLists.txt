@@ -8,6 +8,8 @@ set(utils_HEADERS
   static_for_each.h
   tasks.h
   template_helpers.h
+  tuple_for_each.h
+  tuple_visit.h
   tuple_zip.h
   zip.h
   PARENT_SCOPE

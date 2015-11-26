@@ -18,7 +18,9 @@
 #pragma once
 
 // system includes
+#include <algorithm>
 #include <array>
+#include <functional> 
 
 //! user includes
 #include "ale/utils/check_types.h"
@@ -38,163 +40,244 @@ template <typename T, size_t D>
 using vector_t = std::array<T,D>;
 
 
-
-//! \brief Addition operator involving two vector_ts.
+//! \brief Add to a vector_t.
 //! \tparam T  The array base value type.
 //! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The vector_t on the right hand side of the operator.
-//! \return A reference to the current object.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+template <typename T, size_t D>
+void add_to( vector_t<T,D>& lhs, 
+             const vector_t<T,D>& rhs )
+{
+  std::transform( lhs.begin(), lhs.end(), rhs.begin(), lhs.begin(),
+                  [](const auto & a, const auto & b) { return a + b; } );
+}
+
+template <typename T, size_t D>
+void add_to( vector_t<T,D>& lhs, 
+             const auto& rhs )
+{
+  std::transform( lhs.begin(), lhs.end(), lhs.begin(),
+                  [&](const auto & a) { return a + rhs; } );
+}
+
+
+
+//! \brief Addition operator involving vector_ts.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+//! \return The result of the operation.
 template <typename T, size_t D>
 auto operator+( const vector_t<T,D>& lhs, 
                 const vector_t<T,D>& rhs )
 {
-  vector_t<T,D> tmp(lhs);
-  tmp += rhs;
+  vector_t<T,D> tmp;
+  std::transform( lhs.begin(), lhs.end(), rhs.begin(), tmp.begin(), 
+                  [](const auto & a, const auto & b) { return a + b; } );
   return tmp;
 }
 
-//! \brief Addition operator involving one vector_t and a scalar.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The scalar on the right hand side of the operator.
-//! \return A reference to the current object.
 template <typename T, size_t D>
 auto operator+( const vector_t<T,D>& lhs, 
-                const T& rhs )
+                const auto& rhs )
 {
-  vector_t<T,D> tmp(lhs);
-  tmp += rhs;
+  vector_t<T,D> tmp;
+  std::transform( lhs.begin(), lhs.end(), tmp.begin(), 
+                  [&](const auto & a) { return a + rhs; } );
   return tmp;
 }
 
 template <typename T, size_t D>
-auto operator+( const T& lhs, 
+auto operator+( const auto& lhs, 
                 const vector_t<T,D>& rhs )
 {
-  vector_t<T,D> tmp(lhs);
-  tmp += rhs;
+  vector_t<T,D> tmp;
+  std::transform( rhs.begin(), rhs.end(), tmp.begin(), 
+                  [&](const auto & a) { return lhs + a; } );
   return tmp;
 }
 
-//! \brief Subtraction operator involving two vector_ts.
+
+
+
+//! \brief Subtract from a vector_t.
 //! \tparam T  The array base value type.
 //! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The vector_t on the right hand side of the operator.
-//! \return A reference to the current object.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+template <typename T, size_t D>
+void subtract_from( vector_t<T,D>& lhs, 
+                    const vector_t<T,D>& rhs )
+{
+  std::transform( lhs.begin(), lhs.end(), rhs.begin(), lhs.begin(),
+                  [](const auto & a, const auto & b) { return a - b; } );
+}
+
+template <typename T, size_t D>
+void subtract_from( vector_t<T,D>& lhs, 
+                    const auto& rhs )
+{
+  std::transform( lhs.begin(), lhs.end(), lhs.begin(),
+                  [&](const auto & a) { return a - rhs; } );
+}
+
+
+
+//! \brief Minus operator involving vector_ts.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+//! \return The result of the operation.
 template <typename T, size_t D>
 auto operator-( const vector_t<T,D>& lhs, 
                 const vector_t<T,D>& rhs )
 {
-  vector_t<T,D> tmp(lhs);
-  tmp -= rhs;
+  vector_t<T,D> tmp;
+  std::transform( lhs.begin(), lhs.end(), rhs.begin(), tmp.begin(), 
+                  [](const auto & a, const auto & b) { return a - b; } );
   return tmp;
 }
 
-//! \brief Subtraction operator involving one vector_t and a scalar.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The scalar on the right hand side of the operator.
-//! \return A reference to the current object.
 template <typename T, size_t D>
 auto operator-( const vector_t<T,D>& lhs, 
-                const T& rhs )
+                const auto& rhs )
 {
-  vector_t<T,D> tmp(lhs);
-  tmp -= rhs;
+  vector_t<T,D> tmp;
+  std::transform( lhs.begin(), lhs.end(), tmp.begin(), 
+                  [&](const auto & a) { return a - rhs; } );
   return tmp;
 }
 
 template <typename T, size_t D>
-auto operator-( const T& lhs, 
+auto operator-( const auto& lhs, 
                 const vector_t<T,D>& rhs )
 {
-  vector_t<T,D> tmp(lhs);
-  tmp -= rhs;
+  vector_t<T,D> tmp;
+  std::transform( rhs.begin(), rhs.end(), tmp.begin(), 
+                  [&](const auto & a) { return lhs - a; } );
   return tmp;
 }
 
-//! \brief Multiplication operator involving two vector_ts.
+
+//! \brief multiply a vector_t.
 //! \tparam T  The array base value type.
 //! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The vector_t on the right hand side of the operator.
-//! \return A reference to the current object.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+template <typename T, size_t D>
+void multiply_by( vector_t<T,D>& lhs, 
+                  const vector_t<T,D>& rhs )
+{
+  std::transform( lhs.begin(), lhs.end(), rhs.begin(), lhs.begin(),
+                  [](const auto & a, const auto & b) { return a * b; } );
+}
+
+template <typename T, size_t D>
+void multiply_by( vector_t<T,D>& lhs, 
+                  const auto& rhs )
+{
+  std::transform( lhs.begin(), lhs.end(), lhs.begin(),
+                  [&](const auto & a) { return a * rhs; } );
+}
+
+
+
+//! \brief Multiply operator involving vector_ts.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+//! \return The result of the operation.
 template <typename T, size_t D>
 auto operator*( const vector_t<T,D>& lhs, 
                 const vector_t<T,D>& rhs )
 {
-  vector_t<T,D> tmp(lhs);
-  tmp *= rhs;
+  vector_t<T,D> tmp;
+  std::transform( lhs.begin(), lhs.end(), rhs.begin(), tmp.begin(), 
+                  [](const auto & a, const auto & b) { return a * b; } );
   return tmp;
 }
 
-
-//! \brief Multiplication operator involving one vector_t and a scalar.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The scalar on the right hand side of the operator.
-//! \return A reference to the current object.
 template <typename T, size_t D>
 auto operator*( const vector_t<T,D>& lhs, 
-                const T& rhs )
+                const auto& rhs )
 {
-  vector_t<T,D> tmp(lhs);
-  tmp *= rhs;
+  vector_t<T,D> tmp;
+  std::transform( lhs.begin(), lhs.end(), tmp.begin(), 
+                  [&](const auto & a) { return a * rhs; } );
   return tmp;
 }
 
 template <typename T, size_t D>
-auto operator*( const T& lhs,
+auto operator*( const auto& lhs, 
                 const vector_t<T,D>& rhs )
 {
-  vector_t<T,D> tmp(lhs);
-  tmp *= rhs;
+  vector_t<T,D> tmp;
+  std::transform( rhs.begin(), rhs.end(), tmp.begin(), 
+                  [&](const auto & a) { return lhs * a; } );
   return tmp;
 }
 
-//! \brief Division operator involving two vector_ts.
+
+//! \brief divide a vector_t.
 //! \tparam T  The array base value type.
 //! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The vector_t on the right hand side of the operator.
-//! \return A reference to the current object.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+template <typename T, size_t D>
+void divide_by( vector_t<T,D>& lhs, 
+                const vector_t<T,D>& rhs )
+{
+  std::transform( lhs.begin(), lhs.end(), rhs.begin(), lhs.begin(),
+                  [](const auto & a, const auto & b) { return a / b; } );
+}
+
+template <typename T, size_t D>
+void divide_by( vector_t<T,D>& lhs, 
+                const auto& rhs )
+{
+  std::transform( lhs.begin(), lhs.end(), lhs.begin(),
+                  [&](const auto & a) { return a / rhs; } );
+}
+
+
+
+//! \brief Division operator involving vector_ts.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+//! \return The result of the operation.
 template <typename T, size_t D>
 auto operator/( const vector_t<T,D>& lhs, 
                 const vector_t<T,D>& rhs )
 {
-  vector_t<T,D> tmp(lhs);
-  tmp /= rhs;
+  vector_t<T,D> tmp;
+  std::transform( lhs.begin(), lhs.end(), rhs.begin(), tmp.begin(), 
+                  [](const auto & a, const auto & b) { return a / b; } );
   return tmp;
 }
 
-
-
-//! \brief Division operator involving one vector_t and a scalar.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] lhs The vector_t on the left hand side of the operator.
-//! \param[in] rhs The scalar on the right hand side of the operator.
-//! \return A reference to the current object.
 template <typename T, size_t D>
 auto operator/( const vector_t<T,D>& lhs, 
-                const T& rhs )
+                const auto& rhs )
 {
-  vector_t<T,D> tmp(lhs);
-  tmp /= rhs;
+  vector_t<T,D> tmp;
+  std::transform( lhs.begin(), lhs.end(), tmp.begin(), 
+                  [&](const auto & a) { return a / rhs; } );
   return tmp;
 }
 
 template <typename T, size_t D>
-auto operator/( const T& lhs, 
+auto operator/( const auto& lhs, 
                 const vector_t<T,D>& rhs )
 {
-  vector_t<T,D> tmp(lhs);
-  tmp /= rhs;
+  vector_t<T,D> tmp;
+  std::transform( rhs.begin(), rhs.end(), tmp.begin(), 
+                  [&](const auto & a) { return lhs / a; } );
   return tmp;
 }
 
@@ -230,11 +313,8 @@ auto & operator<<(std::ostream& os, const vector_t<T,D>& a)
 template <typename T, size_t D>
 auto dot_product(const vector_t<T, D> &a, const vector_t<T, D> &b) {
 
-  T sum(0);
-  for (size_t d = 0; d < D; ++d)
-    sum += a[d] * b[d];
-
-  return sum;
+  const auto zero = T();
+  return std::inner_product(a.begin(), a.end(), b.begin(), zero);
 }
 
 template <typename T>
@@ -253,216 +333,7 @@ auto magnitude(const vector_t<T, D> &a) {
   return std::sqrt( dot_product(a,a) );
 }
 
-template <typename T> 
-auto magnitude(const vector_t<T, 1> &a) {
-  return a[0];
-}
-
-
-
-
-#if 0
-
-public:
-
-  //===========================================================================
-  // Typedefs
-  //===========================================================================
-
-  //! \brief the size_t type
-  using size_t = std::size_t;
-
-
-  //! \brief The value type.
-  using value_type = T;
-
-  //! \brief The dimension of the array.
-  static constexpr size_t dimension = D;
-
-
-  //===========================================================================
-  // Constructors / Destructors
-  //===========================================================================
-
-  //! \brief force the default constructor
-  vector_t() = default;
-
-  //! \brief force the default copy constructor
-  vector_t(const vector_t &) = default;
-
-  //! \brief Constructor with initializer list
-  //! \param[in] list the initializer list of values
-  template <
-    typename = typename std::enable_if< D /= 1 >::type
-  >
-  vector_t(std::initializer_list<T> list) {
-    //std::cout << "vector_t (list constructor)\n";
-    if ( list.size() == 1 )
-      data_.fill(*list.begin());
-    else {
-      assert( list.size() == D  && " dimension size mismatch");
-      std::copy(list.begin(), list.end(), data_.begin());
-    }
-  }
-
-  //! \brief Constructor with initializer list
-  //! \param[in] list the initializer list of values
-  template <
-    typename... Args,
-    typename = typename std::enable_if< 
-      sizeof...(Args) == D &&
-      utils::are_type_t<T,Args...>::value 
-    >::type
-  >
-  vector_t(Args&&... args)
-  { 
-    //std::cout << "vector_t (variadic constructor)\n";
-    data_ = { args... };
-  }
- 
-  //! \brief Constructor with one value.
-  //! \param[in] val The value to set the array to
-  vector_t(const T & val) 
-  { 
-    //std::cout << "vector_t (single value constructor)\n";
-    data_.fill( val ); 
-  }
-
-
-  //===========================================================================
-  // Accessors
-  //===========================================================================
-
-
-  //! \brief Return the size of the array.
-  static constexpr size_t size() { return dimension; };
-
-
-  //===========================================================================
-  // Operators
-  //===========================================================================
-
-  //! \brief index operator
-  auto & operator[](size_t i) 
-  { return data_[i]; }
-
-  //! \brief index operator (const version)
-  const auto & operator[](size_t i) const 
-  { return data_[i]; }
-
-
-  // use std::move
-  // http://stackoverflow.com/questions/11726171/numeric-vector-operator-overload-rvalue-reference-parameter
-  
-  //! \brief Addition binary operator involving another array.
-  //! \param[in] rhs The array on the right hand side of the operator.
-  //! \return A reference to the current object.
-  auto & operator+=(const vector_t &rhs) {
-    if ( this != &rhs ) {
-      for ( size_t i=0; i<D; i++ ) 
-        data_[i] += rhs[i];    
-    }
-    return *this;
-  }
-
-  //! \brief Addiition binary operator involving a constant.
-  //! \param[in] val The constant on the right hand side of the operator.
-  //! \return A reference to the current object.
-  auto & operator+=(const T &val) {
-    for ( size_t i=0; i<D; i++ ) 
-      data_[i] += val;    
-    return *this;
-  }
-
-  //! \brief Subtraction binary operator involving another array.
-  //! \param[in] rhs The array on the right hand side of the operator.
-  //! \return A reference to the current object.
-  auto & operator-=(const vector_t &rhs) {
-    if ( this != &rhs ) {
-      for ( size_t i=0; i<D; i++ ) 
-        data_[i] -= rhs[i];
-    }
-    return *this;
-  }
-
-  //! \brief Subtraction binary operator involving a constant.
-  //! \param[in] val The constant on the right hand side of the operator.
-  //! \return A reference to the current object.
-  auto & operator-=(const T &val) {
-    for ( size_t i=0; i<D; i++ ) 
-      data_[i] -= val;    
-    return *this;
-  }
-
-
-  //! \brief Multiplication binary operator involving another array.
-  //! \param[in] rhs The array on the right hand side of the operator.
-  //! \return A reference to the current object.
-  auto & operator*=(const vector_t &rhs) {
-    if ( this != &rhs ) {
-      for ( size_t i=0; i<D; i++ ) 
-        data_[i] *= rhs[i];    
-    }
-    return *this;
-  }
-
-  //! \brief Multiplication binary operator involving a constant.
-  //! \param[in] val The constant on the right hand side of the operator.
-  //! \return A reference to the current object.
-  auto & operator*=(const T &val) {
-    for ( size_t i=0; i<D; i++ ) 
-      data_[i] *= val;    
-    return *this;
-  }
-
-  //! \brief Division binary operator involving another array.
-  //! \param[in] rhs The array on the right hand side of the operator.
-  //! \return A reference to the current object.
-  auto & operator/=(const vector_t &rhs) {
-    if ( this != &rhs ) {
-      for ( size_t i=0; i<D; i++ ) 
-        data_[i] /= rhs[i];    
-    }
-    return *this;
-  }
-
-  //! \brief Division operator involving a constant.
-  //! \param[in] val The constant on the right hand side of the operator.
-  //! \return A reference to the current object.
-  auto & operator/=(const T &val) {
-    for ( size_t i=0; i<D; i++ )
-      data_[i] /= val;
-    return *this;
-  }
-
-  //! \brief Equivalence operator
-  //! \param[in] lhs The quantity on the rhs.
-  //! \param[in] rhs The quantity on the rhs.
-  //! \return true if equality.
-  friend bool operator==(const vector_t& lhs, const vector_t& rhs)
-  {
-    if ( &lhs != &rhs ) {
-      for ( size_t i=0; i<D; i++ ) 
-        if ( lhs.data_[i] != rhs.data_[i] )
-          return false;
-    }
-    return true;
-  }
-
-
-private:
-
-  //! \brief The main data container, which is just a std::array.
-  std::array<T, D> data_;
-
-};
-
-#endif
-
-////////////////////////////////////////////////////////////////////////////////
-// Friend functions
-////////////////////////////////////////////////////////////////////////////////
-  
+   
 
 } // namespace
 } // namespace

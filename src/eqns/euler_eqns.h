@@ -88,7 +88,7 @@ public:
     //! \brief return the equation name for a specific component
     //! \param [in] i the component
     //! \return a string with the variable name
-    static constexpr std::string name(auto i) 
+    static constexpr const char * name(auto i) 
     {
       switch ( i ) {
       case index::mass:
@@ -97,8 +97,6 @@ public:
         return "momentum";
       case index::energy:
         return "energy";
-      default:
-        assert(false && "invalid equation id");
       }
     }
   
@@ -145,7 +143,7 @@ public:
     //! \brief return the variable name for a specific component
     //! \param [in] i the component
     //! \return a string with the variable name
-    static constexpr std::string name(auto i) 
+    static constexpr const char * name(auto i) 
     {
       switch ( i ) {
       case index::density:
@@ -160,8 +158,6 @@ public:
         return "temperature";
       case index::sound_speed:
         return "sound_speed";
-      default:
-        assert(false && "invalid state variable id");
       }
     }
     
@@ -195,11 +191,13 @@ public:
   //! \return the flux alligned with the normal direction
   static flux_data_t flux( const auto & u, const vector_t& normal )
   {
+    using math::operator*;
+    using math::operator+;
 
-    auto rho = math::get<variables::index::density >( u );
-    auto vel = math::get<variables::index::velocity>( u );
-    auto p   = math::get<variables::index::pressure>( u );
-    auto ie  = math::get<variables::index::internal_energy>( u );
+    auto rho = std::get<variables::index::density >( u );
+    auto vel = std::get<variables::index::velocity>( u );
+    auto p   = std::get<variables::index::pressure>( u );
+    auto ie  = std::get<variables::index::internal_energy>( u );
       
     assert( rho > 0  );
 
@@ -222,12 +220,11 @@ public:
   static void update_state_from_pressure( auto & u, 
                                           const auto& eos )
   {
-
-    auto &d   = math::get<variables::index::density >( u );
-    auto &p   = math::get<variables::index::pressure>( u );
-    auto &ie  = math::get<variables::index::internal_energy>( u );
-    auto &t   = math::get<variables::index::temperature>( u );
-    auto &ss  = math::get<variables::index::sound_speed>( u );
+    auto &d   = std::get<variables::index::density >( u );
+    auto &p   = std::get<variables::index::pressure>( u );
+    auto &ie  = std::get<variables::index::internal_energy>( u );
+    auto &t   = std::get<variables::index::temperature>( u );
+    auto &ss  = std::get<variables::index::sound_speed>( u );
       
     assert( d > 0  );
     assert( p > 0  );

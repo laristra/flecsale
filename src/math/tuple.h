@@ -21,7 +21,8 @@
 #include <tuple>
 
 //! user includes
-#include "ale/utils/static_for_each.h"
+#include "ale/utils/tuple_for_each.h"
+#include "ale/utils/tuple_visit.h"
 #include "ale/utils/tuple_zip.h"
 
 namespace ale {
@@ -41,30 +42,280 @@ using tuple_t = std::tuple<Types...>;
 //! \brief Constructor with one value.
 //! \param[in] val The value to set the array to
 template < typename... Types >
-fill( const tuple_t<Types...> t, const auto& val ) 
+void fill( tuple_t<Types...> & t, const auto& val ) 
 { 
   //std::cout << "tuple_t (single value constructor)\n";
-  utils::static_for_each( t, [&](auto & tup) { tup = val; } );
+  utils::tuple_for_each( t, [&](auto & tup) { tup = val; } );
 }
 
 
-//! \brief Equivalence operator
-//! \param[in] lhs The quantity on the rhs.
-//! \param[in] rhs The quantity on the rhs.
-//! \return true if equality.
+//! \brief Add to a tuple_t.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
 template <typename... Types>
-bool operator==(const tuple_t& lhs, const tuple_t& rhs)
+void add_to( tuple_t<Types...>& lhs, 
+             const tuple_t<Types...>& rhs )
 {
-  bool result = true;
-  if ( &lhs != &rhs ) {
-    utils::static_for_each( utils::tuple_tie( lhs.data_, rhs.data_ ),
-                     [&](auto && tup) { 
-                       if ( std::get<0>(tup) != std::get<1>(tup) )
-                         result = false;
-                     } );    
-    return result;
-  }
+  utils::tuple_for_each( utils::tuple_tie( lhs, rhs ),
+                         [&](auto tup) { 
+                           std::get<0>(tup) = std::get<0>(tup) + std::get<1>(tup);
+                         } );                        
 }
+
+template <typename... Types>
+void add_to( tuple_t<Types...>& lhs, 
+             const auto & rhs )
+{
+  utils::tuple_for_each( lhs,
+                         [&](auto & tup) { 
+                           tup = tup + rhs;
+                         } );                        
+}
+
+
+//! \brief Addition operator involving tuple_ts.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+//! \return The result of the operation.
+template <typename... Types>
+auto operator+( const tuple_t<Types...>& lhs, 
+                const tuple_t<Types...>& rhs )
+{
+  tuple_t<Types...> tmp;
+  utils::tuple_visit( 
+                     [](auto & a, const auto & b, const auto & c) { 
+                       a = b + c;
+                     }, 
+                     tmp, lhs, rhs );
+  return tmp;
+}
+
+template <typename... Types>
+auto operator+( const tuple_t<Types...>& lhs, 
+                const auto & rhs )
+{
+  tuple_t<Types...> tmp;
+  utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
+                         [&](auto tup) { 
+                           std::get<0>(tup) = std::get<1>(tup) + rhs;
+                         } );                        
+  return tmp;
+}
+
+template <typename... Types>
+auto operator+( const auto & lhs, 
+                const tuple_t<Types...>& rhs )
+{
+  tuple_t<Types...> tmp;
+  utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
+                         [&](auto tup) { 
+                           std::get<0>(tup) = lhs + std::get<1>(tup);
+                         } );                        
+  return tmp;
+}
+
+
+
+//! \brief Subtract a tuple_t.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+template <typename... Types>
+void subtract_from( tuple_t<Types...>& lhs, 
+                    const tuple_t<Types...>& rhs )
+{
+  utils::tuple_for_each( utils::tuple_tie( lhs, rhs ),
+                         [&](auto tup) { 
+                           std::get<0>(tup) = std::get<0>(tup) - std::get<1>(tup);
+                         } );                        
+}
+
+template <typename... Types>
+void subtract_from( tuple_t<Types...>& lhs, 
+                    const auto & rhs )
+{
+  utils::tuple_for_each( lhs,
+                         [&](auto & tup) { 
+                           tup = tup - rhs;
+                         } );                        
+}
+
+
+//! \brief Subtraction operator involving tuple_ts.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+//! \return The result of the operation.
+template <typename... Types>
+auto operator-( const tuple_t<Types...>& lhs, 
+                const tuple_t<Types...>& rhs )
+{
+  tuple_t<Types...> tmp;
+  utils::tuple_visit( 
+                     [](auto & a, const auto & b, const auto & c) { 
+                       a = b - c;
+                     }, 
+                     tmp, lhs, rhs );
+  return tmp;
+}
+
+template <typename... Types>
+auto operator-( const tuple_t<Types...>& lhs, 
+                const auto & rhs )
+{
+  tuple_t<Types...> tmp;
+  utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
+                         [&](auto tup) { 
+                           std::get<0>(tup) = std::get<1>(tup) - rhs;
+                         } );                        
+  return tmp;
+}
+
+template <typename... Types>
+auto operator-( const auto & lhs, 
+                const tuple_t<Types...>& rhs )
+{
+  tuple_t<Types...> tmp;
+  utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
+                         [&](auto tup) { 
+                           std::get<0>(tup) = lhs - std::get<1>(tup);
+                         } );                        
+  return tmp;
+}
+
+
+//! \brief Multiply a tuple_t.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+template <typename... Types>
+void multiply_by( tuple_t<Types...>& lhs, 
+                  const tuple_t<Types...>& rhs )
+{
+  utils::tuple_for_each( utils::tuple_tie( lhs, rhs ),
+                         [&](auto tup) { 
+                           std::get<0>(tup) = std::get<0>(tup) * std::get<1>(tup);
+                         } );                        
+}
+
+template <typename... Types>
+void multiply_by( tuple_t<Types...>& lhs, 
+                  const auto & rhs )
+{
+  utils::tuple_for_each( lhs,
+                         [&](auto & tup) { 
+                           tup = tup * rhs;
+                         } );                        
+}
+
+
+//! \brief Multiplication operator involving tuple_ts.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+//! \return The result of the operation.
+template <typename... Types>
+auto operator*( const tuple_t<Types...>& lhs, 
+                const tuple_t<Types...>& rhs )
+{
+  tuple_t<Types...> tmp;
+  utils::tuple_visit( 
+                     [](auto & a, const auto & b, const auto & c) { 
+                       a = b * c;
+                     }, 
+                     tmp, lhs, rhs );
+  return tmp;
+}
+
+template <typename... Types>
+auto operator*( const tuple_t<Types...>& lhs, 
+                const auto & rhs )
+{
+  tuple_t<Types...> tmp;
+  utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
+                         [&](auto tup) { 
+                           std::get<0>(tup) = std::get<1>(tup) * rhs;
+                         } );                        
+  return tmp;
+}
+
+template <typename... Types>
+auto operator*( const auto & lhs, 
+                const tuple_t<Types...>& rhs )
+{
+  tuple_t<Types...> tmp;
+  utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
+                         [&](auto tup) { 
+                           std::get<0>(tup) = lhs * std::get<1>(tup);
+                         } );                        
+  return tmp;
+}
+
+
+
+
+
+//! \brief Divide a tuple_t.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+template <typename... Types>
+void divide_by( tuple_t<Types...>& lhs, 
+                const tuple_t<Types...>& rhs )
+{
+  utils::tuple_for_each( utils::tuple_tie( lhs, rhs ),
+                         [&](auto tup) { 
+                           std::get<0>(tup) = std::get<0>(tup) / std::get<1>(tup);
+                         } );                        
+}
+
+template <typename... Types>
+void divide_by( tuple_t<Types...>& lhs, 
+                const auto & rhs )
+{
+  utils::tuple_for_each( lhs,
+                         [&](auto & tup) { 
+                           tup = tup / rhs;
+                         } );                        
+}
+
+
+//! \brief Division operator involving tuple_ts.
+//! \param[in] lhs The value on the left hand side of the operator.
+//! \param[in] rhs The value on the right hand side of the operator.
+//! \return The result of the operation.
+template <typename... Types>
+auto operator/( const tuple_t<Types...>& lhs, 
+                const tuple_t<Types...>& rhs )
+{
+  tuple_t<Types...> tmp;
+  utils::tuple_visit( 
+                     [](auto & a, const auto & b, const auto & c) { 
+                       a = b / c;
+                     }, 
+                     tmp, lhs, rhs );
+  return tmp;
+}
+
+template <typename... Types>
+auto operator/( const tuple_t<Types...>& lhs, 
+                const auto & rhs )
+{
+  tuple_t<Types...> tmp;
+  utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
+                         [&](auto tup) { 
+                           std::get<0>(tup) = std::get<1>(tup) / rhs;
+                         } );                        
+  return tmp;
+}
+
+template <typename... Types>
+auto operator/( const auto & lhs, 
+                const tuple_t<Types...>& rhs )
+{
+  tuple_t<Types...> tmp;
+  utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
+                         [&](auto tup) { 
+                           std::get<0>(tup) = lhs / std::get<1>(tup);
+                         } );                        
+  return tmp;
+}
+
 
 
 
@@ -75,268 +326,17 @@ bool operator==(const tuple_t& lhs, const tuple_t& rhs)
 //! \param[in]     rhs The tuple_t on the right hand side of the operator.
 //! \return A reference to the current ostream.
 template <typename... Types>
-auto & operator<<(std::ostream& os, const tuple_t& a)
+auto & operator<<(std::ostream& os, const tuple_t<Types...>& a)
 {
   os << "{";
-  utils::static_for_each( a.data_, 
-                   [](auto & tup) { std::cout << " [ " << tup << " ]"; } );
+  utils::tuple_for_each( a, 
+                          [](auto & tup) { std::cout << " [ " << tup << " ]"; } );
   os << " }";
   return os;
 }
   
  
  
-//! \brief Addition operator involving two tuple_ts.
-//! \param[in] lhs The tuple_t on the left hand side of the operator.
-//! \param[in] rhs The tuple_t on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename... Types>
-auto operator+( const tuple_t<Types...>& lhs, 
-                const tuple_t<Types...>& rhs )
-{
-  tuple_t<Types...> tmp(lhs);
-  tmp += rhs;
-  return tmp;
-}
-
-
-//! \brief Addition operator involving one tuple_t and a scalar.
-//! \param[in] lhs The tuple_t on the left hand side of the operator.
-//! \param[in] rhs The scalar on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename... Types>
-auto operator+( const tuple_t<Types...>& lhs, 
-                const auto & rhs )
-{
-  tuple_t<Types...> tmp(lhs);
-  tmp += rhs;
-  return tmp;
-}
-
-template <typename... Types>
-auto operator+( const auto & lhs, 
-                const tuple_t<Types...>& rhs )
-{
-  tuple_t<Types...> tmp(lhs);
-  tmp += rhs;
-  return tmp;
-}
-
-//! \brief Subtraction operator involving two tuple_ts.
-//! \param[in] lhs The tuple_t on the left hand side of the operator.
-//! \param[in] rhs The tuple_t on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename... Types>
-auto operator-( const tuple_t<Types...>& lhs, 
-                const tuple_t<Types...>& rhs )
-{
-  tuple_t<Types...> tmp(lhs);
-  tmp -= rhs;
-  return tmp;
-}
-
-//! \brief Subtraction operator involving one tuple_t and a scalar.
-//! \param[in] lhs The tuple_t on the left hand side of the operator.
-//! \param[in] rhs The scalar on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename... Types>
-auto operator-( const tuple_t<Types...>& lhs, 
-                const auto & rhs )
-{
-  tuple_t<Types...> tmp(lhs);
-  tmp -= rhs;
-  return tmp;
-}
-
-template <typename... Types>
-auto operator-( const auto & lhs, 
-                const tuple_t<Types...>& rhs )
-{
-  tuple_t<Types...> tmp(lhs);
-  tmp -= rhs;
-  return tmp;
-}
-
-//! \brief Multiplication operator involving two tuple_ts.
-//! \param[in] lhs The tuple_t on the left hand side of the operator.
-//! \param[in] rhs The tuple_t on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename... Types>
-auto operator*( const tuple_t<Types...>& lhs, 
-                const tuple_t<Types...>& rhs )
-{
-  tuple_t<Types...> tmp(lhs);
-  tmp *= rhs;
-  return tmp;
-}
-
-
-//! \brief Multiplication operator involving one tuple_t and a scalar.
-//! \param[in] lhs The tuple_t on the left hand side of the operator.
-//! \param[in] rhs The scalar on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename... Types>
-auto operator*( const tuple_t<Types...>& lhs, 
-                const auto & rhs )
-{
-  tuple_t<Types...> tmp(lhs);
-  tmp *= rhs;
-  return tmp;
-}
-
-template <typename... Types>
-auto operator*( const auto & lhs,
-                const tuple_t<Types...>& rhs )
-{
-  tuple_t<Types...> tmp(lhs);
-  tmp *= rhs;
-  return tmp;
-}
-
-//! \brief Division operator involving two tuple_ts.
-//! \param[in] lhs The tuple_t on the left hand side of the operator.
-//! \param[in] rhs The tuple_t on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename... Types>
-auto operator/( const tuple_t<Types...>& lhs, 
-                const tuple_t<Types...>& rhs )
-{
-  tuple_t<Types...> tmp(lhs);
-  tmp /= rhs;
-  return tmp;
-}
-
-
-
-//! \brief Division operator involving one tuple_t and a scalar.
-//! \param[in] lhs The tuple_t on the left hand side of the operator.
-//! \param[in] rhs The scalar on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename... Types>
-auto operator/( const tuple_t<Types...>& lhs, 
-                const auto & rhs )
-{
-  tuple_t<Types...> tmp(lhs);
-  tmp /= rhs;
-  return tmp;
-}
-
-template <typename... Types>
-auto operator/( const auto & lhs, 
-                const tuple_t<Types...>& rhs )
-{
-  tuple_t<Types...> tmp(lhs);
-  tmp /= rhs;
-  return tmp;
-}
-
-
-
-
-
-
-
-
-#if 0
-  
-//! \brief Addition binary operator involving another array.
-//! \param[in] rhs The array on the right hand side of the operator.
-//! \return A reference to the current object.
-template <typename... Types>
-void add( const T&& lhs, const tuple_t<Types...> &rhs) {
-  utils::static_for_each( utils::tuple_tie( lhs, rhs ),
-                          [](auto && tup) { 
-                            std::get<0>(tup) += std::get<1>(tup);
-                          } );
-}
-  
-
-//! \brief Multiplication binary operator involving a constant.
-//! \param[in] val The constant on the right hand side of the operator.
-//! \return A reference to the current object.
-tuple_t & operator*=(const auto &val) {
-  utils::static_for_each( data_,
-                   [&](auto && tup) { tup *= val; } );
-  return *this;
-}
-
-//! \brief Division binary operator involving another array.
-//! \param[in] rhs The array on the right hand side of the operator.
-//! \return A reference to the current object.
-auto & operator/=(const tuple_t &rhs) {
-  if ( this != &rhs ) {
-    utils::static_for_each( utils::tuple_tie( data_, rhs.data_ ),
-                     [](auto && tup) { 
-                       std::get<0>(tup) /= std::get<1>(tup);
-                     } );
-  }
-  return *this;
-}
-
-//! \brief Division operator involving a constant.
-//! \param[in] val The constant on the right hand side of the operator.
-//! \return A reference to the current object.
-tuple_t & operator/=(const auto &val) {
-  utils::static_for_each( data_,
-                   [&](auto && tup) { tup /= val; } );
-  return *this;
-}
-
-
-
-
-//! \brief index operator
-template<size_t I, class... UTypes>
-auto & get ( tuple_t<UTypes...> & tup ) 
-{ return std::get<I>(tup.data_); }
-  
-
-//! \brief index operator (const version)
-template<size_t I, class... UTypes>
-const auto & get ( const tuple_t<UTypes...> & tup ) 
-{ return std::get<I>(tup.data_); }
-
-
-//! \brief Extract the tuple element type.
-//! \remark undefined
-template <size_t I, class T>
-struct tuple_element;
-
-//! \brief Extract the tuple element type.
-template <size_t I, class... Types>
-struct tuple_element<I, tuple_t<Types...>> 
-{
-private:
-  using data_t = typename tuple_t<Types...>::data_t;
-public:
-  using type = typename std::tuple_element<I, data_t>::type;
-};
-
-//! \brief Extract the tuple element size.
-//! \remark undefined
-template <class T>
-struct tuple_size;
-
-//! \brief Extract the tuple size.
-template <class... Types>
-struct tuple_size<tuple_t<Types...>> 
-{
-private:
-  using data_t = typename tuple_t<Types...>::data_t;
-public:
-  using value = typename std::tuple_size<data_t>::value;
-};
-
-
-
-//! \brief Copy tuple's forward_as_tuple functionality.
-template<class... Types>
-tuple_t<Types&&...> forward_as_tuple (Types&&... args) noexcept
-{
-  return tuple_t<Types&&...>(std::forward<Types>(args)...);
-}
-
-#endif
 
 } // namespace
 } // namespace

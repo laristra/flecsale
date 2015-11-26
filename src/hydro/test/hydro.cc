@@ -134,6 +134,8 @@ TEST(hydro, simple) {
   auto flux_function = [](const auto &wl, const auto &wr, const auto &n) { 
     auto fl = eqns_t::flux(wl, n);
     auto fr = eqns_t::flux(wr, n);
+    using math::operator*;
+    using math::operator+;
     auto f = 0.5 * ( fl + fr );
     return f;
   };
@@ -202,12 +204,12 @@ TEST(hydro, simple) {
 
   // a lambda function to get the state
   auto get_state = [&](auto cell_id) { 
-    return math::forward_as_tuple( density [ cell_id ],
-                                   velocity[ cell_id ],
-                                   pressure[ cell_id ],
-                                   energy  [ cell_id ],
-                                   temperature[ cell_id ],
-                                   sound_speed[ cell_id ] );
+    return std::forward_as_tuple( density [ cell_id ],
+                                  velocity[ cell_id ],
+                                  pressure[ cell_id ],
+                                  energy  [ cell_id ],
+                                  temperature[ cell_id ],
+                                  sound_speed[ cell_id ] );
   };
 
 
@@ -294,7 +296,8 @@ TEST(hydro, simple) {
   for ( auto cell : mesh.cells() ) {
     auto cell_id = cell->id();
 
-    flux_data_t delta_u(0.0);
+    flux_data_t delta_u;
+    math::fill(delta_u, 0.0);
 
     // loop over each connected edge
     for ( auto edge : mesh.edges(cell) ) {
@@ -312,7 +315,8 @@ TEST(hydro, simple) {
         dir = 1;
       
       // add the contribution to this cell only
-      delta_u += dir * flux[edge_id];
+      using math::operator*;
+      math::add_to( delta_u, dir*flux[edge_id] );
       
     }
 
