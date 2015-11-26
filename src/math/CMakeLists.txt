@@ -4,7 +4,6 @@
 #~----------------------------------------------------------------------------~#
 
 set(math_HEADERS
-  operators.h
   tuple.h
   vector.h
   PARENT_SCOPE

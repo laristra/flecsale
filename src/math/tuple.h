@@ -21,7 +21,6 @@
 #include <tuple>
 
 //! user includes
-#include "ale/math/operators.h"
 #include "ale/utils/tuple_for_each.h"
 #include "ale/utils/tuple_visit.h"
 #include "ale/utils/tuple_zip.h"
@@ -46,7 +45,7 @@ template < typename... Types >
 void fill( tuple_t<Types...> & t, const auto& val ) 
 { 
   //std::cout << "tuple_t (single value constructor)\n";
-  utils::tuple_for_each( t, [&](auto & tup) { fill(tup, val); } );
+  utils::tuple_for_each( t, [&](auto & tup) { tup = val; } );
 }
 
 
@@ -54,11 +53,12 @@ void fill( tuple_t<Types...> & t, const auto& val )
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 template <typename... Types>
-void add_to( tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+void add_to( tuple_t<Types...>& lhs, 
+             const tuple_t<Types...>& rhs )
 {
   utils::tuple_for_each( utils::tuple_tie( lhs, rhs ),
                          [&](auto tup) { 
-                           std::get<0>(tup) = add( std::get<0>(tup), std::get<1>(tup) );
+                           std::get<0>(tup) = std::get<0>(tup) + std::get<1>(tup);
                          } );                        
 }
 
@@ -68,7 +68,7 @@ void add_to( tuple_t<Types...>& lhs,
 {
   utils::tuple_for_each( lhs,
                          [&](auto & tup) { 
-                           tup = add( tup, rhs );
+                           tup = tup + rhs;
                          } );                        
 }
 
@@ -78,34 +78,38 @@ void add_to( tuple_t<Types...>& lhs,
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
 template <typename... Types>
-auto add( const tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+auto operator+( const tuple_t<Types...>& lhs, 
+                const tuple_t<Types...>& rhs )
 {
   tuple_t<Types...> tmp;
-  utils::tuple_visit( tmp, lhs, rhs
-                      [](auto & a, const auto & b, const auto & c) { 
-                        a = add(b, c);
-                      } );
+  utils::tuple_visit( 
+                     [](auto & a, const auto & b, const auto & c) { 
+                       a = b + c;
+                     }, 
+                     tmp, lhs, rhs );
   return tmp;
 }
 
 template <typename... Types>
-auto add( const tuple_t<Types...>& lhs, const auto & rhs )
+auto operator+( const tuple_t<Types...>& lhs, 
+                const auto & rhs )
 {
   tuple_t<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
                          [&](auto tup) { 
-                           std::get<0>(tup) = add( std::get<1>(tup), rhs );
+                           std::get<0>(tup) = std::get<1>(tup) + rhs;
                          } );                        
   return tmp;
 }
 
 template <typename... Types>
-auto add( const auto & lhs, const tuple_t<Types...>& rhs )
+auto operator+( const auto & lhs, 
+                const tuple_t<Types...>& rhs )
 {
   tuple_t<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
                          [&](auto tup) { 
-                           std::get<0>(tup) = add( lhs, std::get<1>(tup) );
+                           std::get<0>(tup) = lhs + std::get<1>(tup);
                          } );                        
   return tmp;
 }
@@ -116,16 +120,18 @@ auto add( const auto & lhs, const tuple_t<Types...>& rhs )
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 template <typename... Types>
-void subtract_from( tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+void subtract_from( tuple_t<Types...>& lhs, 
+                    const tuple_t<Types...>& rhs )
 {
   utils::tuple_for_each( utils::tuple_tie( lhs, rhs ),
                          [&](auto tup) { 
-                           std::get<0>(tup) = subtract( std::get<0>(tup), std::get<1>(tup) );
+                           std::get<0>(tup) = std::get<0>(tup) - std::get<1>(tup);
                          } );                        
 }
 
 template <typename... Types>
-void subtract_from( tuple_t<Types...>& lhs, const auto & rhs )
+void subtract_from( tuple_t<Types...>& lhs, 
+                    const auto & rhs )
 {
   utils::tuple_for_each( lhs,
                          [&](auto & tup) { 
@@ -139,34 +145,38 @@ void subtract_from( tuple_t<Types...>& lhs, const auto & rhs )
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
 template <typename... Types>
-auto subract( const tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+auto operator-( const tuple_t<Types...>& lhs, 
+                const tuple_t<Types...>& rhs )
 {
   tuple_t<Types...> tmp;
-  utils::tuple_visit( tmp, lhs, rhs,
-                      [](auto & a, const auto & b, const auto & c) { 
-                        a = subtract( b, c );
-                      } );
+  utils::tuple_visit( 
+                     [](auto & a, const auto & b, const auto & c) { 
+                       a = b - c;
+                     }, 
+                     tmp, lhs, rhs );
   return tmp;
 }
 
 template <typename... Types>
-auto subtract( const tuple_t<Types...>& lhs, const auto & rhs )
+auto operator-( const tuple_t<Types...>& lhs, 
+                const auto & rhs )
 {
   tuple_t<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
                          [&](auto tup) { 
-                           std::get<0>(tup) = subtract( std::get<1>(tup),  rhs );
+                           std::get<0>(tup) = std::get<1>(tup) - rhs;
                          } );                        
   return tmp;
 }
 
 template <typename... Types>
-auto subtract( const auto & lhs, const tuple_t<Types...>& rhs )
+auto operator-( const auto & lhs, 
+                const tuple_t<Types...>& rhs )
 {
   tuple_t<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
                          [&](auto tup) { 
-                           std::get<0>(tup) = subtract( lhs, std::get<1>(tup) );
+                           std::get<0>(tup) = lhs - std::get<1>(tup);
                          } );                        
   return tmp;
 }
@@ -176,20 +186,22 @@ auto subtract( const auto & lhs, const tuple_t<Types...>& rhs )
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 template <typename... Types>
-void multiply_by( tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+void multiply_by( tuple_t<Types...>& lhs, 
+                  const tuple_t<Types...>& rhs )
 {
   utils::tuple_for_each( utils::tuple_tie( lhs, rhs ),
                          [&](auto tup) { 
-                           std::get<0>(tup) = multiply( std::get<0>(tup), std::get<1>(tup) );
+                           std::get<0>(tup) = std::get<0>(tup) * std::get<1>(tup);
                          } );                        
 }
 
 template <typename... Types>
-void multiply_by( tuple_t<Types...>& lhs, const auto & rhs )
+void multiply_by( tuple_t<Types...>& lhs, 
+                  const auto & rhs )
 {
   utils::tuple_for_each( lhs,
                          [&](auto & tup) { 
-                           tup = multiply( tup, rhs );
+                           tup = tup * rhs;
                          } );                        
 }
 
@@ -199,34 +211,38 @@ void multiply_by( tuple_t<Types...>& lhs, const auto & rhs )
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
 template <typename... Types>
-auto multiply( const tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+auto operator*( const tuple_t<Types...>& lhs, 
+                const tuple_t<Types...>& rhs )
 {
   tuple_t<Types...> tmp;
-  utils::tuple_visit( tmp, lhs, rhs,
-                      [](auto & a, const auto & b, const auto & c) { 
-                        a = multiply( b, c );
-                      } );
+  utils::tuple_visit( 
+                     [](auto & a, const auto & b, const auto & c) { 
+                       a = b * c;
+                     }, 
+                     tmp, lhs, rhs );
   return tmp;
 }
 
 template <typename... Types>
-auto operator*( const tuple_t<Types...>& lhs, const auto & rhs )
+auto operator*( const tuple_t<Types...>& lhs, 
+                const auto & rhs )
 {
   tuple_t<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
                          [&](auto tup) { 
-                           std::get<0>(tup) = multiply( std::get<1>(tup), rhs );
+                           std::get<0>(tup) = std::get<1>(tup) * rhs;
                          } );                        
   return tmp;
 }
 
 template <typename... Types>
-auto multiply( const auto & lhs, const tuple_t<Types...>& rhs )
+auto operator*( const auto & lhs, 
+                const tuple_t<Types...>& rhs )
 {
   tuple_t<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
                          [&](auto tup) { 
-                           std::get<0>(tup) = multiply( lhs, std::get<1>(tup) );
+                           std::get<0>(tup) = lhs * std::get<1>(tup);
                          } );                        
   return tmp;
 }
@@ -239,20 +255,22 @@ auto multiply( const auto & lhs, const tuple_t<Types...>& rhs )
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 template <typename... Types>
-void divide_by( tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+void divide_by( tuple_t<Types...>& lhs, 
+                const tuple_t<Types...>& rhs )
 {
   utils::tuple_for_each( utils::tuple_tie( lhs, rhs ),
                          [&](auto tup) { 
-                           std::get<0>(tup) = divide( std::get<0>(tup), std::get<1>(tup) );
+                           std::get<0>(tup) = std::get<0>(tup) / std::get<1>(tup);
                          } );                        
 }
 
 template <typename... Types>
-void divide_by( tuple_t<Types...>& lhs, const auto & rhs )
+void divide_by( tuple_t<Types...>& lhs, 
+                const auto & rhs )
 {
   utils::tuple_for_each( lhs,
                          [&](auto & tup) { 
-                           tup = divide( tup, rhs );
+                           tup = tup / rhs;
                          } );                        
 }
 
@@ -262,35 +280,38 @@ void divide_by( tuple_t<Types...>& lhs, const auto & rhs )
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
 template <typename... Types>
-auto divide( const tuple_t<Types...>& lhs, 
+auto operator/( const tuple_t<Types...>& lhs, 
                 const tuple_t<Types...>& rhs )
 {
   tuple_t<Types...> tmp;
-  utils::tuple_visit( tmp, lhs, rhs,
-                      [](auto & a, const auto & b, const auto & c) { 
-                        a = divide( b,  c);
-                      } );
+  utils::tuple_visit( 
+                     [](auto & a, const auto & b, const auto & c) { 
+                       a = b / c;
+                     }, 
+                     tmp, lhs, rhs );
   return tmp;
 }
 
 template <typename... Types>
-auto divide( const tuple_t<Types...>& lhs, const auto & rhs )
+auto operator/( const tuple_t<Types...>& lhs, 
+                const auto & rhs )
 {
   tuple_t<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
                          [&](auto tup) { 
-                           std::get<0>(tup) = divide( std::get<1>(tup), rhs );
+                           std::get<0>(tup) = std::get<1>(tup) / rhs;
                          } );                        
   return tmp;
 }
 
 template <typename... Types>
-auto divide( const auto & lhs, const tuple_t<Types...>& rhs )
+auto operator/( const auto & lhs, 
+                const tuple_t<Types...>& rhs )
 {
   tuple_t<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
                          [&](auto tup) { 
-                           std::get<0>(tup) = divide( lhs, std::get<1>(tup) );
+                           std::get<0>(tup) = lhs / std::get<1>(tup);
                          } );                        
   return tmp;
 }
