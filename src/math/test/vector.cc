@@ -81,10 +81,10 @@ TEST(vector, addition_1d) {
   vector_1d_t b{ 2.0 };
 
   auto c = a;
-  add_to( c, b ); 
+  plus_equal( c, b ); 
   ASSERT_TRUE( c == ans ) << " error in add_to with vector";
 
-  auto d = a + b; 
+  auto d = plus(a, b); 
   ASSERT_TRUE( d == ans ) << " error in operator+ with vector";
 
   // { 1.0 } + 2.0 = { 3.0 }
@@ -92,18 +92,19 @@ TEST(vector, addition_1d) {
   real_t val = 2.0;
 
   auto e = a;
-  add_to( e, val ); 
+  plus_equal( e, val ); 
   ASSERT_TRUE( e == ans ) << " error in add_to with vector";
 
-  auto f = a + val; 
+  auto f = plus(a, val); 
   ASSERT_TRUE( f == ans ) << " error in operator+ with scalar";
   
   // 2.0 + { 1.0 } = { 3.0 }
-  auto g = val + a; 
+  auto g = plus(val, a); 
   ASSERT_TRUE( g == ans ) << " error in operator+ with scalar";
   
 
 }
+#if 0
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the addition
@@ -422,7 +423,7 @@ TEST(vector, magnitude) {
   ASSERT_EQ(sqrt(50.0), magnitude(c));
 
 } // TEST
-
+#endif
 
 /*~------------------------------------------------------------------------~--*
  a* Formatting options
