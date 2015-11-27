@@ -41,7 +41,8 @@ struct gens<0, S...> {
 // zip each tuple together
 template <class Tup1, class Tup2, size_t ...S>
 auto tuple_zip_helper(Tup1&& t1, Tup2&& t2, seq<S...> s)  {
-  return std::make_tuple( std::make_pair( std::get<S>(t1), std::get<S>(t2) )...);
+  using std::get;
+  return std::make_tuple( std::make_pair( get<S>(t1), get<S>(t2) )...);
 }
 
 
@@ -59,7 +60,9 @@ auto tuple_zip(Tup1&& t1, Tup2&& t2)  {
 // tie each tuple together
 template <class Tup1, class Tup2, size_t ...S>
 auto tuple_tie_helper(Tup1&& t1, Tup2&& t2, seq<S...> s)  {
-  return std::make_tuple( std::forward_as_tuple( std::get<S>(t1), std::get<S>(t2) )...);
+  using std::get;
+  using std::forward_as_tuple;
+  return std::make_tuple( forward_as_tuple( get<S>(t1), get<S>(t2) )...);
 }
 
 

@@ -39,23 +39,20 @@ namespace math {
 template <typename T, size_t D> 
 using vector_t = std::array<T,D>;
 
-
 //! \brief Add to a vector_t.
 //! \tparam T  The array base value type.
 //! \tparam D  The array dimension.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 template <typename T, size_t D>
-void add_to( vector_t<T,D>& lhs, 
-             const vector_t<T,D>& rhs )
+void plus_equal( vector_t<T,D>& lhs, const vector_t<T,D>& rhs )
 {
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), lhs.begin(),
                   [](const auto & a, const auto & b) { return a + b; } );
 }
 
 template <typename T, size_t D>
-void add_to( vector_t<T,D>& lhs, 
-             const auto& rhs )
+void plus_equal( vector_t<T,D>& lhs, const auto& rhs )
 {
   std::transform( lhs.begin(), lhs.end(), lhs.begin(),
                   [&](const auto & a) { return a + rhs; } );
@@ -70,8 +67,7 @@ void add_to( vector_t<T,D>& lhs,
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
 template <typename T, size_t D>
-auto operator+( const vector_t<T,D>& lhs, 
-                const vector_t<T,D>& rhs )
+auto operator+( const vector_t<T,D>& lhs, const vector_t<T,D>& rhs )
 {
   vector_t<T,D> tmp;
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), tmp.begin(), 
@@ -80,8 +76,7 @@ auto operator+( const vector_t<T,D>& lhs,
 }
 
 template <typename T, size_t D>
-auto operator+( const vector_t<T,D>& lhs, 
-                const auto& rhs )
+auto operator+( const vector_t<T,D>& lhs, const auto& rhs )
 {
   vector_t<T,D> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(), 
@@ -90,8 +85,7 @@ auto operator+( const vector_t<T,D>& lhs,
 }
 
 template <typename T, size_t D>
-auto operator+( const auto& lhs, 
-                const vector_t<T,D>& rhs )
+auto operator+( const auto& lhs, const vector_t<T,D>& rhs )
 {
   vector_t<T,D> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(), 
@@ -100,24 +94,20 @@ auto operator+( const auto& lhs,
 }
 
 
-
-
 //! \brief Subtract from a vector_t.
 //! \tparam T  The array base value type.
 //! \tparam D  The array dimension.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 template <typename T, size_t D>
-void subtract_from( vector_t<T,D>& lhs, 
-                    const vector_t<T,D>& rhs )
+void minus_equal( vector_t<T,D>& lhs, const vector_t<T,D>& rhs )
 {
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), lhs.begin(),
                   [](const auto & a, const auto & b) { return a - b; } );
 }
 
 template <typename T, size_t D>
-void subtract_from( vector_t<T,D>& lhs, 
-                    const auto& rhs )
+void minus_equal( vector_t<T,D>& lhs, const auto& rhs )
 {
   std::transform( lhs.begin(), lhs.end(), lhs.begin(),
                   [&](const auto & a) { return a - rhs; } );
@@ -132,8 +122,7 @@ void subtract_from( vector_t<T,D>& lhs,
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
 template <typename T, size_t D>
-auto operator-( const vector_t<T,D>& lhs, 
-                const vector_t<T,D>& rhs )
+auto operator-( const vector_t<T,D>& lhs, const vector_t<T,D>& rhs )
 {
   vector_t<T,D> tmp;
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), tmp.begin(), 
@@ -142,8 +131,7 @@ auto operator-( const vector_t<T,D>& lhs,
 }
 
 template <typename T, size_t D>
-auto operator-( const vector_t<T,D>& lhs, 
-                const auto& rhs )
+auto operator-( const vector_t<T,D>& lhs, const auto& rhs )
 {
   vector_t<T,D> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(), 
@@ -152,8 +140,7 @@ auto operator-( const vector_t<T,D>& lhs,
 }
 
 template <typename T, size_t D>
-auto operator-( const auto& lhs, 
-                const vector_t<T,D>& rhs )
+auto operator-( const auto& lhs, const vector_t<T,D>& rhs )
 {
   vector_t<T,D> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(), 
@@ -168,16 +155,14 @@ auto operator-( const auto& lhs,
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 template <typename T, size_t D>
-void multiply_by( vector_t<T,D>& lhs, 
-                  const vector_t<T,D>& rhs )
+void multiplies_equal( vector_t<T,D>& lhs, const vector_t<T,D>& rhs )
 {
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), lhs.begin(),
                   [](const auto & a, const auto & b) { return a * b; } );
 }
 
 template <typename T, size_t D>
-void multiply_by( vector_t<T,D>& lhs, 
-                  const auto& rhs )
+void multiplies_equal( vector_t<T,D>& lhs, const auto& rhs )
 {
   std::transform( lhs.begin(), lhs.end(), lhs.begin(),
                   [&](const auto & a) { return a * rhs; } );
@@ -192,8 +177,7 @@ void multiply_by( vector_t<T,D>& lhs,
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
 template <typename T, size_t D>
-auto operator*( const vector_t<T,D>& lhs, 
-                const vector_t<T,D>& rhs )
+auto operator*( const vector_t<T,D>& lhs, const vector_t<T,D>& rhs )
 {
   vector_t<T,D> tmp;
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), tmp.begin(), 
@@ -202,8 +186,7 @@ auto operator*( const vector_t<T,D>& lhs,
 }
 
 template <typename T, size_t D>
-auto operator*( const vector_t<T,D>& lhs, 
-                const auto& rhs )
+auto operator*( const vector_t<T,D>& lhs, const auto& rhs )
 {
   vector_t<T,D> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(), 
@@ -212,8 +195,7 @@ auto operator*( const vector_t<T,D>& lhs,
 }
 
 template <typename T, size_t D>
-auto operator*( const auto& lhs, 
-                const vector_t<T,D>& rhs )
+auto operator*( const auto& lhs, const vector_t<T,D>& rhs )
 {
   vector_t<T,D> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(), 
@@ -228,16 +210,14 @@ auto operator*( const auto& lhs,
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 template <typename T, size_t D>
-void divide_by( vector_t<T,D>& lhs, 
-                const vector_t<T,D>& rhs )
+void divides_equal( vector_t<T,D>& lhs, const vector_t<T,D>& rhs )
 {
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), lhs.begin(),
                   [](const auto & a, const auto & b) { return a / b; } );
 }
 
 template <typename T, size_t D>
-void divide_by( vector_t<T,D>& lhs, 
-                const auto& rhs )
+void divides_equal( vector_t<T,D>& lhs, const auto& rhs )
 {
   std::transform( lhs.begin(), lhs.end(), lhs.begin(),
                   [&](const auto & a) { return a / rhs; } );
@@ -252,8 +232,7 @@ void divide_by( vector_t<T,D>& lhs,
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
 template <typename T, size_t D>
-auto operator/( const vector_t<T,D>& lhs, 
-                const vector_t<T,D>& rhs )
+auto operator/( const vector_t<T,D>& lhs, const vector_t<T,D>& rhs )
 {
   vector_t<T,D> tmp;
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), tmp.begin(), 
@@ -262,8 +241,7 @@ auto operator/( const vector_t<T,D>& lhs,
 }
 
 template <typename T, size_t D>
-auto operator/( const vector_t<T,D>& lhs, 
-                const auto& rhs )
+auto operator/( const vector_t<T,D>& lhs, const auto& rhs )
 {
   vector_t<T,D> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(), 
@@ -272,8 +250,7 @@ auto operator/( const vector_t<T,D>& lhs,
 }
 
 template <typename T, size_t D>
-auto operator/( const auto& lhs, 
-                const vector_t<T,D>& rhs )
+auto operator/( const auto& lhs, const vector_t<T,D>& rhs )
 {
   vector_t<T,D> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(), 

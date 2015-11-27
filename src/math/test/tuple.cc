@@ -81,7 +81,7 @@ TEST(tuple, addition_1d) {
   tuple_1d_t b{ 2.0 };
 
   auto c = a;
-  add_to( c, b );
+  plus_equal( c, b );
   ASSERT_TRUE( c == ans ) << " error in operator+= with tuple";
  
   auto d = a + b; 
@@ -93,7 +93,7 @@ TEST(tuple, addition_1d) {
   real_t val = 2.0;
 
   auto e = a;
-  add_to( e, val );
+  plus_equal( e, val );
   ASSERT_TRUE( e == ans ) << " error in operator+= with scalar";
   
   auto f = a + val; 
@@ -118,7 +118,7 @@ TEST(tuple, addition_2d) {
   tuple_2d_t ans{ 3.0, 3.0 };
 
   auto c = a;
-  add_to( c, b );
+  plus_equal( c, b );
   ASSERT_TRUE( c == ans ) << " error in operator+= with tuple";
   
   auto d = a + b; 
@@ -129,7 +129,7 @@ TEST(tuple, addition_2d) {
   real_t val = 2.0;
 
   auto e = a;
-  add_to( e, val );
+  plus_equal( e, val );
   ASSERT_TRUE( e == ans ) << " error in operator+= with scalar";
   
   auto f = a + val; 
@@ -151,7 +151,7 @@ TEST(tuple, subtraction_1d) {
   tuple_1d_t b{ 2.0 };
 
   auto c = a;
-  subtract_from( c, b );
+  minus_equal( c, b );
   ASSERT_TRUE( c == ans ) << " error in operator-= with tuple";
   
   auto d = a - b; 
@@ -162,7 +162,7 @@ TEST(tuple, subtraction_1d) {
   real_t val = 2.0;
 
   auto e = a;
-  subtract_from( e, val );
+  minus_equal( e, val );
   ASSERT_TRUE( e == ans ) << " error in operator+= with scalar";
   
   auto f = a - val; 
@@ -189,7 +189,7 @@ TEST(tuple, subtraction_2d) {
   tuple_2d_t ans{ -1.0, 1.0 };
 
   auto c = a;
-  subtract_from( c, b );
+  minus_equal( c, b );
   ASSERT_TRUE( c == ans ) << " error in operator-= with tuple";
   
   auto d = a - b; 
@@ -200,7 +200,7 @@ TEST(tuple, subtraction_2d) {
   real_t val = 2.0;
 
   auto e = a;
-  subtract_from( e, val );
+  minus_equal( e, val );
   ASSERT_TRUE( e == ans ) << " error in operator-= with scalar";
   
   auto f = a - val; 
@@ -226,7 +226,7 @@ TEST(tuple, multiply_1d) {
   tuple_1d_t b{ 3.0 };
 
   auto c = a;
-  multiply_by( c, b );
+  multiplies_equal( c, b );
   ASSERT_TRUE( c == ans ) << " error in operator*= with tuple";
   
   auto d = a * b; 
@@ -237,7 +237,7 @@ TEST(tuple, multiply_1d) {
   real_t val = 3.0;
 
   auto e = a;
-  multiply_by( e, val );
+  multiplies_equal( e, val );
   ASSERT_TRUE( e == ans ) << " error in operator*= with scalar";
   
   auto f = a * val; 
@@ -263,7 +263,7 @@ TEST(tuple, multiply_2d) {
   tuple_2d_t ans{ 6.0, 6.0 };
 
   auto c = a;
-  multiply_by( c, b );
+  multiplies_equal( c, b );
   ASSERT_TRUE( c == ans ) << " error in operator*= with tuple";
   
   auto d = a * b; 
@@ -274,7 +274,7 @@ TEST(tuple, multiply_2d) {
   real_t val = 2.0;
 
   auto e = a;
-  multiply_by( e, val );
+  multiplies_equal( e, val );
   ASSERT_TRUE( e == ans ) << " error in operator*= with scalar";
   
   auto f = a * val; 
@@ -300,7 +300,7 @@ TEST(tuple, divide_1d) {
   tuple_1d_t b{ 2.0 };
 
   auto c = a;
-  divide_by( c, b );
+  divides_equal( c, b );
   ASSERT_TRUE( c == ans ) << " error in operator/= with tuple";
   
   auto d = a / b; 
@@ -311,7 +311,7 @@ TEST(tuple, divide_1d) {
   real_t val = 3.0;
 
   auto e = a;
-  divide_by( e, val );
+  divides_equal( e, val );
   ASSERT_TRUE( e == ans ) << " error in operator/= with scalar";
   
   auto f = a / val; 
@@ -338,7 +338,7 @@ TEST(tuple, divide_2d) {
   tuple_2d_t ans{ 8.0, 6.0 };
 
   auto c = a;
-  divide_by( c, b );
+  divides_equal( c, b );
   ASSERT_TRUE( c == ans ) << " error in operator/= with tuple";
   
   auto d = a / b; 
@@ -349,7 +349,7 @@ TEST(tuple, divide_2d) {
   real_t val = 2.0;
 
   auto e = a;
-  divide_by( e, 2.0 );
+  divides_equal( e, 2.0 );
   ASSERT_TRUE( e == ans ) << " error in operator/= with scalar";
   
   auto f = a / 2.0; 

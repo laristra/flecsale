@@ -316,7 +316,7 @@ TEST(hydro, simple) {
       
       // add the contribution to this cell only
       using math::operator*;
-      math::add_to( delta_u, dir*flux[edge_id] );
+      math::plus_equal( delta_u, dir*flux[edge_id] );
       
     }
 

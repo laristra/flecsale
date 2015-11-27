@@ -194,10 +194,11 @@ public:
     using math::operator*;
     using math::operator+;
 
-    auto rho = std::get<variables::index::density >( u );
-    auto vel = std::get<variables::index::velocity>( u );
-    auto p   = std::get<variables::index::pressure>( u );
-    auto ie  = std::get<variables::index::internal_energy>( u );
+    using std::get;
+    auto rho = get<variables::index::density >( u );
+    auto vel = get<variables::index::velocity>( u );
+    auto p   = get<variables::index::pressure>( u );
+    auto ie  = get<variables::index::internal_energy>( u );
       
     assert( rho > 0  );
 
@@ -220,11 +221,12 @@ public:
   static void update_state_from_pressure( auto & u, 
                                           const auto& eos )
   {
-    auto &d   = std::get<variables::index::density >( u );
-    auto &p   = std::get<variables::index::pressure>( u );
-    auto &ie  = std::get<variables::index::internal_energy>( u );
-    auto &t   = std::get<variables::index::temperature>( u );
-    auto &ss  = std::get<variables::index::sound_speed>( u );
+    using std::get;
+    auto &d   = get<variables::index::density >( u );
+    auto &p   = get<variables::index::pressure>( u );
+    auto &ie  = get<variables::index::internal_energy>( u );
+    auto &t   = get<variables::index::temperature>( u );
+    auto &ss  = get<variables::index::sound_speed>( u );
       
     assert( d > 0  );
     assert( p > 0  );
