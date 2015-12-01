@@ -39,6 +39,7 @@ using std::endl;
 using std::vector;
 
 using flexi::dot;
+using flexi::normal;
 using flexi::persistent;
 using flexi::temporary;
 
@@ -59,6 +60,10 @@ using eqns_t = eqns::euler_eqns_t<real_t, mesh_t::dimension()>;
 using state_data_t = eqns_t::state_data_t;
 using flux_data_t = eqns_t::flux_data_t;
 
+using math::operator*;
+using math::operator/;
+using math::operator+;
+using math::operator-;
 
 
 #if 0
@@ -134,8 +139,6 @@ TEST(hydro, simple) {
   auto flux_function = [](const auto &wl, const auto &wr, const auto &n) { 
     auto fl = eqns_t::flux(wl, n);
     auto fr = eqns_t::flux(wr, n);
-    using math::operator*;
-    using math::operator+;
     auto f = 0.5 * ( fl + fr );
     return f;
   };
@@ -233,6 +236,9 @@ TEST(hydro, simple) {
 
   }
 
+  //===========================================================================
+  // Apply EOS
+  //===========================================================================
 
 
   // apply the eos to the state
@@ -257,16 +263,20 @@ TEST(hydro, simple) {
   // compute the fluxes
   auto flux = register_state(mesh, "flux", edges, flux_data_t, temporary);
 
-  //---------------------------------------------------------------------------
   // loop over each edge and compute/store the flux
   // fluxes are stored on each edge
 
   for ( auto e : mesh.edges() ) {
     auto edge_id = e->id();
 
+    // get the normal
+    auto vs = mesh.vertices(e).toVec();
+    auto normal = normal( vs[0]->coordinates(), vs[1]->coordinates() );
+
     // get the cell neighbors
     auto c = mesh.cells(e).toVec();
     auto cells = c.size();
+
 
     // get the left state
     auto left_cell_id = c[0]->id();
@@ -276,13 +286,17 @@ TEST(hydro, simple) {
     if ( cells == 2 ) {
       auto right_cell_id = c[1]->id();
       auto w_right = get_state( right_cell_id );
-      vector_t normal;
       flux[edge_id] = flux_function( w_left, w_right, normal );
     } 
     // boundary cell
     else {
-      vector_t normal;
-      flux[edge_id] = eqns_t::flux( w_left, normal );
+      // make sure normal points outwards
+      auto midpoint = mesh.midpoint(e);
+      auto centroid = mesh.centroid(c[0]);
+      auto delta = midpoint - centroid;
+      if ( dot_product( normal, delta ) < 0 ) normal = - normal;
+      // compute the boundary flux
+      flux[edge_id] = eqns_t::flux( w_left, -normal );
     }
     
 
@@ -315,7 +329,6 @@ TEST(hydro, simple) {
         dir = 1;
       
       // add the contribution to this cell only
-      using math::operator*;
       math::plus_equal( delta_u, dir*flux[edge_id] );
       
     }

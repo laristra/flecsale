@@ -38,48 +38,24 @@ end( T & a ) { return &a+1; };
 
 
 //! \brief Addition operator.
-template< class T = void >
-struct plus;
-
-template<>
-struct plus<void> {
-  template< class T, class U >
-  constexpr auto operator()( T && lhs, U && rhs ) const
-  { return std::forward<T>(lhs) + std::forward<U>(rhs); }
-};
+template< class T, class U >
+constexpr auto plus( T && lhs, U && rhs )
+{ return std::forward<T>(lhs) + std::forward<U>(rhs); }
 
 //! \brief Minus operator.
-template< class T = void >
-struct minus;
-
-template<>
-struct minus<void> {
-  template< class T, class U >
-  constexpr auto operator()( T && lhs, U && rhs ) const
-  { return std::forward<T>(lhs) - std::forward<U>(rhs); }
-};
+template< class T, class U >
+constexpr auto minus( T && lhs, U && rhs )
+{ return std::forward<T>(lhs) - std::forward<U>(rhs); }
  
 //! \brief Multiplication operator.
-template< class T = void >
-struct multiplies;
-
-template<>
-struct multiplies<void> {
-  template< class T, class U >
-  constexpr auto operator()( T && lhs, U && rhs ) const
-  { return std::forward<T>(lhs) * std::forward<U>(rhs); }
-};
+template< class T, class U >
+constexpr auto multiplies( T && lhs, U && rhs )
+{ return std::forward<T>(lhs) * std::forward<U>(rhs); }
 
 //! \brief Division operator.
-template< class T = void >
-struct divides;
-
-template<>
-struct divides<void> {
-  template< class T, class U >
-  constexpr auto operator()( T && lhs, U && rhs ) const
-  { return std::forward<T>(lhs) / std::forward<U>(rhs); }
-};
+template< class T, class U >
+constexpr auto divides( T && lhs, U && rhs )
+{ return std::forward<T>(lhs) / std::forward<U>(rhs); }
 
 } // namespace
 } // namespace

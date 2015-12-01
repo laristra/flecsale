@@ -189,7 +189,7 @@ public:
   //! \brief compute the flux in the normal direction
   //! \param [in] normal The normal direction
   //! \return the flux alligned with the normal direction
-  static flux_data_t flux( const auto & u, const vector_t& normal )
+  static flux_data_t flux( const auto & u, const auto& normal )
   {
     using math::operator*;
     using math::operator+;
