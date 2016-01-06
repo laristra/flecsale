@@ -223,7 +223,7 @@ TEST(hydro, simple) {
 
   // set the intial conditions
   for ( auto c : mesh.cells() ) {
-    auto cell_id = c->id();
+    auto cell_id = c.id();
     auto cell_center = mesh.centroid(c);
 
 
@@ -243,7 +243,7 @@ TEST(hydro, simple) {
 
   // apply the eos to the state
   for ( auto c : mesh.cells() ) {
-    auto cell_id = c->id();
+    auto cell_id = c.id();
 
     auto u     = get_state(cell_id);
     auto & eos = eos_data [cell_id];
@@ -267,11 +267,12 @@ TEST(hydro, simple) {
   // fluxes are stored on each edge
 
   for ( auto e : mesh.edges() ) {
-    auto edge_id = e->id();
+    auto edge_id = e.id();
 
     // get the normal
     auto vs = mesh.vertices(e).toVec();
-    auto normal = normal( vs[0]->coordinates(), vs[1]->coordinates() );
+    //auto normal = normal( vs[0]->coordinates(), vs[1]->coordinates() );
+    vector_t normal;
 
     // get the cell neighbors
     auto c = mesh.cells(e).toVec();
@@ -279,14 +280,14 @@ TEST(hydro, simple) {
 
 
     // get the left state
-    auto left_cell_id = c[0]->id();
+    auto left_cell_id = c[0];
     auto w_left = get_state( left_cell_id );    
 
     // interior cell
     if ( cells == 2 ) {
-      auto right_cell_id = c[1]->id();
+      auto right_cell_id = c[1];
       auto w_right = get_state( right_cell_id );
-      flux[edge_id] = flux_function( w_left, w_right, normal );
+      //flux[edge_id] = flux_function( w_left, w_right, normal );
     } 
     // boundary cell
     else {
@@ -294,9 +295,9 @@ TEST(hydro, simple) {
       auto midpoint = mesh.midpoint(e);
       auto centroid = mesh.centroid(c[0]);
       auto delta = midpoint - centroid;
-      if ( dot_product( normal, delta ) < 0 ) normal = - normal;
+      //if ( dot_product( normal, delta ) < 0 ) normal = - normal;
       // compute the boundary flux
-      flux[edge_id] = eqns_t::flux( w_left, -normal );
+      //flux[edge_id] = eqns_t::flux( w_left, -normal );
     }
     
 
@@ -308,23 +309,24 @@ TEST(hydro, simple) {
     
   // Loop over each cell, scattering the fluxes to the cell
   for ( auto cell : mesh.cells() ) {
-    auto cell_id = cell->id();
+    auto cell_id = cell.id();
 
     flux_data_t delta_u;
     math::fill(delta_u, 0.0);
 
     // loop over each connected edge
     for ( auto edge : mesh.edges(cell) ) {
-      auto edge_id = edge->id();
+      auto edge_id = edge.id();
       
       // get the cell neighbors
-      auto neigh = mesh.cells(edge).toVec();
+      auto neigh = mesh.cells(edge);
       auto num_neigh = neigh.size();
 
       // figure out the sign
       int dir;
+      auto it = neigh.begin();
       if ( num_neigh == 2 ) 
-        dir = ( neigh[0]->id() == cell_id ) ? -1 : 0;
+        dir = ( it->id() == cell_id ) ? -1 : 0;
       else
         dir = 1;
       
