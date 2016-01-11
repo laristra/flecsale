@@ -10,27 +10,29 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file check_types.h
+ * \file static_for.h
  * 
- * \brief Statically check if all arguments are of the same type.
+ * \brief A static for-each function for looping over sequences statically.
  *
  ******************************************************************************/
 #pragma once
 
-
-// user includes
-#include "detail/check_types.h"
-
+//! user includes
+#include "detail/static_for.h"
 
 namespace ale {
 namespace utils {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Test to see if all variadic template arguments are of type Target
+//! \brief Statically loop over integers from 0 to N, executing a function f
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Target, typename... Ts>
-using are_type_t = detail::and_<std::is_same<Ts,Target>...>;
+template<size_t N, class F>
+void static_for(  F&& f ) {
+  auto indexes = std::make_index_sequence<N>();
+  detail::static_for(indexes, std::forward<F>(f) );
+}
+
 
 
 } // namespace
@@ -42,3 +44,4 @@ using are_type_t = detail::and_<std::is_same<Ts,Target>...>;
  * Formatting options
  * vim: set tabstop=2 shiftwidth=2 expandtab :
  *~------------------------------------------------------------------------~--*/
+

@@ -28,9 +28,9 @@
 using namespace ale::math;
 
 using real_t = double;
-using vector_1d_t = vector_t<real_t,1>;
-using vector_2d_t = vector_t<real_t,2>;
-using vector_3d_t = vector_t<real_t,3>;
+using vector_1d_t = vector<real_t,1>;
+using vector_2d_t = vector<real_t,2>;
+using vector_3d_t = vector<real_t,3>;
 
 
 
@@ -81,8 +81,8 @@ TEST(vector, addition_1d) {
   vector_1d_t b{ 2.0 };
 
   auto c = a;
-  plus_equal( c, b ); 
-  ASSERT_TRUE( c == ans ) << " error in plus_equal with vector";
+  c += b ;
+  ASSERT_TRUE( c == ans ) << " error in += with vector";
 
   auto d = a + b; 
   ASSERT_TRUE( d == ans ) << " error in operator+ with vector";
@@ -92,8 +92,8 @@ TEST(vector, addition_1d) {
   real_t val = 2.0;
 
   auto e = a;
-  plus_equal( e, val ); 
-  ASSERT_TRUE( e == ans ) << " error in plus_equal with vector";
+  e += val; 
+  ASSERT_TRUE( e == ans ) << " error in += with vector";
 
   auto f = a + val; 
   ASSERT_TRUE( f == ans ) << " error in operator+ with scalar";
@@ -117,7 +117,7 @@ TEST(vector, addition_2d) {
   vector_2d_t ans{ 3.0, 3.0 };
 
   auto c = a;
-  plus_equal( c, b );
+  c += b;
   ASSERT_TRUE( c == ans ) << " error in operator+= with vector";
   
   auto d = a + b; 
@@ -128,7 +128,7 @@ TEST(vector, addition_2d) {
   real_t val = 2.0;
 
   auto e = a;
-  plus_equal( e, val );
+  e += val;
   ASSERT_TRUE( e == ans ) << " error in operator+= with scalar";
   
   auto f = a + 2.0; 
@@ -151,7 +151,7 @@ TEST(vector, subtraction_1d) {
   vector_1d_t b{ 2.0 };
 
   auto c = a;
-  minus_equal( c, b );
+  c -= b;
   ASSERT_TRUE( c == ans ) << " error in operator-= with vector";
   
   auto d = a - b; 
@@ -162,7 +162,7 @@ TEST(vector, subtraction_1d) {
   real_t val = 2.0;
 
   auto e = a;
-  minus_equal( e, val );
+  e -= val;
   ASSERT_TRUE( e == ans ) << " error in operator+= with scalar";
   
   auto f = a - val; 
@@ -189,7 +189,7 @@ TEST(vector, subtraction_2d) {
   vector_2d_t ans{ -1.0, 1.0 };
 
   auto c = a;
-  minus_equal( c, b );
+  c -= b;
   ASSERT_TRUE( c == ans ) << " error in operator-= with vector";
   
   auto d = a - b; 
@@ -200,7 +200,7 @@ TEST(vector, subtraction_2d) {
   real_t val = 2.0;
 
   auto e = a;
-  minus_equal( e, val );
+  e -= val;
   ASSERT_TRUE( e == ans ) << " error in operator-= with scalar";
   
   auto f = a - val; 
@@ -227,7 +227,7 @@ TEST(vector, multiply_1d) {
   vector_1d_t b{ 3.0 };
 
   auto c = a;
-  multiplies_equal( c, b );
+  c *= b;
   ASSERT_TRUE( c == ans ) << " error in operator*= with vector";
   
   auto d = a * b; 
@@ -238,7 +238,7 @@ TEST(vector, multiply_1d) {
   real_t val = 3.0;
 
   auto e = a;
-  multiplies_equal( e, val );
+  e *= val;
   ASSERT_TRUE( e == ans ) << " error in operator*= with scalar";
   
   auto f = a * val; 
@@ -264,7 +264,7 @@ TEST(vector, multiply_2d) {
   vector_2d_t ans{ 6.0, 6.0 };
 
   auto c = a;
-  multiplies_equal( c, b );
+  c *= b;
   ASSERT_TRUE( c == ans ) << " error in operator*= with vector";
   
   auto d = a * b; 
@@ -275,7 +275,7 @@ TEST(vector, multiply_2d) {
   real_t val = 2.0;
 
   auto e = a;
-  multiplies_equal( e, val );
+  e *= val;
   ASSERT_TRUE( e == ans ) << " error in operator*= with scalar";
   
   auto f = a * val; 
@@ -302,7 +302,7 @@ TEST(vector, divide_1d) {
   vector_1d_t b{ 2.0 };
 
   auto c = a;
-  divides_equal( c, b );
+  c /= b;
   ASSERT_TRUE( c == ans ) << " error in operator/= with vector";
   
   auto d = a / b; 
@@ -313,7 +313,7 @@ TEST(vector, divide_1d) {
   real_t val = 3.0;
 
   auto e = a;
-  divides_equal( e, val );
+  e /= val;
   ASSERT_TRUE( e == ans ) << " error in operator/= with scalar";
   
   auto f = a / val; 
@@ -340,7 +340,7 @@ TEST(vector, divide_2d) {
   vector_2d_t ans{ 8.0, 6.0 };
 
   auto c = a;
-  divides_equal( c, b );
+  c /= b;
   ASSERT_TRUE( c == ans ) << " error in operator/= with vector";
   
   auto d = a / b; 
@@ -351,7 +351,7 @@ TEST(vector, divide_2d) {
   real_t val = 2.0;
 
   auto e = a;
-  divides_equal( e, val );
+  e /= val;
   ASSERT_TRUE( e == ans ) << " error in operator/= with scalar";
   
   auto f = a / val; 

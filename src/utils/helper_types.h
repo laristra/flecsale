@@ -10,16 +10,12 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file check_types.h
+ * \file helper_types.h
  * 
- * \brief Statically check if all arguments are of the same type.
+ * \brief C++14 helper types.
  *
  ******************************************************************************/
 #pragma once
-
-
-// user includes
-#include "detail/check_types.h"
 
 
 namespace ale {
@@ -27,11 +23,10 @@ namespace utils {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Test to see if all variadic template arguments are of type Target
+//! \brief an enable_if helper type
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Target, typename... Ts>
-using are_type_t = detail::and_<std::is_same<Ts,Target>...>;
-
+template< bool B, class T = void >
+using enable_if_t = typename std::enable_if<B,T>::type;
 
 } // namespace
 } // namespace

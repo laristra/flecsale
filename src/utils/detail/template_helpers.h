@@ -10,27 +10,34 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file check_types.h
+ * \file template_helpers.h
  * 
- * \brief Statically check if all arguments are of the same type.
+ * \brief Some helper functions for template foo magic.
  *
  ******************************************************************************/
 #pragma once
 
-
-// user includes
-#include "detail/check_types.h"
-
-
 namespace ale {
 namespace utils {
 
+namespace detail {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Test to see if all variadic template arguments are of type Target
+// Template helper to statically multiply arguments together
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Target, typename... Ts>
-using are_type_t = detail::and_<std::is_same<Ts,Target>...>;
+
+
+//! \brief return 1 for the final multiplcation
+constexpr std::size_t multiply() 
+{ return 1; }
+
+//! \brief main implementation for multiplication
+template<typename Arg, typename... Args>
+constexpr auto multiply(Arg first, Args... rest) 
+{ return first * multiply(rest...); }
+
+
+}  // namespace
 
 
 } // namespace

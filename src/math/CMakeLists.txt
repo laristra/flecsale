@@ -4,18 +4,18 @@
 #~----------------------------------------------------------------------------~#
 
 set(math_HEADERS
+  array.h
   operators.h
   tuple.h
   vector.h
   PARENT_SCOPE
 )
 
-cinch_add_unit(vector
-    SOURCES test/vector.cc
-)
-
-cinch_add_unit(tuple
-    SOURCES test/tuple.cc
+cinch_add_unit(test_math
+    SOURCES 
+      test/tuple.cc 
+      test/vector.cc
+      test/matrix.cc
 )
 
 #----------------------------------------------------------------------------~-#

@@ -11,12 +11,12 @@
 #  PARENT_SCOPE
 #)
 
-if (ENABLE_UNIT_TESTS)
-  cinch_add_unit(
-    gradients
-    SOURCES test/gradients.cc
-  )
-endif()
+#if (ENABLE_UNIT_TESTS)
+#  cinch_add_unit(
+#    gradients
+#    SOURCES test/gradients.cc
+#  )
+#endif()
 
 #----------------------------------------------------------------------------~-#
 # Formatting options for vim.

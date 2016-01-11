@@ -38,15 +38,17 @@ namespace math {
 //!    to be stored in the array.
 ////////////////////////////////////////////////////////////////////////////////
 template <typename... Types>
-using tuple_t = std::tuple<Types...>;
+using tuple = std::tuple<Types...>;
 
+//! \brief use std::get for access of tuple_t
+using std::get;
 
 //! \brief Constructor with one value.
 //! \param[in] val The value to set the array to
 template < typename... Types >
-void fill( tuple_t<Types...> & t, const auto& val ) 
+void fill( tuple<Types...> & t, const auto& val ) 
 { 
-  //std::cout << "tuple_t (single value constructor)\n";
+  //std::cout << "tuple (single value constructor)\n";
   using std::fill;  // enable ADL
   //using std::begin; // enable ADL  
   //using std::end;   // enable ADL
@@ -57,11 +59,11 @@ void fill( tuple_t<Types...> & t, const auto& val )
 }
 
 
-//! \brief Add to a tuple_t.
+//! \brief Add to a tuple.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 template <typename... Types>
-void plus_equal( tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+void plus_equal( tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
   utils::tuple_for_each( utils::tuple_tie( lhs, rhs ),
                          [&](auto tup) { 
@@ -71,7 +73,7 @@ void plus_equal( tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
 }
 
 template <typename... Types>
-void plus_equal( tuple_t<Types...>& lhs, const auto & rhs )
+void plus_equal( tuple<Types...>& lhs, const auto & rhs )
 {
   utils::tuple_for_each( lhs,
                          [&](auto & tup) { 
@@ -80,15 +82,15 @@ void plus_equal( tuple_t<Types...>& lhs, const auto & rhs )
 }
 
 
-//! \brief Addition operator involving tuple_ts.
+//! \brief Addition operator involving tuples.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
 template <typename... Types>
-auto operator+( const tuple_t<Types...>& lhs, 
-                const tuple_t<Types...>& rhs )
+auto operator+( const tuple<Types...>& lhs, 
+                const tuple<Types...>& rhs )
 {
-  tuple_t<Types...> tmp;
+  tuple<Types...> tmp;
   utils::tuple_visit( 
                      [](auto & a, const auto & b, const auto & c) { 
                        a = b + c;
@@ -98,9 +100,9 @@ auto operator+( const tuple_t<Types...>& lhs,
 }
 
 template <typename... Types>
-auto operator+( const tuple_t<Types...>& lhs, const auto & rhs )
+auto operator+( const tuple<Types...>& lhs, const auto & rhs )
 {
-  tuple_t<Types...> tmp;
+  tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -110,9 +112,9 @@ auto operator+( const tuple_t<Types...>& lhs, const auto & rhs )
 }
 
 template <typename... Types>
-auto operator+( const auto & lhs, const tuple_t<Types...>& rhs )
+auto operator+( const auto & lhs, const tuple<Types...>& rhs )
 {
-  tuple_t<Types...> tmp;
+  tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -123,11 +125,11 @@ auto operator+( const auto & lhs, const tuple_t<Types...>& rhs )
 
 
 
-//! \brief Subtract a tuple_t.
+//! \brief Subtract a tuple.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 template <typename... Types>
-void minus_equal( tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+void minus_equal( tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
   utils::tuple_for_each( utils::tuple_tie( lhs, rhs ),
                          [&](auto tup) { 
@@ -137,7 +139,7 @@ void minus_equal( tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
 }
 
 template <typename... Types>
-void minus_equal( tuple_t<Types...>& lhs, const auto & rhs )
+void minus_equal( tuple<Types...>& lhs, const auto & rhs )
 {
   utils::tuple_for_each( lhs,
                          [&](auto & tup) { 
@@ -146,14 +148,14 @@ void minus_equal( tuple_t<Types...>& lhs, const auto & rhs )
 }
 
 
-//! \brief Subtraction operator involving tuple_ts.
+//! \brief Subtraction operator involving tuples.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
 template <typename... Types>
-auto operator-( const tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+auto operator-( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
-  tuple_t<Types...> tmp;
+  tuple<Types...> tmp;
   utils::tuple_visit( 
                      [](auto & a, const auto & b, const auto & c) { 
                        a = b - c;
@@ -163,9 +165,9 @@ auto operator-( const tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
 }
 
 template <typename... Types>
-auto operator-( const tuple_t<Types...>& lhs, const auto & rhs )
+auto operator-( const tuple<Types...>& lhs, const auto & rhs )
 {
-  tuple_t<Types...> tmp;
+  tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -175,9 +177,9 @@ auto operator-( const tuple_t<Types...>& lhs, const auto & rhs )
 }
 
 template <typename... Types>
-auto operator-( const auto & lhs, const tuple_t<Types...>& rhs )
+auto operator-( const auto & lhs, const tuple<Types...>& rhs )
 {
-  tuple_t<Types...> tmp;
+  tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -187,11 +189,11 @@ auto operator-( const auto & lhs, const tuple_t<Types...>& rhs )
 }
 
 
-//! \brief Multiply a tuple_t.
+//! \brief Multiply a tuple.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 template <typename... Types>
-void multiplies_equal( tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+void multiplies_equal( tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
   utils::tuple_for_each( utils::tuple_tie( lhs, rhs ),
                          [&](auto tup) { 
@@ -201,7 +203,7 @@ void multiplies_equal( tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
 }
 
 template <typename... Types>
-void multiplies_equal( tuple_t<Types...>& lhs, const auto & rhs )
+void multiplies_equal( tuple<Types...>& lhs, const auto & rhs )
 {
   utils::tuple_for_each( lhs,
                          [&](auto & tup) { 
@@ -210,14 +212,14 @@ void multiplies_equal( tuple_t<Types...>& lhs, const auto & rhs )
 }
 
 
-//! \brief Multiplication operator involving tuple_ts.
+//! \brief Multiplication operator involving tuples.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
 template <typename... Types>
-auto operator*( const tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+auto operator*( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
-  tuple_t<Types...> tmp;
+  tuple<Types...> tmp;
   utils::tuple_visit( 
                      [](auto & a, const auto & b, const auto & c) { 
                        a = b * c;
@@ -227,9 +229,9 @@ auto operator*( const tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
 }
 
 template <typename... Types>
-auto operator*( const tuple_t<Types...>& lhs, const auto & rhs )
+auto operator*( const tuple<Types...>& lhs, const auto & rhs )
 {
-  tuple_t<Types...> tmp;
+  tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -239,9 +241,9 @@ auto operator*( const tuple_t<Types...>& lhs, const auto & rhs )
 }
 
 template <typename... Types>
-auto operator*( const auto & lhs, const tuple_t<Types...>& rhs )
+auto operator*( const auto & lhs, const tuple<Types...>& rhs )
 {
-  tuple_t<Types...> tmp;
+  tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -254,11 +256,11 @@ auto operator*( const auto & lhs, const tuple_t<Types...>& rhs )
 
 
 
-//! \brief Divide a tuple_t.
+//! \brief Divide a tuple.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 template <typename... Types>
-void divides_equal( tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+void divides_equal( tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
   utils::tuple_for_each( utils::tuple_tie( lhs, rhs ),
                          [&](auto tup) { 
@@ -268,7 +270,7 @@ void divides_equal( tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
 }
 
 template <typename... Types>
-void divides_equal( tuple_t<Types...>& lhs, const auto & rhs )
+void divides_equal( tuple<Types...>& lhs, const auto & rhs )
 {
   utils::tuple_for_each( lhs,
                          [&](auto & tup) { 
@@ -277,14 +279,14 @@ void divides_equal( tuple_t<Types...>& lhs, const auto & rhs )
 }
 
 
-//! \brief Division operator involving tuple_ts.
+//! \brief Division operator involving tuples.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
 template <typename... Types>
-auto operator/( const tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
+auto operator/( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
-  tuple_t<Types...> tmp;
+  tuple<Types...> tmp;
   utils::tuple_visit( 
                      [](auto & a, const auto & b, const auto & c) { 
                        a = b / c;
@@ -294,9 +296,9 @@ auto operator/( const tuple_t<Types...>& lhs, const tuple_t<Types...>& rhs )
 }
 
 template <typename... Types>
-auto operator/( const tuple_t<Types...>& lhs, const auto & rhs )
+auto operator/( const tuple<Types...>& lhs, const auto & rhs )
 {
-  tuple_t<Types...> tmp;
+  tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -306,9 +308,9 @@ auto operator/( const tuple_t<Types...>& lhs, const auto & rhs )
 }
 
 template <typename... Types>
-auto operator/( const auto & lhs, const tuple_t<Types...>& rhs )
+auto operator/( const auto & lhs, const tuple<Types...>& rhs )
 {
-  tuple_t<Types...> tmp;
+  tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -320,14 +322,14 @@ auto operator/( const auto & lhs, const tuple_t<Types...>& rhs )
 
 
 
-//! \brief Output operator for tuple_t.
+//! \brief Output operator for tuple.
 //! \tparam T  The array base value type.
 //! \tparam D  The array dimension.
 //! \param[in,out] os  The ostream to dump output to.
-//! \param[in]     rhs The tuple_t on the right hand side of the operator.
+//! \param[in]     rhs The tuple on the right hand side of the operator.
 //! \return A reference to the current ostream.
 template <typename... Types>
-auto & operator<<(std::ostream& os, const tuple_t<Types...>& a)
+auto & operator<<(std::ostream& os, const tuple<Types...>& a)
 {
   os << "{";
   utils::tuple_for_each( a, 

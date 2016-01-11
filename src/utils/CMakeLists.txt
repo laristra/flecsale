@@ -4,14 +4,14 @@
 #~----------------------------------------------------------------------------~#
 
 set(utils_HEADERS
-  check_types.h
-  static_for_each.h
-  tasks.h
-  template_helpers.h
-  tuple_for_each.h
-  tuple_visit.h
-  tuple_zip.h
-  zip.h
+  check_types.h    detail/check_types.h
+  helper_types.h   detail/helper_types.h
+  static_for.h     detail/static_for.h
+  tasks.h          detail/tasks.h
+  tuple_for_each.h detail/tuple_for_each.h
+  tuple_visit.h    detail/tuple_visit.h
+  tuple_zip.h      detail/tuple_zip.h
+  zip.h            detail/zip.h
   PARENT_SCOPE
 )
 
@@ -20,13 +20,15 @@ set(utils_SOURCES
   PARENT_SCOPE
 )
 
-cinch_add_unit(zip_iterator
-    SOURCES test/zip.cc
-)
 
-
-cinch_add_unit(tasks
-    SOURCES test/tasks.cc
+cinch_add_unit(test_utils
+    SOURCES 
+      test/static_for.cc
+      test/tasks.cc
+      test/tuple_for_each.cc
+      test/tuple_visit.cc
+      test/tuple_zip.cc
+      test/zip.cc
 )
 
 

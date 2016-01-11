@@ -17,18 +17,25 @@
  ******************************************************************************/
 #pragma once
 
+// user includes
+#include "detail/template_helpers.h"
+
 namespace ale {
 namespace utils {
 
 
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief statically multiply arguments together
+////////////////////////////////////////////////////////////////////////////////
+template<typename... Args>
+constexpr auto multiply(Args... args) 
+{ return detail::multiply(args...); }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief random junk
+//! \brief a tie using constant references
 ////////////////////////////////////////////////////////////////////////////////
-
-
 template < typename T, typename... Ts >
 std::tuple<T&, const Ts&...> ctie( T& first, const Ts&... rest )
 {
@@ -36,6 +43,9 @@ std::tuple<T&, const Ts&...> ctie( T& first, const Ts&... rest )
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief return an lvalue reference
+////////////////////////////////////////////////////////////////////////////////
 template<typename T>
 T &as_lvalue(T &&val) {
   return val;

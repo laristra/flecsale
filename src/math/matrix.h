@@ -10,9 +10,9 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file vector.h
+ * \file matrix.h
  * 
- * \brief Provides a dimensioned array which functions as a vector.
+ * \brief Provides a dimensioned array which functions as a matrix.
  *
  ******************************************************************************/
 #pragma once
@@ -26,14 +26,28 @@ namespace math {
 namespace detail {
 
 ////////////////////////////////////////////////////////////////////////////////
-//!  \brief 1d layout
+//!  \brief Define the layout of the matrix using a row-major convention
 ////////////////////////////////////////////////////////////////////////////////
-struct vector_layout {
-  static constexpr auto element( auto i, auto  /* D */ ) noexcept
-  { return i; }   
+struct row_major_layout {
+  static constexpr 
+  auto element( auto i, auto j, 
+                auto /* size_i */, auto size_j ) noexcept
+  { return i * size_j + j; }   
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+//!  \brief Define the layout of the matrix using column major convention
+////////////////////////////////////////////////////////////////////////////////
+struct column_major_layout {
+  static constexpr 
+  auto element( auto i, auto j, 
+                auto size_i, auto /* size_j */ ) noexcept
+  { return j * size_i + i; }   
 };
 
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //!  \brief The dimensioned_array type provides a general base for defining
@@ -43,10 +57,13 @@ struct vector_layout {
 //!  \tparam D The dimension of the array, i.e., the number of elements
 //!    to be stored in the array.
 ////////////////////////////////////////////////////////////////////////////////
-template <typename T, std::size_t D> 
-using vector = math::array<detail::vector_layout,T,D>;
+template <typename T, std::size_t D1, std::size_t D2> 
+using row_major_matrix = math::array< detail::row_major_layout, T, D1, D2>;
 
-  
+
+template <typename T, std::size_t D1, std::size_t D2> 
+using col_major_matrix = math::array< detail::column_major_layout, T, D1, D2>;
+
 
 } // namespace
 } // namespace

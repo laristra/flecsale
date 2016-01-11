@@ -3,20 +3,20 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-set(eos_HEADERS
-  euler_eqns.h
-  PARENT_SCOPE
-)
-
-#set(eos_SOURCES
-#  dummy.c
+#set(mesh_HEADERS
 #  PARENT_SCOPE
 #)
 
-cinch_add_unit( test_eqns
-  SOURCES 
-    test/euler_eqns.cc
-)
+#set(mesh_SOURCES
+#  PARENT_SCOPE
+#)
+
+#if (ENABLE_UNIT_TESTS)
+#  cinch_add_unit(
+#    gradients
+#    SOURCES test/gradients.cc
+#  )
+#endif()
 
 #----------------------------------------------------------------------------~-#
 # Formatting options for vim.

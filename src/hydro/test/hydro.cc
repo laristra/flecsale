@@ -50,7 +50,7 @@ using namespace ale;
 // mesh and some underlying data types
 using size_t = std::size_t;
 using real_t = common::real_t;
-using vector_t = math::vector_t<real_t,2>;
+using vector_t = math::vector<real_t,2>;
 
 using mesh_t = flexi::burton_mesh_t;
 
@@ -66,40 +66,6 @@ using math::operator+;
 using math::operator-;
 
 
-#if 0
-
-// the register state function
-template<size_t I, class MESH>
-void register_state_(MESH&& mesh) {
-  auto var_name = eqns_t::variables::name(I);
-  using var_type_t = typename math::tuple_element<I, eqns_t::state_data_t>::type;
-  register_state( 
-    mesh, 
-    var_name.c_str(), 
-    cells, 
-    var_type_t, 
-    persistent );
-}
-
-// actuall call to functions
-template<size_t... Is, class MESH>
-void register_states_( std::index_sequence<Is...>, MESH&& mesh ) {
-  int unused[] = { 0, ( register_state_<Is>( 
-                          std::forward<MESH>(mesh) ) , 0 )... };
-}
-
-// This is the exposed function!!
-template<class MESH>
-void register_states(MESH&& mesh) {
-  constexpr auto num_vars = eqns_t::variables::number();
-  auto indexes = std::make_index_sequence<num_vars>();
-  register_states_(
-    indexes, 
-    std::forward<MESH>(mesh) );
-}
-
-#endif
-
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
 ///////////////////////////////////////////////////////////////////////////////
@@ -108,6 +74,15 @@ TEST(hydro, simple) {
   //===========================================================================
   // Case Parameters
   //===========================================================================
+
+
+  // the flux function
+  auto flux_function = [](const auto &wl, const auto &wr, const auto &n) { 
+    auto fl = eqns_t::flux(wl, n);
+    auto fr = eqns_t::flux(wr, n);
+    auto f = 0.5 * ( fl + fr );
+    return f;
+  };
 
   // the grid dimensions
   constexpr size_t num_cells_x = 10;
@@ -119,37 +94,14 @@ TEST(hydro, simple) {
   constexpr real_t x0 = -length_x/2.0;
   constexpr real_t y0 = -length_y/2.0;
 
-  // set the initial conditions
-  auto solution = [](const auto &x, auto t) { 
-    eos_t eos( /* gamma */ 1.4, /* cv */ 1.0);
-    real_t d, p;
-    if ( x[0] < 0.0 ) {
-      d = 1.0;
-      p = 1.0;
-    }
-    else {
-      d = 0.125;
-      p = 0.1;
-    }    
-    eos.set_ref_state_dp(d, 2.5);
-    return std::make_tuple( d, p, vector_t{0.0,0.0}, eos ); 
-  };
-
-  // the flux function
-  auto flux_function = [](const auto &wl, const auto &wr, const auto &n) { 
-    auto fl = eqns_t::flux(wl, n);
-    auto fr = eqns_t::flux(wr, n);
-    auto f = 0.5 * ( fl + fr );
-    return f;
-  };
-
-
 
   //===========================================================================
   // Mesh Setup
   //===========================================================================
 
+  // this is the mesh object
   mesh_t mesh;
+
 
   // reserve storage for the mesh
   auto num_vertex = ( num_cells_x + 1 ) * ( num_cells_y + 1 );
@@ -205,14 +157,21 @@ TEST(hydro, simple) {
   auto eos_data = register_state(mesh, "eos", cells, eos_t);
 
 
-  // a lambda function to get the state
-  auto get_state = [&](auto cell_id) { 
+  // a lambda function to get the full independant+derived state
+  auto get_full_state = [&](auto cell_id) { 
     return std::forward_as_tuple( density [ cell_id ],
                                   velocity[ cell_id ],
                                   pressure[ cell_id ],
                                   energy  [ cell_id ],
                                   temperature[ cell_id ],
                                   sound_speed[ cell_id ] );
+  };
+
+  // a lambda function to get the primitive (i.e. independant) state
+  auto get_prim_state = [&](auto cell_id) { 
+    return std::forward_as_tuple( density [ cell_id ],
+                                  velocity[ cell_id ],
+                                  pressure[ cell_id ] );
   };
 
 
@@ -224,16 +183,30 @@ TEST(hydro, simple) {
   // set the intial conditions
   for ( auto c : mesh.cells() ) {
     auto cell_id = c.id();
-    auto cell_center = mesh.centroid(c);
+    auto x = mesh.centroid(c);
 
+    // velocity is constant for now
+    vector_t v = {0.0, 0.0};
 
-    auto & d = density [cell_id];
-    auto & p = pressure[cell_id];
-    auto & v = velocity[cell_id];
-    auto & eos = eos_data [cell_id];
+    // figure out the left and right density/pressure
+    real_t d;
+    real_t p;
+    if ( x[0] < 0.0 ) {
+      d = 1.0;
+      p = 1.0;
+    }
+    else {
+      d = 0.125;
+      p = 0.1;
+    }    
 
-    std::tie( d, p, v, eos ) = solution( cell_center, 0.0 );    
+    // a constant eos is used for now
+    eos_t eos( /* gamma */ 1.4, /* cv */ 1.0); 
+    eos.set_ref_state_dp(d, 2.5);
 
+    // now copy the state to flexi
+    get_prim_state( cell_id ) = std::make_tuple( d, v, p );
+    eos_data[cell_id] = eos;
   }
 
   //===========================================================================
@@ -245,22 +218,23 @@ TEST(hydro, simple) {
   for ( auto c : mesh.cells() ) {
     auto cell_id = c.id();
 
-    auto u     = get_state(cell_id);
+    auto u     = get_full_state(cell_id);
     auto & eos = eos_data [cell_id];
 
     eqns_t::update_state_from_pressure( u, eos );
   }
 
 
+
   // now output the solution
   flexi::write_mesh("test/hydro_0.exo", mesh);
-
 
   //===========================================================================
   // Flux Evaluation
   //===========================================================================
 
-  // compute the fluxes
+  // compute the fluxes.  here I am regestering a struct as the stored data
+  // type since I will only ever be accesissing all the data at once.
   auto flux = register_state(mesh, "flux", edges, flux_data_t, temporary);
 
   // loop over each edge and compute/store the flux
@@ -270,23 +244,23 @@ TEST(hydro, simple) {
     auto edge_id = e.id();
 
     // get the normal
-    auto vs = mesh.vertices(e).toVec();
+    auto vs = mesh.vertices(e).to_vec();
     //auto normal = normal( vs[0]->coordinates(), vs[1]->coordinates() );
     vector_t normal;
 
     // get the cell neighbors
-    auto c = mesh.cells(e).toVec();
+    auto c = mesh.cells(e).to_vec();
     auto cells = c.size();
 
 
     // get the left state
     auto left_cell_id = c[0];
-    auto w_left = get_state( left_cell_id );    
+    auto w_left = get_full_state( left_cell_id );    
 
     // interior cell
     if ( cells == 2 ) {
       auto right_cell_id = c[1];
-      auto w_right = get_state( right_cell_id );
+      auto w_right = get_full_state( right_cell_id );
       //flux[edge_id] = flux_function( w_left, w_right, normal );
     } 
     // boundary cell
@@ -302,6 +276,9 @@ TEST(hydro, simple) {
     
 
   }
+
+#if 0
+
 
   //===========================================================================
   // Residual evaluation
@@ -343,7 +320,7 @@ TEST(hydro, simple) {
   flexi::write_mesh("test/hydro_1.exo", mesh);
 
 
-
+#endif
 
     
 }
