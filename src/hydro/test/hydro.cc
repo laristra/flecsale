@@ -248,9 +248,9 @@ TEST(hydro, simple) {
   // the flux function
   auto flux_function = [](const auto &wl, const auto &wr, const auto &n) { 
     auto fl = eqns_t::flux(wl, n);
-    auto fr = eqns_t::flux(wr, n);
-    auto f = 0.5 * ( fl + fr );
-    return f;
+    //auto fr = eqns_t::flux(wr, n);
+    //auto f = fl + fr;
+    return fl;
   };
 
   // TASK: loop over each edge and compute/store the flux
@@ -270,13 +270,13 @@ TEST(hydro, simple) {
 
 
     // get the left state
-    auto left_cell_id = c[0];
-    auto w_left = get_full_state( left_cell_id );    
+    auto left_cell = c[0];
+    auto w_left = get_full_state( left_cell );    
 
     // interior cell
     if ( cells == 2 ) {
-      auto right_cell_id = c[1];
-      auto w_right = get_full_state( right_cell_id );
+      auto right_cell = c[1];
+      auto w_right = get_full_state( right_cell );
       flux[edge_id] = flux_function( w_left, w_right, normal );
     } 
     // boundary cell
@@ -292,8 +292,6 @@ TEST(hydro, simple) {
     
 
   }
-
-#if 0
 
 
   //===========================================================================
@@ -314,13 +312,16 @@ TEST(hydro, simple) {
       // get the cell neighbors
       auto neigh = mesh.cells(edge);
       auto num_neigh = neigh.size();
+      auto neigh_it = neigh.begin();
+      auto first_neigh_id= (*neigh_it).id();
 
       // figure out the sign
-      int dir;
-      auto it = neigh.begin();
+      int dir{1};
       if ( num_neigh == 2 ) 
-        dir = ( it->id() == cell_id ) ? -1 : 0;
+        // interior
+        dir = ( first_neigh_id == cell_id ) ? -1 : 1;
       else
+        // boundary
         dir = 1;
       
       // add the contribution to this cell only
@@ -336,7 +337,6 @@ TEST(hydro, simple) {
   flexi::write_mesh("test/hydro_1.exo", mesh);
 
 
-#endif
 
     
 }

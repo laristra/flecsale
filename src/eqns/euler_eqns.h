@@ -135,37 +135,42 @@ public:
   //! \param [in] u the state
   //! \return the quantity of interest
   //============================================================================
-  static auto density( const state_data_t & u )
+  template <typename U>
+  static auto density( U && u )
   { 
     using math::get;
-    return get<variables::index::density>( u ); 
+    return get<variables::index::density>( std::forward<U>(u) ); 
   }
 
-  static auto velocity( const state_data_t & u )
+  template <typename U>
+  static auto velocity( U && u )
   { 
     using math::get;
-    return get<variables::index::velocity>( u ); 
+    return get<variables::index::velocity>( std::forward<U>(u) ); 
   }
 
-  static auto pressure( const state_data_t & u )
+  template <typename U>
+  static auto pressure( U && u )
   { 
     using math::get;
-    return get<variables::index::pressure>( u ); 
+    return get<variables::index::pressure>( std::forward<U>(u) ); 
   }
 
-  static auto internal_energy( const state_data_t & u )
+  template <typename U>
+  static auto internal_energy( U && u )
   { 
     using math::get;
-    return get<variables::index::pressure>( u ); 
+    return get<variables::index::pressure>( std::forward<U>(u) ); 
   }
 
-  static auto total_energy( const state_data_t & u )
+  template <typename U>
+  static auto total_energy( U && u )
   { 
     using math::get;
     using math::dot_product;
-    auto ie = internal_energy( u );
-    auto vel = velocity( u );
-    return ie + 0.5 * dot_product(vel, vel);
+    auto ie = internal_energy( std::forward<U>(u) );
+    auto vel = velocity( std::forward<U>(u) );
+    return ie + 0.5 * dot_product( vel, vel );
   }
 
   //============================================================================
@@ -173,21 +178,22 @@ public:
   //! \param [in] normal The normal direction
   //! \return the flux alligned with the normal direction
   //============================================================================
-  static auto flux( const auto & u, const auto & normal )
+  template <typename U, typename V>
+  static auto flux(  U && u, V && normal )
   {
 
     using math::get;
     using math::dot_product;
 
     // these may be independant or derived quantities
-    auto rho = density ( u );
-    auto vel = velocity( u );
-    auto p   = pressure( u );
-    auto et  = total_energy( u );
+    auto rho = density ( std::forward<U>(u) );
+    auto vel = velocity( std::forward<U>(u) );
+    auto p   = pressure( std::forward<U>(u) );
+    auto et  = total_energy( std::forward<U>(u) );
       
     assert( rho > 0  );
 
-    auto v_dot_n = dot_product(vel, normal);
+    auto v_dot_n = dot_product( vel, std::forward<V>(normal) );
     auto pn = p*normal;
       
     // explicitly set the individual elements, and it is clear what is
@@ -207,23 +213,24 @@ public:
   //! \param [in,out] u   The state to update
   //! \param [in]     eos The state to update
   //============================================================================
-  static void update_state_from_pressure( auto & u, 
-                                          const auto& eos )
+  template <typename U, typename E>
+  static void update_state_from_pressure( U && u, 
+                                          const E & eos )
   {
     using math::get;
 
     // access independant or derived quantities 
-    auto d = density( u );
-    auto p = pressure( u );
+    auto d = density ( std::forward<U>(u) );
+    auto p = pressure( std::forward<U>(u) );
       
     assert( d > 0  );
     assert( p > 0  );
 
 
     // can use aliases for clarity
-    auto & ie = get<variables::index::internal_energy>( u );
-    auto & t  = get<variables::index::temperature>( u );
-    auto & ss = get<variables::index::sound_speed>( u );
+    auto & ie = get<variables::index::internal_energy>( std::forward<U>(u) );
+    auto & t  = get<variables::index::temperature>( std::forward<U>(u) );
+    auto & ss = get<variables::index::sound_speed>( std::forward<U>(u) );
 
     // explicitly set the individual elements
     ie = eos.compute_internal_energy_dp( d, p );

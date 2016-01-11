@@ -50,11 +50,9 @@ void fill( tuple<Types...> & t, const auto& val )
 { 
   //std::cout << "tuple (single value constructor)\n";
   using std::fill;  // enable ADL
-  //using std::begin; // enable ADL  
-  //using std::end;   // enable ADL
   utils::tuple_for_each( t, 
                          [&](auto & tup) { 
-                           fill( begin(tup), end(tup), val ); 
+                           tup = val; 
                          } );
 }
 

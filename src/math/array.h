@@ -520,8 +520,9 @@ template <typename L, typename T, size_t... N>
 auto operator+( const array<L,T,N...>& lhs, 
                 const array<L,T,N...>& rhs )
 {
-  array<L,T,N...> tmp(lhs);
-  tmp += rhs;
+  array<L,T,N...> tmp;
+  std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
+                  tmp.begin(), std::plus<>() );    
   return tmp;
 }
 
@@ -531,21 +532,23 @@ auto operator+( const array<L,T,N...>& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, size_t... N>
+template <typename L, typename T, typename U, size_t... N>
 auto operator+( const array<L,T,N...>& lhs, 
-                const T& rhs )
+                const U& rhs )
 {
-  array<L,T,N...> tmp(lhs);
-  tmp += rhs;
+  array<L,T,N...> tmp;
+  std::transform( lhs.begin(), lhs.end(), tmp.begin(),
+                  [&rhs](auto & e) { return e+rhs; } );
   return tmp;
 }
 
-template <typename L, typename T, size_t... N>
-auto operator+( const T& lhs, 
+template <typename L, typename T, typename U, size_t... N>
+auto operator+( const U& lhs, 
                 const array<L,T,N...>& rhs )
 {
-  array<L,T,N...> tmp(lhs);
-  tmp += rhs;
+  array<L,T,N...> tmp;
+  std::transform( rhs.begin(), rhs.end(), tmp.begin(),
+                  [&lhs](auto & e) { return lhs+e; } );
   return tmp;
 }
 
@@ -559,8 +562,9 @@ template <typename L, typename T, size_t... N>
 auto operator-( const array<L,T,N...>& lhs, 
                 const array<L,T,N...>& rhs )
 {
-  array<L,T,N...> tmp(lhs);
-  tmp -= rhs;
+  array<L,T,N...> tmp;
+  std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
+                  tmp.begin(), std::minus<>() );    
   return tmp;
 }
 
@@ -570,21 +574,23 @@ auto operator-( const array<L,T,N...>& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, size_t... N>
+template <typename L, typename T, typename U, size_t... N>
 auto operator-( const array<L,T,N...>& lhs, 
-                const T& rhs )
+                const U& rhs )
 {
-  array<L,T,N...> tmp(lhs);
-  tmp -= rhs;
+  array<L,T,N...> tmp;
+  std::transform( lhs.begin(), lhs.end(), tmp.begin(),
+                  [&rhs](auto & e) { return e-rhs; } );
   return tmp;
 }
 
-template <typename L, typename T, size_t... N>
-auto operator-( const T& lhs, 
+template <typename L, typename T, typename U, size_t... N>
+auto operator-( const U& lhs, 
                 const array<L,T,N...>& rhs )
 {
-  array<L,T,N...> tmp(lhs);
-  tmp -= rhs;
+  array<L,T,N...> tmp;
+  std::transform( rhs.begin(), rhs.end(), tmp.begin(),
+                  [&lhs](auto & e) { return lhs-e; } );
   return tmp;
 }
 
@@ -598,8 +604,9 @@ template <typename L, typename T, size_t... N>
 auto operator*( const array<L,T,N...>& lhs, 
                 const array<L,T,N...>& rhs )
 {
-  array<L,T,N...> tmp(lhs);
-  tmp *= rhs;
+  array<L,T,N...> tmp;
+  std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
+                  tmp.begin(), std::multiplies<>() );    
   return tmp;
 }
 
@@ -610,21 +617,23 @@ auto operator*( const array<L,T,N...>& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, size_t... N>
+template <typename L, typename T, typename U, size_t... N>
 auto operator*( const array<L,T,N...>& lhs, 
-                const T& rhs )
+                const U& rhs )
 {
-  array<L,T,N...> tmp(lhs);
-  tmp *= rhs;
+  array<L,T,N...> tmp;
+  std::transform( lhs.begin(), lhs.end(), tmp.begin(),
+                  [&rhs](auto & e) { return e*rhs; } );
   return tmp;
 }
 
-template <typename L, typename T, size_t... N>
-auto operator*( const T& lhs,
+template <typename L, typename T, typename U, size_t... N>
+auto operator*( const U& lhs,
                 const array<L,T,N...>& rhs )
 {
-  array<L,T,N...> tmp(lhs);
-  tmp *= rhs;
+  array<L,T,N...> tmp;
+  std::transform( rhs.begin(), rhs.end(), tmp.begin(),
+                  [&lhs](auto & e) { return lhs*e; } );
   return tmp;
 }
 
@@ -638,8 +647,9 @@ template <typename L, typename T, size_t... N>
 auto operator/( const array<L,T,N...>& lhs, 
                 const array<L,T,N...>& rhs )
 {
-  array<L,T,N...> tmp(lhs);
-  tmp /= rhs;
+  array<L,T,N...> tmp;
+  std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
+                  tmp.begin(), std::divides<>() );    
   return tmp;
 }
 
@@ -651,21 +661,23 @@ auto operator/( const array<L,T,N...>& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, size_t... N>
+template <typename L, typename T, typename U, size_t... N>
 auto operator/( const array<L,T,N...>& lhs, 
-                const T& rhs )
+                const U& rhs )
 {
-  array<L,T,N...> tmp(lhs);
-  tmp /= rhs;
+  array<L,T,N...> tmp;
+  std::transform( lhs.begin(), lhs.end(), tmp.begin(),
+                  [&rhs](auto & e) { return e/rhs; } );
   return tmp;
 }
 
-template <typename L, typename T, size_t... N>
-auto operator/( const T& lhs, 
+template <typename L, typename T, typename U, size_t... N>
+auto operator/( const U& lhs, 
                 const array<L,T,N...>& rhs )
 {
-  array<L,T,N...> tmp(lhs);
-  tmp /= rhs;
+  array<L,T,N...> tmp;
+  std::transform( rhs.begin(), rhs.end(), tmp.begin(),
+                  [&lhs](auto & e) { return lhs/e; } );
   return tmp;
 }
 
