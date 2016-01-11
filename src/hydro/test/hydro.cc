@@ -72,17 +72,9 @@ using math::operator-;
 TEST(hydro, simple) {
 
   //===========================================================================
-  // Case Parameters
+  // Mesh Setup
   //===========================================================================
 
-
-  // the flux function
-  auto flux_function = [](const auto &wl, const auto &wr, const auto &n) { 
-    auto fl = eqns_t::flux(wl, n);
-    auto fr = eqns_t::flux(wr, n);
-    auto f = 0.5 * ( fl + fr );
-    return f;
-  };
 
   // the grid dimensions
   constexpr size_t num_cells_x = 10;
@@ -94,10 +86,6 @@ TEST(hydro, simple) {
   constexpr real_t x0 = -length_x/2.0;
   constexpr real_t y0 = -length_y/2.0;
 
-
-  //===========================================================================
-  // Mesh Setup
-  //===========================================================================
 
   // this is the mesh object
   mesh_t mesh;
@@ -145,20 +133,35 @@ TEST(hydro, simple) {
   // now finalize the mesh setup
   mesh.init();
 
-  // create some field data
-  auto density  = register_state(mesh, "density",      cells,   real_t, persistent);
-  auto pressure = register_state(mesh, "pressure",     cells,   real_t, persistent);
-  auto velocity = register_state(mesh, "velocity",     cells, vector_t, persistent);
 
-  auto energy      = register_state(mesh, "internal_energy", cells, real_t, persistent);
-  auto temperature = register_state(mesh, "temperature",     cells, real_t, persistent);
-  auto sound_speed = register_state(mesh, "sound_speed",     cells, real_t, persistent);
+  //===========================================================================
+  // Field Creation
+  //===========================================================================
 
+  // create some field data.  Fields are registered as struct of arrays.
+  // this allows us to access the data in different patterns.
+  register_state(mesh, "density",      cells,   real_t, persistent);
+  register_state(mesh, "pressure",     cells,   real_t, persistent);
+  register_state(mesh, "velocity",     cells, vector_t, persistent);
+
+  register_state(mesh, "internal_energy", cells, real_t, persistent);
+  register_state(mesh, "temperature",     cells, real_t, persistent);
+  register_state(mesh, "sound_speed",     cells, real_t, persistent);
+
+  // register state also returns an accessor
   auto eos_data = register_state(mesh, "eos", cells, eos_t);
 
 
   // a lambda function to get the full independant+derived state
-  auto get_full_state = [&](auto cell_id) { 
+  auto get_full_state = [&mesh](auto cell_id) { 
+
+    auto density  = access_state(mesh, "density",   real_t);
+    auto pressure = access_state(mesh, "pressure",   real_t);
+    auto velocity = access_state(mesh, "velocity", vector_t);
+    auto energy      = access_state(mesh, "internal_energy", real_t);
+    auto temperature = access_state(mesh, "temperature", real_t);
+    auto sound_speed = access_state(mesh, "sound_speed", real_t);
+
     return std::forward_as_tuple( density [ cell_id ],
                                   velocity[ cell_id ],
                                   pressure[ cell_id ],
@@ -168,7 +171,12 @@ TEST(hydro, simple) {
   };
 
   // a lambda function to get the primitive (i.e. independant) state
-  auto get_prim_state = [&](auto cell_id) { 
+  auto get_prim_state = [&mesh](auto cell_id) { 
+
+    auto density  = access_state(mesh, "density",   real_t);
+    auto pressure = access_state(mesh, "pressure",   real_t);
+    auto velocity = access_state(mesh, "velocity", vector_t);
+
     return std::forward_as_tuple( density [ cell_id ],
                                   velocity[ cell_id ],
                                   pressure[ cell_id ] );
@@ -180,7 +188,7 @@ TEST(hydro, simple) {
   // Initial conditions
   //===========================================================================
 
-  // set the intial conditions
+  // set the intial conditions.  This is really a TASK.
   for ( auto c : mesh.cells() ) {
     auto cell_id = c.id();
     auto x = mesh.centroid(c);
@@ -214,7 +222,7 @@ TEST(hydro, simple) {
   //===========================================================================
 
 
-  // apply the eos to the state
+  // TASK: apply the eos to the state
   for ( auto c : mesh.cells() ) {
     auto cell_id = c.id();
 
@@ -237,7 +245,15 @@ TEST(hydro, simple) {
   // type since I will only ever be accesissing all the data at once.
   auto flux = register_state(mesh, "flux", edges, flux_data_t, temporary);
 
-  // loop over each edge and compute/store the flux
+  // the flux function
+  auto flux_function = [](const auto &wl, const auto &wr, const auto &n) { 
+    auto fl = eqns_t::flux(wl, n);
+    auto fr = eqns_t::flux(wr, n);
+    auto f = 0.5 * ( fl + fr );
+    return f;
+  };
+
+  // TASK: loop over each edge and compute/store the flux
   // fluxes are stored on each edge
 
   for ( auto e : mesh.edges() ) {
@@ -261,7 +277,7 @@ TEST(hydro, simple) {
     if ( cells == 2 ) {
       auto right_cell_id = c[1];
       auto w_right = get_full_state( right_cell_id );
-      //flux[edge_id] = flux_function( w_left, w_right, normal );
+      flux[edge_id] = flux_function( w_left, w_right, normal );
     } 
     // boundary cell
     else {
