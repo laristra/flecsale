@@ -3,4 +3,4 @@
 	url = git@gitlab.lanl.gov:csse/cinch.git
 [submodule "flexi"]
 	path = flexi
-	url = git@gitlab.lanl.gov:csse/flexi.git
+	url = git@github.com:flecsi/flecsi.git
