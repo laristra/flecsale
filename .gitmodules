@@ -4,3 +4,6 @@
 [submodule "flexi"]
 	path = flecsi
 	url = git@github.com:flecsi/flecsi.git
+[submodule "jali"]
+	path = jali
+	url = ssh://git@xcp-stash.lanl.gov:7999/ngc/jali.git
