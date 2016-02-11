@@ -33,9 +33,10 @@ To clone the repository, type
 
     git clone --recursive ssh://git@xcp-stash.lanl.gov:7999/ngc/ale.git
     
-**Make sure to include the *"\-\-recursive"* so that all of the submodules are cloned as well.**  Once the code is checked out, create a build directory somewhere. 
+**Make sure to include the *"\-\-recursive"* so that all of the submodules are cloned as well.**  Once the code is checked out, create a build directory somewhere for the thirdparty libraries and the ALE code
 
-    mkdir build
+    mkdir -p build/tpl
+    mkdir -p build/ale
     cd build
     
 Building the code is a three step process:  1) obtaining the thirdparty libraries; 2) building the thirdparty libraries; and 3) compiling the final ALE project.
@@ -50,10 +51,18 @@ To build the thirdparty libraries, you need a C and C++ compiler installed.  You
 
     module load gcc/5.3.0
 
-sdf
+Make a directory for the thirdparty libraries in **build** and compile the libraries
 
-    mkdir tpl
     cd tpl
-    /path/to/ale/
+    CC=gcc CXX=g++ TPL_INSTALL_PREFIX=install <ALE_DIR>/arch/build-tpl.sh
+    make -j
 
-asdfasdf
+## 3. Build the ALE Project
+
+    cd ../ale
+    CC=gcc CXX=g++ TPL_INSTALL_PREFIX=../tpl/install <ALE_DIR>/arch/build-tpl.sh
+    make -j
+
+
+# Code Structure
+
