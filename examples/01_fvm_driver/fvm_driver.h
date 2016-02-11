@@ -22,14 +22,11 @@
 #include <iostream>
 
 // flexi includes
-#include <flexi/execution/task.h>
+#include <flecsi/execution/task.h>
 
 // local includes
 #include "mesh.h"
 
-
-//using equation_t = ale::equations::euler_equation_t;
-//using discrete_t = ale::discrete::fvm::fvm_t;
 
 
 ////////////////////////////////////////////////////////////////////////////////

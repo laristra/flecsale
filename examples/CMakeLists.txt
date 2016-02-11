@@ -3,6 +3,8 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
+return()
+
 #------------------------------------------------------------------------------#
 # Add a rule to build the executable
 #------------------------------------------------------------------------------#
@@ -38,8 +40,8 @@ foreach(dir ${dirs})
      message( STATUS "Adding driver ${target_name}" )
      add_custom_target(
         ${target_name} ALL
-        ${CMAKE_BINARY_DIR}/bin/flexi ${target_name}.h
-        DEPENDS ale flexi ${CMAKE_BINARY_DIR}/bin/flexi
+        ${CMAKE_BINARY_DIR}/bin/flecsi ${target_name}.h
+        DEPENDS ale flecsi ${CMAKE_BINARY_DIR}/bin/flecsi
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${base_name}
      )
 

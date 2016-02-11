@@ -1,0 +1,42 @@
+--- include/netcdf.h	2015-02-18 22:11:01.000000000 -0700
++++ include/netcdf.h	2015-03-10 16:25:19.701659347 -0600
+@@ -226,11 +226,11 @@
+ As a rule, NC_MAX_VAR_DIMS <= NC_MAX_DIMS.
+ */
+ /**@{*/
+-#define NC_MAX_DIMS	1024
++#define NC_MAX_DIMS	65536
+ #define NC_MAX_ATTRS	8192
+-#define NC_MAX_VARS	8192
++#define NC_MAX_VARS	524288
+ #define NC_MAX_NAME	256
+-#define NC_MAX_VAR_DIMS	1024 /**< max per variable dimensions */
++#define NC_MAX_VAR_DIMS	8 /**< max per variable dimensions */
+ /**@}*/
+ 
+ /** This is the max size of an SD dataset name in HDF4 (from HDF4 documentation).*/
+
+--- CMakeLists.txt	2015-02-25 15:56:15.000000000 -0700
++++ CMakeLists.txt	2015-03-19 10:02:05.196070292 -0600
+@@ -492,14 +492,18 @@
+ 	SET(HDF5_CC h5cc)
+   ENDIF()
+ 
+-  execute_process(COMMAND sh -c "${HDF5_CC} -showconfig | grep -i 'HDF5 version' | cut -d: -f2 | tr -d ' '"
+-  OUTPUT_VARIABLE HDF5_VERSION
+-  ERROR_QUIET)
++  #execute_process(COMMAND sh -c "${HDF5_CC} -showconfig | grep -i 'HDF5 version' | cut -d: -f2 | tr -d ' '"
++  #OUTPUT_VARIABLE HDF5_VERSION
++  #ERROR_QUIET)
+ 
+   # It cannot be assumed that libhdf5.settings exists.  If it doesn't,
+   # the call to h5cc will have failed.  At this point we will have to
+   # trust the user that they have configured their system properly.
+ 
++  IF(NOT ${HDF5_VERSION} AND ${HDF5_VERSION_STRING})
++    SET( HDF5_VERSION ${HDF5_VERSION_STRING} )
++  ENDIF()
++
+   IF("${HDF5_VERSION}" STREQUAL "")
+     MESSAGE(STATUS "Unable to determine hdf5 version.  NetCDF requires at least version ${HDF5_VERSION_REQUIRED}")
+   ELSE()

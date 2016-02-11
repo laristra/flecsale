@@ -1,37 +1,50 @@
+#!/bin/bash
+
 #~----------------------------------------------------------------------------~#
-# Copyright (c) 2014 Los Alamos National Security, LLC
-# All rights reserved.
+# placeholder
 #~----------------------------------------------------------------------------~#
 
-project(ale)
-
-
 #------------------------------------------------------------------------------#
-# Add subprojects
+# Get the path to the project from which this script was called
 #------------------------------------------------------------------------------#
 
-cinch_add_subproject("flecsi")
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+TPL_DIR=${SCRIPT_DIR}/../thirdparty
 
 #------------------------------------------------------------------------------#
-# Set application directory
+# Check required environment variables
 #------------------------------------------------------------------------------#
 
-cinch_add_application_directory("examples")
+if [ -z "${TPL_INSTALL_PREFIX}" ] ; then
+  echo "You must set TPL_INSTALL_PREFIX in your environment"
+  exit 1
+fi
+
+if [ -z "${TPL_DOWNLOAD_PATH}" ] ; then
+  TPL_DOWNLOAD_PATH=${TPL_DIR}/files
+  echo "TPL_DOWNLOAD_PATH not set, using ${TPL_DOWNLOAD_PATH}"
+  echo "To change, set TPL_DOWNLOAD_PATH in your environment"
+fi
 
 #------------------------------------------------------------------------------#
-# Add library targets
+# Call CMake command
 #------------------------------------------------------------------------------#
 
-cinch_add_library_target(ale src)
+
+cmake \
+    -DCMAKE_INSTALL_PREFIX=${TPL_INSTALL_PREFIX} \
+    -DTPL_DOWNLOAD_PATH=${TPL_DOWNLOAD_PATH} \
+    -DTPL_DOWNLOAD_ONLY=OFF \
+    -DENABLE_EXODUS=ON \
+    -DENABLE_METIS=ON \
+    -DENABLE_SCOTCH=ON \
+    ${TPL_DIR}
 
 #------------------------------------------------------------------------------#
-# Set header suffix regular expression
+# vim: syntax=sh
 #------------------------------------------------------------------------------#
-
-set(CINCH_HEADER_SUFFIXES "\\.h")
-
 
 #~---------------------------------------------------------------------------~-#
-# Formatting options for vim.
-# vim: set tabstop=2 shiftwidth=2 expandtab :
+# placeholder
 #~---------------------------------------------------------------------------~-#

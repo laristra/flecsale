@@ -8,137 +8,30 @@
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
+/*!
+ *
+ * \file gradients.cc
+ * 
+ * \brief Try computing some gradients on the burton mesh.
+ *
+ ******************************************************************************/
 
-// system includes
-#include <cinchtest.h>
-#include <iostream>
-#include <flexi/specializations/burton/burton.h>
-#include <vector>
+//! user includes
+#include "burton_test.h"
+#include "ale/geom/centroid.h"
 
 
 // explicitly use some stuff
 using std::cout;
 using std::endl;
-using std::vector;
-using flexi::persistent;
-
-//=============================================================================
-//! \brief Fixture for testing the partitioner.
-//=============================================================================
-class gradients : public ::testing::Test {
-
-protected:
-
-  //---------------------------------------------------------------------------
-  // Types
-  //---------------------------------------------------------------------------
-  
-  //! \brief the mesh type
-  using mesh_t = flexi::burton_mesh_t;
-
-  //! \brief the real type
-  using real_t = mesh_t::real_t;
-
-  //! \brief a dimensional space vector
-  using vector_t = mesh_t::vector_t;
-
-  //! \brief the vertex type
-  using vertex_t = mesh_t::vertex_t;
-
-  //! \brief the cell type
-  using cell_t = mesh_t::cell_t;
-
-
-  //---------------------------------------------------------------------------
-  //! \brief the test setup function
-  //---------------------------------------------------------------------------
-  virtual void SetUp() {
-
-    // reserve storage for the mesh
-    mesh_.init_parameters((height+1)*(width+1));
-
-
-    // create the individual vertices
-    vector<vertex_t*> vs;
-    
-    for(size_t j = 0; j < height + 1; ++j){
-      for(size_t i = 0; i < width + 1; ++i){
-	auto v =
-	  mesh_.create_vertex({double(i)+ 0.1*pow(double(j),1.8), 1.5*double(j)});
-	v->set_rank(1);
-	vs.push_back(v);
-      }
-
-    }
-
-    // define each cell
-    size_t width1 = width + 1;
-
-    for(size_t j = 0; j < height; ++j){
-      for(size_t i = 0; i < width; ++i){
-	auto c = 
-	  mesh_.create_cell({vs[i + j * width1],
-		vs[i + 1 + j * width1],
-		vs[i + 1 + (j + 1) * width1],
-		vs[i + (j + 1) * width1]});
-      }
-    }
-
-    // now finalize the mesh setup
-    mesh_.init();
-  }
-
-  //---------------------------------------------------------------------------
-  //! \brief the test teardown function 
-  //---------------------------------------------------------------------------
-  virtual void TearDown() { }
-
-
-  //---------------------------------------------------------------------------
-  //! \brief Determine the cell-cell adjacency information
-  //!  
-  //! \param[out] cell_idx   The cell-cell adjacency starting index for each cell
-  //! \param[out] cell_neigh The cell-cell adjacency information
-  //---------------------------------------------------------------------------
-  
-  template < typename E >
-  decltype(auto) get_cell_neighbors( E cell ) {
-
-    vector<E> neighbors;
-
-    for ( auto e : mesh_.edges(cell) ) 
-      for ( auto neigh : mesh_.cells(e) ) 
-        if ( neigh != cell ) 
-          neighbors.push_back( neigh );
-      
-    return neighbors;
-  }
-
-  
-  //---------------------------------------------------------------------------
-  // Data members
-  //---------------------------------------------------------------------------
-
-  //! \brief the mesh object used for testing
-  mesh_t mesh_;
-
-  //! \brief number of vertices in width of domain
-  const size_t width = 10;
-  //! \brief number of vertices in height of domain
-  const size_t height = 20;
-
-  //! \brief some test tolerance
-  const real_t tol = 1e-12;
-
-};
-
+using ale::geom::centroid;
 
 //=============================================================================
 //! \brief Computation of simple cell centered gradients
 //!
 //! This test creates a simple flexi mesh, then computes gradients
 //=============================================================================
-TEST_F(gradients, simple_cell_centered) {
+TEST_F(Burton, gradients) {
 
   // get the number of cells in the mesh
   auto num_cells = mesh_.num_cells();
@@ -165,9 +58,8 @@ TEST_F(gradients, simple_cell_centered) {
 
   // loop over vertices and assign the field value
   for ( auto c : mesh_.cells() ) {
-    auto x = mesh_.centroid(c);
+    auto x = centroid(c);
     velocity[c] = x;
-    std::cout << velocity[c][0] << " " << velocity[c][1] << std::endl;
   }
 
   //---------------------------------------------------------------------------
@@ -195,7 +87,7 @@ TEST_F(gradients, simple_cell_centered) {
     // loop over each edge connected to v0
     for ( auto e : mesh_.edges(v0) ) {
       // get the edge points and select the other point
-      auto points = mesh_.vertices(e).toVec();
+      auto points = mesh_.vertices(e).to_vec();
       auto v1 = ( points[0] == v0 ? points[1] : points[0] );
       // get the state and coordinates
       auto u1 = const_pressure[v1];
@@ -235,7 +127,7 @@ TEST_F(gradients, simple_cell_centered) {
   for ( auto c0 : mesh_.cells() ) {
 
     // the the current point and state
-    auto x0 = mesh_.centroid(c0);
+    auto x0 = centroid(c0);
     auto u0 = const_velocity[c0];
 
     // get the neighbors
@@ -245,15 +137,15 @@ TEST_F(gradients, simple_cell_centered) {
     real_t dxdx = 0;
     real_t dxdy = 0;
     real_t dydy = 0;
-    decltype(u0) dudx = { 0, 0 };
-    decltype(u0) dudy = { 0, 0 };
+    decltype(u0) dudx = { 0., 0. };
+    decltype(u0) dudy = { 0., 0. };
 
     // loop over each edge connected to v0
     for ( auto c1 : neighbors ) {
 
       // get the state and coordinates
       auto u1 = const_velocity[c1];
-      auto x1 = mesh_.centroid(c1);
+      auto x1 = centroid(c1);
 
       // compute the terms necessary for gradients
       auto dx = x1[0]-x0[0];

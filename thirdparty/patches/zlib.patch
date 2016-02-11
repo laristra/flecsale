@@ -1,0 +1,11 @@
+--- config/cmake/ZLIB-config.cmake.install.in	2014-03-17 14:07:34.000000000 -0600
++++ config/cmake/ZLIB-config.cmake.install.in	2015-03-18 10:55:19.371717890 -0600
+@@ -9,7 +9,7 @@
+   GET_FILENAME_COMPONENT(_IMPORT_PREFIX "${_IMPORT_PREFIX}" PATH)
+ endif (NOT WIN32)
+ 
+-GET_FILENAME_COMPONENT (ZLIB_INCLUDE_DIRS "${_IMPORT_PREFIX}/include")
++GET_FILENAME_COMPONENT (ZLIB_INCLUDE_DIRS "${_IMPORT_PREFIX}/include" PATH)
+ 
+ #-----------------------------------------------------------------------------
+ # Version Strings

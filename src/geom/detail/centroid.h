@@ -10,24 +10,45 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file helper_types.h
+ * \file operators.h
  * 
- * \brief C++14 helper types.
+ * \brief Some helper functions for template foo magic.
  *
  ******************************************************************************/
 #pragma once
 
-
 namespace ale {
-namespace utils {
-
+namespace geom {
+namespace detail {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief an enable_if helper type
+// Template helper to compute centroids
 ////////////////////////////////////////////////////////////////////////////////
-template< bool B, class T = void >
-using enable_if_t = typename std::enable_if<B,T>::type;
 
+//! \brief average operator.
+template< class T, class U, class V >
+constexpr void centroid_2d( T & cx, U & vol, V && v )
+{ 
+  // nothing left to do
+}
+
+//! \brief average operator.
+template< class T, class U, class V1, class V2, class ... Args >
+constexpr void centroid_2d( T & cx, U & vol, V1 && v1, V2 && v2, Args&&... args )
+{ 
+  
+  auto tmp = v1[0]*v2[1] - v2[0]*v1[1];
+  cx[0] += ( v1[0] + v2[0] ) * tmp;
+  cx[1] += ( v1[1] + v2[1] ) * tmp;
+  vol += tmp;
+  centroid_2d( cx, 
+               vol, 
+               std::forward<V2>(v2), 
+               std::forward<Args>(args)... ); 
+}
+
+
+} // namespace
 } // namespace
 } // namespace
 

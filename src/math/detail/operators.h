@@ -10,50 +10,38 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file template_helpers.h
+ * \file operators.h
  * 
  * \brief Some helper functions for template foo magic.
  *
  ******************************************************************************/
 #pragma once
 
-// system includes
-#include <functional>
-
-// user includes
-#include "detail/template_helpers.h"
-
 namespace ale {
-namespace utils {
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief statically multiply arguments together
-////////////////////////////////////////////////////////////////////////////////
-template<typename... Args>
-constexpr auto multiply(Args... args) 
-{ return detail::multiply(args...); }
-
+namespace math {
+  namespace detail {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief a tie using constant references
+// Template helper to compute averages
 ////////////////////////////////////////////////////////////////////////////////
-template < typename T, typename... Ts >
-std::tuple<T&, const Ts&...> ctie( T& first, const Ts&... rest )
-{
-  return std::make_tuple( std::ref(first), std::cref(rest)... );
+
+//! \brief average operator.
+template< class T >
+constexpr void average( T & res )
+{ 
+  // nothing left to do
+}
+
+//! \brief average operator.
+template< class T, class U, class ... Args >
+constexpr void average( T & res, U && u, Args&&... args )
+{ 
+  res += u;
+  average(res, std::forward<Args>(args)...); 
 }
 
 
-////////////////////////////////////////////////////////////////////////////////
-//! \brief return an lvalue reference
-////////////////////////////////////////////////////////////////////////////////
-template<typename T>
-T &as_lvalue(T &&val) {
-  return val;
-}
-
+}  // namespace
 } // namespace
 } // namespace
 

@@ -3,22 +3,13 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-#set(hydro_HEADERS
-#  euler_eqns.h
-#  PARENT_SCOPE
-#)
-
-#set(hydro_SOURCES
-#  dummy.c
-#  PARENT_SCOPE
-#)
-
-
-cinch_add_unit(
-  hydro
-  SOURCES test/hydro.cc
-  LIBRARIES ${IO_LIBRARIES}
+set(std_HEADERS
+  memory.h
+  type_traits.h
+  PARENT_SCOPE
 )
+
+
 
 #----------------------------------------------------------------------------~-#
 # Formatting options for vim.

@@ -17,7 +17,7 @@
  ******************************************************************************/
 
 // flexi includes
-#include <flexi/specializations/burton/burton.h>
+#include <flecsi/specializations/burton/burton.h>
 
 // select the mesh
 using mesh_t = flexi::burton_mesh_t;

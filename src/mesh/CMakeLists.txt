@@ -1,24 +1,49 @@
 #~----------------------------------------------------------------------------~#
-# Copyright (c) 2014 Los Alamos National Security, LLC
-# All rights reserved.
+#  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
+# /@@/////  /@@          @@////@@ @@////// /@@
+# /@@       /@@  @@@@@  @@    // /@@       /@@
+# /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
+# /@@////   /@@/@@@@@@@/@@       ////////@@/@@
+# /@@       /@@/@@//// //@@    @@       /@@/@@
+# /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
+# //       ///  //////   //////  ////////  // 
+# 
+# Copyright (c) 2016 Los Alamos National Laboratory, LLC
+# All rights reserved
 #~----------------------------------------------------------------------------~#
 
-#set(mesh_HEADERS
-#  PARENT_SCOPE
-#)
+set(mesh_HEADERS
+  burton/burton_entity_types.h
+  burton/burton.h
+  burton/burton_io.h
+  burton/burton_io_exodus.h
+  burton/burton_mesh.h
+  burton/burton_mesh_traits.h
+  burton/burton_types.h
+  PARENT_SCOPE
+)
 
-#set(mesh_SOURCES
-#  PARENT_SCOPE
-#)
 
-#if (ENABLE_UNIT_TESTS)
-#  cinch_add_unit(
-#    gradients
-#    SOURCES test/gradients.cc
-#  )
-#endif()
+set(mesh_SOURCES
+  burton/burton_entity_types.cc
+  PARENT_SCOPE
+)
 
-#----------------------------------------------------------------------------~-#
-# Formatting options for vim.
+set( mesh_LIBS 
+  ${IO_LIBRARIES} 
+  flecsi 
+)
+
+cinch_add_unit(test_mesh
+    SOURCES 
+      burton/test/burton.cc
+      burton/test/burton_io.cc
+      burton/test/gradients.cc
+    LIBRARIES ${mesh_LIBS} ale
+)
+
+
+#~---------------------------------------------------------------------------~-#
+# Formatting options
 # vim: set tabstop=2 shiftwidth=2 expandtab :
-#----------------------------------------------------------------------------~-#
+#~---------------------------------------------------------------------------~-#

@@ -21,57 +21,13 @@
 #include <array>
 
 // user includes
+#include "ale/std/type_traits.h"
 #include "ale/utils/check_types.h"
 #include "ale/utils/template_helpers.h"
-#include "ale/utils/helper_types.h"
 #include "ale/utils/tuple_visit.h"
 
 namespace ale {
-
 namespace math {
-
-
-
-#if 0
-
-  struct layout_type {
-
-    struct detail {
-
-      template< std::size_t... Js,
-                typename I, typename... Is, 
-                typename D, typename... Ds, 
-                template<typename...> class Itup,
-                template<typename...> class Dtup >
-      static
-      constexpr std::size_t element( Itup<I, Is...> i, Dtup<D, Ds...> d,
-                                     std::index_sequence<Js...>) 
-      { 
-        detail::element( std::make_tuple( std::get<Js+1>(i)... ), 
-                         std::make_tuple( std::get<Js+1>(d)... ),
-                         std::make_index_sequence<sizeof...(Js)-1>() );
-        return 0;
-      }
-      
-    };
-    
-
-    template< typename... Is, 
-              typename... Ds, 
-              template<typename...> class Itup,
-              template<typename...> class Dtup >
-    static
-    constexpr std::size_t element( Itup<Is...> i, Dtup<Ds...> d ) 
-    { 
-      detail::element( i, 
-                       d,
-                       std::make_index_sequence<sizeof...(Ds)-1>() );
-      return 0;
-    }
-    
-  };
-
-#endif
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -131,26 +87,24 @@ public:
 
   //! \brief Constructor with initializer list
   //! \param[in] list the initializer list of values
-  template <
-    typename = typename std::enable_if< static_size /= 1 >::type
-  >
-  array(std::initializer_list<T> list) {
+  template < typename U >
+  array(std::initializer_list< typename std::enable_if_t<(static_size > 1), U> > list) {
     //std::cout << "array (list constructor)\n";
-    if ( list.size() == 1 )
-      assign(*list.begin());
-    else {
-      assert( list.size() == static_size  && " dimension size mismatch");
-      std::copy(list.begin(), list.end(), begin());
-    }
+    //if ( list.size() == 1 )
+    //  assign(*list.begin());
+    //else {
+    assert( list.size() == static_size  && " dimension size mismatch");
+    std::copy(list.begin(), list.end(), begin());
+    //}
   }
 
   //! \brief Constructor with initializer list
   //! \param[in] list the initializer list of values
   template <
     typename... Args,
-    typename = utils::enable_if_t< 
-      sizeof...(Args) == static_size &&
-      utils::are_type_t<T,Args...>::value 
+    typename = std::enable_if_t< 
+      ( sizeof...(Args) == static_size && 
+        utils::are_type_t<T,Args...>::value ) 
     >
   >
   array(Args&&... args) : elems_{ args... }
@@ -227,7 +181,7 @@ public:
 
   //! \brief return the ith element ( allows multiple dimensions )
   template <typename... Args>
-  utils::enable_if_t< sizeof...(Args) == sizeof...(N), reference >
+  std::enable_if_t< sizeof...(Args) == sizeof...(N), reference >
   operator()(Args... i) 
   { 
     assert_ranges( i... );
@@ -237,7 +191,7 @@ public:
 
 
   template <typename... Args>
-  utils::enable_if_t< sizeof...(Args) == sizeof...(N), const_reference >
+  std::enable_if_t< sizeof...(Args) == sizeof...(N), const_reference >
   operator()(Args... i) const
   { 
     assert_ranges( i... );
@@ -248,7 +202,7 @@ public:
 
   //! \brief at() with range check
   template< typename... Args >
-  utils::enable_if_t< sizeof...(Args) == sizeof...(N), reference >
+  std::enable_if_t< sizeof...(Args) == sizeof...(N), reference >
   at(Args... i) { 
     check_ranges(i...); 
     auto ind = layout_type::element( i..., N... );
@@ -256,7 +210,7 @@ public:
   }
 
   template< typename... Args >
-  utils::enable_if_t< sizeof...(Args) == sizeof...(N), const_reference >
+  std::enable_if_t< sizeof...(Args) == sizeof...(N), const_reference >
   at(Args... i) const 
   { 
     check_ranges(i...); 
@@ -331,7 +285,7 @@ public:
   //! \brief check range (may be private because it is static)
   template< typename... Args >
   static
-  utils::enable_if_t< sizeof...(Args) == sizeof...(N) >
+  std::enable_if_t< sizeof...(Args) == sizeof...(N) >
   check_ranges (Args... is) {
     utils::tuple_visit( 
                        [](auto i, auto dim) { 
@@ -345,7 +299,7 @@ public:
 
   template< typename... Args >
   static
-  utils::enable_if_t< sizeof...(Args) == sizeof...(N) >
+  std::enable_if_t< sizeof...(Args) == sizeof...(N) >
   assert_ranges ( Args... is ) 
   { 
     utils::tuple_visit( 

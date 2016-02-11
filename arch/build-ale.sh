@@ -1,37 +1,40 @@
+#!/bin/bash
 #~----------------------------------------------------------------------------~#
-# Copyright (c) 2014 Los Alamos National Security, LLC
-# All rights reserved.
+# placeholder
 #~----------------------------------------------------------------------------~#
 
-project(ale)
-
-
 #------------------------------------------------------------------------------#
-# Add subprojects
+# Get the path to the project from which this script was called
 #------------------------------------------------------------------------------#
 
-cinch_add_subproject("flecsi")
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+SRC_DIR=${SCRIPT_DIR}/..
 
 #------------------------------------------------------------------------------#
-# Set application directory
+# Check required environment variables
 #------------------------------------------------------------------------------#
 
-cinch_add_application_directory("examples")
+if [ -z "${TPL_INSTALL_PREFIX}" ] ; then
+  echo "You must set TPL_INSTALL_PREFIX in your environment"
+  exit 1
+fi
 
 #------------------------------------------------------------------------------#
-# Add library targets
+# Call CMake command
 #------------------------------------------------------------------------------#
 
-cinch_add_library_target(ale src)
+cmake \
+  -DENABLE_UNIT_TESTS=ON \
+  -DENABLE_JENKINS_OUTPUT=ON \
+  -DENABLE_IO=ON \
+  -DTPL_INSTALL_PREFIX=${TPL_INSTALL_PREFIX} \
+  $SRC_DIR
 
 #------------------------------------------------------------------------------#
-# Set header suffix regular expression
+# vim: syntax=sh
 #------------------------------------------------------------------------------#
-
-set(CINCH_HEADER_SUFFIXES "\\.h")
-
 
 #~---------------------------------------------------------------------------~-#
-# Formatting options for vim.
-# vim: set tabstop=2 shiftwidth=2 expandtab :
+# placeholder
 #~---------------------------------------------------------------------------~-#

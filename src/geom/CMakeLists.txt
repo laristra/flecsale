@@ -3,20 +3,13 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-#set(fem_HEADERS
-#  PARENT_SCOPE
-#)
+set(geom_HEADERS
+  centroid.h    detail/centroid.h
+  midpoint.h
+  PARENT_SCOPE
+)
 
-#set(fem_SOURCES
-#  PARENT_SCOPE
-#)
 
-#if (ENABLE_UNIT_TESTS)
-#  cinch_add_unit(
-#    gradients
-#    SOURCES test/gradients.cc
-#  )
-#endif()
 
 #----------------------------------------------------------------------------~-#
 # Formatting options for vim.

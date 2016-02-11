@@ -10,53 +10,50 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file template_helpers.h
+ * \file type_traits.h
  * 
- * \brief Some helper functions for template foo magic.
+ * \brief Extensions to C++11 that are part of C++14.
  *
  ******************************************************************************/
 #pragma once
 
-// system includes
-#include <functional>
+//! system includes
+#include <type_traits>
 
-// user includes
-#include "detail/template_helpers.h"
+#if __cplusplus == 201103L
 
-namespace ale {
-namespace utils {
+namespace std {
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief an enable_if helper type
+////////////////////////////////////////////////////////////////////////////////
+template< bool B, class T = void >
+using enable_if_t = typename enable_if<B,T>::type;
 
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief statically multiply arguments together
+//! \brief a remove_reference helper type
 ////////////////////////////////////////////////////////////////////////////////
-template<typename... Args>
-constexpr auto multiply(Args... args) 
-{ return detail::multiply(args...); }
+template< class T >
+using remove_reference_t = typename remove_reference<T>::type;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief a tie using constant references
+//! \brief a decay helper type
 ////////////////////////////////////////////////////////////////////////////////
-template < typename T, typename... Ts >
-std::tuple<T&, const Ts&...> ctie( T& first, const Ts&... rest )
-{
-  return std::make_tuple( std::ref(first), std::cref(rest)... );
-}
-
+template< class T >
+using decay_t = typename decay<T>::type;
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief return an lvalue reference
+//! \brief a is_pointer helper type
 ////////////////////////////////////////////////////////////////////////////////
-template<typename T>
-T &as_lvalue(T &&val) {
-  return val;
-}
+template< class T >
+using is_pointer_v = typename is_pointer<T>::value;
 
 } // namespace
-} // namespace
 
+#endif
 
 
 /*~------------------------------------------------------------------------~--*
