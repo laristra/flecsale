@@ -1,8 +1,3 @@
-# ALE - NGC Subproject
-
-
----
-
 # Summary
 
 This is a *hopefully* parallel unstructured solver infrastructure for
