@@ -67,9 +67,9 @@ executing the following commands:
     <ALE_DIR>/arch/<MACHINE>/cmake-ale.sh gcc
     make -j
 
-where **\<ALE_DIR\>** is the location of the cloned ALE git
-repository and **\<MACHINE\>** is the LANL machine you are using.
-Right now **\<MACHINE\>** can be one of **darwin** or **moonlight**.
+where `\<ALE_DIR\>` is the location of the cloned ALE git
+repository and `\<MACHINE\>` is the LANL machine you are using.
+Right now `\<MACHINE\>` can be one of **darwin** or **moonlight**.
 This command will use the gcc compilers to build the code.
 
 
@@ -96,7 +96,7 @@ If you already have the necessary libraries in a folder somewhere, you
 can skip this step.  For example, they have already been downloaded
 for you on the LANL machines described in the
 [Simple Installation](#simple) section.  The build system can also
-download them for you.  To download the files
+download them for you.  To download the files to `build/files`
 
     cd build/files
     TPL_DOWNLOAD_PATH=. <ALE_DIR>/arch/download-tpl.sh
@@ -110,7 +110,7 @@ Build them using the following commands:
     TPL_INSTALL_PREFIX=./install TPL_DOWNLOAD_PATH=../files <ALE_DIR>/arch/<MACHINE>/cmake-tpl.sh gcc
     make -j
     
-You do not need to provide ```TPL_DOWNLOAD_PATH=../files``` if you skipped
+You do not need to provide `TPL_DOWNLOAD_PATH=../files` if you skipped
 the previous step in the advanced installation process.
 
 
@@ -132,3 +132,24 @@ ALE source using the make command:
 
 # Code Structure
 
+```
+project
+├───arch
+│   *CMake configuration scripts.*
+│
+├───config
+│   *Cinch configuration files.*
+│
+├───doc
+│   *Project documention.*
+│
+├───examples
+│   *Example full applications that utilize the fullALE/FlecSI
+│   library (not completed yet!).* 
+│
+├───src
+│   *The main ALE project source code to construct the ALE library.*
+│
+└───thirdparty
+    *CMake configuration scripts for building the thirdparty libraries.*
+```
