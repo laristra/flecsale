@@ -102,7 +102,7 @@ Build them using the following commands:
     TPL_INSTALL_PREFIX=./install TPL_DOWNLOAD_PATH=../files <ALE_DIR>/arch/<MACHINE>/cmake-tpl.sh gcc
     make -j
     
-You do not need to provide *TPL_DOWNLOAD_PATH=../files* if you skipped
+You do not need to provide ```TPL_DOWNLOAD_PATH=../files``` if you skipped
 the previous step in the advanced installation process.
 
 ## 2. Build the ALE Project
