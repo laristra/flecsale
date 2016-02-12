@@ -34,74 +34,88 @@ dependants. The library dependency graph is as follows:
             - [HDF5](https://www.hdfgroup.org/HDF5/) - A data model and
               file format
 
-# Installation
+# Getting the ALE Project Source
 This project uses [Git](https://git-scm.com/) for revision control and
 distribution, and [CMake](https://cmake.org/) for build configuration.
 Below are some general instructions for obtaining and building ALE.
-
-First, make sure that [CMake](https://cmake.org/) and
-[Git](https://git-scm.com/) are available on your system.  Typing
- 
-    which cmake git 
-   
-should correctly locate the two programs and return something like
-
-    /usr/bin/cmake
-    /usr/bin/git
-
-If it does not, and you get something like *"which: no git in
-(...)"*, try loading the necessary modules.  On most machines, the
-modules are loaded using
-
-    module load cmake git
 
 To clone the repository, type
 
     git clone --recursive ssh://git@xcp-stash.lanl.gov:7999/ngc/ale.git
     
 **Make sure to include the *"\-\-recursive"* so that all of the
-submodules are cloned as well.**  Once the code is checked out,
-create two seperate build directories; one for the thirdparty libraries and
-one for the ALE code:
+submodules are cloned as well.** 
 
+# <a name="simple"></a> Simple Installation
+
+
+To make building the code simpler, the thirdparty libraries have
+already been downloaded and installed for you on some LANL machines.
+Currently the simple installation process is avaliable on
+[darwin](darwin.lanl.gov) and moonlight. All you need to do is
+compiler the ALE source.  Fist, create a build directory somewhere, run the
+cmake configure script, then make the code.  This is performed by
+executing the following commands:
+
+    mkdir build
+    cd build
+    <ALE_DIR>/arch/<MACHINE>/cmake-ale.sh gcc
+    make -j
+
+where **\<ALE_DIR\>** is the location of the cloned ALE git
+repository and **\<MACHINE\>** is the LANL machine you are using.
+Right now **\<MACHINE\>** can be one of **darwin** or **moonlight**.
+This command will use the gcc compilers to build the code.
+
+
+# Advanced Installation
+
+The advanced installation lets users build they're own thirdparty
+libraries if they want.  This is a three step process:  1) downloading
+the thirdparty libraries; 2) building the thirdparty
+libraries; and 3) compiling the final ALE project.  To start,
+create seperate build directories as follows:
+
+    mkdir build
+    mkdir -p build/files
     mkdir -p build/tpl
     mkdir -p build/ale
     ls build
-    $ ale tpl
-    
-Building the code is a two step process:  1) building the thirdparty
-libraries and 2) compiling the final ALE project.
+    $ ale files tpl 
 
-## 1. Build the Thirdparty Libraries
-The thirdparty libraries have already been downloaded for you on most
-machines.  To build the thirdparty libraries, you need a C and C++
-compiler installed.  You might have to load the necessary modules
 
-    module load gcc/5.3.0
+## 1. Obtaining the Thirdparty Libraries (optional)
+If you already have the necessary libraries in a folder somewhere, you
+can skip this step.  For example, they have already been downloaded
+for you on the LANL machines described in the
+[Simple Installation](#simple) section.  The build system can also
+download them for you.  To download the files
 
-Make a directory for the thirdparty libraries in **build** and compile
-the libraries.  The following commad will build and install them in a
-folder **build/tpl/install**:
+    cd build/files
+    TPL_DOWNLOAD_PATH=. <ALE_DIR>/arch/download-tpl.sh
 
-    cd build/tpl
-    CC=gcc CXX=g++ TPL_INSTALL_PREFIX=./install <ALE_DIR>/arch/cmake-tpl.sh
+## 2. Build the Thirdparty Libraries
+
+Build them using the following commands: 
+
+    cd ../tpl
+    TPL_INSTALL_PREFIX=./install TPL_DOWNLOAD_PATH=../files <ALE_DIR>/arch/<MACHINE>/cmake-tpl.sh gcc
     make -j
     
-where **\<ALE_DIR\>** is the location of the cloned ALE git repository.
-
+You do not need to provide *TPL_DOWNLOAD_PATH=../files* if you skipped
+the previous step in the advanced installation process.
 
 ## 2. Build the ALE Project
 
-Now build the final ALE project.  Go into the **build/ale** directory
-we created, run cmake, then make the code.  Execute the following:
+Now build the final ALE project.  Execute the following:
 
     cd ../ale
-    CC=gcc CXX=g++ TPL_INSTALL_PREFIX=../tpl/install <ALE_DIR>/arch/cmake-ale.sh
+    TPL_INSTALL_PREFIX=../tpl/install <ALE_DIR>/arch/<MACHINE>/cmake-ale.sh gcc
     make -j
     
 You do not have to rebuild the thirdparty libraries if you make
 changes to the ALE source code in **\<ALE_DIR\>**.  Simply recompile the
-ALE source using the following:
+ALE source using the make command:
 
     cd build/ale
     make -j
