@@ -97,7 +97,7 @@ we created, run cmake, then make the code.  Execute the following:
     make -j
     
 You do not have to rebuild the thirdparty libraries if you make
-changes to the ALE source code in **<ALE_DIR>**.  Simply recompile the
+changes to the ALE source code in **\<ALE_DIR\>**.  Simply recompile the
 ALE source using the following:
 
     cd build/ale
