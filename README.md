@@ -49,7 +49,7 @@ should correctly locate the two programs and return something like
     /usr/bin/cmake
     /usr/bin/git
 
-If it does not, and you get something like *"which: no gits in
+If it does not, and you get something like *"which: no git in
 (...)"*, try loading the necessary modules.  On most machines, the
 modules are loaded using
 
@@ -86,6 +86,9 @@ folder **build/tpl/install**:
     cd build/tpl
     CC=gcc CXX=g++ TPL_INSTALL_PREFIX=./install <ALE_DIR>/arch/cmake-tpl.sh
     make -j
+    
+where **\<ALE_DIR\>** is the location of the cloned ALE git repository.
+
 
 ## 2. Build the ALE Project
 
