@@ -22,7 +22,8 @@ if [ -z "${TPL_INSTALL_PREFIX}" ] ; then
 fi
 
 if [ -z "${TPL_DOWNLOAD_PATH}" ] ; then
-  TPL_DOWNLOAD_PATH=${TPL_DIR}/files
+  #TPL_DOWNLOAD_PATH=${TPL_DIR}/files
+  TPL_DOWNLOAD_PATH=/usr/projects/ngc/public/tpl-downloads/ale
   echo "TPL_DOWNLOAD_PATH not set, using ${TPL_DOWNLOAD_PATH}"
   echo "To change, set TPL_DOWNLOAD_PATH in your environment"
 fi
