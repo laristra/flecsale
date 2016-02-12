@@ -15,24 +15,18 @@ of the required thirdparty libraries and their respective
 dependants. The library dependency graph is as follows:
 
 - [Cinch](https://github.com/losalamos/cinch) - A set of utilities and
-configuration options to simplify [CMake](https://cmake.org/)
-configuration.
-
+  configuration options to simplify [CMake](https://cmake.org/)
+  configuration.
 - [FleCSI](https://github.com/flecsi/flecsi) - For mesh/state and
-  execution control.
-
+  execution control. 
     - [METIS](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview) -
       A graph partitioner
-
     - [Scotch](https://www.labri.fr/perso/pelegrin/scotch/) - A graph
       partitioner
-
     - [ExodusII](https://sourceforge.net/projects/exodusii/) - A
       finite-element data file format
-
         - [NetCDF](http://www.unidata.ucar.edu/software/netcdf/) -
           Provides machine-independant file formats
-
             - [HDF5](https://www.hdfgroup.org/HDF5/) - A data model and
               file format
 
