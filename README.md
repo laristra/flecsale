@@ -130,12 +130,15 @@ ALE source using the make command:
     make -j
 
 
+
 # Code Structure
 
+The directory structure is layed out as follows:
+
 ```
-project
+root
 ├───arch
-│   *CMake configuration scripts.*
+│   *CMake configuration scripts for the overall project.*
 │
 ├───config
 │   *Cinch configuration files.*
@@ -144,8 +147,7 @@ project
 │   *Project documention.*
 │
 ├───examples
-│   *Example full applications that utilize the fullALE/FlecSI
-│   library (not completed yet!).* 
+│   *Example full applications that utilize the fullALE/FlecSI library (not completed yet!).* 
 │
 ├───src
 │   *The main ALE project source code to construct the ALE library.*
@@ -153,3 +155,6 @@ project
 └───thirdparty
     *CMake configuration scripts for building the thirdparty libraries.*
 ```
+
+Right now most new developpers should focus on building tests in the
+`src` directory to excersize different functionality.
