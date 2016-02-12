@@ -33,8 +33,8 @@ dependants. The library dependency graph is as follows:
     - [NetCDF](http://www.unidata.ucar.edu/software/netcdf/) -
       Provides machine-independant file formats
 
-    - [HDF5](https://www.hdfgroup.org/HDF5/) - A data model and file
-      format
+            - [HDF5](https://www.hdfgroup.org/HDF5/) - A data model and file
+            format
 
 # Installation
 This project uses [Git](https://git-scm.com/) for revision control and
