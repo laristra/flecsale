@@ -51,7 +51,7 @@ TEST(eos, ideal_gas) {
 
   constexpr size_t n = 2;
   
-  constexpr auto rt_two = std::sqrt( 2.0 );
+  const auto rt_two = std::sqrt( 2.0 );
 
   vector<real_t> e(n), ss(n), t(n);
 

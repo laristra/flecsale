@@ -30,8 +30,8 @@ namespace detail {
 ////////////////////////////////////////////////////////////////////////////////
 struct row_major_layout {
   static constexpr 
-  auto element( auto i, auto j, 
-                auto /* size_i */, auto size_j ) noexcept
+  auto element( size_t i, size_t j, 
+                size_t /* size_i */, size_t size_j ) noexcept
   { return i * size_j + j; }   
 };
 
@@ -41,8 +41,8 @@ struct row_major_layout {
 ////////////////////////////////////////////////////////////////////////////////
 struct column_major_layout {
   static constexpr 
-  auto element( auto i, auto j, 
-                auto size_i, auto /* size_j */ ) noexcept
+  auto element( size_t i, size_t j, 
+                size_t size_i, size_t /* size_j */ ) noexcept
   { return j * size_i + i; }   
 };
 

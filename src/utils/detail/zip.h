@@ -19,6 +19,9 @@
  ******************************************************************************/
 #pragma once
 
+//! user includes
+#include "ale/std/type_traits.h"
+
 namespace ale {
 namespace utils {
 namespace detail {
@@ -96,8 +99,9 @@ bool not_equal_tuples( const std::tuple<T1>& t1,  const std::tuple<T1>& t2 )
 }
 
 template<typename T1, typename... Ts>
-bool not_equal_tuples( const std::tuple<T1, Ts...>& t1,  
-                       const std::tuple<T1, Ts...>& t2 )
+std::enable_if_t<(sizeof...(Ts) > 0), bool> not_equal_tuples( 
+    const std::tuple<T1, Ts...>& t1,  
+    const std::tuple<T1, Ts...>& t2 )
 {
   return 
     (std::get<0>(t1) != std::get<0>(t2)) && 
@@ -114,8 +118,9 @@ bool equal_tuples( const std::tuple<T1>& t1,  const std::tuple<T1>& t2 )
 }
 
 template<typename T1, typename... Ts>
-bool equal_tuples( const std::tuple<T1, Ts...>& t1,  
-                   const std::tuple<T1, Ts...>& t2 )
+std::enable_if_t<(sizeof...(Ts) > 0), bool> equal_tuples( 
+    const std::tuple<T1, Ts...>& t1,  
+    const std::tuple<T1, Ts...>& t2 )
 {
   return 
     (std::get<0>(t1) == std::get<0>(t2)) && 

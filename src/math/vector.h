@@ -29,7 +29,7 @@ namespace detail {
 //!  \brief 1d layout
 ////////////////////////////////////////////////////////////////////////////////
 struct vector_layout {
-  static constexpr auto element( auto i, auto  /* D */ ) noexcept
+  static constexpr auto element( size_t i, size_t  /* D */ ) noexcept
   { return i; }   
 };
 

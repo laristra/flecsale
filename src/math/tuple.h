@@ -45,8 +45,8 @@ using std::get;
 
 //! \brief Constructor with one value.
 //! \param[in] val The value to set the array to
-template < typename... Types >
-void fill( tuple<Types...> & t, const auto& val ) 
+template < typename... Types, typename U >
+void fill( tuple<Types...> & t, const U & val ) 
 { 
   //std::cout << "tuple (single value constructor)\n";
   using std::fill;  // enable ADL
@@ -70,8 +70,8 @@ void plus_equal( tuple<Types...>& lhs, const tuple<Types...>& rhs )
                          } );                        
 }
 
-template <typename... Types>
-void plus_equal( tuple<Types...>& lhs, const auto & rhs )
+template <typename... Types, typename U>
+void plus_equal( tuple<Types...>& lhs, const U & rhs )
 {
   utils::tuple_for_each( lhs,
                          [&](auto & tup) { 
@@ -97,8 +97,8 @@ auto operator+( const tuple<Types...>& lhs,
   return tmp;
 }
 
-template <typename... Types>
-auto operator+( const tuple<Types...>& lhs, const auto & rhs )
+template <typename... Types, typename U>
+auto operator+( const tuple<Types...>& lhs, const U & rhs )
 {
   tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
@@ -109,8 +109,8 @@ auto operator+( const tuple<Types...>& lhs, const auto & rhs )
   return tmp;
 }
 
-template <typename... Types>
-auto operator+( const auto & lhs, const tuple<Types...>& rhs )
+template <typename... Types, typename U>
+auto operator+( const U & lhs, const tuple<Types...>& rhs )
 {
   tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
@@ -136,8 +136,8 @@ void minus_equal( tuple<Types...>& lhs, const tuple<Types...>& rhs )
                          } );                        
 }
 
-template <typename... Types>
-void minus_equal( tuple<Types...>& lhs, const auto & rhs )
+template <typename... Types, typename U>
+void minus_equal( tuple<Types...>& lhs, const U & rhs )
 {
   utils::tuple_for_each( lhs,
                          [&](auto & tup) { 
@@ -162,8 +162,8 @@ auto operator-( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
   return tmp;
 }
 
-template <typename... Types>
-auto operator-( const tuple<Types...>& lhs, const auto & rhs )
+template <typename... Types, typename U>
+auto operator-( const tuple<Types...>& lhs, const U & rhs )
 {
   tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
@@ -174,8 +174,8 @@ auto operator-( const tuple<Types...>& lhs, const auto & rhs )
   return tmp;
 }
 
-template <typename... Types>
-auto operator-( const auto & lhs, const tuple<Types...>& rhs )
+template <typename... Types, typename U>
+auto operator-( const U & lhs, const tuple<Types...>& rhs )
 {
   tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
@@ -200,8 +200,8 @@ void multiplies_equal( tuple<Types...>& lhs, const tuple<Types...>& rhs )
                          } );                        
 }
 
-template <typename... Types>
-void multiplies_equal( tuple<Types...>& lhs, const auto & rhs )
+template <typename... Types, typename U>
+void multiplies_equal( tuple<Types...>& lhs, const U & rhs )
 {
   utils::tuple_for_each( lhs,
                          [&](auto & tup) { 
@@ -226,8 +226,8 @@ auto operator*( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
   return tmp;
 }
 
-template <typename... Types>
-auto operator*( const tuple<Types...>& lhs, const auto & rhs )
+template <typename... Types, typename U>
+auto operator*( const tuple<Types...>& lhs, const U & rhs )
 {
   tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
@@ -238,8 +238,8 @@ auto operator*( const tuple<Types...>& lhs, const auto & rhs )
   return tmp;
 }
 
-template <typename... Types>
-auto operator*( const auto & lhs, const tuple<Types...>& rhs )
+template <typename... Types, typename U>
+auto operator*( const U & lhs, const tuple<Types...>& rhs )
 {
   tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
@@ -267,8 +267,8 @@ void divides_equal( tuple<Types...>& lhs, const tuple<Types...>& rhs )
                          } );                        
 }
 
-template <typename... Types>
-void divides_equal( tuple<Types...>& lhs, const auto & rhs )
+template <typename... Types, typename U>
+void divides_equal( tuple<Types...>& lhs, const U & rhs )
 {
   utils::tuple_for_each( lhs,
                          [&](auto & tup) { 
@@ -293,8 +293,8 @@ auto operator/( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
   return tmp;
 }
 
-template <typename... Types>
-auto operator/( const tuple<Types...>& lhs, const auto & rhs )
+template <typename... Types, typename U>
+auto operator/( const tuple<Types...>& lhs, const U & rhs )
 {
   tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
@@ -305,8 +305,8 @@ auto operator/( const tuple<Types...>& lhs, const auto & rhs )
   return tmp;
 }
 
-template <typename... Types>
-auto operator/( const auto & lhs, const tuple<Types...>& rhs )
+template <typename... Types, typename U>
+auto operator/( const U & lhs, const tuple<Types...>& rhs )
 {
   tuple<Types...> tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),

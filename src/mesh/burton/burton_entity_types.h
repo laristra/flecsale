@@ -28,13 +28,21 @@ namespace mesh {
 
 //! the flecsi mesh topology type
 using flecsi::mesh_topology_t;
-
+//! the flecsi mesh topology type
+using mesh_topology_base_t = flecsi::mesh_topology_base_t;
 
 //! the flexi domain type
 using flecsi::domain_;
-
 //! the flexi domain entity type
 using flecsi::domain_entity;
+//! the flecsi entity group
+using flecsi::entity_group;
+
+
+//! some flexi flags
+using flecsi::persistent;
+using flecsi::flecsi_internal;
+using flecsi::flecsi_user_space;
 
 // some flecsi types
 using flecsi::id_t;
@@ -59,7 +67,7 @@ class burton_vertex_t
   : public flecsi::mesh_entity_t<0, burton_mesh_traits_t::num_domains>
 {
 public:
-
+  
   //! Type containing coordinates of the vertex.
   using point_t = burton_mesh_traits_t::point_t;
 
@@ -70,16 +78,16 @@ public:
   static constexpr size_t num_domains = burton_mesh_traits_t::num_domains;
 
   //! Constructor
-  burton_vertex_t(state_t & state)
-      : state_(state) {}
+  burton_vertex_t(state_t & state) : state_(state) {}
 
   /*!
     \brief Set the coordinates for a vertex.
 
     \param[in] coordinates Coordinates value to set for vertex.
    */
-  void set_coordinates(const point_t &coordinates) {
-    auto c = state_.accessor<point_t, flecsi::flecsi_internal>("coordinates");
+  void set_coordinates(const point_t & coordinates)
+  {
+    auto c = state_.dense_accessor<point_t, flecsi_internal>("coordinates");
     c[mesh_entity_base_t<num_domains>::template id<0>()] = coordinates;
   } // set_coordinates
 
@@ -87,8 +95,10 @@ public:
     \brief Get the coordinates at a vertex from the state handle.
     \return coordinates of vertex.
    */
-  const point_t & coordinates() const {
-    const auto c = state_.accessor<point_t, flecsi::flecsi_internal>("coordinates");
+  const point_t & coordinates() const
+  {
+    const auto c =
+        state_.dense_accessor<point_t, flecsi_internal>("coordinates");
     return c[mesh_entity_base_t<num_domains>::template id<0>()];
   } // coordinates
 
@@ -112,9 +122,6 @@ private:
 struct burton_edge_t
   : public flecsi::mesh_entity_t<1, burton_mesh_traits_t::num_domains> {
   
-  //! the flecsi mesh topology type
-  using mesh_topology_base_t = flecsi::mesh_topology_base_t;
-
   //! Type containing coordinates of the vertex.
   using point_t = burton_mesh_traits_t::point_t;
 
@@ -143,9 +150,6 @@ struct burton_cell_t
   : public flecsi::mesh_entity_t<2, burton_mesh_traits_t::num_domains> {
 
 
-  //! the flecsi mesh topology type
-  using mesh_topology_base_t = flecsi::mesh_topology_base_t;
-
   //! Type containing coordinates of the vertex.
   using point_t = burton_mesh_traits_t::point_t;
 
@@ -172,9 +176,9 @@ struct burton_cell_t
     \return A pair with a) the number of vertex collections making up the
       entity and b) the number of vertices per collection.
    */
-  virtual std::pair<size_t, id_vector_t> 
+  virtual id_vector_t
     create_entities( size_t dim, 
-                     id_vector_t &e, 
+                     id_t * e, 
                      id_t * v, 
                      size_t vertex_count) = 0;
 
@@ -190,12 +194,12 @@ struct burton_cell_t
     \return A pair with a) the number of entity collections making up the
       binding and b) the number of entities per collection.
    */
-  virtual std::pair<size_t, id_vector_t> 
+  virtual id_vector_t
     create_bound_entities( size_t from_domain, 
                            size_t to_domain,
                            size_t dim, 
-                           id_t **ent_ids,
-                           id_vector_t & c) = 0;
+                           id_t ** ent_ids,
+                           id_t * c) = 0;
 
 }; // class burton_cell_t
 
@@ -212,9 +216,6 @@ class burton_quadrilateral_cell_t : public burton_cell_t
 {
 public:
 
-  //! the flecsi mesh topology type
-  using mesh_topology_base_t = flecsi::mesh_topology_base_t;
-
   burton_quadrilateral_cell_t(mesh_topology_base_t & mesh)
     : mesh_(mesh) {}
  
@@ -223,15 +224,12 @@ public:
   /*!
     \brief create_entities function for burton_quadrilateral_cell_t.
    */
-  std::pair<size_t, id_vector_t> 
+  id_vector_t 
     create_entities( size_t dim, 
-                     id_vector_t & e, 
+                     id_t * e, 
                      id_t * v, 
                      size_t vertex_count) override 
   {
-    
-    e.resize(8);
-
     e[0] = v[0];
     e[1] = v[1];
 
@@ -244,50 +242,44 @@ public:
     e[6] = v[3];
     e[7] = v[0];
 
-    return {4, {2, 2, 2, 2}};
+    return {2, 2, 2, 2};
   } // create_entities
   
   /*!
     \brief create_bound_entities function for burton_quadrilateral_cell_t.
    */
-  std::pair<size_t, id_vector_t> 
+  id_vector_t
   create_bound_entities( size_t from_domain, 
                          size_t to_domain, 
                          size_t dim,
                          id_t **ent_ids, 
-                         id_vector_t & c) override 
+                         id_t * c) override 
   {
 
     switch(dim) {
       // Corners
       case 1:
-        c.resize(16);
-
         // corner 0
         c[0] = ent_ids[0][0]; // vertex 0
         c[1] = ent_ids[1][0]; // edge 0
         c[2] = ent_ids[1][3]; // edge 3
-        c[3] = ent_ids[2][0]; // cell
 
         // corner 1
         c[4] = ent_ids[0][1]; // vertex 1
         c[5] = ent_ids[1][0]; // edge 0
         c[6] = ent_ids[1][1]; // edge 1
-        c[7] = ent_ids[2][0]; // cell
 
         // corner 2
         c[8] = ent_ids[0][2]; // vertex 2
         c[9] = ent_ids[1][1]; // edge 1
         c[10] = ent_ids[1][2]; // edge 2
-        c[11] = ent_ids[2][0]; // cell
 
         // corner 3
         c[12] = ent_ids[0][3]; // vertex 3
         c[13] = ent_ids[1][2]; // edge 2
         c[14] = ent_ids[1][3]; // edge 3
-        c[15] = ent_ids[2][0]; // cell
 
-        return {4, {4, 4, 4, 4}};
+        return {4, 4, 4, 4};
 
 #if 0 // Wedges are currently only referenced through corners
       // so this logic is unused for the time being...
@@ -328,7 +320,7 @@ public:
         c[14] = ent_ids[3]; // vertex 3
         c[15] = ent_ids[7]; // edge 3
 
-        return {8, {2, 2, 2, 2, 2, 2, 2, 2}};
+        return {2, 2, 2, 2, 2, 2, 2, 2};
 #endif
 
       default:
@@ -403,13 +395,6 @@ class burton_corner_t
   : public flecsi::mesh_entity_t<1, burton_mesh_traits_t::num_domains>
 {
 public:
-
-  //! the flecsi mesh topology type
-  using mesh_topology_base_t = flecsi::mesh_topology_base_t;
-
-  //! the flecsi entity group
-  template <typename T>
-  using entity_group = flecsi::entity_group<T>;
 
   burton_corner_t(mesh_topology_base_t & mesh)
     : mesh_(mesh) {}

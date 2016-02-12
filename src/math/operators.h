@@ -73,7 +73,7 @@ std::enable_if_t<
   utils::are_type_t<T,Types...>::value, std::decay_t<T> >
 average( T && t, Types&&... args )
 { 
-  auto res{ t }; // first one
+  auto res( t ); // first one
   detail::average(res, std::forward<Types>(args)...); // sum the rest
   res /=  ( sizeof...(args) + 1 ); // divide by number
   return res;
