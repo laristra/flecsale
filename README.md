@@ -61,8 +61,8 @@ To clone the repository, type
     
 **Make sure to include the *"\-\-recursive"* so that all of the
 submodules are cloned as well.**  Once the code is checked out,
-create a build directory somewhere for the thirdparty libraries and
-the ALE code
+create two seperate build directories; one for the thirdparty libraries and
+one for the ALE code:
 
     mkdir -p build/tpl
     mkdir -p build/ale
