@@ -10,6 +10,7 @@ nodes. The code is built upon
 [FleCSI](https://github.com/flecsi/flecsi), an open source general
 purpose set of tools for execution and state control.
 
+---
 
 # Thirdparty Libraries
 
@@ -38,6 +39,8 @@ dependants. The library dependency graph is as follows:
               file format
 
 
+---
+
 # Getting the ALE Project Source
 
 This project uses [Git](https://git-scm.com/) for revision control and
@@ -51,6 +54,8 @@ To clone the repository, type
 **Make sure to include the *"\-\-recursive"* so that all of the
 submodules are cloned as well.** 
 
+
+---
 
 # <a name="simple"></a> Simple Installation
 
@@ -72,6 +77,8 @@ repository and `\<MACHINE\>` is the LANL machine you are using.
 Right now `\<MACHINE\>` can be one of **darwin** or **moonlight**.
 This command will use the gcc compilers to build the code.
 
+
+---
 
 # Advanced Installation
 
@@ -98,7 +105,7 @@ for you on the LANL machines described in the
 [Simple Installation](#simple) section.  The build system can also
 download them for you.  To download the files to `build/files`
 
-    cd build/files
+    cd build/files
     TPL_DOWNLOAD_PATH=. <ALE_DIR>/arch/download-tpl.sh
 
 
@@ -130,6 +137,8 @@ ALE source using the make command:
     make -j
 
 
+
+---
 
 # Code Structure
 
