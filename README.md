@@ -21,20 +21,20 @@ dependants. The library dependency graph is as follows:
 - [FleCSI](https://github.com/flecsi/flecsi) - For mesh/state and
   execution control.
 
-  - [METIS](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview) - A
-    graph partitioner
+    - [METIS](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview) - A
+      graph partitioner
 
-  - [Scotch](https://www.labri.fr/perso/pelegrin/scotch/) - A graph
-    partitioner
+    - [Scotch](https://www.labri.fr/perso/pelegrin/scotch/) - A graph
+      partitioner
 
-  - [ExodusII](https://sourceforge.net/projects/exodusii/) - A
-    finite-element data file format
+    - [ExodusII](https://sourceforge.net/projects/exodusii/) - A
+      finite-element data file format
 
-  - [NetCDF](http://www.unidata.ucar.edu/software/netcdf/) -
+    - [NetCDF](http://www.unidata.ucar.edu/software/netcdf/) -
       Provides machine-independant file formats
 
-    - [HDF5](https://www.hdfgroup.org/HDF5/) - A data model and file
-        format
+        - [HDF5](https://www.hdfgroup.org/HDF5/) - A data model and file
+          format
 
 # Installation
 This project uses [Git](https://git-scm.com/) for revision control and
@@ -69,7 +69,7 @@ the ALE code
     mkdir -p build/tpl
     mkdir -p build/ale
     ls build
-    >> ale tpl
+    $ ale tpl
     
 Building the code is a two step process:  1) building the thirdparty
 libraries and 2) compiling the final ALE project.
@@ -91,12 +91,19 @@ folder **build/tpl/install**:
 
 ## 2. Build the ALE Project
 
-Now 
+Now build the final ALE project.  Go into the **build/ale** directory
+we created, run cmake, then make the code.  Execute the following:
 
     cd ../ale
-    CC=gcc CXX=g++ TPL_INSTALL_PREFIX=../tpl/install <ALE_DIR>/arch/cmake-tpl.sh
+    CC=gcc CXX=g++ TPL_INSTALL_PREFIX=../tpl/install <ALE_DIR>/arch/cmake-ale.sh
     make -j
+    
+You do not have to rebuild the thirdparty libraries if you make
+changes to the ALE source code in **<ALE_DIR>**.  Simply recompile the
+ALE source using the following:
 
+    cd build/ale
+    make -j
 
 # Code Structure
 
