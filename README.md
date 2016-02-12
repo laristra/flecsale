@@ -30,11 +30,11 @@ configuration.
     - [ExodusII](https://sourceforge.net/projects/exodusii/) - A
       finite-element data file format
 
-    - [NetCDF](http://www.unidata.ucar.edu/software/netcdf/) -
-      Provides machine-independant file formats
+        - [NetCDF](http://www.unidata.ucar.edu/software/netcdf/) -
+          Provides machine-independant file formats
 
-        - [HDF5](https://www.hdfgroup.org/HDF5/) - A data model and
-          file format
+            - [HDF5](https://www.hdfgroup.org/HDF5/) - A data model and
+              file format
 
 # Installation
 This project uses [Git](https://git-scm.com/) for revision control and
