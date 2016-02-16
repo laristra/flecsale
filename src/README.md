@@ -3,13 +3,14 @@
 This is where the main ALE library functionallity is developped.  The
 end result of the code whithin this folder is a library,
 **libale.a**, that users can link against in order to create actual
-applications.  That is, there is no `main` function defined anywhere within
+applications.  There is no `main` function defined anywhere within
 this directory.
 
 Developpers should create and test their functionality here.  A sample
 sub-package is provided for instructional purposes in `dummy`.
-Developpers should familiarize themselves with the **cinch** build
-system and Google's C++ testing framework
+Developpers should familiarize themselves with the
+[Cinch](https://github.com/losalamos/cinch) build system and Google's
+C++ testing framework
 [gtest](https://github.com/google/googletest/blob/master/googletest/docs/Primer.md).
 
 Some key points to remember, all code within `src` is protected within

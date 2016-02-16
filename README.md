@@ -102,7 +102,7 @@ for you on the LANL machines described in the
 [Simple Installation](#simple) section.  The build system can also
 download them for you.  To download the files to `build/files`
 
-    cd build/files
+    cd build/files
     TPL_DOWNLOAD_PATH=. <ALE_DIR>/arch/download-tpl.sh
 
 
@@ -127,7 +127,7 @@ Now build the final ALE project.  Execute the following:
     make -j
     
 You do not have to rebuild the thirdparty libraries if you make
-changes to the ALE source code in **\<ALE_DIR\>**.  Simply recompile the
+changes to the ALE source code in `<ALE_DIR>`.  Simply recompile the
 ALE source using the make command:
 
     cd build/ale
