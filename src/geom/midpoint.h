@@ -39,7 +39,7 @@ template< class T >
 constexpr
 auto midpoint( T && t )
 { 
-  return std::forward<T>(t).midpoint();
+  return std::forward<T>(t)->midpoint();
 }
 
 

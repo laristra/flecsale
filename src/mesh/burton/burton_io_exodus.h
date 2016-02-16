@@ -11,6 +11,11 @@
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
+/*!
+ * \file io_exodus.h
+ * \authors wohlbier
+ * \date Initial file creation: Oct 07, 2015
+ */
 
 #pragma once
 
@@ -25,11 +30,6 @@
 #include "flecsi/io/io_exodus.h"
 #include "ale/mesh/burton/burton_mesh.h"
 
-/*!
- * \file io_exodus.h
- * \authors wohlbier
- * \date Initial file creation: Oct 07, 2015
- */
 
 namespace flecsi {
 

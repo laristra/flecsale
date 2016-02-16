@@ -10,7 +10,7 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file vector.h
+ * \file array.h
  * 
  * \brief Provides a dimensioned array which functions as a vector.
  *
@@ -18,7 +18,9 @@
 #pragma once
 
 // system includes
+#include <algorithm>
 #include <array>
+#include <cassert>
 
 // user includes
 #include "ale/std/type_traits.h"
@@ -53,16 +55,26 @@ public:
 
 
   using value_type      = T;
-  using iterator        = T*;
-  using const_iterator  = const T*;
-  using reference       = T&;
-  using const_reference = const T&;
+  using reference       = T &;
+  using pointer         = T *;
+  using const_reference = const T &;
+  using const_pointer   = const T *;
   using size_type       = std::size_t;
   using difference_type = std::ptrdiff_t;
 
+  //! iterator support
+  using iterator        = pointer;
+  using const_iterator  = const_pointer;
+  //! reverse iterator support
+  using reverse_iterator       = std::reverse_iterator<iterator>;
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+  //! the layout type
   using layout_type = L;
 
+  //! size in each dimension 
   static constexpr size_type dimensions  = sizeof...(N);
+  //! the total length of storage
   static constexpr size_type static_size = utils::multiply(N...);
 
 private:
@@ -87,57 +99,42 @@ public:
 
   //! \brief Constructor with initializer list
   //! \param[in] list the initializer list of values
-  template < typename U >
-  array(std::initializer_list< typename std::enable_if_t<(static_size > 1), U> > list) {
-    //std::cout << "array (list constructor)\n";
-    //if ( list.size() == 1 )
-    //  assign(*list.begin());
-    //else {
-    assert( list.size() == static_size  && " dimension size mismatch");
-    std::copy(list.begin(), list.end(), begin());
-    //}
-  }
-
-  //! \brief Constructor with initializer list
-  //! \param[in] list the initializer list of values
   template <
     typename... Args,
     typename = std::enable_if_t< 
-      ( sizeof...(Args) == static_size && 
-        utils::are_type_t<T,Args...>::value ) 
+      ( sizeof...(Args) == static_size &&
+        sizeof...(Args) >= 2 ) 
     >
   >
-  array(Args&&... args) : elems_{ args... }
+  array(Args&&... args) : elems_{ static_cast<T>(args)... }
   { 
     //std::cout << "array (variadic constructor)\n";
   }
  
   //! \brief Constructor with one value.
   //! \param[in] val The value to set the array to
-  template <typename T2>
+  template < typename T2 >
   array(const T2 & val) 
   { 
     //std::cout << "array (single value constructor)\n";
-    assign( val ); 
+    fill( val ); 
   }
 
+  
   //===========================================================================
   // Iterators
   //===========================================================================
 
   //! \brief return an iterator to the beginning of the array
-  iterator        begin()       { return elems_; }
-  const_iterator  begin() const { return elems_; }
-  const_iterator cbegin() const { return elems_; }
+                  iterator  begin()       { return elems_; }
+  constexpr const_iterator  begin() const { return elems_; }
+  constexpr const_iterator cbegin() const { return begin(); }
         
   //! \brief return an iterator to the end of the array
-  iterator        end()       { return elems_+static_size; }
-  const_iterator  end() const { return elems_+static_size; }
-  const_iterator cend() const { return elems_+static_size; }
+                  iterator  end()       { return elems_+static_size; }
+  constexpr const_iterator  end() const { return elems_+static_size; }
+  constexpr const_iterator cend() const { return end(); }
 
-  // reverse iterator support
-  using reverse_iterator       = std::reverse_iterator<iterator>;
-  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
   //! \brief return a reverse iterator to the beginning of the aray
   reverse_iterator rbegin() 
@@ -245,19 +242,20 @@ public:
   //===========================================================================
 
   //! \brief return the size
-  static size_type size() { return static_size; }
+  static constexpr size_type     size() { return static_size; }
+  static constexpr size_type capacity() { return size(); }
 
   //! \brief checks whether container is empty
-  static bool empty() { return false; }
+  static constexpr bool empty() { return false; }
   
   //! \brief returns the maximum possible number of elements
-  static size_type max_size() { return static_size; }
+  static constexpr size_type max_size() { return static_size; }
 
   //! \brief return the number of dimensions
-  static size_type dims() { return dimensions; }
+  static constexpr size_type dims() { return dimensions; }
 
   //! \brief return the size in a particular dimension
-  static size_type size( size_t i ) 
+  static constexpr size_type size( size_t i ) 
   { 
     assert( i<= dimensions && "dimension out of range" );
     return dims_[i];
@@ -276,10 +274,25 @@ public:
 
 
   //! \brief assign one value to all elements
-  void assign (const T& value) { fill ( value ); }    // A synonym for fill
-  void fill   (const T& value)
+  void fill(const T& value)
   {
     std::fill_n(begin(),size(),value);
+  }
+
+  //! \brief Replaces the contents of the container. 
+  //! \tparam InputIt  The input iterator type
+  //! \param [in] first  the start of the range to copy the elements from
+  //! \param [in] last   the end of the range to copy the elements from
+  template < class InputIt >
+  void assign(InputIt first, InputIt last) 
+  { 
+    std::copy( first, last, begin() );
+  }
+
+  void assign( std::initializer_list<T> list ) 
+  { 
+    assert( list.size() == static_size && "input list size mismatch" );
+    assign( list.begin(), list.end() );
   }
 
   //! \brief check range (may be private because it is static)

@@ -21,6 +21,7 @@
 #include <cinchtest.h>
 
 //! user includes
+#include "ale/common/types.h"
 #include "ale/mesh/burton/burton.h"
 
 //! \brief the mesh type
@@ -64,7 +65,7 @@ public:
   static constexpr size_t height = 2;
 
   //! \brief some test tolerance
-  static constexpr real_t tol = 1e-12;
+  static constexpr real_t tol = ale::common::test_tolerance;
 
 protected:
   
@@ -80,7 +81,7 @@ protected:
 
     for(size_t j = 0; j < height + 1; ++j){
       for(size_t i = 0; i < width + 1; ++i){
-        auto v = mesh_.create_vertex({double(i), double(j)});
+        auto v = mesh_.create_vertex({ i, j });
         vs.push_back(v);
       } // for
     } // for

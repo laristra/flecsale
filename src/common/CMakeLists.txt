@@ -3,14 +3,25 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-set(geom_HEADERS
-  centroid.h    detail/centroid.h
-  midpoint.h
-  point.h
+set(common_HEADERS
+  types.h
   PARENT_SCOPE
 )
 
+#set(utils_SOURCES
+#  dummy.c
+#  PARENT_SCOPE
+#)
 
+#if(ENABLE_UNIT_TESTS)
+#  cinch_add_unit(casename
+#    SOURCES testfile.cc
+#    LIBRARIES list
+#    INCLUDES list
+#    POLICY MPI
+#    THREADS 1 2 4
+#  )
+#endif(ENABLE_UNIT_TESTS)
 
 #----------------------------------------------------------------------------~-#
 # Formatting options for vim.

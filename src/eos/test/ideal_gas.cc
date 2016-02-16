@@ -22,6 +22,7 @@
 #include <vector>
 
 // user includes
+#include "ale/common/types.h"
 #include "ale/eos/ideal_gas.h"
 #include "ale/utils/tasks.h"
 
@@ -33,6 +34,8 @@ using std::vector;
 
 using real_t = double;
 using vector_t = vector<real_t>;
+
+static constexpr auto test_tolerance = ale::common::test_tolerance;
 
 using namespace ale::eos;
 using namespace ale::utils;
@@ -73,11 +76,11 @@ TEST(eos, ideal_gas) {
               << ", e=" <<  e[i] 
               << ", s=" << ss[i]
               << ", t=" <<  t[i] << std::endl;
-    ASSERT_NEAR( i+1, d[i], TEST_TOLERANCE ) << "Density test failed";
-    ASSERT_NEAR( i+1, p[i], TEST_TOLERANCE ) << "Pressure test failed";
-    ASSERT_NEAR( 1.0, e[i], TEST_TOLERANCE ) << "Energy test failed";
-    ASSERT_NEAR( rt_two, ss[i], TEST_TOLERANCE ) << "Sound speed test failed";
-    ASSERT_NEAR( 1.0, t[i], TEST_TOLERANCE ) << "Temperature test failed";
+    ASSERT_NEAR( i+1, d[i], test_tolerance ) << "Density test failed";
+    ASSERT_NEAR( i+1, p[i], test_tolerance ) << "Pressure test failed";
+    ASSERT_NEAR( 1.0, e[i], test_tolerance ) << "Energy test failed";
+    ASSERT_NEAR( rt_two, ss[i], test_tolerance ) << "Sound speed test failed";
+    ASSERT_NEAR( 1.0, t[i], test_tolerance ) << "Temperature test failed";
   }
 
     

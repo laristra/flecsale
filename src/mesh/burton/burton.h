@@ -32,7 +32,10 @@
  * Expose some constants
  *----------------------------------------------------------------------------*/
 
+//! persistent field allocation in register_state
 using flecsi::persistent;
+//! temporary field allocation in register_state
+using flecsi::temporary;
 
 /*----------------------------------------------------------------------------*
  * Execution Interface
@@ -169,6 +172,15 @@ using flecsi::persistent;
 
 #include "ale/mesh/burton/burton_io_exodus.h"
 
+namespace ale {
+namespace mesh {
+
+//! bring write/read mesh into the ale::mesh namespace
+using flecsi::write_mesh;
+using flecsi::read_mesh;
+
+}
+}
 
 /*~-------------------------------------------------------------------------~-*
  * Formatting options

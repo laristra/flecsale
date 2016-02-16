@@ -11,6 +11,11 @@
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
+/*!
+ * \file burton_mesh.h
+ * \authors bergen
+ * \date Initial file creation: Sep 02, 2015
+ */
 
 #pragma once
 
@@ -22,12 +27,6 @@
 #include "flecsi/execution/task.h"
 
 #include "ale/mesh/burton/burton_types.h"
-
-/*!
- * \file burton_mesh.h
- * \authors bergen
- * \date Initial file creation: Sep 02, 2015
- */
 
 namespace ale {
 namespace mesh {
@@ -187,6 +186,9 @@ public:
   // Geometry
   //! Floating point data type.
   using real_t = burton_mesh_traits_t::real_t;
+
+  //! Floating point data type.
+  using size_t = burton_mesh_traits_t::size_t;
 
   //! Point data type.
   using point_t = burton_mesh_traits_t::point_t;

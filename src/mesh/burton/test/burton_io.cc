@@ -21,8 +21,8 @@
 
 // some general using statements
 using std::string;
-using flecsi::write_mesh;
-using flecsi::read_mesh;
+using ale::mesh::write_mesh;
+using ale::mesh::read_mesh;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test writing an exodus file

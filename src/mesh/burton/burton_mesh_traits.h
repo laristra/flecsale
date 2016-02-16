@@ -15,6 +15,8 @@
 #pragma once
 
 //! user includes
+#include "ale/common/types.h"
+#include "ale/geom/point.h"
 #include "ale/math/vector.h"
 #include "flecsi/utils/bitfield.h"
 #include "flecsi/state/state.h"
@@ -37,6 +39,9 @@ struct burton_mesh_traits_t {
 #define FLECSI_MESH_DIMENSION 2
 #endif // FLECSI_MESH_DIMENSION
 
+  //! the size type
+  using size_t = std::size_t;
+
   //! the bitfield type
   using bitfield_t = flecsi::bitfield_t;
 
@@ -48,10 +53,10 @@ struct burton_mesh_traits_t {
   static constexpr size_t num_domains = 2;
 
   //! The type for floating-point values.
-  using real_t = double;
+  using real_t = common::real_t;
 
   //! A point type with real_t data and mesh dimension.
-  using point_t = math::vector<real_t, dimension>;
+  using point_t = geom::point<real_t, dimension>;
 
   //! A space ("physics") vector type with real_t data and mesh dimension.
   using vector_t = math::vector<real_t, dimension>;

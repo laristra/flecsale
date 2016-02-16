@@ -3,14 +3,10 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-set(geom_HEADERS
-  centroid.h    detail/centroid.h
-  midpoint.h
-  point.h
-  PARENT_SCOPE
-)
+set( LIBS ale flecsi ${IO_LIBRARIES} )
 
-
+add_executable( hydro hydro.cc )
+target_link_libraries( hydro ${LIBS} )
 
 #----------------------------------------------------------------------------~-#
 # Formatting options for vim.
