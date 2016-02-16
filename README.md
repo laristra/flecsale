@@ -48,7 +48,7 @@ To clone the repository, type
 
     git clone --recursive ssh://git@xcp-stash.lanl.gov:7999/ngc/ale.git
     
-**Make sure to include the *"\-\-recursive"* so that all of the
+**Make sure to include the `\-\-recursive` so that all of the
 submodules are cloned as well.** 
 
 
@@ -69,9 +69,9 @@ executing the following commands:
     <ALE_DIR>/arch/<MACHINE>/cmake-ale.sh gcc
     make -j
 
-where `\<ALE_DIR\>` is the location of the cloned ALE git
-repository and `\<MACHINE\>` is the LANL machine you are using.
-Right now `\<MACHINE\>` can be one of **darwin** or **moonlight**.
+where `<ALE_DIR>` is the location of the cloned ALE git
+repository and `<MACHINE>` is the LANL machine you are using.
+Right now `<MACHINE>` can be one of **darwin** or **moonlight**.
 This command will use the gcc compilers to build the code.
 
 

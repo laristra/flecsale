@@ -8,6 +8,9 @@ set( LIBS ale flecsi ${IO_LIBRARIES} )
 add_executable( hydro hydro.cc )
 target_link_libraries( hydro ${LIBS} )
 
+add_executable( dummy dummy.cc )
+
+
 #----------------------------------------------------------------------------~-#
 # Formatting options for vim.
 # vim: set tabstop=2 shiftwidth=2 expandtab :

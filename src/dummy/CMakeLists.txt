@@ -12,35 +12,32 @@
 # All rights reserved
 #~----------------------------------------------------------------------------~#
 
-set(mesh_HEADERS
-  burton/burton_entity_types.h
-  burton/burton.h
-  burton/burton_io.h
-  burton/burton_io_exodus.h
-  burton/burton_mesh.h
-  burton/burton_mesh_traits.h
-  burton/burton_types.h
+# these are all the headers within this sub-package/sub-folder
+set(dummy_HEADERS
+  dummy/dummy.h
   PARENT_SCOPE
 )
 
 
-set(mesh_SOURCES
-  burton/burton_entity_types.cc
+# these are all the sources within this sub-package/sub-folder
+set(dummy_SOURCES
+  dummy.cc
   PARENT_SCOPE
 )
 
-set( mesh_LIBS 
-  ${IO_LIBRARIES} 
-  flecsi 
-)
+# if the test uses a library, uncomment the line below and replace
+# "some_library" with the required library
 
-cinch_add_unit(test_mesh
+# set( dummy_LIBS some_library )
+
+# add a unit test.  test code for dummy.h/dummy.cc goes in a folder
+# called test inside this directory
+cinch_add_unit(test_dummy
     SOURCES 
-      burton/test/burton.cc
-      burton/test/burton_io.cc
-      burton/test/gradients.cc
-    LIBRARIES ${mesh_LIBS} ale
+      test/dummy.cc
+    LIBRARIES ${dummy_LIBS} ale
 )
+
 
 #~---------------------------------------------------------------------------~-#
 # Formatting options
