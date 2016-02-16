@@ -48,7 +48,7 @@ To clone the repository, type
 
     git clone --recursive ssh://git@xcp-stash.lanl.gov:7999/ngc/ale.git
     
-**Make sure to include the `\-\-recursive` so that all of the
+**Make sure to include the `--recursive` so that all of the
 submodules are cloned as well.** 
 
 
