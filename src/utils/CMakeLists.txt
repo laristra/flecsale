@@ -16,7 +16,7 @@ set(utils_HEADERS
 )
 
 
-cinch_add_unit(test_utils
+cinch_add_unit(utils
     SOURCES 
       test/static_for.cc
       test/tasks.cc

@@ -34,7 +34,7 @@ set( mesh_LIBS
   flecsi 
 )
 
-cinch_add_unit(test_mesh
+cinch_add_unit(mesh
     SOURCES 
       burton/test/burton.cc
       burton/test/burton_io.cc

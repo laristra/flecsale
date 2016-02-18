@@ -59,7 +59,7 @@ TEST_F(Burton, mesh) {
     CINCH_CAPTURE() << "----------- corner id: " << c.id() << endl;
 
     for(auto e: mesh_.edges(c)) {
-      CINCH_CAPTURE() << "----------- edge id: " << e.id() << endl;
+      CINCH_CAPTURE() << "      ++++ edge id: " << e.id() << endl;
     } // for
   } // for
 

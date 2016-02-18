@@ -8,7 +8,7 @@ set( LIBS ale flecsi ${IO_LIBRARIES} )
 add_executable( hydro hydro.cc )
 target_link_libraries( hydro ${LIBS} )
 
-add_executable( dummy dummy.cc )
+add_executable( dummy_app dummy_app.cc )
 
 
 #----------------------------------------------------------------------------~-#

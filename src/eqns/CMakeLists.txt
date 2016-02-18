@@ -13,7 +13,7 @@ set(eos_HEADERS
 #  PARENT_SCOPE
 #)
 
-cinch_add_unit( test_eqns
+cinch_add_unit( eqns
   SOURCES 
     test/euler_eqns.cc
 )

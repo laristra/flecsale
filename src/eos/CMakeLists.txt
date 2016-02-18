@@ -13,7 +13,7 @@ set(eos_HEADERS
 #  PARENT_SCOPE
 #)
 
-cinch_add_unit( test_eos
+cinch_add_unit( eos
   SOURCES test/ideal_gas.cc
 )
 

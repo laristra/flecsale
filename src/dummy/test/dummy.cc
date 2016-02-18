@@ -14,15 +14,15 @@
  * 
  * \brief Tests a part of the dummy code.
  *
- * This creates an executable test_dummy that runs the tests.    Tests are created
+ * This creates an executable `dummy` that runs the tests.    Tests are created
  * with the "TEST(group_name, test_name)" macro.  Executing
- *    ./test_dummy
+ *    ./dummy
  * runs all the tests, and calling
- *    ./test_dummy --gtest_list_tests
+ *    ./dummy --gtest_list_tests
  * will list all the available tests.  You can execute specific tests by calling
- *    ./test_dummy --gtest_filter=<PATTERN>
+ *    ./dummy --gtest_filter=<PATTERN>
  * where <PATTERN> is a typicall shell regex patern.  For example,
- *    ./test_dummy --gtest_filter=dummy.*
+ *    ./dummy --gtest_filter=dummy.*
  * means run all tests in the dummy group.
  *
  ******************************************************************************/

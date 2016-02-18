@@ -32,7 +32,7 @@ set(dummy_SOURCES
 
 # add a unit test.  test code for dummy.h/dummy.cc goes in a folder
 # called test inside this directory
-cinch_add_unit(test_dummy
+cinch_add_unit(dummy
     SOURCES 
       test/dummy.cc
     LIBRARIES ${dummy_LIBS} ale

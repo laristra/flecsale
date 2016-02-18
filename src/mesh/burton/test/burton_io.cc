@@ -49,7 +49,7 @@ TEST_F(Burton, write_exo) {
   } // for
 
   // write the mesh
-  string name("test/mesh.exo");
+  string name("mesh.exo");
   ASSERT_FALSE(write_mesh(name, mesh_));
 
 } // TEST_F
@@ -59,7 +59,7 @@ TEST_F(Burton, write_exo) {
 //! \brief test writing an exodus file
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(Burton, write_g) {
-  string name("test/mesh.g");
+  string name("mesh.g");
   ASSERT_FALSE(write_mesh(name, mesh_));
 } // TEST_F
 
@@ -70,11 +70,11 @@ TEST_F(Burton, write_g) {
 TEST(BurtonIO, read_exo) {
   mesh_t m;
   // read mesh written by above test
-  string name("test/mesh.exo");
+  string name("mesh.exo");
   ASSERT_FALSE(read_mesh(name, m));
 
   // write m to a different file
-  name = "test/mesh_out.exo";
+  name = "mesh_out.exo";
   ASSERT_FALSE(write_mesh(name, m));
 } // TEST_F
 
@@ -84,11 +84,11 @@ TEST(BurtonIO, read_exo) {
 TEST(BurtonIO, read_g) {
   mesh_t m;
   // read mesh written by above test
-  string name("test/mesh.g");
+  string name("mesh.g");
   ASSERT_FALSE(read_mesh(name, m));
 
   // write m to a different file
-  name = "test/mesh_out.g";
+  name = "mesh_out.g";
   ASSERT_FALSE(write_mesh(name, m));
 } // TEST_F
 

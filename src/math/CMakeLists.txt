@@ -11,7 +11,7 @@ set(math_HEADERS
   PARENT_SCOPE
 )
 
-cinch_add_unit(test_math
+cinch_add_unit(math
     SOURCES 
       test/tuple.cc 
       test/vector.cc
