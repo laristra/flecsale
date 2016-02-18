@@ -10,7 +10,7 @@ purpose set of tools for execution and state control.
 Right now most new developpers should focus on building tests in the
 `src` directory to excersize different functionality.  See the
 [README](src) on building library functionality and tests. Developpers
-can also start by creating their own apps using the [README](apps).
+can also start by creating their own apps using this [README](apps).
 
 ---
 
