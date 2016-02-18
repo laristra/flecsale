@@ -7,6 +7,10 @@ nodes. The code is built upon
 [FleCSI](https://github.com/flecsi/flecsi), an open source general
 purpose set of tools for execution and state control.
 
+Right now most new developpers should focus on building tests in the
+`src` directory to excersize different functionality.  See the [README](src) . They can also
+start by 
+
 ---
 
 # Thirdparty Libraries
@@ -143,24 +147,24 @@ The directory structure is layed out as follows:
 
 ```
 root
+├───apps
+│   Applications that make use of the ALE library.
+│
 ├───arch
-│   *CMake configuration scripts for the overall project.*
+│   CMake configuration scripts for the overall project.
 │
 ├───config
-│   *Cinch configuration files.*
+│   Cinch configuration files.
 │
 ├───doc
-│   *Project documention.*
+│   Project documention.
 │
 ├───examples
-│   *Example full applications that utilize the fullALE/FlecSI library (not completed yet!).* 
+│   Example full applications that utilize the fullALE/FlecSI library (not completed yet!).
 │
 ├───src
-│   *The main ALE project source code to construct the ALE library.*
+│   The main ALE project source code to construct the ALE library.
 │
 └───thirdparty
-    *CMake configuration scripts for building the thirdparty libraries.*
+    CMake configuration scripts for building the thirdparty libraries.
 ```
-
-Right now most new developpers should focus on building tests in the
-`src` directory to excersize different functionality.
