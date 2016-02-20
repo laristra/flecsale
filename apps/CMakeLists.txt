@@ -3,10 +3,9 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-set( LIBS ale flecsi ${IO_LIBRARIES} )
+set( ALE_LIBS ale flecsi ${IO_LIBRARIES} )
 
-add_executable( hydro hydro.cc )
-target_link_libraries( hydro ${LIBS} )
+add_subdirectory( hydro )
 
 add_executable( dummy_app dummy_app.cc )
 

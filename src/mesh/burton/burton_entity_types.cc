@@ -47,8 +47,8 @@ point_t burton_quadrilateral_cell_t::centroid() const
     auto & mesh = static_cast<mesh_topology_t<burton_mesh_types_t> &>(mesh_);
     auto vs = mesh.entities<0,0>(this).to_vec();
 
-    return geom::centroid_2d( vs[0]->coordinates(), vs[1]->coordinates(), 
-                              vs[2]->coordinates(), vs[3]->coordinates() );
+    return geom::centroid( vs[0]->coordinates(), vs[1]->coordinates(), 
+                           vs[2]->coordinates(), vs[3]->coordinates() );
   } // burton_quadrilateral_cell_t::centroid
 
 } // namespace mesh

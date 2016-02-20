@@ -6,6 +6,7 @@
 set(geom_HEADERS
   centroid.h    detail/centroid.h
   midpoint.h
+  normal.h
   point.h
   PARENT_SCOPE
 )

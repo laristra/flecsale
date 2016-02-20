@@ -13,6 +13,7 @@
 #~----------------------------------------------------------------------------~#
 
 set(mesh_HEADERS
+  factory.h
   burton/burton_entity_types.h
   burton/burton.h
   burton/burton_io.h

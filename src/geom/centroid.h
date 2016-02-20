@@ -57,9 +57,10 @@ auto centroid( T && t )
 template< class T, class... Types >
 constexpr
 std::enable_if_t< 
-  (sizeof...(Types) > 2) && utils::are_type_t<T,Types...>::value, 
+  (sizeof...(Types) > 2 && utils::are_type_t<T,Types...>::value && 
+   std::decay_t<T>::size() == 2), 
   std::decay_t<T> >
-centroid_2d( T && t, Types&&... args )
+centroid( T && t, Types&&... args )
 { 
   // initialize centroid and volume
   std::decay_t<T> cx( 0 );

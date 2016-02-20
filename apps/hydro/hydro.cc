@@ -28,17 +28,26 @@
 #include <ale/utils/zip.h>
 
 #include <ale/mesh/burton/burton.h>
+#include <ale/mesh/factory.h>
+
+// some namespace aliases
+namespace mesh  = ale::mesh;
+namespace math  = ale::math;
+namespace utils = ale::utils;
+namespace geom  = ale::geom;
 
 
-// explicitly use some stuff
+// math operations
+using math::operator*;
+using math::operator/;
+using math::operator+;
+using math::operator-;
+
+// explicitly use some other stuff
 using std::cout;
 using std::cerr;
 using std::endl;
 using std::vector;
-
-// load the ale namespace
-using namespace ale;
-
 
 
 // mesh and some underlying data types
@@ -49,17 +58,14 @@ using real_t = mesh_t::real_t;
 using point_t = mesh_t::point_t;
 using vector_t = mesh_t::vector_t;
 
-using eos_t = eos::ideal_gas_t<real_t>;
+using eos_t = ale::eos::ideal_gas_t<real_t>;
 
-using eqns_t = eqns::euler_eqns_t<real_t, mesh_t::dimension()>;
+using eqns_t = ale::eqns::euler_eqns_t<real_t, mesh_t::dimension()>;
 using state_data_t = eqns_t::state_data_t;
 using flux_data_t = eqns_t::flux_data_t;
 
-// math operations
-using math::operator*;
-using math::operator/;
-using math::operator+;
-using math::operator-;
+// hydro incdlues
+#include "hydro_tasks.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -72,7 +78,6 @@ int main(int argc, char** argv)
   // Mesh Setup
   //===========================================================================
 
-
   // the grid dimensions
   constexpr size_t num_cells_x = 10;
   constexpr size_t num_cells_y = 2;
@@ -80,57 +85,10 @@ int main(int argc, char** argv)
   constexpr real_t length_x = 1.0;
   constexpr real_t length_y = 0.2;
 
-  constexpr real_t x0 = -length_x/2.0;
-  constexpr real_t y0 = -length_y/2.0;
-
-
   // this is the mesh object
-  mesh_t mesh;
-
-
-  // reserve storage for the mesh
-  auto num_vertex = ( num_cells_x + 1 ) * ( num_cells_y + 1 );
-  mesh.init_parameters( num_vertex );
+  auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, length_x, length_y );
+  cout << mesh;
   
-  
-  // create the individual vertices
-  using vertex_t = mesh_t::vertex_t;
-  vector<vertex_t*> vs;
-  
-  auto delta_x = length_x / num_cells_x;
-  auto delta_y = length_y / num_cells_y;
-
-  auto num_vert_x = num_cells_x + 1;
-  auto num_vert_y = num_cells_y + 1;
-
-  for(size_t j = 0; j < num_vert_y; ++j) {
-    auto y = y0 + j*delta_y;
-    for(size_t i = 0; i < num_vert_x; ++i) {
-      auto x = x0 + i*delta_x;
-      auto v = mesh.create_vertex( {x, y} );
-      vs.push_back(v);
-    }
-    
-  }
-  
-  // define each cell
-  auto index = [=](auto i, auto j) { return i + num_vert_x*j; };
-  
-  for(size_t j = 0; j < num_cells_y; ++j)
-    for(size_t i = 0; i < num_cells_x; ++i) {
-      auto c = 
-        mesh.create_cell({
-              vs[ index(i  , j  ) ],
-              vs[ index(i+1, j  ) ],
-              vs[ index(i+1, j+1) ],
-              vs[ index(i  , j+1) ]});
-    }
-  
-  
-  // now finalize the mesh setup
-  mesh.init();
-
-
   //===========================================================================
   // Field Creation
   //===========================================================================
@@ -145,95 +103,58 @@ int main(int argc, char** argv)
   register_state(mesh, "temperature",     cells, real_t, persistent);
   register_state(mesh, "sound_speed",     cells, real_t, persistent);
 
-  // register state also returns an accessor
-  auto eos_data = register_state(mesh, "eos", cells, eos_t);
+  // register state a global eos
+  auto eos = register_global_state( mesh, "eos", eos_t );
+  eos->set_gamma( 1.4 ); 
+  eos->set_specific_heat_v( 1.0 ); 
 
+  /*
+  // register collections: the full independant+derived state
+  register_collection( mesh, "full_state", 
+    { "density", "velocity", "pressure", "internal_energy", "temperature", 
+      "sound_speed" } );
 
-  // a lambda function to get the full independant+derived state
-  auto get_full_state = [&mesh](auto cell_id) { 
-
-    auto density  = access_state(mesh, "density",   real_t);
-    auto pressure = access_state(mesh, "pressure",   real_t);
-    auto velocity = access_state(mesh, "velocity", vector_t);
-    auto energy      = access_state(mesh, "internal_energy", real_t);
-    auto temperature = access_state(mesh, "temperature", real_t);
-    auto sound_speed = access_state(mesh, "sound_speed", real_t);
-
-    return std::forward_as_tuple( density [ cell_id ],
-                                  velocity[ cell_id ],
-                                  pressure[ cell_id ],
-                                  energy  [ cell_id ],
-                                  temperature[ cell_id ],
-                                  sound_speed[ cell_id ] );
-  };
-
-  // a lambda function to get the primitive (i.e. independant) state
-  auto get_prim_state = [&mesh](auto cell_id) { 
-
-    auto density  = access_state(mesh, "density",   real_t);
-    auto pressure = access_state(mesh, "pressure",   real_t);
-    auto velocity = access_state(mesh, "velocity", vector_t);
-
-    return std::forward_as_tuple( density [ cell_id ],
-                                  velocity[ cell_id ],
-                                  pressure[ cell_id ] );
-  };
-
-
+  // register collections: the primitive (i.e. independant) state
+  register_collection( mesh, "full_state", 
+    { "density", "velocity", "pressure" } );
+  */
 
   //===========================================================================
   // Initial conditions
   //===========================================================================
 
-  // set the intial conditions.  This is really a TASK.
-  for ( auto c : mesh.cells() ) {
-    auto cell_id = c.id();
-    auto x = geom::centroid(c);
-
-    // velocity is constant for now
-    vector_t v = {0, 0};
-
-    // figure out the left and right density/pressure
-    real_t d;
-    real_t p;
-    if ( x[0] < 0.0 ) {
-      d = 1.0;
-      p = 1.0;
-    }
-    else {
-      d = 0.125;
-      p = 0.1;
-    }    
-
-    // a constant eos is used for now
-    eos_t eos( /* gamma */ 1.4, /* cv */ 1.0); 
-    eos.set_ref_state_dp(d, 2.5);
-
-    // now copy the state to flexi
-    get_prim_state( cell_id ) = std::make_tuple( d, v, p );
-    eos_data[cell_id] = eos;
-  }
-
+  // this is a lambda function to set the initial conditions
+  auto ics = [] ( const auto & x )
+    {
+      real_t d, p;
+      vector_t v(0);
+      if ( x[0] < 0.0 ) {
+        d = 1.0;
+        p = 1.0;
+      }
+      else {
+        d = 0.125;
+        p = 0.1;
+      }    
+      return std::make_tuple( d, v, p );
+    };
+  
+  // now call the main task to set the ics
+  apps::hydro::initial_conditions( mesh, ics );
+  
   //===========================================================================
   // Apply EOS
   //===========================================================================
 
 
-  // TASK: apply the eos to the state
-  for ( auto c : mesh.cells() ) {
-    auto cell_id = c.id();
-
-    auto u     = get_full_state(cell_id);
-    auto & eos = eos_data [cell_id];
-
-    eqns_t::update_state_from_pressure( u, eos );
-  }
-
+  // now call the main task to set the ics
+  apps::hydro::update_state_from_pressure( mesh );
 
 
   // now output the solution
   mesh::write_mesh("test/hydro_0.exo", mesh);
 
+#if 0
   //===========================================================================
   // Flux Evaluation
   //===========================================================================
@@ -333,7 +254,7 @@ int main(int argc, char** argv)
   // now output the solution
   mesh::write_mesh("test/hydro_1.exo", mesh);
 
-
+#endif
 
     
 }
