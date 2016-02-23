@@ -23,71 +23,14 @@
 #include <utility>
 
 // user includes
-#include <ale/eqns/euler_eqns.h>
-#include <ale/eqns/flux.h>
-#include <ale/eos/ideal_gas.h>
-
-#include <ale/mesh/burton/burton.h>
 #include <ale/mesh/factory.h>
 
-// some namespace aliases
-namespace mesh  = ale::mesh;
-namespace math  = ale::math;
-namespace utils = ale::utils;
-namespace geom  = ale::geom;
-namespace eos   = ale::eos;
-namespace eqns  = ale::eqns;
+// hydro incdludes
+#include "tasks.h"
+#include "types.h"
 
-
-// math operations
-using math::operator*;
-using math::operator/;
-using math::operator+;
-using math::operator-;
-
-// explicitly use some other stuff
-using std::cout;
-using std::cerr;
-using std::endl;
-
-
-// mesh and some underlying data types
-using mesh_t = mesh::burton_mesh_t;
-
-using size_t = mesh_t::size_t;
-using real_t = mesh_t::real_t;
-using point_t = mesh_t::point_t;
-using vector_t = mesh_t::vector_t;
-
-using eos_t = eos::ideal_gas_t<real_t>;
-
-using eqns_t = eqns::euler_eqns_t<real_t, mesh_t::dimension()>;
-using state_data_t = eqns_t::state_data_t;
-using flux_data_t = eqns_t::flux_data_t;
-
-//! \brief alias the flux function
-//! Change the called function to alter the flux evaluation
-template< typename UL, typename UR, typename V >
-auto flux_function( UL && left_state, UR && right_state, V && norm )
-{ 
-  return 
-    eqns::rusanov_flux<eqns_t>( std::forward<UL>(left_state), 
-                                std::forward<UR>(right_state), 
-                                std::forward<V>(norm) ); 
-}
-
-//! \brief alias the flux function
-//! Change the called function to alter the flux evaluation
-template< typename U, typename V >
-auto boundary_flux( U && state, V && norm )
-{ 
-  return 
-    eqns_t::wall_flux( std::forward<U>(state), std::forward<V>(norm) ); 
-}
-
-// hydro incdlues
-#include "hydro_tasks.h"
-
+// everything is in the hydro namespace
+using namespace apps::hydro;
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver

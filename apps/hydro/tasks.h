@@ -10,7 +10,7 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file hydro_tasks.h
+ * \file tasks.h
  * 
  * \brief Simple tasks related to solving full hydro solutions.
  *
@@ -18,65 +18,11 @@
 
 #pragma once
 
+// hydro includes
+#include "types.h"
+
 namespace apps {
 namespace hydro {
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief A functor for accessing state in the mesh
-//! \tparam M  the mesh type
-////////////////////////////////////////////////////////////////////////////////
-template < typename M >
-class state_accessor 
-{
-public:
-
-  template< typename T >
-  using accessor_t = 
-    decltype( access_state( std::declval<M>(), "density", T ) );
-
-  constexpr state_accessor( M & mesh ) :
-    d( access_state( mesh, "density",           real_t ) ),
-    p( access_state( mesh, "pressure",          real_t ) ),
-    v( access_state( mesh, "velocity",        vector_t ) ),
-    e( access_state( mesh, "internal_energy",   real_t ) ),
-    t( access_state( mesh, "temperature",       real_t ) ),
-    a( access_state( mesh, "sound_speed",       real_t ) )
-  {}
-
-  template< typename T >
-  constexpr auto operator()( T && i ) const 
-  {
-    using std::forward;
-    return std::forward_as_tuple( d[ forward<T>(i) ], 
-                                  v[ forward<T>(i) ], 
-                                  p[ forward<T>(i) ], 
-                                  e[ forward<T>(i) ], 
-                                  t[ forward<T>(i) ], 
-                                  a[ forward<T>(i) ] );
-  }
-
-  template< typename T >
-  auto operator()( T && i ) 
-  {
-    using std::forward;
-    return std::forward_as_tuple( d[ forward<T>(i) ], 
-                                  v[ forward<T>(i) ], 
-                                  p[ forward<T>(i) ], 
-                                  e[ forward<T>(i) ], 
-                                  t[ forward<T>(i) ], 
-                                  a[ forward<T>(i) ] );
-  }
-
-private:
-
-  accessor_t<real_t>   d;
-  accessor_t<real_t>   p;
-  accessor_t<vector_t> v;
-  accessor_t<real_t>   e;
-  accessor_t<real_t>   t;
-  accessor_t<real_t>   a;
-       
-};
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task for setting initial conditions
