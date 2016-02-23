@@ -105,6 +105,12 @@ average( T && t, Types&&... args )
   return T();
 }
 
+
+//! \brief square operator.
+template< class T >
+constexpr auto sqr( T && x )
+{ return std::forward<T>(x) * std::forward<T>(x); }
+
 } // namespace
 } // namespace
 

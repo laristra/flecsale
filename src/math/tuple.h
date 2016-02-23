@@ -88,7 +88,7 @@ template <typename... Types>
 auto operator+( const tuple<Types...>& lhs, 
                 const tuple<Types...>& rhs )
 {
-  tuple<Types...> tmp;
+  tuple< std::decay_t<Types>... > tmp;
   utils::tuple_visit( 
                      [](auto & a, const auto & b, const auto & c) { 
                        a = b + c;
@@ -100,7 +100,7 @@ auto operator+( const tuple<Types...>& lhs,
 template <typename... Types, typename U>
 auto operator+( const tuple<Types...>& lhs, const U & rhs )
 {
-  tuple<Types...> tmp;
+  tuple< std::decay_t<Types>... > tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -112,7 +112,7 @@ auto operator+( const tuple<Types...>& lhs, const U & rhs )
 template <typename... Types, typename U>
 auto operator+( const U & lhs, const tuple<Types...>& rhs )
 {
-  tuple<Types...> tmp;
+  tuple< std::decay_t<Types>... > tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -153,7 +153,7 @@ void minus_equal( tuple<Types...>& lhs, const U & rhs )
 template <typename... Types>
 auto operator-( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
-  tuple<Types...> tmp;
+  tuple< std::decay_t<Types>... > tmp;
   utils::tuple_visit( 
                      [](auto & a, const auto & b, const auto & c) { 
                        a = b - c;
@@ -165,7 +165,7 @@ auto operator-( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
 template <typename... Types, typename U>
 auto operator-( const tuple<Types...>& lhs, const U & rhs )
 {
-  tuple<Types...> tmp;
+  tuple< std::decay_t<Types>... > tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -177,7 +177,7 @@ auto operator-( const tuple<Types...>& lhs, const U & rhs )
 template <typename... Types, typename U>
 auto operator-( const U & lhs, const tuple<Types...>& rhs )
 {
-  tuple<Types...> tmp;
+  tuple< std::decay_t<Types>... > tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -217,7 +217,7 @@ void multiplies_equal( tuple<Types...>& lhs, const U & rhs )
 template <typename... Types>
 auto operator*( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
-  tuple<Types...> tmp;
+  tuple< std::decay_t<Types>... > tmp;
   utils::tuple_visit( 
                      [](auto & a, const auto & b, const auto & c) { 
                        a = b * c;
@@ -229,7 +229,7 @@ auto operator*( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
 template <typename... Types, typename U>
 auto operator*( const tuple<Types...>& lhs, const U & rhs )
 {
-  tuple<Types...> tmp;
+  tuple< std::decay_t<Types>... > tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -241,7 +241,7 @@ auto operator*( const tuple<Types...>& lhs, const U & rhs )
 template <typename... Types, typename U>
 auto operator*( const U & lhs, const tuple<Types...>& rhs )
 {
-  tuple<Types...> tmp;
+  tuple< std::decay_t<Types>... > tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -284,7 +284,7 @@ void divides_equal( tuple<Types...>& lhs, const U & rhs )
 template <typename... Types>
 auto operator/( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
-  tuple<Types...> tmp;
+  tuple< std::decay_t<Types>... > tmp;
   utils::tuple_visit( 
                      [](auto & a, const auto & b, const auto & c) { 
                        a = b / c;
@@ -296,7 +296,7 @@ auto operator/( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
 template <typename... Types, typename U>
 auto operator/( const tuple<Types...>& lhs, const U & rhs )
 {
-  tuple<Types...> tmp;
+  tuple< std::decay_t<Types>... > tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, lhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -308,7 +308,7 @@ auto operator/( const tuple<Types...>& lhs, const U & rhs )
 template <typename... Types, typename U>
 auto operator/( const U & lhs, const tuple<Types...>& rhs )
 {
-  tuple<Types...> tmp;
+  tuple< std::decay_t<Types>... > tmp;
   utils::tuple_for_each( utils::tuple_tie( tmp, rhs ),
                          [&](auto tup) { 
                            using std::get;
@@ -336,6 +336,7 @@ auto & operator<<(std::ostream& os, const tuple<Types...>& a)
   return os;
 }
   
+ 
  
  
 

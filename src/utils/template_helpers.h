@@ -45,6 +45,32 @@ std::tuple<T&, const Ts&...> ctie( T& first, const Ts&... rest )
   return std::make_tuple( std::ref(first), std::cref(rest)... );
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// A type traits type struct used to unpack a tuple type, and repack it using 
+// references
+////////////////////////////////////////////////////////////////////////////////
+
+//! \brief Unpack a tuple and create a tuple of references to each element.
+//! \tparam T  The tuple type
+//! \remark This is the empty struct
+template < typename T >
+struct reference_wrapper {};
+
+//! \brief Unpack a tuple and create a tuple of references to each element.
+//! \tparam Tuple  The tuple type
+//! \remark This is the tuple implementation
+template < template<typename...> class Tuple, typename... Args >
+struct reference_wrapper < Tuple<Args...> >
+{
+  using type = Tuple<Args&...>;
+};
+
+
+//! \brief This is a helper function to unpack a tuple and create references
+//! \tparam T  The tuple type
+template < typename T >
+using reference_wrapper_t = typename reference_wrapper<T>::type;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief return an lvalue reference

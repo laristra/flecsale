@@ -32,13 +32,14 @@ using std::cout;
 using std::endl;
 using std::vector;
 
-using real_t = double;
-using vector_t = vector<real_t>;
-
-static constexpr auto test_tolerance = ale::common::test_tolerance;
-
+using namespace ale;
 using namespace ale::eos;
 using namespace ale::utils;
+
+using real_t = common::real_t;
+using vector_t = vector<real_t>;
+
+using common::test_tolerance;
 
     
 ///////////////////////////////////////////////////////////////////////////////

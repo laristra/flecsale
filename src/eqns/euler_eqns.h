@@ -24,7 +24,6 @@
 namespace ale {
 namespace eqns {
 
-
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Specialization of the euler equations
 ////////////////////////////////////////////////////////////////////////////////
@@ -113,6 +112,8 @@ public:
 
   //! \brief  the type for holding the state data
   using state_data_t = typename variables::data_t;
+  //! \brief  the type for holding refernces to state data
+  using state_ref_t = utils::reference_wrapper_t< state_data_t >;
 
   //! \brief  the type for holding the state data (mass, momentum, and energy)
   using flux_data_t = typename equations::data_t;
@@ -135,42 +136,88 @@ public:
   //! \param [in] u the state
   //! \return the quantity of interest
   //============================================================================
-  template <typename U>
-  static auto density( U && u )
+  static auto density( const state_data_t & u )
   { 
     using math::get;
-    return get<variables::index::density>( std::forward<U>(u) ); 
+    return get<variables::index::density>( u ); 
   }
 
-  template <typename U>
-  static auto velocity( U && u )
+  static auto velocity( const state_data_t & u )
   { 
     using math::get;
-    return get<variables::index::velocity>( std::forward<U>(u) ); 
+    return get<variables::index::velocity>( u ); 
   }
 
-  template <typename U>
-  static auto pressure( U && u )
+  static auto pressure(  const state_data_t & u )
   { 
     using math::get;
-    return get<variables::index::pressure>( std::forward<U>(u) ); 
+    return get<variables::index::pressure>( u ); 
   }
 
-  template <typename U>
-  static auto internal_energy( U && u )
+  static auto internal_energy( const state_data_t & u )
   { 
     using math::get;
-    return get<variables::index::pressure>( std::forward<U>(u) ); 
+    return get<variables::index::internal_energy>( u ); 
   }
 
-  template <typename U>
-  static auto total_energy( U && u )
+  static auto sound_speed( const state_data_t & u )
   { 
     using math::get;
-    using math::dot_product;
-    auto ie = internal_energy( std::forward<U>(u) );
-    auto vel = velocity( std::forward<U>(u) );
-    return ie + 0.5 * dot_product( vel, vel );
+    return get<variables::index::sound_speed>( u ); 
+  }
+
+  static auto total_energy( const state_data_t & u )
+  { 
+    using math::get;
+    using math::abs;
+    auto ie = internal_energy( u );
+    auto vel = velocity( u );
+    return ie + 0.5 * abs( vel );
+  }
+
+  //============================================================================
+  //! \brief Compute the fastest moving eigenvalue
+  //! \param [in]  u   The solution state
+  //! \return the fastest moving wave speed
+  //============================================================================
+  template <typename V>
+  static auto fastest_wavespeed( const state_data_t & u, const V & norm )
+  {
+    auto a = sound_speed( u );
+    auto v = velocity( u );
+    auto vn = math::dot_product( v, norm );
+    return a + std::abs(vn);
+
+  }
+
+  //============================================================================
+  //! \brief Computes the change in conserved quantities between two states
+  //! \param [in]  ul   The left state
+  //! \param [in]  ur   The right state
+  //! \return ur - ul
+  //============================================================================
+  static auto solution_delta( 
+    const state_data_t & ul, const state_data_t & ur )
+  {
+    using math::get;
+
+    // get the conserved quatities
+    auto mass_l = density( ul );
+    auto mom_l  = mass_l*velocity( ul );
+    auto ener_l = mass_l*total_energy( ul );
+
+    auto mass_r = density( ur );
+    auto mom_r  = mass_r*velocity( ur );
+    auto ener_r = mass_r*total_energy( ur );
+
+    // compute the change
+    flux_data_t du;
+    get<equations::index::mass    >( du ) = mass_r - mass_l;
+    get<equations::index::momentum>( du ) = mom_r - mom_l;
+    get<equations::index::energy  >( du ) = ener_r - ener_l;
+
+    return du;
+
   }
 
   //============================================================================
@@ -178,23 +225,23 @@ public:
   //! \param [in] normal The normal direction
   //! \return the flux alligned with the normal direction
   //============================================================================
-  template <typename U, typename V>
-  static auto flux(  U && u, V && normal )
+  template <typename V>
+  static auto flux( const state_data_t & u, const V & norm )
   {
 
     using math::get;
     using math::dot_product;
 
     // these may be independant or derived quantities
-    auto rho = density ( std::forward<U>(u) );
-    auto vel = velocity( std::forward<U>(u) );
-    auto p   = pressure( std::forward<U>(u) );
-    auto et  = total_energy( std::forward<U>(u) );
+    auto rho = density ( u );
+    auto vel = velocity( u );
+    auto p   = pressure( u );
+    auto et  = total_energy( u );
       
     assert( rho > 0  );
 
-    auto v_dot_n = dot_product( vel, std::forward<V>(normal) );
-    auto pn = p*normal;
+    auto v_dot_n = dot_product( vel, norm );
+    auto pn = p*norm;
       
     // explicitly set the individual elements, and it is clear what is
     // being set by using static indexing instead of wrapper functions
@@ -202,10 +249,25 @@ public:
     auto mass_flux = rho * v_dot_n;
     get<equations::index::mass    >( f ) = mass_flux;     
     get<equations::index::momentum>( f ) = mass_flux * vel + pn;
-    get<equations::index::energy  >( f ) = (rho*et + p) * v_dot_n;
+    get<equations::index::energy  >( f ) = mass_flux * (et + p/rho);
 
     return f;
   }
+
+  //============================================================================
+  //! \brief The flux at the wall
+  //!
+  //! \param [in] u      the solution state
+  //! \param [in] norm  the normal direction
+  //! \return the flux
+  //============================================================================
+  template <typename V>
+  static auto wall_flux( const state_data_t & u, const V & norm )
+  {
+    auto p  = pressure( u );
+    auto pn = p*norm;
+    return flux_data_t{ 0.0, pn, 0.0 };
+  };
 
 
   //============================================================================
@@ -213,24 +275,23 @@ public:
   //! \param [in,out] u   The state to update
   //! \param [in]     eos The state to update
   //============================================================================
-  template <typename U, typename E>
-  static void update_state_from_pressure( U && u, 
-                                          const E & eos )
+  template <typename E>
+  static void update_state_from_pressure( state_ref_t & u, const E & eos )
   {
     using math::get;
 
     // access independant or derived quantities 
-    auto d = density ( std::forward<U>(u) );
-    auto p = pressure( std::forward<U>(u) );
+    auto d = density ( u );
+    auto p = pressure( u );
       
     assert( d > 0  );
     assert( p > 0  );
 
 
     // can use aliases for clarity
-    auto & ie = get<variables::index::internal_energy>( std::forward<U>(u) );
-    auto & t  = get<variables::index::temperature>( std::forward<U>(u) );
-    auto & ss = get<variables::index::sound_speed>( std::forward<U>(u) );
+    auto & ie = get<variables::index::internal_energy>( u );
+    auto & t  = get<variables::index::temperature>( u );
+    auto & ss = get<variables::index::sound_speed>( u );
 
     // explicitly set the individual elements
     ie = eos.compute_internal_energy_dp( d, p );
@@ -238,6 +299,72 @@ public:
     ss = eos.compute_sound_speed_de( d, ie );
   }
 
+
+  //============================================================================
+  //! \brief update the state from the energy
+  //! \param [in,out] u   The state to update
+  //! \param [in]     eos The state to update
+  //============================================================================
+  template <typename E>
+  static void update_state_from_energy( state_ref_t & u, const E & eos )
+  {
+    using math::get;
+
+    // access independant or derived quantities 
+    auto d  = density ( u );
+    auto ie = internal_energy( u );
+      
+    assert( d > 0  );
+    assert( ie > 0  );
+
+
+    // can use aliases for clarity
+    auto & p  = get<variables::index::pressure>( u );
+    auto & t  = get<variables::index::temperature>( u );
+    auto & ss = get<variables::index::sound_speed>( u );
+
+    // explicitly set the individual elements
+    p  = eos.compute_pressure_de( d, ie );
+    t  = eos.compute_temperature_de( d, ie );
+    ss = eos.compute_sound_speed_de( d, ie );
+  }
+
+
+  //============================================================================
+  //! \brief apply an update from conservative fluxes
+  //! \param [in,out] u   The state to update
+  //! \param [in]     du  The conservative change in state
+  //============================================================================
+  static void update_state_from_flux( state_ref_t & u, const flux_data_t & du )
+  {
+    using math::get;
+    using math::abs;
+
+    // get the conserved quatities
+    auto mass = density( u );
+    auto mom  = mass*velocity( u );
+    auto ener = mass*total_energy( u );
+
+    // access independant or derived quantities 
+    mass += get<equations::index::mass    >( du );     
+    mom  += get<equations::index::momentum>( du );
+    ener += get<equations::index::energy  >( du );
+
+    // get aliases for clarity
+    auto & d  = get<variables::index::density>( u );
+    auto & v  = get<variables::index::velocity>( u );
+    auto & ie = get<variables::index::internal_energy>( u );
+
+    // recompute solution quantities
+    d = mass;
+    v = mom / mass;
+    auto et = ener / mass;
+    ie = et - 0.5 * abs( v );
+
+    assert( d > 0  );
+    assert( ie > 0  );
+
+  }
 
 };
 

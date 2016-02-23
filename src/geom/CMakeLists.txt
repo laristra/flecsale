@@ -5,12 +5,17 @@
 
 set(geom_HEADERS
   centroid.h    detail/centroid.h
+  area.h        detail/area.h
   midpoint.h
   normal.h
   point.h
   PARENT_SCOPE
 )
 
+cinch_add_unit(geom
+    SOURCES 
+      test/centroid.cc
+)
 
 
 #----------------------------------------------------------------------------~-#

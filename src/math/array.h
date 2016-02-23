@@ -429,6 +429,16 @@ public:
     return *this;
   }
 
+  //! \brief Unary - operator.
+  //! \param[in] rhs The array on the right hand side of the operator.
+  //! \return A reference to the current object.
+  auto operator-() const {
+    array tmp;
+    std::transform( begin(), end(), tmp.begin(), std::negate<>() );    
+    return tmp;
+  }
+
+
 };
 
 
@@ -689,8 +699,9 @@ auto & operator<<(std::ostream& os, const array<L,T,D1,D2>& a)
 //! \param[in] b  The other vector
 //! \return The result of the operation
 template <typename L, typename T, size_t... N>
-auto dot_product(const array<L, T, N...> &a, const array<L, T, N...> &b) {
-  return std::inner_product(a.begin(), a.end(), b.begin(), 0);
+auto dot_product(const array<L, T, N...> &a, const array<L, T, N...> &b) 
+{
+  return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0) );
 }
 
 //! \brief Compute the magnitude of the vector
@@ -700,8 +711,33 @@ auto dot_product(const array<L, T, N...> &a, const array<L, T, N...> &b) {
 //! \param[in] b  The other vector
 //! \return The result of the operation
 template <typename L, typename T, size_t... N> 
-auto magnitude(const array<L, T, N...> &a) {
+auto magnitude(const array<L, T, N...> &a) 
+{
   return std::sqrt( dot_product(a,a) );
+}
+
+//! \brief Compute the magnitude of the vector
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template <typename L, typename T, size_t... N> 
+auto abs(const array<L, T, N...> &a) 
+{
+  return std::sqrt( dot_product(a,a) );
+}
+
+//! \brief Compute the dot product
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template <typename L, typename T>
+auto cross_product(const array<L, T, 2> &a, const array<L, T, 2> &b) 
+{
+  return a[0]*b[1] - a[1]*b[0];
 }
 
 } // namespace

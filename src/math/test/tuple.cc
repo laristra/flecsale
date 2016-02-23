@@ -21,15 +21,17 @@
 #include <iostream>
 
 // user includes
+#include "ale/common/types.h"
 #include "ale/math/tuple.h"
 
 
 // explicitly use some stuff
+using namespace ale;
 using namespace ale::math;
 
 using std::make_tuple;
 
-using real_t = double;
+using real_t = common::real_t;
 using tuple_1d_t = tuple<real_t>;
 using tuple_2d_t = tuple<real_t,real_t>;
 using std_tuple_2d = std::tuple<real_t,real_t>;

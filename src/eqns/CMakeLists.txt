@@ -5,6 +5,7 @@
 
 set(eos_HEADERS
   euler_eqns.h
+  flux.h
   PARENT_SCOPE
 )
 

@@ -22,6 +22,63 @@ namespace apps {
 namespace hydro {
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief A functor for accessing state in the mesh
+//! \tparam M  the mesh type
+////////////////////////////////////////////////////////////////////////////////
+template < typename M >
+class state_accessor 
+{
+public:
+
+  template< typename T >
+  using accessor_t = 
+    decltype( access_state( std::declval<M>(), "density", T ) );
+
+  constexpr state_accessor( M & mesh ) :
+    d( access_state( mesh, "density",           real_t ) ),
+    p( access_state( mesh, "pressure",          real_t ) ),
+    v( access_state( mesh, "velocity",        vector_t ) ),
+    e( access_state( mesh, "internal_energy",   real_t ) ),
+    t( access_state( mesh, "temperature",       real_t ) ),
+    a( access_state( mesh, "sound_speed",       real_t ) )
+  {}
+
+  template< typename T >
+  constexpr auto operator()( T && i ) const 
+  {
+    using std::forward;
+    return std::forward_as_tuple( d[ forward<T>(i) ], 
+                                  v[ forward<T>(i) ], 
+                                  p[ forward<T>(i) ], 
+                                  e[ forward<T>(i) ], 
+                                  t[ forward<T>(i) ], 
+                                  a[ forward<T>(i) ] );
+  }
+
+  template< typename T >
+  auto operator()( T && i ) 
+  {
+    using std::forward;
+    return std::forward_as_tuple( d[ forward<T>(i) ], 
+                                  v[ forward<T>(i) ], 
+                                  p[ forward<T>(i) ], 
+                                  e[ forward<T>(i) ], 
+                                  t[ forward<T>(i) ], 
+                                  a[ forward<T>(i) ] );
+  }
+
+private:
+
+  accessor_t<real_t>   d;
+  accessor_t<real_t>   p;
+  accessor_t<vector_t> v;
+  accessor_t<real_t>   e;
+  accessor_t<real_t>   t;
+  accessor_t<real_t>   a;
+       
+};
+
+////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task for setting initial conditions
 //!
 //! \param [in,out] mesh the mesh object
@@ -32,13 +89,15 @@ template< typename T, typename F >
 int32_t initial_conditions( T & mesh, F && ics ) {
 
   // get the collection accesor
-  //auto prim_state = access_collection( mesh, "prim_state" );
+  auto d = access_state( mesh, "density",    real_t );
+  auto p = access_state( mesh, "pressure",   real_t );
+  auto v = access_state( mesh, "velocity", vector_t );
 
   for ( auto c : mesh.cells() ) {
     // get the 
-    auto x = geom::centroid(c);
+    auto x = c->centroid();
     // now copy the state to flexi
-    //prim_state[c] = std::forward<F>(ics)( x );
+    std::tie( d[c], v[c], p[c] ) = std::forward<F>(ics)( x );
   }
 
   return 0;
@@ -49,7 +108,6 @@ int32_t initial_conditions( T & mesh, F && ics ) {
 //! \brief The main task for setting initial conditions
 //!
 //! \param [in,out] mesh the mesh object
-//! \param [in]     ics  the initial conditions to set
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
@@ -57,14 +115,232 @@ int32_t update_state_from_pressure( T & mesh ) {
 
 
   // get the collection accesor
-  //auto full_state = access_collection( mesh, "full_state" );
   auto eos = access_global_state( mesh, "eos", eos_t );
+  state_accessor<T> state( mesh );
 
   for ( auto c : mesh.cells() ) {
-    //auto u = full_state[c];
-    //eqns_t::update_state_from_pressure( u, eos );
+    auto u = state(c);
+    eqns_t::update_state_from_pressure( u, *eos );
   }
 
+  return 0;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task for setting initial conditions
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int32_t update_state_from_energy( T & mesh ) {
+
+
+  // get the collection accesor
+  auto eos = access_global_state( mesh, "eos", eos_t );
+  state_accessor<T> state( mesh );
+
+  for ( auto c : mesh.cells() ) {
+    auto u = state(c);
+    eqns_t::update_state_from_energy( u, *eos );
+  }
+
+  return 0;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to compute the time step size
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename E, typename T >
+int32_t evaluate_time_step( T & mesh ) {
+
+  // access what we need
+  state_accessor<T> state( mesh );
+
+  auto delta_t = access_global_state( mesh, "time_step", real_t );
+  real_t cfl = access_global_state( mesh, "cfl", real_t );
+ 
+ 
+  // Loop over each cell, computing the minimum time step,
+  // which is also the maximum 1/dt
+  real_t dt_inv(0);
+
+  for ( auto c : mesh.cells() ) {
+
+    // get cell properties
+    auto u = state( c );
+    auto area = c->area();
+
+    // loop over each edge
+    for ( auto e : mesh.edges(c) ) {
+      // estimate the length scale normal to the edge
+      auto delta_x = area / e->length();
+      // get the unit normal
+      auto norm = e->normal();
+      auto nunit = norm / abs(norm);
+      // compute the inverse of the time scale
+      auto dti =  E::fastest_wavespeed(u, nunit) / delta_x;
+      // check for the maximum value
+      dt_inv = std::max( dti, dt_inv );
+    } // edge
+
+  } // cell
+
+  assert( dt_inv > 0 && "infinite delta t" );
+
+  // invert dt and apply cfl
+  delta_t = cfl / dt_inv;
+
+  return 0;
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to evaluate residuals
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int32_t evaluate_fluxes( T & mesh ) {
+
+  // access what we need
+  auto flux = access_state( mesh, "flux", flux_data_t );
+  state_accessor<T> state( mesh );
+
+  //----------------------------------------------------------------------------
+  // TASK: loop over each edge and compute/store the flux
+  // fluxes are stored on each edge
+  for ( auto e : mesh.edges() ) {
+
+    // get the normal and unit normal
+    // The normal always points towards the first cell in the list.
+    // So we flip it.  This makes it point from the first cell outward.
+    auto norm = - e->normal();
+    auto nunit = norm / abs(norm);
+
+    // get the cell neighbors
+    auto c = mesh.cells(e).to_vec();
+    auto cells = c.size();
+
+
+    // get the left state
+    auto w_left = state( c[0] );    
+
+    // interior cell
+    if ( cells == 2 ) {
+      // Normal always points from the first cell to the second
+      // dot product below should always be the same sign ( positive )
+      auto cx_left = c[0]->centroid();
+      auto cx_right = c[1]->centroid();
+      auto delta = cx_right - cx_left;
+      auto dot = math::dot_product( norm, delta );
+      if ( dot < 0 ) norm = - norm;
+      assert( dot >= 0 && "interior normal points wrong way!!!!" );
+      // compute the interface flux
+      auto w_right = state( c[1] );
+      flux[e] = flux_function( w_left, w_right, nunit );
+    } 
+    // boundary cell
+    else {
+      // Normal always points outside, so the result of this
+      // dot product below should always be the same sign ( positive )
+      auto mp = e->midpoint();
+      auto cx = c[0]->centroid();
+      auto delta = mp - cx;
+      auto dot = math::dot_product( norm, delta );
+      if ( dot < 0 ) norm = - norm;
+      assert( dot >= 0 && "boundary normal points inward!!!!" );
+      // compute the boundary flux
+      flux[e] = boundary_flux( w_left, nunit );
+    }
+    
+    // scale the flux by the face area
+    math::multiplies_equal( flux[e], e->length() );
+    
+  } // for
+  //----------------------------------------------------------------------------
+
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to update the solution
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int32_t apply_update( T & mesh ) {
+
+  // access what we need
+  auto flux = access_state( mesh, "flux", flux_data_t );
+  state_accessor<T> state( mesh );
+
+  // read only access
+  real_t delta_t = access_global_state( mesh, "time_step", real_t );
+ 
+  //----------------------------------------------------------------------------
+  // Loop over each cell, scattering the fluxes to the cell
+  for ( auto cell : mesh.cells() ) {
+    
+    flux_data_t delta_u;
+    math::fill( delta_u, 0.0 );
+
+    // loop over each connected edge
+    for ( auto edge : mesh.edges(cell) ) {
+      
+      // get the cell neighbors
+      auto neigh = mesh.cells(edge).to_vec();
+      auto num_neigh = neigh.size();
+
+      // add the contribution to this cell only
+      if ( neigh[0] == cell )
+        math::minus_equal( delta_u, flux[edge] );
+      else
+        math::plus_equal( delta_u, flux[edge] );
+
+    } // edge
+
+    // now compute the final update
+    math::multiplies_equal( delta_u, delta_t/cell->area() );
+    
+    // apply the update
+    auto u = state( cell );
+    eqns_t::update_state_from_flux( u, delta_u );
+
+  } // for
+  //----------------------------------------------------------------------------
+
+  return 0;
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Output the solution
+//!
+//! \param [in] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int32_t output( T & mesh, const std::string & prefix ) 
+{
+  static size_t cnt = 0;
+
+  std::stringstream ss;
+  ss << prefix;
+  ss << std::setw( 7 ) << std::setfill( '0' ) << cnt++;
+  ss << ".exo";
+  
+  mesh::write_mesh( ss.str(), mesh );
+  
+  return 0;
 }
 
 } // namespace hydro

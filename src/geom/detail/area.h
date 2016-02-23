@@ -10,7 +10,7 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file centroid.h
+ * \file area.h
  * 
  * \brief Some helper functions for template foo magic.
  *
@@ -25,29 +25,25 @@ namespace detail {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Template helper to compute centroids
+// Template helper to compute areas
 ////////////////////////////////////////////////////////////////////////////////
 
-//! \brief average operator.
-template< class T, class U, class V >
-constexpr void centroid_2d( T & cx, U & vol, V && v )
+//! \brief area operator.
+template< class U, class V >
+constexpr void area_2d( U & vol, V && v )
 { 
   // nothing left to do
 }
 
 //! \brief average operator.
-template< class T, class U, class V1, class V2, class ... Args >
-constexpr void centroid_2d( T & cx, U & vol, V1 && v1, V2 && v2, Args&&... args )
+template< class U, class V1, class V2, class ... Args >
+constexpr void area_2d( U & vol, V1 && v1, V2 && v2, Args&&... args )
 { 
   
-  auto tmp = v1[0]*v2[1] - v2[0]*v1[1];
-  cx[0] += ( v1[0] + v2[0] ) * tmp;
-  cx[1] += ( v1[1] + v2[1] ) * tmp;
-  vol += tmp;
-  centroid_2d( cx, 
-               vol, 
-               std::forward<V2>(v2), 
-               std::forward<Args>(args)... ); 
+  vol += v1[0]*v2[1] - v2[0]*v1[1];
+  area_2d( vol, 
+           std::forward<V2>(v2), 
+           std::forward<Args>(args)... ); 
 }
 
 

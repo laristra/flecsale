@@ -21,6 +21,7 @@
 #include <iostream>
 
 // user includes
+#include "ale/common/types.h"
 #include "ale/eqns/euler_eqns.h"
 #include "ale/eos/ideal_gas.h"
 
@@ -32,11 +33,11 @@ using std::vector;
 
 using namespace std::placeholders;
 
+using namespace ale;
 using namespace ale::eqns;
 using namespace ale::eos;
-using namespace ale;
 
-using real_t = double;
+using real_t = common::real_t;
 using eqns_t = euler_eqns_t<real_t,3>;
 using eos_t  = ideal_gas_t<real_t>;
 

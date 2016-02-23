@@ -76,7 +76,7 @@ using flecsi::temporary;
     function of the user-defined meta data type.
  */
 #define register_state(mesh_, key, site, type, ...) \
-  (mesh_).register_state_<type>((key), \
+  (mesh_).template register_state_<type>((key), \
   ale::mesh::burton_mesh_traits_t::attachment_site_t::site, ##__VA_ARGS__)
 
 /*!
@@ -89,7 +89,7 @@ using flecsi::temporary;
   \return An accessor to the state data.
  */
 #define access_state(mesh, key, type) \
-  (mesh).access_state_<type>((key))
+  (mesh).template access_state_<type>((key))
 
 /*!
   \brief Access all state of a given type from a given \e mesh and \e key.
@@ -101,7 +101,7 @@ using flecsi::temporary;
     the matching state data.
  */
 #define access_type(mesh, type) \
-  (mesh).access_type_<type>()
+  (mesh).template access_type_<type>()
 
 /*!
   \brief Access all state of a given type from a given \e mesh and \e key that
@@ -116,7 +116,7 @@ using flecsi::temporary;
     the matching state data.
  */
 #define access_type_if(mesh, type, predicate) \
-  (mesh).access_type_if_<type>(predicate)
+  (mesh).template access_type_if_<type>(predicate)
 
 /*!
   \brief Select state variables at a given attachment site.
@@ -196,7 +196,7 @@ using flecsi::temporary;
     the matching state data.
  */
 #define access_global_type(mesh, type) \
-  (mesh).access_global_type_<type>()
+  (mesh).template access_global_type_<type>()
 
 /*!
   \brief Access all state of a given type from a given \e mesh and \e key that
@@ -211,7 +211,7 @@ using flecsi::temporary;
     the matching state data.
  */
 #define access_global_type_if(mesh, type, predicate) \
-  (mesh).access_global_type_if_<type>(predicate)
+  (mesh).template access_global_type_if_<type>(predicate)
 
 
 /*----------------------------------------------------------------------------*

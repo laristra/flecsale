@@ -26,7 +26,8 @@ namespace geom {
 //! \remark this one is for pointers
 template< class T >
 constexpr
-auto midpoint( const T * t )
+decltype( std::declval<T>()->midpoint() ) // exploit SFINAE
+midpoint( const T * t )
 { 
   return t->midpoint();
 }
@@ -37,7 +38,8 @@ auto midpoint( const T * t )
 //! \remark this one is for non-pointer types
 template< class T >
 constexpr
-auto midpoint( T && t )
+decltype( std::declval<T>()->midpoint() ) // exploit SFINAE
+midpoint( T && t )
 { 
   return std::forward<T>(t)->midpoint();
 }

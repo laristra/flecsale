@@ -107,7 +107,7 @@ T box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
   auto x0 = - x1;
   auto y0 = - y1;
 
-  return box<T>( num_cells_y, num_cells_x, x0, y0, x1, y1 );
+  return box<T>( num_cells_x, num_cells_y, x0, y0, x1, y1 );
 }
 
 } // namespace mesh

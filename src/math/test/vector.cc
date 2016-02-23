@@ -21,13 +21,15 @@
 #include <iostream>
 
 // user includes
+#include "ale/common/types.h"
 #include "ale/math/vector.h"
 
 
 // explicitly use some stuff
+using namespace ale;
 using namespace ale::math;
 
-using real_t = double;
+using real_t = common::real_t;
 using vector_1d_t = vector<real_t,1>;
 using vector_2d_t = vector<real_t,2>;
 using vector_3d_t = vector<real_t,3>;

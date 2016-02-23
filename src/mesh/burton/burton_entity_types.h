@@ -119,11 +119,27 @@ class burton_vertex_t
  */
 struct burton_edge_t
     : public flecsi::mesh_entity_t<1, burton_mesh_traits_t::num_domains> {
+
+  //! Type of floating point.
+  using real_t = burton_mesh_traits_t::real_t;
+
   //! Type containing coordinates of the vertex.
   using point_t = burton_mesh_traits_t::point_t;
 
+  //! Type vector type.
+  using vector_t = burton_mesh_traits_t::vector_t;
+
+  //! the constructor
   burton_edge_t(mesh_topology_base_t & mesh) : mesh_(mesh) {}
+  
+  //! the edge midpoint
   point_t midpoint() const;
+
+  //! the edge length
+  real_t  length() const;
+
+  //! the edge normal
+  vector_t normal() const;
 
  private:
 
@@ -148,12 +164,20 @@ struct burton_cell_t
   //! Type containing coordinates of the vertex.
   using point_t = burton_mesh_traits_t::point_t;
 
+  //! Type of floating point.
+  using real_t = burton_mesh_traits_t::real_t;
+
   //! Constructor
   burton_cell_t() = default;
   burton_cell_t(mesh_topology_base_t &) {};
   //! Destructor
   virtual ~burton_cell_t() {}
+
+  //! the centroid
   virtual point_t centroid() const {};
+
+  //! the area of the cell
+  virtual real_t area() const {};
 
   /*!
     \brief create_entities is a function that creates entities
@@ -205,7 +229,11 @@ class burton_quadrilateral_cell_t : public burton_cell_t
   {
   }
 
+  //! the centroid
   point_t centroid() const override;
+
+  //! the area of the cell
+  real_t area() const override;
 
   /*!
     \brief create_entities function for burton_quadrilateral_cell_t.

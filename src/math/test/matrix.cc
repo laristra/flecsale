@@ -21,13 +21,15 @@
 #include <iostream>
 
 // user includes
+#include "ale/common/types.h"
 #include "ale/math/matrix.h"
 
 
 // explicitly use some stuff
+using namespace ale;
 using namespace ale::math;
 
-using real_t = double;
+using real_t = common::real_t;
 using matrix_1d_t = row_major_matrix<real_t,1,1>;
 using matrix_2d_t = row_major_matrix<real_t,2,3>;
 
