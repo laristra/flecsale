@@ -17,7 +17,7 @@ can also start by creating their own apps using this [README](apps).
 # Current Status
 
 
-<a href="url"><img src="doc/sod.png" width="400" alt="The Sod shock tube at t=0.2s"></a>
+<a href="doc/sod.png"><img src="doc/sod.png" width="400" alt="The Sod shock tube at t=0.2s"></a>
 
 ---
 
