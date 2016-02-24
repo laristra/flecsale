@@ -191,6 +191,20 @@ public:
   }
 
   //============================================================================
+  //! \brief Compute the fastest moving eigenvalue
+  //! \param [in]  u   The solution state
+  //! \return the fastest moving wave speed
+  //============================================================================
+  template <typename V>
+  static auto eigenvalues( const state_data_t & u, const V & norm )
+  {
+    auto a = sound_speed( u );
+    auto v = velocity( u );
+    auto vn = math::dot_product( v, norm );
+    return std::array<real_t,4>{vn-a, vn, vn, vn+a};
+  }
+
+  //============================================================================
   //! \brief Computes the change in conserved quantities between two states
   //! \param [in]  ul   The left state
   //! \param [in]  ur   The right state

@@ -32,6 +32,10 @@
 // everything is in the hydro namespace
 using namespace apps::hydro;
 
+// right now cases are hard coded
+#define SOD
+//#define SHOCK_BOX
+
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
 ///////////////////////////////////////////////////////////////////////////////
@@ -42,8 +46,10 @@ int main(int argc, char** argv)
   // Inputs
   //===========================================================================
 
+#ifdef SOD
+
   // the case prefix
-  std::string prefix = "hydro";
+  std::string prefix = "sod";
 
   // the grid dimensions
   constexpr size_t num_cells_x = 100;
@@ -71,6 +77,45 @@ int main(int argc, char** argv)
       }    
       return std::make_tuple( d, v, p );
     };
+
+#elif defined(SHOCK_BOX)
+
+  // the case prefix
+  std::string prefix = "shock_box";
+
+  // the grid dimensions
+  constexpr size_t num_cells_x = 100;
+  constexpr size_t num_cells_y = 100;
+
+  constexpr real_t length_x = 1.0;
+  constexpr real_t length_y = 1.0;
+  
+  // the CFL and final solution time
+  constexpr real_t CFL = 0.5;
+  constexpr real_t final_time = 0.2;
+
+  // this is a lambda function to set the initial conditions
+  auto ics = [] ( const auto & x )
+    {
+      real_t d, p;
+      vector_t v(0);
+      if ( x[0] < 0.0 && x[1] < 0.0 ) {
+        d = 0.125;
+        p = 0.1;
+      }
+      else {
+        d = 1.0;
+        p = 1.0;
+      }    
+      return std::make_tuple( d, v, p );
+    };
+  
+
+#else
+
+#  pragma message("NO CASE DEFINED!")
+
+#endif
 
   // setup an equation of state
   eos_t eos( /* gamma */ 1.4, /* cv */ 1.0 ); 

@@ -73,6 +73,46 @@ average( T && t, Types&&... args )
 }
 
 //////////////////////////////////////////////////////////////////////////////
+// return the max and min value of lists
+//////////////////////////////////////////////////////////////////////////////
+
+//! \brief return the minimum value of a list
+//! \param [in] a the array to search
+//! \remark general version
+template< template<typename...> typename C, typename...Args >
+auto min_value( const C<Args...> & a ) 
+{
+  return *std::min_element( a.begin(), a.end() );
+}
+
+//! \brief return the minimum value of a list
+//! \param [in] a the array to search
+//! \remark array version
+template< typename T, std::size_t N >
+auto min_value( const std::array<T,N> & a ) 
+{
+  return *std::min_element( a.begin(), a.end() );
+}
+
+//! \brief return the maximum value of a list
+//! \param [in] a the array to search
+//! \remark general version
+template< template<typename...> typename C, typename...Args >
+auto max_value( const C<Args...> & a ) 
+{
+  return *std::max_element( a.begin(), a.end() );
+}
+
+//! \brief return the maximum value of a list
+//! \param [in] a the array to search
+//! \remark array version
+template< typename T, std::size_t N >
+auto max_value( const std::array<T,N> & a ) 
+{
+  return *std::max_element( a.begin(), a.end() );
+}
+
+//////////////////////////////////////////////////////////////////////////////
 // Some general math functions
 //////////////////////////////////////////////////////////////////////////////
 

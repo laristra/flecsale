@@ -46,8 +46,8 @@ int main(int argc, char** argv)
   std::string prefix = "hydro";
 
   // the grid dimensions
-  constexpr size_t num_cells_x = 100;
-  constexpr size_t num_cells_y = 1;
+  constexpr size_t num_cells_x = 10;
+  constexpr size_t num_cells_y = 2;
 
   constexpr real_t length_x = 1.0;
   constexpr real_t length_y = 0.1;

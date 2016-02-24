@@ -62,9 +62,9 @@ template< typename UL, typename UR, typename V >
 auto flux_function( UL && left_state, UR && right_state, V && norm )
 { 
   return 
-    eqns::rusanov_flux<eqns_t>( std::forward<UL>(left_state), 
-                                std::forward<UR>(right_state), 
-                                std::forward<V>(norm) ); 
+    eqns::hlle_flux<eqns_t>( std::forward<UL>(left_state), 
+                             std::forward<UR>(right_state), 
+                             std::forward<V>(norm) ); 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
