@@ -16,11 +16,18 @@ can also start by creating their own apps using this [README](apps).
 
 # Current Status
 
-
+A proxy application has been written to solve the two-dimensional
+Euler equations on fixed meshes.  The solution algorithm uses a
+first-order Godunov-type finite-volume method and an approximate flux
+function.  Below is the computed density 
+for the standard Sod shock tube problem at *t* = 0.2 s:
 <center>
 <a href="doc/sod.png"><img src="doc/sod.png" width="400" alt="The Sod shock tube at t=0.2s"></a>
 </center>
 
+The shock-box problem is a two-dimensional version of Sod's shock
+tube.  Below are the computed solutions at **(left)** *t* = 0 s and
+**(right)** *t* = 0.2 s:
 <center>
 <a href="doc/shock_box1.png"><img src="doc/shock_box1.png" width="400" alt="A 2d shock box at t=0s"></a>
 <a href="doc/shock_box2.png"><img src="doc/shock_box2.png" width="400" alt="A 2d shock box at t=0.2s"></a>
