@@ -171,7 +171,7 @@ using flecsi::temporary;
     function of the user-defined meta data type.
  */
 #define register_global_state(mesh_, key, type, ...) \
-  (mesh_).register_global_state_<type>((key), ##__VA_ARGS__)
+  (mesh_).template register_global_state_<type>((key), ##__VA_ARGS__)
 
 
 /*!

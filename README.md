@@ -14,6 +14,13 @@ can also start by creating their own apps using this [README](apps).
 
 ---
 
+# Current Status
+
+
+![The Sod shock tube at t=0.2s][doc/sod.png]
+
+---
+
 # Thirdparty Libraries
 
 This project uses a number of third party libraries.  Below is a list

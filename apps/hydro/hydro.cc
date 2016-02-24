@@ -33,8 +33,8 @@
 using namespace apps::hydro;
 
 // right now cases are hard coded
-#define SOD
-//#define SHOCK_BOX
+//#define SOD
+#define SHOCK_BOX
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
@@ -143,7 +143,6 @@ int main(int argc, char** argv)
   register_state(mesh, "sound_speed",     cells, real_t, persistent);
 
   // register the time step and set a cfl
-  register_global_state( mesh, "time", real_t );
   register_global_state( mesh, "time_step", real_t );
   register_global_state( mesh, "cfl", real_t ) = CFL;
   
@@ -168,11 +167,6 @@ int main(int argc, char** argv)
   //===========================================================================
 
 
-
-  // access and set the current solution time
-  auto soln_time = access_global_state( mesh, "time", real_t );
-  soln_time = 0;
-
   // now output the solution
   apps::hydro::output(mesh, prefix);
 
@@ -184,6 +178,9 @@ int main(int argc, char** argv)
   // type since I will only ever be accesissing all the data at once.
   register_state(mesh, "flux", edges, flux_data_t, temporary);
 
+  // get the current time
+  auto soln_time = mesh.get_time();
+
   // a counter for time steps
   auto time_cnt = 0;
 
@@ -194,11 +191,11 @@ int main(int argc, char** argv)
     
     // access the computed time step and make sure its not too large
     auto time_step = access_global_state( mesh, "time_step", real_t );   
-    time_step = std::min( *time_step, final_time - *soln_time );       
+    time_step = std::min( *time_step, final_time - soln_time );       
 
     cout << "step =  " << std::setw(4) << time_cnt++
          << std::setprecision(2)
-         << ", time = " << std::scientific << *soln_time
+         << ", time = " << std::scientific << soln_time
          << ", dt = " << std::scientific << *time_step
          << std::endl;
 
@@ -212,12 +209,13 @@ int main(int argc, char** argv)
     apps::hydro::update_state_from_energy( mesh );
 
     // update time
-    soln_time = *soln_time + *time_step;
+    soln_time += *time_step;
+    mesh.set_time( soln_time );
 
     // now output the solution
     apps::hydro::output(mesh, prefix);
 
-  } while ( *soln_time < final_time );
+  } while ( soln_time < final_time );
 
 
   //===========================================================================

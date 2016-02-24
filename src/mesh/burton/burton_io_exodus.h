@@ -210,6 +210,11 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   using ex_real_t = real_t;
   using ex_index_t = int;
 
+
+  //============================================================================
+  // initial setup
+  //============================================================================
+
   // size of floating point variables used in app.
   int CPU_word_size = sizeof(real_t);
   // size of floating point to be stored in file.
@@ -275,10 +280,14 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   status = ex_put_elem_conn(exoid, blockid, elt_conn.data());
   assert(status == 0);
 
-
+  //============================================================================
   // write field data
+  //============================================================================
 
+  //----------------------------------------------------------------------------
   // nodal field data
+  //----------------------------------------------------------------------------
+
   int num_nf = 0; // number of nodal fields
   // real scalars persistent at vertices
   auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
@@ -321,29 +330,32 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   // write nodal fields
   inum = 1;
   // node field buffer
-  vector<real_t> nf(num_nodes);
+  vector<ex_real_t> nf(num_nodes);
   for(auto sf: rspav) {
     for(auto v: m.vertices()) nf[v.id()] = sf[v];
-    status = ex_put_nodal_var(exoid, 1, inum++, num_nodes, nf.data());
+    status = ex_put_nodal_var(exoid, /* timestep */ 1, inum++, num_nodes, nf.data());
     assert(status == 0);
   } // for
   for(auto sf: ispav) {
     // cast int fields to real_t
     for(auto v: m.vertices()) nf[v.id()] = (real_t)sf[v];
-    status = ex_put_nodal_var(exoid, 1, inum++, num_nodes, nf.data());
+    status = ex_put_nodal_var(exoid, /* timestep */ 1, inum++, num_nodes, nf.data());
     assert(status == 0);
   } // for
   for(auto vf: rvpav) {
     for(int d=0; d < m.dimension(); ++d) {
       for(auto v: m.vertices()) nf[v.id()] = vf[v][d];
-      status = ex_put_nodal_var(exoid, 1, inum++, num_nodes, nf.data());
+      status = ex_put_nodal_var(exoid, /* timestep */ 1, inum++, num_nodes, nf.data());
       assert(status == 0);
     } // for
   } // for
 
 
 
+  //----------------------------------------------------------------------------
   // element field data
+  //----------------------------------------------------------------------------
+
   int num_ef = 0; // number of element fields
   // real scalars persistent at cells
   auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
@@ -383,25 +395,34 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   // write element fields
   inum = 1;
   // element field buffer
-  real_t ef[num_elem];
+  vector<ex_real_t> ef(num_elem);
   for(auto sf: rspac) {
     for(auto c: m.cells()) ef[c.id()] = sf[c];
-    status = ex_put_elem_var(exoid, 1, inum++, 0, num_elem, ef);
+    status = ex_put_elem_var(exoid, /* timestep */ 1, inum++, /* blkid */ 0, num_elem, ef.data());
     assert(status == 0);
   } // for
   for(auto sf: ispac) {
     // cast int fields to real_t
     for(auto c: m.cells()) ef[c.id()] = (real_t)sf[c];
-    status = ex_put_elem_var(exoid, 1, inum++, 0, num_elem, ef);
+    status = ex_put_elem_var(exoid, /* timestep */ 1, inum++, /* blkid */ 0, num_elem, ef.data());
     assert(status == 0);
   } // for
   for(auto vf: rvpac) {
     for(int d=0; d < m.dimension(); ++d) {
       for(auto c: m.cells()) ef[c.id()] = vf[c][d];
-      status = ex_put_elem_var(exoid, 1, inum++, 0, num_elem, ef);
+      status = ex_put_elem_var(exoid, /* timestep */ 1, inum++, /* blkid */ 0, num_elem, ef.data());
       assert(status == 0);
     } // for
   } // for
+
+
+  //============================================================================
+  // final setup
+  //============================================================================
+  // set the time
+  ex_real_t soln_time = m.get_time();
+  status = ex_put_time(exoid, /* timestep */ 1, &soln_time );
+  assert(status == 0);
 
   // close
   status = ex_close(exoid);

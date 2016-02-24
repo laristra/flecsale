@@ -328,6 +328,28 @@ public:
   } // dimension
 
   /*--------------------------------------------------------------------------*
+   * interface for some general things
+   *--------------------------------------------------------------------------*/
+
+
+  /*!
+    \brief Return the time associated with the mesh
+   */
+  auto get_time()
+  {
+    auto soln_time = access_global_state_<real_t, flecsi_internal>("time");
+    return *soln_time;
+  }
+
+  /*!
+    \brief Set the time associated with the mesh
+   */
+  auto set_time(real_t soln_time)
+  {
+    access_global_state_<real_t, flecsi_internal>("time") = soln_time;
+  }
+
+  /*--------------------------------------------------------------------------*
    * Vertex Interface
    *--------------------------------------------------------------------------*/
 
@@ -807,6 +829,11 @@ public:
     // register coordinate state
     state_.register_state<point_t, flecsi_internal>(
       "coordinates", vertices, attachment_site_t::vertices, persistent);
+
+    // register time state
+    auto soln_time = state_.register_global_state<real_t, flecsi_internal>(
+      "time", attachment_site_t::global, persistent);
+    soln_time = 0;
 
   } // init_parameters
 
