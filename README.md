@@ -19,6 +19,9 @@ can also start by creating their own apps using this [README](apps).
 
 <a href="doc/sod.png"><img src="doc/sod.png" width="400" alt="The Sod shock tube at t=0.2s"></a>
 
+<a href="doc/shock_box1.png"><img src="doc/shock_box1.png" width="400" alt="A 2d shock box at t=0s"></a>
+<a href="doc/shock_box2.png"><img src="doc/shock_box2.png" width="400" alt="A 2d shock box at t=0.2s"></a>
+
 ---
 
 # Thirdparty Libraries
