@@ -26,8 +26,8 @@ for the standard Sod shock tube problem at *t* = 0.2 s:
 </center>
 
 The shock-box problem is a two-dimensional version of Sod's shock
-tube.  Below are the computed solutions at **(left)** *t* = 0 s and
-**(right)** *t* = 0.2 s:
+tube.  Below are the computed solutions at (left) *t* = 0 s and
+(right) *t* = 0.2 s:
 <center>
 <a href="doc/shock_box1.png"><img src="doc/shock_box1.png" width="400" alt="A 2d shock box at t=0s"></a>
 <a href="doc/shock_box2.png"><img src="doc/shock_box2.png" width="400" alt="A 2d shock box at t=0.2s"></a>
