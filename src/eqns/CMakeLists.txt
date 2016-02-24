@@ -6,6 +6,7 @@
 set(eos_HEADERS
   euler_eqns.h
   flux.h
+  lagrange_eqns.h
   PARENT_SCOPE
 )
 

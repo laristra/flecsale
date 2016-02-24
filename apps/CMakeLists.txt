@@ -6,6 +6,7 @@
 set( ALE_LIBS ale flecsi ${IO_LIBRARIES} )
 
 add_subdirectory( hydro )
+add_subdirectory( lag_hydro )
 
 add_executable( dummy_app dummy_app.cc )
 
