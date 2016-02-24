@@ -79,11 +79,9 @@ TEST_F(Burton, mesh) {
   for(auto w : mesh_.wedges()) {
     CINCH_CAPTURE() << "----------- wedge id: " << w.id() << endl;
 
-#if 0
     for(auto c: mesh_.cells(w)) {
-      CINCH_CAPTURE() << "       ++++ c id: " << c.id() << endl;
+      CINCH_CAPTURE() << "       ++++ cell id: " << c.id() << endl;
     } // for
-#endif
 
     for(auto e: mesh_.edges(w)) {
       CINCH_CAPTURE() << "       ++++ edge id: " << e.id() << endl;
@@ -128,10 +126,6 @@ TEST_F(Burton, mesh) {
     } // for
   } // for
 
-  //CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED("burton.blessed"));
-
-  cout << CINCH_DUMP() << endl;
-
 } // TEST_F
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -159,33 +153,30 @@ TEST_F(Burton, geometry) {
   CINCH_CAPTURE() << separator;
   for(auto v: mesh_.vertices()) {
     auto xv = v->coordinates();
-    CINCH_CAPTURE() << "---- vertex id: " << v.id() 
+    CINCH_CAPTURE() << "^^^^ vertex id: " << v.id()
       << " with coordinates " << xv << endl;
     for(auto w: mesh_.wedges(v)) {
-// FIXME ... and why do we have to do first()?
-#if 0
+
+      CINCH_CAPTURE() << "     ---- wedge id: " << w.id() << endl;
+
+      // Why do we have to do .first()?
       auto c = mesh_.cells(w).first();
-      CINCH_CAPTURE() << "     ++++ cell id: " << c.id()
+      CINCH_CAPTURE() << "          ++++ cell id: " << c.id()
         << " with centroid " << c->centroid() << endl;
-#endif
+
       auto e = mesh_.edges(w).first();
-      CINCH_CAPTURE() << "     ++++ edge id: " << e.id()
+      CINCH_CAPTURE() << "          ++++ edge id: " << e.id()
         << " with midpoint " << e->midpoint() << endl;
 
-// FIXME
-#if 0
-      CINCH_CAPTURE() << "     ++++ side_facet_normal: "
+      CINCH_CAPTURE() << "          ++++ side_facet_normal: "
         << w->side_facet_normal() << endl;
-#endif
 
-      CINCH_CAPTURE() << "     ++++ cell_facet_normal: "
+      CINCH_CAPTURE() << "          ++++ cell_facet_normal: "
         << w->cell_facet_normal() << endl;
 
     } // for
 
   } // for
-
-  cout << CINCH_DUMP() << endl;
 
 } // TEST_F
 
@@ -206,6 +197,8 @@ TEST_F(Burton, accessors) {
   register_state(mesh_, "total energy", cells, real_t, persistent);
   register_state(mesh_, "velocity", vertices, vector_t, persistent);
   register_state(mesh_, "H", edges, vector_t);
+  register_state(mesh_, "point_not_persistent", vertices, point_t);
+  register_state(mesh_, "point_is_persistent", vertices, point_t, persistent);
 
   struct data_t {
     double x, y;
@@ -228,7 +221,7 @@ TEST_F(Burton, accessors) {
     CINCH_CAPTURE() << "\t" << v.label() << " has type data_t" << endl;
   } // for
 
-  CINCH_CAPTURE() << std::endl;
+  CINCH_CAPTURE() << endl;
 
   CINCH_CAPTURE() << "Accessing state with type real_t at cells:" << endl;
 
@@ -303,8 +296,6 @@ TEST_F(Burton, accessors) {
   } // for
 
   CINCH_CAPTURE() << endl;
-
-  cout << CINCH_DUMP() << endl;
 
 } // TEST_F
 
@@ -405,9 +396,13 @@ TEST_F(Burton, state) {
 
 } // TEST_F
 
-
-
-
+////////////////////////////////////////////////////////////////////////////////
+//! \brief A final test to compare the blessed file and do CINCH_DUMP().
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(Burton, cinch_dump) {
+  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED("burton.blessed"));
+  cout << CINCH_DUMP() << endl;
+}
 
 /*~------------------------------------------------------------------------~--*
  * Formatting options

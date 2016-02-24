@@ -5,7 +5,7 @@
 
 set(math_HEADERS
   array.h
-  operators.h  detail/operators.h
+  math.h    detail/math.h
   tuple.h
   vector.h
   PARENT_SCOPE

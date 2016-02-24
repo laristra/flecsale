@@ -25,29 +25,6 @@
 namespace ale {
 namespace geom {
 
-//! \brief general area operator.
-//! \remark this one is used for types with an area function
-//! \remark this one is for pointers
-template< class T >
-constexpr
-decltype( std::declval<T>()->area() ) // exploit SFINAE
-area( const T * t )
-{ 
-  return t->area();
-}
-
-
-//! \brief general area operator.
-//! \remark this one is used for types with a area function
-//! \remark this one is for non-pointer types
-template< class T >
-constexpr
-decltype( std::declval<T>()->area() ) // exploit SFINAE
-area( T && t )
-{ 
-  return std::forward<T>(t)->area();
-}
-
 
 //! \brief compute area for 2d
 //! \remark all arguments must be of the same type

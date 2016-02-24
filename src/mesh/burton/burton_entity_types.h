@@ -16,6 +16,7 @@
 
 #include "flecsi/mesh/mesh_types.h"
 #include "ale/geom/normal.h"
+#include "ale/math/math.h"
 #include "ale/mesh/burton/burton_mesh_traits.h"
 
 /*!
@@ -144,7 +145,7 @@ struct burton_edge_t
  private:
 
   //! a reference to the mesh topology
-  mesh_topology_base_t & mesh_;
+  const mesh_topology_base_t & mesh_;
 
 }; // struct burton_edge_t
 
@@ -219,6 +220,7 @@ struct burton_cell_t
 
 /*!
   \class burton_quadrilateral_t burton_entity_types.h
+
   \brief The burton_quadrilateral_t type provides a derived instance of
     burton_cell_t for 2D quadrilateral cells.
  */
@@ -376,7 +378,7 @@ class burton_quadrilateral_cell_t : public burton_cell_t
 private:
 
   //! a reference to the mesh topology
-  mesh_topology_base_t & mesh_;
+  const mesh_topology_base_t & mesh_;
 
 }; // class burton_quadrilateral_cell_t
 
@@ -433,9 +435,14 @@ class burton_wedge_t
   vector_t side_facet_normal() const
   {
     // Use the edge midpoint and the cell centroid to create the normal vector.
+    // Multiply normal by the sign of the dot between the normal and the vector
+    // from v to e to get "outward facing" normal.
     auto c = cell()->centroid();
     auto e = edge()->midpoint();
-    return geom::normal(c,e);
+    auto v = vertex()->coordinates();
+    auto nrml = geom::normal(c,e);
+    auto dot = dot_product(nrml, e-v);
+    return nrml * math::sgn(dot);
   }
 
   /*!
@@ -445,9 +452,14 @@ class burton_wedge_t
   vector_t cell_facet_normal() const
   {
     // Use the edge midpoint and vertex to create the normal vector.
+    // Multiply normal by the sign of the dot between the normal and the vector
+    // from c to e to get "outward facing" normal.
     auto e = edge()->midpoint();
     auto v = vertex()->coordinates();
-    return geom::normal(e,v);
+    auto c = cell()->centroid();
+    auto nrml = geom::normal(e,v);
+    auto dot = dot_product(nrml,e-c);
+    return nrml * math::sgn(dot);
   }
 
  private:
@@ -495,7 +507,7 @@ class burton_corner_t
   entity_group<burton_wedge_t> wedges_;
 
   //! a reference to the mesh topology
-  mesh_topology_base_t & mesh_;
+  const mesh_topology_base_t & mesh_;
 
 }; // class burton_corner_t
 

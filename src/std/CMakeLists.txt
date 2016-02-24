@@ -4,6 +4,8 @@
 #~----------------------------------------------------------------------------~#
 
 set(std_HEADERS
+  functional.h
+  iterator.h
   memory.h
   type_traits.h
   PARENT_SCOPE

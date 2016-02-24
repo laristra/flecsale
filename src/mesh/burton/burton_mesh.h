@@ -823,10 +823,7 @@ public:
 
     // Initialize wedges
     for (auto w : wedges()) {
-// FIXME
-#if 0
       w->set_cell(cells(w).first());
-#endif
       w->set_edge(edges(w).first());
       w->set_vertex(vertices(w).first());
     } // for

@@ -27,31 +27,6 @@ namespace ale {
 namespace geom {
 
 
-
-//! \brief general normal operator.
-//! \remark this one is used for types with a normal function
-//! \remark this one is for pointers
-template< class T >
-constexpr
-decltype( std::declval<T>()->normal() ) // exploit SFINAE
-normal( const T * t )
-{ 
-  return t->normal();
-}
-
-
-//! \brief general normal operator.
-//! \remark this one is used for types with a normal function
-//! \remark this one is for non-pointer types
-template< class T >
-constexpr
-decltype( std::declval<T>()->normal() ) // exploit SFINAE
-normal( T && t )
-{ 
-  return std::forward<T>(t)->normal();
-}
-
-
 //! \brief compute normal between two points in 2d
 //! \remark all arguments must be of the same type
 template< class T, class U >

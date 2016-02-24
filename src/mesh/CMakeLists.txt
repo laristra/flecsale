@@ -16,7 +16,6 @@ set(mesh_HEADERS
   factory.h
   burton/burton_entity_types.h
   burton/burton.h
-  burton/burton_io.h
   burton/burton_io_exodus.h
   burton/burton_mesh.h
   burton/burton_mesh_traits.h
@@ -40,6 +39,7 @@ cinch_add_unit(mesh
       burton/test/burton.cc
       burton/test/burton_io.cc
       burton/test/gradients.cc
+    INPUTS burton/test/burton.blessed
     LIBRARIES ${mesh_LIBS} ale
 )
 

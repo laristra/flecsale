@@ -18,13 +18,11 @@
 
 //! user includes
 #include "burton_test.h"
-#include "ale/geom/centroid.h"
 
 
 // explicitly use some stuff
 using std::cout;
 using std::endl;
-using ale::geom::centroid;
 
 //=============================================================================
 //! \brief Computation of simple cell centered gradients
@@ -58,7 +56,7 @@ TEST_F(Burton, gradients) {
 
   // loop over vertices and assign the field value
   for ( auto c : mesh_.cells() ) {
-    auto x = centroid(c);
+    auto x = c->centroid();
     velocity[c] = x;
   }
 
@@ -127,7 +125,7 @@ TEST_F(Burton, gradients) {
   for ( auto c0 : mesh_.cells() ) {
 
     // the the current point and state
-    auto x0 = centroid(c0);
+    auto x0 = c0->centroid();
     auto u0 = const_velocity[c0];
 
     // get the neighbors
@@ -145,7 +143,7 @@ TEST_F(Burton, gradients) {
 
       // get the state and coordinates
       auto u1 = const_velocity[c1];
-      auto x1 = centroid(c1);
+      auto x1 = c1->centroid();
 
       // compute the terms necessary for gradients
       auto dx = x1[0]-x0[0];

@@ -21,7 +21,6 @@
 #include <tuple>
 
 //! user includes
-#include "ale/math/operators.h"
 #include "ale/utils/tuple_for_each.h"
 #include "ale/utils/tuple_visit.h"
 #include "ale/utils/tuple_zip.h"

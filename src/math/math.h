@@ -21,47 +21,14 @@
 // user includes
 #include "ale/std/type_traits.h"
 #include "ale/utils/check_types.h"
-#include "detail/operators.h"
+#include "detail/math.h"
 
 namespace ale {
 namespace math {
 
-
-//! \brief User-defined overloaded begin/end for scalar values
-//! \param[in] a the scalar
-//! \return the pointer to the beginning
-template <typename T>
-typename std::enable_if< std::is_scalar<T>::value, T* >::type 
-begin( T & a ) { return &a; };
-
-//! \brief User-defined overloaded begin/end for scalar values
-//! \param[in] a the scalar
-//! \return the pointer to the end
-template <typename T>
-typename std::enable_if< std::is_scalar<T>::value, T* >::type 
-end( T & a ) { return &a+1; };
-
-
-//! \brief Addition operator.
-template< class T, class U >
-constexpr auto plus( T && lhs, U && rhs )
-{ return std::forward<T>(lhs) + std::forward<U>(rhs); }
-
-//! \brief Minus operator.
-template< class T, class U >
-constexpr auto minus( T && lhs, U && rhs )
-{ return std::forward<T>(lhs) - std::forward<U>(rhs); }
- 
-//! \brief Multiplication operator.
-template< class T, class U >
-constexpr auto multiplies( T && lhs, U && rhs )
-{ return std::forward<T>(lhs) * std::forward<U>(rhs); }
-
-//! \brief Division operator.
-template< class T, class U >
-constexpr auto divides( T && lhs, U && rhs )
-{ return std::forward<T>(lhs) / std::forward<U>(rhs); }
-
+//////////////////////////////////////////////////////////////////////////////
+// Compute an average
+//////////////////////////////////////////////////////////////////////////////
 
 //! \brief average operator.
 //! \remark all arguments must be of the same type
@@ -105,11 +72,20 @@ average( T && t, Types&&... args )
   return T();
 }
 
+//////////////////////////////////////////////////////////////////////////////
+// Some general math functions
+//////////////////////////////////////////////////////////////////////////////
 
 //! \brief square operator.
 template< class T >
 constexpr auto sqr( T && x )
 { return std::forward<T>(x) * std::forward<T>(x); }
+
+//! \brief returns 1 if +ve, -1 if -ve
+template <typename T> 
+constexpr int sgn( const T & val ) {
+  return (T(0) < val) - (val < T(0));
+}
 
 } // namespace
 } // namespace

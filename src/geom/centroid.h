@@ -29,29 +29,6 @@ namespace geom {
 
 
 
-//! \brief general centroid operator.
-//! \remark this one is used for types with a centroid function
-//! \remark this one is for pointers
-template< class T >
-constexpr
-decltype( std::declval<T>()->centroid() ) // exploit SFINAE
-centroid( const T * t )
-{ 
-  return t->centroid();
-}
-
-
-//! \brief general centroid operator.
-//! \remark this one is used for types with a centroid function
-//! \remark this one is for non-pointer types
-template< class T >
-constexpr
-decltype( std::declval<T>()->centroid() ) // exploit SFINAE
-centroid( T && t )
-{ 
-  return std::forward<T>(t)->centroid();
-}
-
 
 //! \brief compute centroid for 2d
 //! \remark all arguments must be of the same type

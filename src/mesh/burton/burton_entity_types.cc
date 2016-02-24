@@ -15,7 +15,7 @@
 //! user includes
 #include "flecsi/mesh/mesh_topology.h"
 
-#include "ale/math/operators.h"
+#include "ale/math/math.h"
 #include "ale/mesh/burton/burton_types.h"
 
 namespace ale {
@@ -36,7 +36,7 @@ using point_t = burton_mesh_traits_t::point_t;
 
 point_t burton_edge_t::midpoint() const
   {
-    auto & mesh = static_cast<mesh_topology_t<burton_mesh_types_t> &>(mesh_);
+    auto & mesh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh_);
     auto vs = mesh.entities<0,0>(this).to_vec();
 
     return point_t{0.5*(vs[0]->coordinates() + vs[1]->coordinates())};
@@ -44,7 +44,7 @@ point_t burton_edge_t::midpoint() const
 
 real_t burton_edge_t::length() const
   {
-    auto & mesh = static_cast<mesh_topology_t<burton_mesh_types_t> &>(mesh_);
+    auto & mesh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh_);
     auto vs = mesh.entities<0,0>(this).to_vec();
 
     auto & a = vs[0]->coordinates();
@@ -57,7 +57,7 @@ real_t burton_edge_t::length() const
 
 vector_t burton_edge_t::normal() const
   {
-    auto & mesh = static_cast<mesh_topology_t<burton_mesh_types_t> &>(mesh_);
+    auto & mesh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh_);
     auto vs = mesh.entities<0,0>(this).to_vec();
 
     auto & a = vs[0]->coordinates();
@@ -72,7 +72,7 @@ vector_t burton_edge_t::normal() const
 
 point_t burton_quadrilateral_cell_t::centroid() const
   {
-    auto & mesh = static_cast<mesh_topology_t<burton_mesh_types_t> &>(mesh_);
+    auto & mesh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh_);
     auto vs = mesh.entities<0,0>(this).to_vec();
 
     auto tmp = vs[0]->coordinates();
@@ -86,7 +86,7 @@ point_t burton_quadrilateral_cell_t::centroid() const
 
 real_t burton_quadrilateral_cell_t::area() const
   {
-    auto & mesh = static_cast<mesh_topology_t<burton_mesh_types_t> &>(mesh_);
+    auto & mesh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh_);
     auto vs = mesh.entities<0,0>(this).to_vec();
 
     auto p = vs[0]->coordinates() - vs[2]->coordinates();
