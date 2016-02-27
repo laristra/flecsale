@@ -18,7 +18,7 @@
 #pragma once
 
 //! user includes
-#include "ale/math/array/multi_array.h"
+#include "ale/math/array.h"
 
 namespace ale {
 namespace math {
@@ -32,7 +32,7 @@ namespace math {
 //!    to be stored in the array.
 ////////////////////////////////////////////////////////////////////////////////
 template <typename T, std::size_t D> 
-using vector = array::multi_array<T,D>;
+using vector = array<T,D>;
 
   
 

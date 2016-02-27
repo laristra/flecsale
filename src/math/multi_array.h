@@ -76,30 +76,34 @@ namespace math {
     }
   } // multi_for
 
-namespace layout {
 
 ////////////////////////////////////////////////////////////////////////////////
-//!  \brief Define the layout of the matrix using a row-major convention
+//!  \brief Define the layout of the matrix using different conventions
 ////////////////////////////////////////////////////////////////////////////////
-struct row_major {
-  static constexpr 
-  auto element( size_t i, size_t j, 
-                size_t /* size_i */, size_t size_j ) noexcept
-  { return i * size_j + j; }   
-};
+struct layouts {
+
+  //============================================================================
+  //!  \brief Define the layout of the matrix using a row-major convention
+  //============================================================================
+  struct row_major {
+    static constexpr 
+    auto element( size_t i, size_t j, 
+                  size_t /* size_i */, size_t size_j ) noexcept
+    { return i * size_j + j; }   
+  };
 
 
-////////////////////////////////////////////////////////////////////////////////
-//!  \brief Define the layout of the matrix using column major convention
-////////////////////////////////////////////////////////////////////////////////
-struct column_major {
-  static constexpr 
-  auto element( size_t i, size_t j, 
-                size_t size_i, size_t /* size_j */ ) noexcept
-  { return j * size_i + i; }   
-};
+  //============================================================================
+  //!  \brief Define the layout of the matrix using column major convention
+  //============================================================================
+  struct column_major {
+    static constexpr 
+    auto element( size_t i, size_t j, 
+                  size_t size_i, size_t /* size_j */ ) noexcept
+    { return j * size_i + i; }   
+  };
 
-} // namespace layout
+}; // namespace layout
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -250,7 +254,7 @@ public:
     if ( list.size() == 1 ) {
       fill( *list.begin() );
     }
-    else if ( std::is_same_v< layout_type, layout::row_major > ) {
+    else if ( std::is_same_v< layout_type, layouts::row_major > ) {
       assign(list);
     }
     else {

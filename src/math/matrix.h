@@ -18,7 +18,7 @@
 #pragma once
 
 //! user includes
-#include "ale/math/array/multi_array.h"
+#include "ale/math/multi_array.h"
 #include "ale/math/vector.h"
 
 namespace ale {
@@ -34,11 +34,11 @@ namespace math {
 //!    to be stored in the array.
 ////////////////////////////////////////////////////////////////////////////////
 template <typename T, std::size_t D1, std::size_t D2> 
-using row_major_matrix = array::multi_array< array::layouts::row_major, T, D1, D2>;
+using row_major_matrix = multi_array< layouts::row_major, T, D1, D2>;
 
 
 template <typename T, std::size_t D1, std::size_t D2> 
-using col_major_matrix = array::multi_array< array::layouts::column_major, T, D1, D2>;
+using col_major_matrix = multi_array< layouts::column_major, T, D1, D2>;
 
 
 #if 0

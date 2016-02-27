@@ -4,10 +4,9 @@
 #~----------------------------------------------------------------------------~#
 
 set(math_HEADERS
-  array/array.h
-  array/multi_array.h
-  array/super_class.h
+  array.h
   math.h    detail/math.h
+  multi_array.h
   tuple.h
   vector.h
   matrix.h
