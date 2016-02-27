@@ -177,6 +177,13 @@ public:
   //! \brief force the default copy constructor
   multi_array(const multi_array &) = default;
 
+  //!\brief fancy copy constructor with type conversion
+  template <typename T2>
+  multi_array(const multi_array<L,T2,N...>& oth) 
+  {
+    std::copy(oth.begin(),oth.end(), begin());    
+  }
+
   //! \brief Constructor with one value.
   //! \param[in] val The value to set the multi_array to
   template < typename T2 >
