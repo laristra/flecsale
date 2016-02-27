@@ -77,6 +77,7 @@ public:
   template <typename T>
   using dense_accessor_t =
       burton_mesh_traits_t::mesh_state_t::dense_accessor_t<T>;
+
   /*--------------------------------------------------------------------------*
    * Dense Accessors
    *--------------------------------------------------------------------------*/
@@ -300,6 +301,14 @@ public:
 
   //! Corner type.
   using corner_t = burton_mesh_types_t::corner_t;
+
+
+  //! \brief The locations of different bits that we set as flags
+  enum bits : size_t 
+  {
+    boundary = 0 //!< the boundary bit
+  };
+
 
   //! Default constructor
   burton_mesh_t() {}
@@ -830,10 +839,6 @@ public:
     state_.register_state<point_t, flecsi_internal>(
       "coordinates", vertices, attachment_site_t::vertices, persistent);
 
-    // register time state
-    auto soln_time = state_.register_global_state<real_t, flecsi_internal>(
-      "time", attachment_site_t::global, persistent);
-    soln_time = 0;
 
   } // init_parameters
 
@@ -850,10 +855,38 @@ public:
 
     // Initialize wedges
     for (auto w : wedges()) {
-      w->set_cell(cells(w).first());
-      w->set_edge(edges(w).first());
-      w->set_vertex(vertices(w).first());
+      w->set_cell(cells(w).front());
+      w->set_edge(edges(w).front());
+      w->set_vertex(vertices(w).front());
     } // for
+
+
+    // register time state
+    auto soln_time = state_.register_global_state<real_t, flecsi_internal>(
+      "time", attachment_site_t::global, persistent);
+    soln_time = 0;
+
+    // register some flags for identifying boundarys
+    auto point_flags = state_.register_state<bitfield_t, flecsi_internal>(
+      "point_flags", num_vertices(), attachment_site_t::vertices, persistent);
+    auto edge_flags = state_.register_state<bitfield_t, flecsi_internal>(
+      "edge_flags", num_edges(), attachment_site_t::edges, persistent);
+
+    // now set the boundary flags
+    for ( auto e : edges() ) {
+      // set the edge pointer
+      e->set_state_ptr( &state_ );
+      // get the points and cells attached to the edge
+      auto points = vertices(e);
+      auto zones = cells(e);
+      // if there is only one cell, it is a boundary
+      if ( zones.size() == 1 ) {
+        edge_flags[e].set( 1 << bits::boundary );
+        point_flags[ points.front() ].setbit( bits::boundary );
+        point_flags[ points.back () ].setbit( bits::boundary );
+      }
+    } // for
+
 
   } // init
 

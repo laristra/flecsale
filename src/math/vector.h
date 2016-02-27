@@ -18,22 +18,10 @@
 #pragma once
 
 //! user includes
-#include "ale/math/array.h"
+#include "ale/math/array/multi_array.h"
 
 namespace ale {
 namespace math {
-
-namespace detail {
-
-////////////////////////////////////////////////////////////////////////////////
-//!  \brief 1d layout
-////////////////////////////////////////////////////////////////////////////////
-struct vector_layout {
-  static constexpr auto element( size_t i, size_t  /* D */ ) noexcept
-  { return i; }   
-};
-
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 //!  \brief The dimensioned_array type provides a general base for defining
@@ -44,7 +32,7 @@ struct vector_layout {
 //!    to be stored in the array.
 ////////////////////////////////////////////////////////////////////////////////
 template <typename T, std::size_t D> 
-using vector = math::array<detail::vector_layout,T,D>;
+using vector = array::multi_array<T,D>;
 
   
 

@@ -31,7 +31,7 @@ using namespace ale::math;
 
 using real_t = common::real_t;
 using matrix_1d_t = row_major_matrix<real_t,1,1>;
-using matrix_2d_t = row_major_matrix<real_t,2,3>;
+using matrix_2d_t = col_major_matrix<real_t,2,3>;
 
 
 
@@ -51,20 +51,31 @@ TEST(matrix, init) {
   a4.fill( 6.0 );
   ASSERT_TRUE( a5 == ans_1d );
   ASSERT_TRUE( a6 == ans_1d );
+  matrix_1d_t a7( 1.0 ); ASSERT_TRUE( a7 == ans_1d );
 
-  std::cout << a2 << std::endl;
-
-#if 0
   // { 1.0, 2.0 }
-  matrix_2d_t ans_2d{ 1.0, 2.0 };
-  //matrix_2d_t b1( 1.0, 2.0 );      ASSERT_TRUE( b1 == ans_2d );
-  matrix_2d_t b2{ 1.0, 2.0 };      ASSERT_TRUE( b2 == ans_2d );
-  matrix_2d_t b3( b2 );            ASSERT_TRUE( b3 == ans_2d );
-  matrix_2d_t b4 = {1.0, 2.0};     ASSERT_TRUE( b4 == ans_2d );
+  matrix_2d_t ans_2d{ 1.0, 2.0, 3.0,
+                      3.0, 2.0, 1.0 };
+  
+  matrix_2d_t b2{ { 1.0, 2.0, 3.0,
+                    3.0, 2.0, 1.0 } };      
+  ASSERT_TRUE( b2 == ans_2d );
+  
+  matrix_2d_t b3( b2 );            
+  ASSERT_TRUE( b3 == ans_2d );
+  
+  matrix_2d_t b4 = { 1.0, 2.0, 3.0,
+                     3.0, 2.0, 1.0 };     
+  ASSERT_TRUE( b4 == ans_2d );
+
   matrix_2d_t b5; 
-  b5 = {2.0, 1.0}; ASSERT_FALSE( b5 == ans_2d );
-  b5 = {1.0, 2.0}; ASSERT_TRUE ( b5 == ans_2d );
-#endif
+  b5 = { 1.0, 1.0, 3.0,
+         3.0, 2.0, 1.0 }; 
+  ASSERT_FALSE( b5 == ans_2d );
+  
+  b5 = { 1.0, 2.0, 3.0,
+         3.0, 2.0, 1.0 }; 
+  ASSERT_TRUE ( b5 == ans_2d );
 
   // { 1.0, 1.0 }
   //ans_2d = { 1.0, 1.0 };
@@ -73,8 +84,6 @@ TEST(matrix, init) {
   //matrix_2d_t b8 = {1.0};   ASSERT_TRUE( b8 == 1.0 );
  
 }
-
-#if 0
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the addition
@@ -111,6 +120,9 @@ TEST(matrix, addition_1d) {
 
 }
 
+#if 0
+
+
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the addition
 ///////////////////////////////////////////////////////////////////////////////
@@ -145,6 +157,7 @@ TEST(matrix, addition_2d) {
  
 }
 
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the subtraction
@@ -182,6 +195,7 @@ TEST(matrix, subtraction_1d) {
 
 }
 
+#if 0
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the subtraction
@@ -220,7 +234,7 @@ TEST(matrix, subtraction_2d) {
 
 }
 
-
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the multiplication
@@ -257,6 +271,8 @@ TEST(matrix, multiply_1d) {
   ASSERT_TRUE( g == ans ) << " error in operator* with scalar";
 
 }
+
+#if 0
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the multiplication
@@ -295,7 +311,7 @@ TEST(matrix, multiply_2d) {
  
 }
 
-
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the multiplication
@@ -333,6 +349,8 @@ TEST(matrix, divide_1d) {
   ASSERT_TRUE( g == ans ) << " error in operator/ with scalar";
 
 }
+
+#if 0
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the multiplication
@@ -372,7 +390,9 @@ TEST(matrix, divide_2d) {
  
 }
 
+#endif
 
+#if 0
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the dot  operator

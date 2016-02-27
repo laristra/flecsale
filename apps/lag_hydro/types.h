@@ -22,6 +22,7 @@
 #include <ale/eqns/lagrange_eqns.h>
 #include <ale/eqns/flux.h>
 #include <ale/eos/ideal_gas.h>
+#include <ale/math/matrix.h>
 
 #include <ale/mesh/burton/burton.h>
 
@@ -48,6 +49,9 @@ using eos_t = eos::ideal_gas_t<real_t>;
 
 using eqns_t = eqns::lagrange_eqns_t<real_t, mesh_t::dimension()>;
 using flux_data_t = eqns_t::flux_data_t;
+
+template< typename T, size_t N >
+using matrix_t = math::row_major_matrix<T, N, N>;
 
 // explicitly use some other stuff
 using std::cout;
@@ -99,8 +103,8 @@ public:
   constexpr cell_state_accessor( M & mesh ) :
     m( access_state( mesh, "cell:mass",              real_t ) ),
     V( access_state( mesh, "cell:volume",            real_t ) ),
-    p( access_state( mesh, "cell:pressure",     real_t ) ),
-    v( access_state( mesh, "cell:velocity",   vector_t ) ),
+    p( access_state( mesh, "cell:pressure",          real_t ) ),
+    v( access_state( mesh, "cell:velocity",        vector_t ) ),
     d( access_state( mesh, "cell:density",           real_t ) ),
     e( access_state( mesh, "cell:internal_energy",   real_t ) ),
     t( access_state( mesh, "cell:temperature",       real_t ) ),

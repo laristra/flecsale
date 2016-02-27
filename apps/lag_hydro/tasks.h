@@ -161,6 +161,10 @@ int32_t evaluate_time_step( T & mesh ) {
 template< typename T >
 int32_t evaluate_nodal_state( T & mesh ) {
 
+  // get the number of dimensions and create a matrix
+  constexpr size_t dims = T::dimension();
+  using matrix = matrix_t<real_t, dims>;
+  
   // access what we need
   vertex_state_accessor<T> vertex_state( mesh );
   cell_state_accessor<T>     cell_state( mesh );
@@ -168,14 +172,48 @@ int32_t evaluate_nodal_state( T & mesh ) {
   //----------------------------------------------------------------------------
   // Loop over each vertex
   for ( auto v : mesh.vertices() ) {
-    cout << v.id() << " : ";
-    // loop over each connected edge
-    for ( auto c : mesh.cells(v) ) {
-      cout << c.id() << " ";
+
+    if ( v->is_boundary() ) continue;
+    
+    // get the corners connected to this point
+    auto corners = mesh.corners(v);
+
+    // create the final matrix the point
+    matrix Mp(0);
+    
+    for ( auto c : corners ) {
+      // get the cell state (there is only one)
+      auto state = cell_state(c);
+      // create a temporary for the corner matrix
+      matrix Mpc(0);
+      // the impedance
+      auto z = eqns_t::impedance( state );
+      // the norms ( have area of whole edge built into them )
+      auto wedges = c->wedges();
+      cout << wedges.size() << endl;
+      //auto n_plus  = (*wedge)->edge();//->normal();
+      //auto n_minus = wedges.end()  ->edge();//->normal();
+      // compute the 
+      vector_t n_plus( 1.0, 2.0 );
+      auto M_plus  = math::outer_product<matrix>( n_plus , n_plus  );
+      //auto M_minus = math::outer_product<matrix>( n_minus, n_minus );
+      
     } // cell
-    cout << endl;
+
   } // vertex
   //----------------------------------------------------------------------------
+
+
+  for ( auto e : mesh.edges() ) {
+
+    // get the cells/edges connected to this point
+    auto points = mesh.vertices(e);
+
+    std::cout << e->is_boundary() << " " << points[0]->is_boundary() << " " << points[1]->is_boundary() << std::endl;
+    if ( e->is_boundary() ) 
+      assert( points[0]->is_boundary() && points[1]->is_boundary() );
+
+  }
 
   return 0;
 

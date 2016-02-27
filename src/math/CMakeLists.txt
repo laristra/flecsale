@@ -4,10 +4,13 @@
 #~----------------------------------------------------------------------------~#
 
 set(math_HEADERS
-  array.h
+  array/array.h
+  array/multi_array.h
+  array/super_class.h
   math.h    detail/math.h
   tuple.h
   vector.h
+  matrix.h
   PARENT_SCOPE
 )
 

@@ -75,6 +75,9 @@ class burton_vertex_t
   //! Handle for accessing state at vertex.
   using state_t = burton_mesh_traits_t::mesh_state_t;
 
+  //! the bitfield type
+  using bitfield_t = burton_mesh_traits_t::bitfield_t;
+
   //! Number of domains in the burton mesh.
   static constexpr size_t num_domains = burton_mesh_traits_t::num_domains;
 
@@ -102,9 +105,20 @@ class burton_vertex_t
     return c[mesh_entity_base_t<num_domains>::template id<0>()];
   } // coordinates
 
- private:
-  state_t & state_;
 
+  //! is this a boundary
+  bool is_boundary() const
+  {
+    auto flag =
+      state_.dense_accessor<bitfield_t, flecsi_internal>("point_flags");
+    return flag[mesh_entity_base_t<num_domains>::template id<0>()].bitset(0);
+  }
+
+ private:
+
+  //! a reference to the state
+  state_t & state_;
+  
 }; // class burton_vertex_t
 
 /*----------------------------------------------------------------------------*
@@ -130,9 +144,24 @@ struct burton_edge_t
   //! Type vector type.
   using vector_t = burton_mesh_traits_t::vector_t;
 
+  //! Handle for accessing state at vertex.
+  using state_t = burton_mesh_traits_t::mesh_state_t;
+
+  //! the bitfield type
+  using bitfield_t = burton_mesh_traits_t::bitfield_t;
+
+  //! Number of domains in the burton mesh.
+  static constexpr size_t num_domains = burton_mesh_traits_t::num_domains;
+
   //! the constructor
   burton_edge_t(mesh_topology_base_t & mesh) : mesh_(mesh) {}
   
+  //! set the state pointer
+  void set_state_ptr(state_t * state) 
+  {
+    state_ = state;
+  }
+
   //! the edge midpoint
   point_t midpoint() const;
 
@@ -142,11 +171,24 @@ struct burton_edge_t
   //! the edge normal
   vector_t normal() const;
 
+  //! is this a boundary
+  bool is_boundary() const
+  {
+    assert( state_ != nullptr );
+    auto flag =
+      state_->dense_accessor<bitfield_t, flecsi_internal>("edge_flags");
+    return flag[mesh_entity_base_t<num_domains>::template id<0>()].bitset(0);
+  }
+
  private:
 
   //! a reference to the mesh topology
   const mesh_topology_base_t & mesh_;
 
+  //! a pointer to the state
+  state_t * state_ = nullptr;
+    
+  
 }; // struct burton_edge_t
 
 /*----------------------------------------------------------------------------*
@@ -170,7 +212,7 @@ struct burton_cell_t
 
   //! Constructor
   burton_cell_t() = default;
-  burton_cell_t(mesh_topology_base_t &) {};
+  burton_cell_t(const mesh_topology_base_t &) {};
   //! Destructor
   virtual ~burton_cell_t() {}
 
@@ -227,7 +269,7 @@ struct burton_cell_t
 class burton_quadrilateral_cell_t : public burton_cell_t
 {
  public:
-  burton_quadrilateral_cell_t(mesh_topology_base_t & mesh) : mesh_(mesh) 
+  burton_quadrilateral_cell_t(const mesh_topology_base_t & mesh) : mesh_(mesh) 
   {
   }
 
@@ -399,7 +441,7 @@ class burton_wedge_t
  public:
   burton_wedge_t(){}
 
-  burton_wedge_t(mesh_topology_base_t & mesh){}
+  burton_wedge_t(const mesh_topology_base_t & mesh){}
 
   //! Physics vector type.
   using vector_t = burton_mesh_traits_t::vector_t;
@@ -486,7 +528,7 @@ class burton_corner_t
 {
  public:
 
-  burton_corner_t(mesh_topology_base_t & mesh) : mesh_(mesh) {}
+  burton_corner_t(const mesh_topology_base_t & mesh) : mesh_(mesh) {}
   /*!
     \brief Add a wedge to the mesh.
 
@@ -503,7 +545,9 @@ class burton_corner_t
     \return The wedges in the mesh.
    */
   entity_group<burton_wedge_t> & wedges() { return wedges_; } // wedges
+
  private:
+  
   entity_group<burton_wedge_t> wedges_;
 
   //! a reference to the mesh topology

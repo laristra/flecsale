@@ -182,11 +182,15 @@ public:
 
   static auto total_energy( const state_data_t & u )
   { 
-    using math::get;
     using math::abs;
     auto ie = internal_energy( u );
     auto vel = velocity( u );
     return ie + 0.5 * abs( vel );
+  }
+
+  static auto impedance( const state_data_t & u )
+  { 
+    return density(u) * sound_speed(u);
   }
 
   //============================================================================

@@ -18,35 +18,11 @@
 #pragma once
 
 //! user includes
-#include "ale/math/array.h"
+#include "ale/math/array/multi_array.h"
+#include "ale/math/vector.h"
 
 namespace ale {
 namespace math {
-
-namespace detail {
-
-////////////////////////////////////////////////////////////////////////////////
-//!  \brief Define the layout of the matrix using a row-major convention
-////////////////////////////////////////////////////////////////////////////////
-struct row_major_layout {
-  static constexpr 
-  auto element( size_t i, size_t j, 
-                size_t /* size_i */, size_t size_j ) noexcept
-  { return i * size_j + j; }   
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-//!  \brief Define the layout of the matrix using column major convention
-////////////////////////////////////////////////////////////////////////////////
-struct column_major_layout {
-  static constexpr 
-  auto element( size_t i, size_t j, 
-                size_t size_i, size_t /* size_j */ ) noexcept
-  { return j * size_i + i; }   
-};
-
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -58,12 +34,48 @@ struct column_major_layout {
 //!    to be stored in the array.
 ////////////////////////////////////////////////////////////////////////////////
 template <typename T, std::size_t D1, std::size_t D2> 
-using row_major_matrix = math::array< detail::row_major_layout, T, D1, D2>;
+using row_major_matrix = array::multi_array< array::layouts::row_major, T, D1, D2>;
 
 
 template <typename T, std::size_t D1, std::size_t D2> 
-using col_major_matrix = math::array< detail::column_major_layout, T, D1, D2>;
+using col_major_matrix = array::multi_array< array::layouts::column_major, T, D1, D2>;
 
+
+#if 0
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the dot product
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename M, typename T, std::size_t D
+>
+std::enable_if_t< 
+  std::is_same< typename M::layout_type, detail::row_major_layout >::value, M
+> 
+outer_product(const vector<T, D> &a, const vector<T, D> &b)
+{
+
+}
+
+#endif
+
+//template <typename T, std::size_t D>
+//auto outer_product(const vector<T, D> &a, const vector<T, D> &b)
+//{
+//  row_major_matrix<T,D,D> tmp;
+//  return tmp;
+//}
+
+//template <typename T, std::size_t D>
+//auto outer_product(const vector<T, D> &a, const vector<T, D> &b)
+//{
+//  col_major_matrix<T,D,D> tmp;
+//  return tmp;
+//}
 
 } // namespace
 } // namespace

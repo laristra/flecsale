@@ -171,25 +171,25 @@ int32_t evaluate_fluxes( T & mesh ) {
     auto nunit = norm / abs(norm);
 
     // get the cell neighbors
-    auto c = mesh.cells(e).to_vec();
-    auto cells = c.size();
+    auto cells = mesh.cells(e);
+    auto num_cells = cells.size();
 
 
     // get the left state
-    auto w_left = state( c[0] );    
+    auto w_left = state( cells[0] );    
 
     // interior cell
-    if ( cells == 2 ) {
+    if ( num_cells == 2 ) {
       // Normal always points from the first cell to the second
       // dot product below should always be the same sign ( positive )
-      auto cx_left = c[0]->centroid();
-      auto cx_right = c[1]->centroid();
+      auto cx_left  = cells[0]->centroid();
+      auto cx_right = cells[1]->centroid();
       auto delta = cx_right - cx_left;
       auto dot = math::dot_product( norm, delta );
       if ( dot < 0 ) norm = - norm;
       assert( dot >= 0 && "interior normal points wrong way!!!!" );
       // compute the interface flux
-      auto w_right = state( c[1] );
+      auto w_right = state( cells[1] );
       flux[e] = flux_function( w_left, w_right, nunit );
     } 
     // boundary cell
@@ -197,7 +197,7 @@ int32_t evaluate_fluxes( T & mesh ) {
       // Normal always points outside, so the result of this
       // dot product below should always be the same sign ( positive )
       auto mp = e->midpoint();
-      auto cx = c[0]->centroid();
+      auto cx = cells[0]->centroid();
       auto delta = mp - cx;
       auto dot = math::dot_product( norm, delta );
       if ( dot < 0 ) norm = - norm;

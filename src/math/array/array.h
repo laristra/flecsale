@@ -31,7 +31,6 @@
 namespace ale {
 namespace math {
 
-
 ////////////////////////////////////////////////////////////////////////////////
 //!  \brief The dimensioned_array type provides a general base for defining
 //!  contiguous array types that have a specific dimension.
@@ -40,12 +39,8 @@ namespace math {
 //!  \tparam D The dimension of the array, i.e., the number of elements
 //!    to be stored in the array.
 ////////////////////////////////////////////////////////////////////////////////
-template <typename L, typename T, std::size_t... N> 
+template <typename T, std::size_t N> 
 class array {
-
-
-
-
 
 public:
 
@@ -69,21 +64,17 @@ public:
   using reverse_iterator       = std::reverse_iterator<iterator>;
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-  //! the layout type
-  using layout_type = L;
-
-  //! size in each dimension 
-  static constexpr size_type dimensions  = sizeof...(N);
-  //! the total length of storage
-  static constexpr size_type static_size = utils::multiply(N...);
+  //! array size
+  static constexpr size_type length  = N;
 
 private:
 
-  //! \brief The main data container, which is just a std::array.
-  T elems_[ static_size ];
+  //===========================================================================
+  // Private Data
+  //===========================================================================
 
-  //! \brief The individual dimensions
-  static constexpr size_type dims_[ dimensions ] = {N...};
+  //! \brief The main data container, which is just a std::array.
+  T elems_[ length ];
 
 public:
 
@@ -102,11 +93,11 @@ public:
   template <
     typename... Args,
     typename = std::enable_if_t< 
-      ( sizeof...(Args) == static_size &&
-        sizeof...(Args) >= 2 ) 
+      ( sizeof...(Args) == N && sizeof...(Args) >= 2 )
     >
   >
-  array(Args&&... args) : elems_{ static_cast<T>(args)... }
+  array(Args&&... args) : 
+    elems_{ static_cast<T>( std::forward<Args>(args) )... }
   { 
     //std::cout << "array (variadic constructor)\n";
   }
@@ -119,8 +110,7 @@ public:
     //std::cout << "array (single value constructor)\n";
     fill( val ); 
   }
-
-  
+   
   //===========================================================================
   // Iterators
   //===========================================================================
@@ -131,8 +121,8 @@ public:
   constexpr const_iterator cbegin() const { return begin(); }
         
   //! \brief return an iterator to the end of the array
-                  iterator  end()       { return elems_+static_size; }
-  constexpr const_iterator  end() const { return elems_+static_size; }
+                  iterator  end()       { return elems_+size(); }
+  constexpr const_iterator  end() const { return elems_+size(); }
   constexpr const_iterator cend() const { return end(); }
 
 
@@ -156,63 +146,50 @@ public:
   const_reverse_iterator crend() const 
   { return const_reverse_iterator(begin()); }
  
-
-
   //===========================================================================
   // Element Access
   //===========================================================================
 
-
-  //! \brief return the ith element ( uses 1d index only )
+  //! \brief return the ith element
   reference operator[](size_type i) 
   { 
-    assert( i < static_size && "out of range" );
+    assert( i < size() && "out of range" );
     return elems_[i];
   }
         
   const_reference operator[](size_type i) const 
   {     
-    assert( i < static_size && "out of range" );
+    assert( i < size() && "out of range" );
     return elems_[i]; 
   }
 
-  //! \brief return the ith element ( allows multiple dimensions )
-  template <typename... Args>
-  std::enable_if_t< sizeof...(Args) == sizeof...(N), reference >
-  operator()(Args... i) 
+  //! \brief return the ith element
+  reference operator()(size_type i) 
   { 
-    assert_ranges( i... );
-    auto ind = layout_type::element( i..., N... );
-    return elems_[ind];
+    assert( i < size() && "out of range" );
+    return elems_[i];
   }
 
-
-  template <typename... Args>
-  std::enable_if_t< sizeof...(Args) == sizeof...(N), const_reference >
-  operator()(Args... i) const
+  const_reference operator()(size_type i) const
   { 
-    assert_ranges( i... );
-    auto ind = layout_type::element( i..., N... );
-    return elems_[ind];
+    assert( i < size() && "out of range" );
+    return elems_[i];
   }
 
 
   //! \brief at() with range check
-  template< typename... Args >
-  std::enable_if_t< sizeof...(Args) == sizeof...(N), reference >
-  at(Args... i) { 
-    check_ranges(i...); 
-    auto ind = layout_type::element( i..., N... );
-    return elems_[ind];
+  reference at(size_type i) 
+  { 
+    return i >= size() ? 
+      throw std::out_of_range("array<>: index out of range") : 
+      elems_[i];
   }
 
-  template< typename... Args >
-  std::enable_if_t< sizeof...(Args) == sizeof...(N), const_reference >
-  at(Args... i) const 
+  const_reference at(size_type i) const
   { 
-    check_ranges(i...); 
-    auto ind = layout_type::element( i..., N... );
-    return elems_[ind];
+    return i >= size() ? 
+      throw std::out_of_range("array<>: index out of range") : 
+      elems_[i];
   }
     
   //! \brief return the first element
@@ -224,10 +201,10 @@ public:
         
   //! \brief return the last element
   reference back() 
-  { return elems_[static_size-1]; }
+  { return elems_[size()-1]; }
         
   const_reference back() const 
-  {  return elems_[static_size-1]; }
+  {  return elems_[size()-1]; }
 
 
   //  \brief direct access to data (read-only)
@@ -242,36 +219,25 @@ public:
   //===========================================================================
 
   //! \brief return the size
-  static constexpr size_type     size() { return static_size; }
+  static constexpr size_type     size() { return length; }
   static constexpr size_type capacity() { return size(); }
 
   //! \brief checks whether container is empty
   static constexpr bool empty() { return false; }
   
   //! \brief returns the maximum possible number of elements
-  static constexpr size_type max_size() { return static_size; }
-
-  //! \brief return the number of dimensions
-  static constexpr size_type dims() { return dimensions; }
-
-  //! \brief return the size in a particular dimension
-  static constexpr size_type size( size_t i ) 
-  { 
-    assert( i<= dimensions && "dimension out of range" );
-    return dims_[i];
-  }
+  static constexpr size_type max_size() { return size(); }
 
 
   //===========================================================================
   // operations
   //===========================================================================
 
-
   //  \brief swap contents (note: linear complexity)
-  void swap (array<L,T,N...>& y) {
+  void swap (array& y) 
+  {
     std::swap(elems_, y.elems_);
   }
-
 
   //! \brief assign one value to all elements
   void fill(const T& value)
@@ -291,49 +257,20 @@ public:
 
   void assign( std::initializer_list<T> list ) 
   { 
-    assert( list.size() == static_size && "input list size mismatch" );
+    assert( list.size() == size() && "input list size mismatch" );
     assign( list.begin(), list.end() );
   }
 
-  //! \brief check range (may be private because it is static)
-  template< typename... Args >
-  static
-  std::enable_if_t< sizeof...(Args) == sizeof...(N) >
-  check_ranges (Args... is) {
-    utils::tuple_visit( 
-                       [](auto i, auto dim) { 
-                         if ( i>= dim  )
-                           throw std::out_of_range("array<>: index out of range");
-                       },
-                       std::forward_as_tuple(is...), 
-                       std::forward_as_tuple(N...) );
-  }
-
-
-  template< typename... Args >
-  static
-  std::enable_if_t< sizeof...(Args) == sizeof...(N) >
-  assert_ranges ( Args... is ) 
-  { 
-    utils::tuple_visit( 
-                       [](auto i, auto dim) { 
-                         assert( i < dim && "out of range" );
-                       },
-                       std::forward_as_tuple(is...), 
-                       std::forward_as_tuple(N...) );
-  }
-  
   //===========================================================================
   // Operators
   //===========================================================================
-
 
   // use std::move
   // http://stackoverflow.com/questions/11726171/numeric-vector-operator-overload-rvalue-reference-parameter
 
   //!\brief  assignment with type conversion
   template <typename T2>
-  auto & operator= (const array<L,T2,N...>& rhs) {
+  auto & operator= (const array<T2,N>& rhs) {
     if ( this != &rhs )
       std::copy(rhs.begin(),rhs.end(), begin());    
     return *this;
@@ -344,7 +281,7 @@ public:
   //! \param[in] rhs The array on the right hand side of the operator.
   //! \return A reference to the current object.
   template <typename T2>
-  auto & operator+=(const array<L,T2,N...> & rhs) {
+  auto & operator+=(const array<T2,N> & rhs) {
     std::transform( begin(), end(), rhs.begin(), 
                     begin(), std::plus<>() );
     //for ( size_type i=0; i<N; i++ ) elems_[i] += rhs.elems_[i];    
@@ -366,7 +303,7 @@ public:
   //! \param[in] rhs The array on the right hand side of the operator.
   //! \return A reference to the current object.
   template <typename T2>
-  auto & operator-=(const array<L,T2,N...> & rhs) {
+  auto & operator-=(const array<T2,N> & rhs) {
     std::transform( begin(), end(), rhs.begin(), 
                     begin(), std::minus<>() );    
     //for ( size_type i=0; i<N; i++ ) elems_[i] -= rhs.elems_[i];    
@@ -389,7 +326,7 @@ public:
   //! \param[in] rhs The array on the right hand side of the operator.
   //! \return A reference to the current object.
   template <typename T2> 
-  auto & operator*=(const array<L,T2,N...> & rhs) {
+  auto & operator*=(const array<T2,N> & rhs) {
     std::transform( begin(), end(), rhs.begin(), 
                     begin(), std::multiplies<>() );    
     //for ( size_type i=0; i<N; i++ ) elems_[i] *= rhs.elems_[i];    
@@ -411,7 +348,7 @@ public:
   //! \param[in] rhs The array on the right hand side of the operator.
   //! \return A reference to the current object.
   template <typename T2>
-  auto & operator/=(const array<L,T2,N...> & rhs) {
+  auto & operator/=(const array<T2,N> & rhs) {
     std::transform( begin(), end(), rhs.begin(), 
                     begin(), std::divides<>() );    
     //for ( size_type i=0; i<N; i++ ) elems_[i] /= rhs.elems_[i];    
@@ -438,7 +375,6 @@ public:
     return tmp;
   }
 
-
 };
 
 
@@ -450,38 +386,38 @@ public:
 //! \brief lexicographically compares the values in the array 
 //! \param[in] lhs The quantity on the lhs.
 //! \param[in] rhs The quantity on the rhs.
-template<typename L, typename T, std::size_t... N>
-bool operator==(const array<L,T,N...>& lhs, const array<L,T,N...>& rhs)
+template<typename T, std::size_t N>
+bool operator==(const array<T,N>& lhs, const array<T,N>& rhs)
 {
   return std::equal(lhs.begin(), lhs.end(), rhs.begin());
 }
 
-template<typename L, typename T, std::size_t... N>
-bool operator< (const array<L,T,N...>& x, const array<L,T,N...>& y) {
+template<typename T, std::size_t N>
+bool operator< (const array<T,N>& x, const array<T,N>& y) {
   return std::lexicographical_compare(x.begin(),x.end(),y.begin(),y.end());
 }
 
-template<typename L, typename T, std::size_t... N>
-bool operator!= (const array<L,T,N...>& x, const array<L,T,N...>& y) {
+template<typename T, std::size_t N>
+bool operator!= (const array<T,N>& x, const array<T,N>& y) {
   return !(x==y);
 }
 
-template<typename L, typename T, std::size_t... N>
-bool operator> (const array<L,T,N...>& x, const array<L,T,N...>& y) {
+template<typename T, std::size_t N>
+bool operator> (const array<T,N>& x, const array<T,N>& y) {
   return y<x;
 }
-template<typename L, typename T, std::size_t... N>
-bool operator<= (const array<L,T,N...>& x, const array<L,T,N...>& y) {
+template<typename T, std::size_t N>
+bool operator<= (const array<T,N>& x, const array<T,N>& y) {
   return !(y<x);
 }
-template<typename L, typename T, std::size_t... N>
-bool operator>= (const array<L,T,N...>& x, const array<L,T,N...>& y) {
+template<typename T, std::size_t N>
+bool operator>= (const array<T,N>& x, const array<T,N>& y) {
   return !(x<y);
 }
 
 //! \brief  global swap(), specializes the std::swap algorithm 
-template<typename L, typename T, std::size_t... N>
-inline void swap (array<L,T,N...>& x, array<L,T,N...>& y) {
+template<typename T, std::size_t N>
+inline void swap (array<T,N>& x, array<T,N>& y) {
   x.swap(y);
 }
 
@@ -493,11 +429,11 @@ inline void swap (array<L,T,N...>& x, array<L,T,N...>& y) {
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The array on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, size_t... N>
-auto operator+( const array<L,T,N...>& lhs, 
-                const array<L,T,N...>& rhs )
+template <typename T, std::size_t N>
+auto operator+( const array<T,N>& lhs, 
+                const array<T,N>& rhs )
 {
-  array<L,T,N...> tmp;
+  array<T,N> tmp;
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
                   tmp.begin(), std::plus<>() );    
   return tmp;
@@ -509,21 +445,21 @@ auto operator+( const array<L,T,N...>& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, typename U, size_t... N>
-auto operator+( const array<L,T,N...>& lhs, 
+template <typename T, typename U, std::size_t N>
+auto operator+( const array<T,N>& lhs, 
                 const U& rhs )
 {
-  array<L,T,N...> tmp;
+  array<T,N> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(),
                   [&rhs](auto & e) { return e+rhs; } );
   return tmp;
 }
 
-template <typename L, typename T, typename U, size_t... N>
+template <typename T, typename U, std::size_t N>
 auto operator+( const U& lhs, 
-                const array<L,T,N...>& rhs )
+                const array<T,N>& rhs )
 {
-  array<L,T,N...> tmp;
+  array<T,N> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(),
                   [&lhs](auto & e) { return lhs+e; } );
   return tmp;
@@ -535,11 +471,11 @@ auto operator+( const U& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The array on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, size_t... N>
-auto operator-( const array<L,T,N...>& lhs, 
-                const array<L,T,N...>& rhs )
+template <typename T, std::size_t N>
+auto operator-( const array<T,N>& lhs, 
+                const array<T,N>& rhs )
 {
-  array<L,T,N...> tmp;
+  array<T,N> tmp;
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
                   tmp.begin(), std::minus<>() );    
   return tmp;
@@ -551,21 +487,21 @@ auto operator-( const array<L,T,N...>& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, typename U, size_t... N>
-auto operator-( const array<L,T,N...>& lhs, 
+template <typename T, typename U, std::size_t N>
+auto operator-( const array<T,N>& lhs, 
                 const U& rhs )
 {
-  array<L,T,N...> tmp;
+  array<T,N> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(),
                   [&rhs](auto & e) { return e-rhs; } );
   return tmp;
 }
 
-template <typename L, typename T, typename U, size_t... N>
+template <typename T, typename U, std::size_t N>
 auto operator-( const U& lhs, 
-                const array<L,T,N...>& rhs )
+                const array<T,N>& rhs )
 {
-  array<L,T,N...> tmp;
+  array<T,N> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(),
                   [&lhs](auto & e) { return lhs-e; } );
   return tmp;
@@ -577,11 +513,11 @@ auto operator-( const U& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The array on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, size_t... N>
-auto operator*( const array<L,T,N...>& lhs, 
-                const array<L,T,N...>& rhs )
+template <typename T, std::size_t N>
+auto operator*( const array<T,N>& lhs, 
+                const array<T,N>& rhs )
 {
-  array<L,T,N...> tmp;
+  array<T,N> tmp;
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
                   tmp.begin(), std::multiplies<>() );    
   return tmp;
@@ -594,21 +530,21 @@ auto operator*( const array<L,T,N...>& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, typename U, size_t... N>
-auto operator*( const array<L,T,N...>& lhs, 
+template <typename T, typename U, std::size_t N>
+auto operator*( const array<T,N>& lhs, 
                 const U& rhs )
 {
-  array<L,T,N...> tmp;
+  array<T,N> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(),
                   [&rhs](auto & e) { return e*rhs; } );
   return tmp;
 }
 
-template <typename L, typename T, typename U, size_t... N>
+template <typename T, typename U, std::size_t N>
 auto operator*( const U& lhs,
-                const array<L,T,N...>& rhs )
+                const array<T,N>& rhs )
 {
-  array<L,T,N...> tmp;
+  array<T,N> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(),
                   [&lhs](auto & e) { return lhs*e; } );
   return tmp;
@@ -620,11 +556,11 @@ auto operator*( const U& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The array on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, size_t... N>
-auto operator/( const array<L,T,N...>& lhs, 
-                const array<L,T,N...>& rhs )
+template <typename T, std::size_t N>
+auto operator/( const array<T,N>& lhs, 
+                const array<T,N>& rhs )
 {
-  array<L,T,N...> tmp;
+  array<T,N> tmp;
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
                   tmp.begin(), std::divides<>() );    
   return tmp;
@@ -638,21 +574,21 @@ auto operator/( const array<L,T,N...>& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, typename U, size_t... N>
-auto operator/( const array<L,T,N...>& lhs, 
+template <typename T, typename U, std::size_t N>
+auto operator/( const array<T,N>& lhs, 
                 const U& rhs )
 {
-  array<L,T,N...> tmp;
+  array<T,N> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(),
                   [&rhs](auto & e) { return e/rhs; } );
   return tmp;
 }
 
-template <typename L, typename T, typename U, size_t... N>
+template <typename T, typename U, std::size_t N>
 auto operator/( const U& lhs, 
-                const array<L,T,N...>& rhs )
+                const array<T,N>& rhs )
 {
-  array<L,T,N...> tmp;
+  array<T,N> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(),
                   [&lhs](auto & e) { return lhs/e; } );
   return tmp;
@@ -664,32 +600,14 @@ auto operator/( const U& lhs,
 //! \param[in,out] os  The ostream to dump output to.
 //! \param[in]     rhs The array on the right hand side of the operator.
 //! \return A reference to the current ostream.
-template <typename L, typename T, size_t... N>
-auto & operator<<(std::ostream& os, const array<L,T,N...>& a)
+template <typename T, std::size_t N>
+auto & operator<<(std::ostream& os, const array<T,N>& a)
 {
   os << "(";
   for ( auto i : a ) os << " " << i;
   os << " )";
   return os;
 }
-
-//! \brief Output operator for array.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in,out] os  The ostream to dump output to.
-//! \param[in]     rhs The array on the right hand side of the operator.
-//! \return A reference to the current ostream.
-template <typename L, typename T, std::size_t D1, std::size_t D2>
-auto & operator<<(std::ostream& os, const array<L,T,D1,D2>& a)
-{
-  for ( std::size_t j = 0; j<D2; j++ ) { 
-    os << "[";
-    for ( std::size_t i = 0; i<D1; i++ ) os << " " << a(i,j);
-    os << " ]" << std::endl;
-  }
-  return os;
-}
-
 
 
 //! \brief Compute the dot product
@@ -698,8 +616,8 @@ auto & operator<<(std::ostream& os, const array<L,T,D1,D2>& a)
 //! \param[in] a  The first vector
 //! \param[in] b  The other vector
 //! \return The result of the operation
-template <typename L, typename T, size_t... N>
-auto dot_product(const array<L, T, N...> &a, const array<L, T, N...> &b) 
+template <typename T, std::size_t N>
+auto dot_product(const array<T, N> &a, const array<T, N> &b) 
 {
   return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0) );
 }
@@ -710,8 +628,8 @@ auto dot_product(const array<L, T, N...> &a, const array<L, T, N...> &b)
 //! \param[in] a  The first vector
 //! \param[in] b  The other vector
 //! \return The result of the operation
-template <typename L, typename T, size_t... N> 
-auto magnitude(const array<L, T, N...> &a) 
+template <typename T, std::size_t N> 
+auto magnitude(const array<T, N> &a) 
 {
   return std::sqrt( dot_product(a,a) );
 }
@@ -722,8 +640,8 @@ auto magnitude(const array<L, T, N...> &a)
 //! \param[in] a  The first vector
 //! \param[in] b  The other vector
 //! \return The result of the operation
-template <typename L, typename T, size_t... N> 
-auto abs(const array<L, T, N...> &a) 
+template <typename T, std::size_t N> 
+auto abs(const array<T, N> &a) 
 {
   return std::sqrt( dot_product(a,a) );
 }
@@ -734,8 +652,8 @@ auto abs(const array<L, T, N...> &a)
 //! \param[in] a  The first vector
 //! \param[in] b  The other vector
 //! \return The result of the operation
-template <typename L, typename T>
-auto cross_product(const array<L, T, 2> &a, const array<L, T, 2> &b) 
+template <typename T>
+auto cross_product(const array<T, 2> &a, const array<T, 2> &b) 
 {
   return a[0]*b[1] - a[1]*b[0];
 }
