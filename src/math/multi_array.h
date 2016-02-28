@@ -865,21 +865,6 @@ auto operator/( const U& lhs,
 //! \param[in,out] os  The ostream to dump output to.
 //! \param[in]     rhs The array on the right hand side of the operator.
 //! \return A reference to the current ostream.
-template <typename L, typename T, size_t... N>
-auto & operator<<(std::ostream& os, const multi_array<L,T,N...>& a)
-{
-  os << "(";
-  for ( auto i : a ) os << " " << i;
-  os << " )";
-  return os;
-}
-
-//! \brief Output operator for array.
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in,out] os  The ostream to dump output to.
-//! \param[in]     rhs The array on the right hand side of the operator.
-//! \return A reference to the current ostream.
 template <typename L, typename T, std::size_t D1, std::size_t D2>
 auto & operator<<(std::ostream& os, const multi_array<L,T,D1,D2>& a)
 {
@@ -891,55 +876,6 @@ auto & operator<<(std::ostream& os, const multi_array<L,T,D1,D2>& a)
   return os;
 }
 
-
-
-//! \brief Compute the dot product
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] a  The first vector
-//! \param[in] b  The other vector
-//! \return The result of the operation
-template <typename L, typename T, size_t... N>
-auto dot_product(const multi_array<L, T, N...> &a, const multi_array<L, T, N...> &b) 
-{
-  return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0) );
-}
-
-//! \brief Compute the magnitude of the vector
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] a  The first vector
-//! \param[in] b  The other vector
-//! \return The result of the operation
-template <typename L, typename T, size_t... N> 
-auto magnitude(const multi_array<L, T, N...> &a) 
-{
-  return std::sqrt( dot_product(a,a) );
-}
-
-//! \brief Compute the magnitude of the vector
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] a  The first vector
-//! \param[in] b  The other vector
-//! \return The result of the operation
-template <typename L, typename T, size_t... N> 
-auto abs(const multi_array<L, T, N...> &a) 
-{
-  return std::sqrt( dot_product(a,a) );
-}
-
-//! \brief Compute the dot product
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] a  The first vector
-//! \param[in] b  The other vector
-//! \return The result of the operation
-template <typename L, typename T>
-auto cross_product(const multi_array<L, T, 2> &a, const multi_array<L, T, 2> &b) 
-{
-  return a[0]*b[1] - a[1]*b[0];
-}
 
 } // namespace
 } // namespace

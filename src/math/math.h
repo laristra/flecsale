@@ -86,10 +86,10 @@ auto min_element( const C<Args...> & a )
 }
 
 template< 
-  typename T, std::size_t N,
-  template< typename, std::size_t > typename A
+  typename T, std::size_t... N,
+  template< typename, std::size_t... > typename A
  >
-auto min_eleemtn( const A<T,N> & a ) 
+auto min_eleemtn( const A<T,N...> & a ) 
 {
   return std::min_element( a.begin(), a.end() );
 }
@@ -104,10 +104,10 @@ auto max_element( const C<Args...> & a )
 }
 
 template< 
-  typename T, std::size_t N,
-  template< typename, std::size_t > typename A
+  typename T, std::size_t... N,
+  template< typename, std::size_t... > typename A
  >
-auto max_element( const A<T,N> & a ) 
+auto max_element( const A<T,N...> & a ) 
 {
   return std::max_element( a.begin(), a.end() );
 }
@@ -136,10 +136,10 @@ auto dot_product( InputIt1 first1, InputIt1 last1, InputIt2 first2 )
 //! \param[in] b  The other vector
 //! \return The result of the operation
 template< 
-  typename T, std::size_t N,
-  template< typename, std::size_t > typename A
+  typename T, std::size_t... N,
+  template< typename, std::size_t... > typename A
  >
-auto dot_product(const A<T, N> &a, const A<T, N> &b) 
+auto dot_product(const A<T, N...> &a, const A<T, N...> &b) 
 {
   return dot_product(a,b);
 }
@@ -167,10 +167,10 @@ auto magnitude(const C<Args...> &a)
 }
 
 template< 
-  typename T, std::size_t N,
-  template< typename, std::size_t > typename A
+  typename T, std::size_t... N,
+  template< typename, std::size_t... > typename A
  >
-auto magnitude(const A<T, N> &a) 
+auto magnitude(const A<T, N...> &a) 
 {
   return std::sqrt( dot_product(a,a) );
 }
@@ -182,10 +182,10 @@ auto magnitude(const A<T, N> &a)
 //! \param[in] b  The other vector
 //! \return The result of the operation
 template< 
-  typename T, std::size_t N,
-  template< typename, std::size_t > typename A
+  typename T, std::size_t... N,
+  template< typename, std::size_t... > typename A
  >
-auto abs(const A<T, N> &a) 
+auto abs(const A<T, N...> &a) 
 {
   return std::sqrt( dot_product(a,a) );
 }
