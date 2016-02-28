@@ -646,6 +646,7 @@ auto abs(const array<T, N> &a)
   return std::sqrt( dot_product(a,a) );
 }
 
+
 //! \brief Compute the dot product
 //! \tparam T  The array base value type.
 //! \tparam D  The array dimension.

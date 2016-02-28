@@ -80,36 +80,120 @@ average( T && t, Types&&... args )
 //! \param [in] a the array to search
 //! \remark general version
 template< template<typename...> typename C, typename...Args >
-auto min_value( const C<Args...> & a ) 
+auto min_element( const C<Args...> & a ) 
 {
-  return *std::min_element( a.begin(), a.end() );
+  return std::min_element( a.begin(), a.end() );
 }
 
-//! \brief return the minimum value of a list
-//! \param [in] a the array to search
-//! \remark array version
-template< typename T, std::size_t N >
-auto min_value( const std::array<T,N> & a ) 
+template< 
+  typename T, std::size_t N,
+  template< typename, std::size_t > typename A
+ >
+auto min_eleemtn( const A<T,N> & a ) 
 {
-  return *std::min_element( a.begin(), a.end() );
+  return std::min_element( a.begin(), a.end() );
 }
 
 //! \brief return the maximum value of a list
 //! \param [in] a the array to search
 //! \remark general version
 template< template<typename...> typename C, typename...Args >
-auto max_value( const C<Args...> & a ) 
+auto max_element( const C<Args...> & a ) 
 {
-  return *std::max_element( a.begin(), a.end() );
+  return std::max_element( a.begin(), a.end() );
 }
 
-//! \brief return the maximum value of a list
-//! \param [in] a the array to search
-//! \remark array version
-template< typename T, std::size_t N >
-auto max_value( const std::array<T,N> & a ) 
+template< 
+  typename T, std::size_t N,
+  template< typename, std::size_t > typename A
+ >
+auto max_element( const A<T,N> & a ) 
 {
-  return *std::max_element( a.begin(), a.end() );
+  return std::max_element( a.begin(), a.end() );
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// A dot product function
+//////////////////////////////////////////////////////////////////////////////
+
+//! \brief Compute the dot product
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template< class InputIt1, class InputIt2 >
+auto dot_product( InputIt1 first1, InputIt1 last1, InputIt2 first2 )
+{
+  std::decay_t< decltype(*first1) > zero = 0;
+  return std::inner_product(first1, last1, first2, zero );
+}
+
+//! \brief Compute the dot product
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template< 
+  typename T, std::size_t N,
+  template< typename, std::size_t > typename A
+ >
+auto dot_product(const A<T, N> &a, const A<T, N> &b) 
+{
+  return dot_product(a,b);
+}
+
+template< template<typename...> typename C, typename...Args >
+auto dot_product(const C<Args...> &a, const C<Args...> &b) 
+{
+  return dot_product(a,b);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// magnitude of vectors
+//////////////////////////////////////////////////////////////////////////////
+
+//! \brief Compute the magnitude of the vector
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template< template<typename...> typename C, typename...Args >
+auto magnitude(const C<Args...> &a) 
+{
+  return std::sqrt( dot_product(a,a) );
+}
+
+template< 
+  typename T, std::size_t N,
+  template< typename, std::size_t > typename A
+ >
+auto magnitude(const A<T, N> &a) 
+{
+  return std::sqrt( dot_product(a,a) );
+}
+
+//! \brief Compute the magnitude of the vector
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template< 
+  typename T, std::size_t N,
+  template< typename, std::size_t > typename A
+ >
+auto abs(const A<T, N> &a) 
+{
+  return std::sqrt( dot_product(a,a) );
+}
+
+template< template<typename...> typename C, typename...Args >
+auto abs(const C<Args...> &a) 
+{
+  return std::sqrt( dot_product(a,a) );
 }
 
 //////////////////////////////////////////////////////////////////////////////
