@@ -19,6 +19,7 @@
 
 //! user includes
 #include "ale/math/tuple.h"
+#include "ale/math/math.h"
 #include "ale/math/vector.h"
 
 namespace ale {

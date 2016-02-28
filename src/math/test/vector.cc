@@ -22,6 +22,7 @@
 
 // user includes
 #include "ale/common/types.h"
+#include "ale/math/math.h"
 #include "ale/math/vector.h"
 
 

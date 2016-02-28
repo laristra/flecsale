@@ -609,44 +609,6 @@ auto & operator<<(std::ostream& os, const array<T,N>& a)
   return os;
 }
 
-
-//! \brief Compute the dot product
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] a  The first vector
-//! \param[in] b  The other vector
-//! \return The result of the operation
-template <typename T, std::size_t N>
-auto dot_product(const array<T, N> &a, const array<T, N> &b) 
-{
-  return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0) );
-}
-
-//! \brief Compute the magnitude of the vector
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] a  The first vector
-//! \param[in] b  The other vector
-//! \return The result of the operation
-template <typename T, std::size_t N> 
-auto magnitude(const array<T, N> &a) 
-{
-  return std::sqrt( dot_product(a,a) );
-}
-
-//! \brief Compute the magnitude of the vector
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] a  The first vector
-//! \param[in] b  The other vector
-//! \return The result of the operation
-template <typename T, std::size_t N> 
-auto abs(const array<T, N> &a) 
-{
-  return std::sqrt( dot_product(a,a) );
-}
-
-
 //! \brief Compute the dot product
 //! \tparam T  The array base value type.
 //! \tparam D  The array dimension.

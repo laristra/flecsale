@@ -17,6 +17,8 @@
  ******************************************************************************/
 #pragma once
 
+// system includes
+#include <algorithm> 
 
 // user includes
 #include "ale/std/type_traits.h"
@@ -89,7 +91,7 @@ template<
   typename T, std::size_t... N,
   template< typename, std::size_t... > typename A
  >
-auto min_eleemtn( const A<T,N...> & a ) 
+auto min_element( const A<T,N...> & a ) 
 {
   return std::min_element( a.begin(), a.end() );
 }
@@ -139,15 +141,17 @@ template<
   typename T, std::size_t... N,
   template< typename, std::size_t... > typename A
  >
-auto dot_product(const A<T, N...> &a, const A<T, N...> &b) 
+T dot_product(const A<T, N...> &a, const A<T, N...> &b) 
 {
-  return dot_product(a,b);
+  auto dot = dot_product(a,b);
+  return dot;
 }
 
-template< template<typename...> typename C, typename...Args >
-auto dot_product(const C<Args...> &a, const C<Args...> &b) 
+template< template<typename...> typename C, typename T, typename...Args >
+T dot_product(const C<T,Args...> &a, const C<T,Args...> &b) 
 {
-  return dot_product(a,b);
+  auto dot = dot_product(a,b); 
+  return dot;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -160,8 +164,8 @@ auto dot_product(const C<Args...> &a, const C<Args...> &b)
 //! \param[in] a  The first vector
 //! \param[in] b  The other vector
 //! \return The result of the operation
-template< template<typename...> typename C, typename...Args >
-auto magnitude(const C<Args...> &a) 
+template< template<typename...> typename C, typename T, typename...Args >
+T magnitude(const C<T,Args...> &a) 
 {
   return std::sqrt( dot_product(a,a) );
 }
@@ -170,7 +174,7 @@ template<
   typename T, std::size_t... N,
   template< typename, std::size_t... > typename A
  >
-auto magnitude(const A<T, N...> &a) 
+T magnitude(const A<T, N...> &a) 
 {
   return std::sqrt( dot_product(a,a) );
 }
@@ -185,13 +189,13 @@ template<
   typename T, std::size_t... N,
   template< typename, std::size_t... > typename A
  >
-auto abs(const A<T, N...> &a) 
+T abs(const A<T, N...> &a) 
 {
   return std::sqrt( dot_product(a,a) );
 }
 
-template< template<typename...> typename C, typename...Args >
-auto abs(const C<Args...> &a) 
+template< template<typename...> typename C, typename T, typename...Args >
+T abs(const C<T,Args...> &a) 
 {
   return std::sqrt( dot_product(a,a) );
 }

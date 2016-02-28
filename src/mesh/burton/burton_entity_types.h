@@ -483,7 +483,8 @@ class burton_wedge_t
     auto e = edge()->midpoint();
     auto v = vertex()->coordinates();
     auto nrml = geom::normal(c,e);
-    auto dot = dot_product(nrml, e-v);
+    auto delta = e - v;
+    auto dot = dot_product(nrml, delta);
     return nrml * math::sgn(dot);
   }
 
@@ -500,7 +501,8 @@ class burton_wedge_t
     auto v = vertex()->coordinates();
     auto c = cell()->centroid();
     auto nrml = geom::normal(e,v);
-    auto dot = dot_product(nrml,e-c);
+    auto delta = e-c;
+    auto dot = dot_product(nrml, delta);
     return nrml * math::sgn(dot);
   }
 
