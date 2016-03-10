@@ -51,8 +51,7 @@ using eos_t = eos::ideal_gas_t<real_t>;
 using eqns_t = eqns::lagrange_eqns_t<real_t, mesh_t::dimension()>;
 using flux_data_t = eqns_t::flux_data_t;
 
-template< typename T, size_t N >
-using matrix_t = math::row_major_matrix<T, N, N>;
+using math::matrix;
 
 // explicitly use some other stuff
 using std::cout;

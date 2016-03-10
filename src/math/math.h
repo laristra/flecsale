@@ -143,14 +143,14 @@ template<
  >
 T dot_product(const A<T, N...> &a, const A<T, N...> &b) 
 {
-  auto dot = dot_product(a,b);
+  auto dot = dot_product( a.begin(), a.end(), b.begin() );
   return dot;
 }
 
 template< template<typename...> typename C, typename T, typename...Args >
 T dot_product(const C<T,Args...> &a, const C<T,Args...> &b) 
 {
-  auto dot = dot_product(a,b); 
+  auto dot = dot_product( a.begin(), a.end(), b.begin() );
   return dot;
 }
 

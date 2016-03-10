@@ -32,79 +32,54 @@ namespace ale {
 namespace math {
 
 
-  template <typename U, size_t I, size_t... J>
-  struct nested_initializer_list
-  {
-    using nested = typename nested_initializer_list<U, J...>::type;
-    using type = std::initializer_list<nested>;
-  };
 
-  template <typename U, std::size_t I>
-  struct nested_initializer_list<U, I> 
-  {
-    using type = std::initializer_list<U>;
-  };
+  struct row_major_ordering {
 
-  template< class U, size_t... I >
-  using nested_initializer_list_t = typename nested_initializer_list<U, I...>::type;
-
-
-
-  template <typename F, size_t N>
-  void multi_for( size_t (&lower_bound) [N], 
-                  size_t (&upper_bound) [N],
-                  F && func) {
-    size_t ranges[N];
-    auto numel = 1;
-    for (size_t i = 0; i < N; i++) {
-      ranges[i] = upper_bound[i]-lower_bound[i];
-      numel *= ranges[i];
+    constexpr std::size_t stride(const std::size_t * ids, const std::size_t & N )
+    {
+      if ( N > 0 )
+        return ids[1] * stride( &ids[1], N-1 );
+      else 
+        return 1;
     }
-
-    for (auto idx = 0; idx < numel; idx++) {
-      //if you don't need the actual indicies, you're done
-
-      //extract indexes
-      auto idx2 = idx;
-      size_t indexes[N];
-      for (auto i = 0; i < ranges[i]; i++) {
-        indexes[i] = idx2 % ranges[i] - lower_bound[i];
-        idx2 /= ranges[i];
-      }
-      //do stuff
-      std::forward<F>(func)(idx, indexes);
+    
+    template< std::size_t N, std::size_t... I >
+    constexpr std::array<std::size_t, N> ordering_helper( const std::size_t (&ids)[N], std::index_sequence<I...> ) 
+    {
+      return {{ stride( &ids[I], N-I-1 )... }};
     }
-  } // multi_for
-
-
-////////////////////////////////////////////////////////////////////////////////
-//!  \brief Define the layout of the matrix using different conventions
-////////////////////////////////////////////////////////////////////////////////
-struct layouts {
-
-  //============================================================================
-  //!  \brief Define the layout of the matrix using a row-major convention
-  //============================================================================
-  struct row_major {
-    static constexpr 
-    auto element( size_t i, size_t j, 
-                  size_t /* size_i */, size_t size_j ) noexcept
-    { return i * size_j + j; }   
+    
+    template< std::size_t N >
+    constexpr auto operator()( const std::size_t (&ids)[N] )    
+    {
+      return ordering_helper( ids, std::make_index_sequence<N>{} );
+    }
+    
   };
 
+  struct col_major_ordering {
 
-  //============================================================================
-  //!  \brief Define the layout of the matrix using column major convention
-  //============================================================================
-  struct column_major {
-    static constexpr 
-    auto element( size_t i, size_t j, 
-                  size_t size_i, size_t /* size_j */ ) noexcept
-    { return j * size_i + i; }   
+    constexpr std::size_t stride(const std::size_t * ids, const std::size_t & N )
+    {
+      if ( N > 0 )
+        return ids[1] * stride( &ids[1], N-1 );
+      else 
+        return 1;
+    }
+    
+    template< std::size_t N, std::size_t... I >
+    constexpr std::array<std::size_t, N> ordering_helper( const std::size_t (&ids)[N], std::index_sequence<I...> ) 
+    {
+      return {{ stride( &ids[N-I-1], I )... }};
+    }
+    
+    template< std::size_t N >
+    constexpr auto operator()( const std::size_t (&ids)[N] )    
+    {
+      return ordering_helper( ids, std::make_index_sequence<N>{} );
+    }
+    
   };
-
-}; // namespace layout
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //!  \brief The dimensioned_array type provides a general base for defining
@@ -114,7 +89,7 @@ struct layouts {
 //!  \tparam D The dimension of the array, i.e., the number of elements
 //!    to be stored in the array.
 ////////////////////////////////////////////////////////////////////////////////
-template <typename L, typename T, std::size_t... N> 
+template <typename T, std::size_t... N> 
 class multi_array {
 
 public:
@@ -139,9 +114,6 @@ public:
   using reverse_iterator       = std::reverse_iterator<iterator>;
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-  //! the layout type
-  using layout_type = L;
-
   //! size in each dimension 
   static constexpr size_type dimensions  = sizeof...(N);
   //! the total length of storage
@@ -160,10 +132,7 @@ private:
   static constexpr size_type dims_[ dimensions ] = {N...};
 
   //! \brief The individual strides
-  static constexpr size_type strides_[ dimensions ] = {N...};
-
-  //! \brief The first element index for each dimension
-  static constexpr size_type index_bases_[ dimensions ] = {N...};
+  static constexpr std::array<std::size_t, sizeof...(N)> strides_ = row_major_ordering{}( {N...} );
 
 public:
 
@@ -179,7 +148,7 @@ public:
 
   //!\brief fancy copy constructor with type conversion
   template <typename T2>
-  multi_array(const multi_array<L,T2,N...>& oth) 
+  multi_array(const multi_array<T2,N...>& oth) 
   {
     std::copy(oth.begin(),oth.end(), begin());    
   }
@@ -189,66 +158,9 @@ public:
   template < typename T2 >
   multi_array(const T2 & val)
   { 
-    std::cout << "multi_array (single value constructor)\n";
+    //std::cout << "multi_array (single value constructor)\n";
     fill( val ); 
   }
-
-
-
-  class strided_iterator
-  {
-   public:
-
-    strided_iterator(pointer ptr)
-      : ptr_(ptr), index_(0)
-    {
-      for ( auto i=0; i< dimensions; i++ )
-        indices_[i] = 0;
-    }
-
-    strided_iterator & operator++()
-    {
-      indices_[dimensions-1]++;
-      for ( auto i=dimensions-1; i>0; i-- )
-        if ( indices_[i] == ranges_[i] ) {
-          indices_[i] = 0;
-          indices_[i-1]++;
-        }
-      index_ = unpack_indices( indices_ );
-      return *this;
-    }
-
-    strided_iterator & operator=(const strided_iterator & itr)
-    {
-      ptr_ = itr.ptr_;
-      index_ = itr.index_;
-      for ( auto i=0; i< dimensions; i++ )
-        indices_[i] = itr.indices_[i];
-      return *this;
-    }
-
-    reference operator*() { return ptr_[index_]; }
-    pointer operator->() { return &ptr_[index_]; }
-
-    bool operator==(const strided_iterator & itr) const
-    {
-      return index_ == itr.index_;
-    }
-
-    bool operator!=(const strided_iterator & itr) const
-    {
-      return index_ != itr.index_;
-    }
-
-
-   private:
-
-    pointer ptr_;
-    size_type index_;
-    size_type indices_[dimensions];
-    size_type ranges_[dimensions] = {N...};
-
-  };
 
   //! \brief Constructor with initializer list
   //! 
@@ -257,20 +169,11 @@ public:
   //! \param[in] list the initializer list of values
   multi_array( std::initializer_list<T> list) 
   { 
-    std::cout << "multi_array (variadic constructor)\n";
-    if ( list.size() == 1 ) {
+    //std::cout << "multi_array (variadic constructor)\n";
+    if ( list.size() == 1 ) 
       fill( *list.begin() );
-    }
-    else if ( std::is_same_v< layout_type, layouts::row_major > ) {
+    else
       assign(list);
-    }
-    else {
-      assert( list.size() == elements && "input list size mismatch" );
-      strided_iterator it( elems_ );
-      auto list_it = list.begin();
-      for ( auto i=0; i<elements; i++, ++it, ++list_it)
-        *it = *list_it;
-    }
   }
    
   //===========================================================================
@@ -333,7 +236,7 @@ public:
   std::enable_if_t< D == dimensions, reference >
   operator[](size_type (&ids)[D]) 
   { 
-    auto ind = unpack_indices( ids );
+    auto ind = element( ids );
     return elems_[ind];
   }
         
@@ -341,7 +244,7 @@ public:
   std::enable_if_t< D == dimensions, const_reference >
   operator[](size_type (&ids)[D]) const 
   {     
-    auto ind = unpack_indices( ids );
+    auto ind = element( ids );
     return elems_[ind]; 
   }
 
@@ -351,7 +254,7 @@ public:
   operator()(Args... i) 
   { 
     assert_ranges( i... );
-    auto ind = layout_type::element( i..., N... );
+    auto ind = element( i... );
     return elems_[ind];
   }
 
@@ -361,7 +264,7 @@ public:
   operator()(Args... i) const
   { 
     assert_ranges( i... );
-    auto ind = layout_type::element( i..., N... );
+    auto ind = element( i... );
     return elems_[ind];
   }
 
@@ -371,7 +274,7 @@ public:
   std::enable_if_t< sizeof...(Args) == sizeof...(N), reference >
   at(Args... i) { 
     check_ranges(i...); 
-    auto ind = layout_type::element( i..., N... );
+    auto ind = element( i... );
     return elems_[ind];
   }
 
@@ -380,7 +283,7 @@ public:
   at(Args... i) const 
   { 
     check_ranges(i...); 
-    auto ind = layout_type::element( i..., N... );
+    auto ind = element( i... );
     return elems_[ind];
   }
     
@@ -428,11 +331,7 @@ public:
 
   //! \brief the stride associated with each array dimension
   static constexpr const size_type * strides() 
-  { return strides_; }
-
-  //! \brief the numeric index of the first element for each array dimension
-  static constexpr const size_type * index_bases()
-  { return index_bases_; }
+  { return strides_.data(); }
 
 
   //===========================================================================
@@ -479,7 +378,7 @@ public:
 
   //!\brief  assignment with type conversion
   template <typename T2>
-  auto & operator= (const multi_array<L,T2,N...>& rhs) {
+  auto & operator= (const multi_array<T2,N...>& rhs) {
     if ( this != &rhs )
       std::copy(rhs.begin(),rhs.end(), begin());    
     return *this;
@@ -490,7 +389,7 @@ public:
   //! \param[in] rhs The array on the right hand side of the operator.
   //! \return A reference to the current object.
   template <typename T2>
-  auto & operator+=(const multi_array<L,T2,N...> & rhs) {
+  auto & operator+=(const multi_array<T2,N...> & rhs) {
     std::transform( begin(), end(), rhs.begin(), 
                     begin(), std::plus<>() );
     //for ( size_type i=0; i<N; i++ ) elems_[i] += rhs.elems_[i];    
@@ -512,7 +411,7 @@ public:
   //! \param[in] rhs The array on the right hand side of the operator.
   //! \return A reference to the current object.
   template <typename T2>
-  auto & operator-=(const multi_array<L,T2,N...> & rhs) {
+  auto & operator-=(const multi_array<T2,N...> & rhs) {
     std::transform( begin(), end(), rhs.begin(), 
                     begin(), std::minus<>() );    
     //for ( size_type i=0; i<N; i++ ) elems_[i] -= rhs.elems_[i];    
@@ -535,7 +434,7 @@ public:
   //! \param[in] rhs The array on the right hand side of the operator.
   //! \return A reference to the current object.
   template <typename T2> 
-  auto & operator*=(const multi_array<L,T2,N...> & rhs) {
+  auto & operator*=(const multi_array<T2,N...> & rhs) {
     std::transform( begin(), end(), rhs.begin(), 
                     begin(), std::multiplies<>() );    
     //for ( size_type i=0; i<N; i++ ) elems_[i] *= rhs.elems_[i];    
@@ -557,7 +456,7 @@ public:
   //! \param[in] rhs The array on the right hand side of the operator.
   //! \return A reference to the current object.
   template <typename T2>
-  auto & operator/=(const multi_array<L,T2,N...> & rhs) {
+  auto & operator/=(const multi_array<T2,N...> & rhs) {
     std::transform( begin(), end(), rhs.begin(), 
                     begin(), std::divides<>() );    
     //for ( size_type i=0; i<N; i++ ) elems_[i] /= rhs.elems_[i];    
@@ -586,32 +485,30 @@ public:
 
 
   //===========================================================================
-  // Private Utilities
+  // Utitilities
   //===========================================================================
 
-private:
 
   //! \brief unpack an array of indices and get the element index
-  //! \remark this is the main implementation
-  template< typename U, std::size_t D, std::size_t... I >
-  static
-  auto unpack_indices_impl( U (&ids)[D], std::index_sequence<I...> )
+  //! \remark this version uses an array of indices
+  template< typename U, size_type D >
+  static constexpr
+  auto element( const U (&ids)[D] )
   {
-    return layout_type::element( ids[I]..., N... );
+    size_type ind = 0;
+    for ( auto i=0; i<dimensions; i++ ) ind += ids[i]*strides_[i];
+    return ind;
+    //return std::inner_product( std::begin(ids), std::end(ids), std::begin(strides_), 0);
   }
 
-  //! \brief unpack an array of indices and get the element index
-  //! \remark this is the function that should be called
-  template< 
-    typename U, std::size_t D, 
-    typename Indices = std::make_index_sequence<D>
-  >
-  static
-  auto unpack_indices( U (&ids)[D] )
+  //! \brief compute the 1d element index
+  //! \remark this version uses the variadic arguments
+  template< typename... Args >
+  static constexpr
+  auto element( Args&&... ids )
   {
-    return unpack_indices_impl( ids, Indices() );
+    return element( {std::forward<Args>(ids)...} );
   }
-
 
   //! \brief check range (may be private because it is static)
   template< typename... Args >
@@ -644,6 +541,19 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+// static members
+////////////////////////////////////////////////////////////////////////////////
+
+//! \brief The individual dimensions
+template <typename T, std::size_t... N> 
+constexpr typename multi_array<T,N...>::size_type 
+multi_array<T,N...> :: dims_[ multi_array<T,N...>::dimensions ];
+
+//! \brief The individual dimensions
+template <typename T, std::size_t... N> 
+constexpr std::array<std::size_t, sizeof...(N)> multi_array<T,N...> :: strides_;
+
+////////////////////////////////////////////////////////////////////////////////
 // Friend functions
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -651,38 +561,38 @@ private:
 //! \brief lexicographically compares the values in the array 
 //! \param[in] lhs The quantity on the lhs.
 //! \param[in] rhs The quantity on the rhs.
-template<typename L, typename T, std::size_t... N>
-bool operator==(const multi_array<L,T,N...>& lhs, const multi_array<L,T,N...>& rhs)
+template<typename T, std::size_t... N>
+bool operator==(const multi_array<T,N...>& lhs, const multi_array<T,N...>& rhs)
 {
   return std::equal(lhs.begin(), lhs.end(), rhs.begin());
 }
 
-template<typename L, typename T, std::size_t... N>
-bool operator< (const multi_array<L,T,N...>& x, const multi_array<L,T,N...>& y) {
+template<typename T, std::size_t... N>
+bool operator< (const multi_array<T,N...>& x, const multi_array<T,N...>& y) {
   return std::lexicographical_compare(x.begin(),x.end(),y.begin(),y.end());
 }
 
-template<typename L, typename T, std::size_t... N>
-bool operator!= (const multi_array<L,T,N...>& x, const multi_array<L,T,N...>& y) {
+template<typename T, std::size_t... N>
+bool operator!= (const multi_array<T,N...>& x, const multi_array<T,N...>& y) {
   return !(x==y);
 }
 
-template<typename L, typename T, std::size_t... N>
-bool operator> (const multi_array<L,T,N...>& x, const multi_array<L,T,N...>& y) {
+template<typename T, std::size_t... N>
+bool operator> (const multi_array<T,N...>& x, const multi_array<T,N...>& y) {
   return y<x;
 }
-template<typename L, typename T, std::size_t... N>
-bool operator<= (const multi_array<L,T,N...>& x, const multi_array<L,T,N...>& y) {
+template<typename T, std::size_t... N>
+bool operator<= (const multi_array<T,N...>& x, const multi_array<T,N...>& y) {
   return !(y<x);
 }
-template<typename L, typename T, std::size_t... N>
-bool operator>= (const multi_array<L,T,N...>& x, const multi_array<L,T,N...>& y) {
+template<typename T, std::size_t... N>
+bool operator>= (const multi_array<T,N...>& x, const multi_array<T,N...>& y) {
   return !(x<y);
 }
 
 //! \brief  global swap(), specializes the std::swap algorithm 
-template<typename L, typename T, std::size_t... N>
-inline void swap (multi_array<L,T,N...>& x, multi_array<L,T,N...>& y) {
+template<typename T, std::size_t... N>
+inline void swap (multi_array<T,N...>& x, multi_array<T,N...>& y) {
   x.swap(y);
 }
 
@@ -694,11 +604,11 @@ inline void swap (multi_array<L,T,N...>& x, multi_array<L,T,N...>& y) {
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The array on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, size_t... N>
-auto operator+( const multi_array<L,T,N...>& lhs, 
-                const multi_array<L,T,N...>& rhs )
+template <typename T, size_t... N>
+auto operator+( const multi_array<T,N...>& lhs, 
+                const multi_array<T,N...>& rhs )
 {
-  multi_array<L,T,N...> tmp;
+  multi_array<T,N...> tmp;
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
                   tmp.begin(), std::plus<>() );    
   return tmp;
@@ -710,21 +620,21 @@ auto operator+( const multi_array<L,T,N...>& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, typename U, size_t... N>
-auto operator+( const multi_array<L,T,N...>& lhs, 
+template <typename T, typename U, size_t... N>
+auto operator+( const multi_array<T,N...>& lhs, 
                 const U& rhs )
 {
-  multi_array<L,T,N...> tmp;
+  multi_array<T,N...> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(),
                   [&rhs](auto & e) { return e+rhs; } );
   return tmp;
 }
 
-template <typename L, typename T, typename U, size_t... N>
+template <typename T, typename U, size_t... N>
 auto operator+( const U& lhs, 
-                const multi_array<L,T,N...>& rhs )
+                const multi_array<T,N...>& rhs )
 {
-  multi_array<L,T,N...> tmp;
+  multi_array<T,N...> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(),
                   [&lhs](auto & e) { return lhs+e; } );
   return tmp;
@@ -736,11 +646,11 @@ auto operator+( const U& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The array on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, size_t... N>
-auto operator-( const multi_array<L,T,N...>& lhs, 
-                const multi_array<L,T,N...>& rhs )
+template <typename T, size_t... N>
+auto operator-( const multi_array<T,N...>& lhs, 
+                const multi_array<T,N...>& rhs )
 {
-  multi_array<L,T,N...> tmp;
+  multi_array<T,N...> tmp;
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
                   tmp.begin(), std::minus<>() );    
   return tmp;
@@ -752,21 +662,21 @@ auto operator-( const multi_array<L,T,N...>& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, typename U, size_t... N>
-auto operator-( const multi_array<L,T,N...>& lhs, 
+template <typename T, typename U, size_t... N>
+auto operator-( const multi_array<T,N...>& lhs, 
                 const U& rhs )
 {
-  multi_array<L,T,N...> tmp;
+  multi_array<T,N...> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(),
                   [&rhs](auto & e) { return e-rhs; } );
   return tmp;
 }
 
-template <typename L, typename T, typename U, size_t... N>
+template <typename T, typename U, size_t... N>
 auto operator-( const U& lhs, 
-                const multi_array<L,T,N...>& rhs )
+                const multi_array<T,N...>& rhs )
 {
-  multi_array<L,T,N...> tmp;
+  multi_array<T,N...> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(),
                   [&lhs](auto & e) { return lhs-e; } );
   return tmp;
@@ -778,11 +688,11 @@ auto operator-( const U& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The array on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, size_t... N>
-auto operator*( const multi_array<L,T,N...>& lhs, 
-                const multi_array<L,T,N...>& rhs )
+template <typename T, size_t... N>
+auto operator*( const multi_array<T,N...>& lhs, 
+                const multi_array<T,N...>& rhs )
 {
-  multi_array<L,T,N...> tmp;
+  multi_array<T,N...> tmp;
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
                   tmp.begin(), std::multiplies<>() );    
   return tmp;
@@ -795,21 +705,21 @@ auto operator*( const multi_array<L,T,N...>& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, typename U, size_t... N>
-auto operator*( const multi_array<L,T,N...>& lhs, 
+template <typename T, typename U, size_t... N>
+auto operator*( const multi_array<T,N...>& lhs, 
                 const U& rhs )
 {
-  multi_array<L,T,N...> tmp;
+  multi_array<T,N...> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(),
                   [&rhs](auto & e) { return e*rhs; } );
   return tmp;
 }
 
-template <typename L, typename T, typename U, size_t... N>
+template <typename T, typename U, size_t... N>
 auto operator*( const U& lhs,
-                const multi_array<L,T,N...>& rhs )
+                const multi_array<T,N...>& rhs )
 {
-  multi_array<L,T,N...> tmp;
+  multi_array<T,N...> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(),
                   [&lhs](auto & e) { return lhs*e; } );
   return tmp;
@@ -821,11 +731,11 @@ auto operator*( const U& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The array on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, size_t... N>
-auto operator/( const multi_array<L,T,N...>& lhs, 
-                const multi_array<L,T,N...>& rhs )
+template <typename T, size_t... N>
+auto operator/( const multi_array<T,N...>& lhs, 
+                const multi_array<T,N...>& rhs )
 {
-  multi_array<L,T,N...> tmp;
+  multi_array<T,N...> tmp;
   std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
                   tmp.begin(), std::divides<>() );    
   return tmp;
@@ -839,21 +749,21 @@ auto operator/( const multi_array<L,T,N...>& lhs,
 //! \param[in] lhs The array on the left hand side of the operator.
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
-template <typename L, typename T, typename U, size_t... N>
-auto operator/( const multi_array<L,T,N...>& lhs, 
+template <typename T, typename U, size_t... N>
+auto operator/( const multi_array<T,N...>& lhs, 
                 const U& rhs )
 {
-  multi_array<L,T,N...> tmp;
+  multi_array<T,N...> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(),
                   [&rhs](auto & e) { return e/rhs; } );
   return tmp;
 }
 
-template <typename L, typename T, typename U, size_t... N>
+template <typename T, typename U, size_t... N>
 auto operator/( const U& lhs, 
-                const multi_array<L,T,N...>& rhs )
+                const multi_array<T,N...>& rhs )
 {
-  multi_array<L,T,N...> tmp;
+  multi_array<T,N...> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(),
                   [&lhs](auto & e) { return lhs/e; } );
   return tmp;
@@ -865,8 +775,8 @@ auto operator/( const U& lhs,
 //! \param[in,out] os  The ostream to dump output to.
 //! \param[in]     rhs The array on the right hand side of the operator.
 //! \return A reference to the current ostream.
-template <typename L, typename T, std::size_t D1, std::size_t D2>
-auto & operator<<(std::ostream& os, const multi_array<L,T,D1,D2>& a)
+template <typename T, std::size_t D1, std::size_t D2>
+auto & operator<<(std::ostream& os, const multi_array<T,D1,D2>& a)
 {
   for ( std::size_t j = 0; j<D2; j++ ) { 
     os << "[";

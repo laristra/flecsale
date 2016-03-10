@@ -6,8 +6,8 @@
  * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
  * /@@       /@@/@@//// //@@    @@       /@@/@@
  * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  // 
- * 
+ * //       ///  //////   //////  ////////  //
+ *
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
@@ -39,6 +39,8 @@ using flecsi::domain_;
 using flecsi::domain_entity;
 //! the flecsi entity group
 using flecsi::entity_group;
+//! the flecsi mesh enity
+using flecsi::mesh_entity_t;
 
 
 //! some flexi flags
@@ -66,14 +68,15 @@ class burton_wedge_t;
   \tparam N The domain of the vertex.
  */
 class burton_vertex_t
-    : public flecsi::mesh_entity_t<0, burton_mesh_traits_t::num_domains>
+  : public mesh_entity_t<0, burton_mesh_traits_t::num_domains>
 {
- public:
+public:
+
   //! Type containing coordinates of the vertex.
   using point_t = burton_mesh_traits_t::point_t;
 
   //! Handle for accessing state at vertex.
-  using state_t = burton_mesh_traits_t::mesh_state_t;
+  using data_t = burton_mesh_traits_t::data_t;
 
   //! the bitfield type
   using bitfield_t = burton_mesh_traits_t::bitfield_t;
@@ -82,7 +85,8 @@ class burton_vertex_t
   static constexpr size_t num_domains = burton_mesh_traits_t::num_domains;
 
   //! Constructor
-  burton_vertex_t(state_t & state) : state_(state) {}
+  burton_vertex_t() {}
+
   /*!
     \brief Set the coordinates for a vertex.
 
@@ -90,7 +94,8 @@ class burton_vertex_t
    */
   void set_coordinates(const point_t & coordinates)
   {
-    auto c = state_.dense_accessor<point_t, flecsi_internal>("coordinates");
+    auto c = data_t::instance().dense_accessor<point_t, flecsi_internal>(
+      "coordinates");
     c[mesh_entity_base_t<num_domains>::template id<0>()] = coordinates;
   } // set_coordinates
 
@@ -100,8 +105,8 @@ class burton_vertex_t
    */
   const point_t & coordinates() const
   {
-    const auto c =
-        state_.dense_accessor<point_t, flecsi_internal>("coordinates");
+    const auto c = data_t::instance().dense_accessor<point_t, flecsi_internal>(
+      "coordinates");
     return c[mesh_entity_base_t<num_domains>::template id<0>()];
   } // coordinates
 
@@ -110,15 +115,10 @@ class burton_vertex_t
   bool is_boundary() const
   {
     auto flag =
-      state_.dense_accessor<bitfield_t, flecsi_internal>("point_flags");
+      data_t::instance().dense_accessor<bitfield_t, flecsi_internal>("point_flags");
     return flag[mesh_entity_base_t<num_domains>::template id<0>()].bitset(0);
   }
 
- private:
-
-  //! a reference to the state
-  state_t & state_;
-  
 }; // class burton_vertex_t
 
 /*----------------------------------------------------------------------------*
@@ -133,7 +133,7 @@ class burton_vertex_t
   \tparam N The domain of the edge.
  */
 struct burton_edge_t
-    : public flecsi::mesh_entity_t<1, burton_mesh_traits_t::num_domains> {
+    : public mesh_entity_t<1, burton_mesh_traits_t::num_domains> {
 
   //! Type of floating point.
   using real_t = burton_mesh_traits_t::real_t;
@@ -144,24 +144,18 @@ struct burton_edge_t
   //! Type vector type.
   using vector_t = burton_mesh_traits_t::vector_t;
 
-  //! Handle for accessing state at vertex.
-  using state_t = burton_mesh_traits_t::mesh_state_t;
-
   //! the bitfield type
   using bitfield_t = burton_mesh_traits_t::bitfield_t;
 
   //! Number of domains in the burton mesh.
   static constexpr size_t num_domains = burton_mesh_traits_t::num_domains;
 
+  //! Handle for accessing state at vertex.
+  using data_t = burton_mesh_traits_t::data_t;
+
   //! the constructor
   burton_edge_t(mesh_topology_base_t & mesh) : mesh_(mesh) {}
   
-  //! set the state pointer
-  void set_state_ptr(state_t * state) 
-  {
-    state_ = state;
-  }
-
   //! the edge midpoint
   point_t midpoint() const;
 
@@ -174,9 +168,8 @@ struct burton_edge_t
   //! is this a boundary
   bool is_boundary() const
   {
-    assert( state_ != nullptr );
     auto flag =
-      state_->dense_accessor<bitfield_t, flecsi_internal>("edge_flags");
+      data_t::instance().dense_accessor<bitfield_t, flecsi_internal>("edge_flags");
     return flag[mesh_entity_base_t<num_domains>::template id<0>()].bitset(0);
   }
 
@@ -185,10 +178,6 @@ struct burton_edge_t
   //! a reference to the mesh topology
   const mesh_topology_base_t & mesh_;
 
-  //! a pointer to the state
-  state_t * state_ = nullptr;
-    
-  
 }; // struct burton_edge_t
 
 /*----------------------------------------------------------------------------*
@@ -201,8 +190,7 @@ struct burton_edge_t
     geometry and state associated with mesh cells.
  */
 struct burton_cell_t
-    : public flecsi::mesh_entity_t<2, burton_mesh_traits_t::num_domains> {
-
+    : public mesh_entity_t<2, burton_mesh_traits_t::num_domains> {
 
   //! Type containing coordinates of the vertex.
   using point_t = burton_mesh_traits_t::point_t;
@@ -217,10 +205,10 @@ struct burton_cell_t
   virtual ~burton_cell_t() {}
 
   //! the centroid
-  virtual point_t centroid() const {};
+  virtual point_t centroid() const {}; // = 0; FIXME
 
   //! the area of the cell
-  virtual real_t area() const {};
+  virtual real_t area() const {}; // = 0; FIXME
 
   /*!
     \brief create_entities is a function that creates entities
@@ -268,8 +256,8 @@ struct burton_cell_t
  */
 class burton_quadrilateral_cell_t : public burton_cell_t
 {
- public:
-  burton_quadrilateral_cell_t(const mesh_topology_base_t & mesh) : mesh_(mesh) 
+public:
+  burton_quadrilateral_cell_t(mesh_topology_base_t & mesh) : mesh_(mesh)
   {
   }
 
@@ -436,9 +424,9 @@ private:
   \tparam N The domain of the wedge.
  */
 class burton_wedge_t
-    : public flecsi::mesh_entity_t<2, burton_mesh_traits_t::num_domains>
+    : public mesh_entity_t<2, burton_mesh_traits_t::num_domains>
 {
- public:
+public:
   burton_wedge_t(){}
 
   burton_wedge_t(const mesh_topology_base_t & mesh){}
@@ -526,11 +514,21 @@ class burton_wedge_t
   \tparam N The domain of the corner.
  */
 class burton_corner_t
-    : public flecsi::mesh_entity_t<1, burton_mesh_traits_t::num_domains>
+    : public mesh_entity_t<1, burton_mesh_traits_t::num_domains>
 {
- public:
+public:
+
+  //! Type of floating point.
+  using real_t = burton_mesh_traits_t::real_t;
+
+  //! Type containing coordinates of a vertex.
+  using point_t = burton_mesh_traits_t::point_t;
+
+  //! Type vector type.
+  using vector_t = burton_mesh_traits_t::vector_t;
 
   burton_corner_t(const mesh_topology_base_t & mesh) : mesh_(mesh) {}
+
   /*!
     \brief Add a wedge to the mesh.
 
@@ -542,15 +540,85 @@ class burton_corner_t
     w->set_corner(this);
   }
 
+  //! Set the cell that a corner is in.
+  void set_cell(burton_cell_t * cell) { cell_ = cell; }
+
+  //! Set the first edge that a corner has.
+  void set_edge1(burton_edge_t * edge) { edge1_ = edge; }
+
+  //! Set the second edge that a corner has.
+  void set_edge2(burton_edge_t * edge) { edge2_ = edge; }
+
+#if 0
+  // FIXME: having to set/get the edges 1 and 2 is hacky. Need to review
+  // this with Bergen to come up with a cleaner solution.
+  using entity_range_t = entity_range_t<1,1>;
+  //! Set the edges that a corner has.
+  void set_edges(entity_range_t edges) { edges_ = edges; }
+#endif
+
+  //! Set the vertex that a corner has.
+  void set_vertex(burton_vertex_t * vertex) { vertex_ = vertex; }
+
+  //! Get the cell that a corner is in.
+  const burton_cell_t * cell() const { return cell_; }
+
+  //! Get edge1 that a corner has.
+  const burton_edge_t * edge1() const { return edge1_; }
+
+  //! Get edge2 that a corner has.
+  const burton_edge_t * edge2() const { return edge2_; }
+
+#if 0
+  //! Get edges that a corner has.
+  const entity_range_t & edges() const { return edges_; }
+#endif
+
+  //! Get the vertex that a corner has.
+  const burton_vertex_t * vertex() const { return vertex_; }
+
+  //! the area of the corner
+  real_t area() {
+    /*
+      Area of a quadrilateral. No sides parallel.
+
+                 D
+          /-------------\
+         /                \
+      B /                   \  C
+       /                      \
+      /-------------------------\
+                 A
+
+      area = 1/2 mag(A X B) + 1/2 mag(C X D)
+     */
+
+    auto p = edge1()->midpoint() - edge2()->midpoint();
+    auto q = vertex()->coordinates() - cell()->centroid();
+    
+    using math::cross_product;
+
+    auto det = cross_product( p, q );
+
+    return 0.5 * std::abs( det );
+  }
+
   /*!
     \brief Get the wedges for the mesh.
     \return The wedges in the mesh.
    */
   entity_group<burton_wedge_t> & wedges() { return wedges_; } // wedges
 
- private:
-  
+private:
+
   entity_group<burton_wedge_t> wedges_;
+  burton_cell_t * cell_;
+  burton_edge_t * edge1_;
+  burton_edge_t * edge2_;
+#if 0
+  entity_range_t  edges_;
+#endif
+  burton_vertex_t * vertex_;
 
   //! a reference to the mesh topology
   const mesh_topology_base_t & mesh_;

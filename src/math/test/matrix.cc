@@ -30,8 +30,8 @@ using namespace ale;
 using namespace ale::math;
 
 using real_t = common::real_t;
-using matrix_1d_t = row_major_matrix<real_t,1,1>;
-using matrix_2d_t = col_major_matrix<real_t,2,3>;
+using matrix_1d_t = matrix<real_t,1,1>;
+using matrix_2d_t = matrix<real_t,2,3>;
 
 
 
@@ -39,6 +39,15 @@ using matrix_2d_t = col_major_matrix<real_t,2,3>;
 //! \brief Test the intialization
 ///////////////////////////////////////////////////////////////////////////////
 TEST(matrix, init) {
+
+  auto strides1 = math::multi_array<real_t,2,3>::strides();
+  std::cout << strides1[0] << " " << strides1[1] << " " << std::endl;
+
+  auto strides2 = math::multi_array<real_t,2,3,4>::strides();
+  std::cout << strides2[0] << " " << strides2[1] << " " << strides2[2] << std::endl;
+
+  auto shape = matrix_2d_t::shape();
+  std::cout << matrix_2d_t::element( 0, 0 ) << " " << matrix_2d_t::element( 0, 1 ) << " " << matrix_2d_t::element( 1, 0 ) << std::endl;
 
   // { 1.0 }
   matrix_1d_t ans_1d{ 1.0 };

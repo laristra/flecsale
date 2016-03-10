@@ -23,7 +23,7 @@
 #include <string>
 
 //! user includes
-#include "flecsi/state/state.h"
+#include "flecsi/data/data.h"
 #include "flecsi/execution/task.h"
 
 #include "ale/mesh/burton/burton_types.h"
@@ -69,14 +69,15 @@ public:
   //! Type defining the data attachment sites on the burton mesh.
   using attachment_site_t = burton_mesh_traits_t::attachment_site_t;
 
+  using data_t = burton_mesh_traits_t::data_t;
+
   /*!
     \brief Accessor type.
 
     \tparam T The type of the underlying data to access.
    */
   template <typename T>
-  using dense_accessor_t =
-      burton_mesh_traits_t::mesh_state_t::dense_accessor_t<T>;
+  using dense_accessor_t = data_t::dense_accessor_t<T>;
 
   /*--------------------------------------------------------------------------*
    * Dense Accessors
@@ -99,25 +100,27 @@ public:
   decltype(auto) register_state_(const const_string_t && key,
       attachment_site_t site, bitfield_t::field_type_t attributes = 0x0)
   {
+    data_t & data_ = data_t::instance();
+
     switch (site) {
       case attachment_site_t::vertices:
-        return state_.register_state<T>(
+        return data_.register_state<T>(
             key, num_vertices(), attachment_site_t::vertices, attributes);
         break;
       case attachment_site_t::edges:
-        return state_.register_state<T>(
+        return data_.register_state<T>(
             key, num_edges(), attachment_site_t::edges, attributes);
         break;
       case attachment_site_t::cells:
-        return state_.register_state<T>(
+        return data_.register_state<T>(
             key, num_cells(), attachment_site_t::cells, attributes);
         break;
       case attachment_site_t::corners:
-        return state_.register_state<T>(
+        return data_.register_state<T>(
             key, num_corners(), attachment_site_t::corners, attributes);
         break;
       case attachment_site_t::wedges:
-        return state_.register_state<T>(
+        return data_.register_state<T>(
             key, num_wedges(), attachment_site_t::wedges, attributes);
         break;
       default:
@@ -131,7 +134,7 @@ public:
 
     \tparam T Data type of underlying state.
     \tparam NS The namespace in which the state variable is registered.
-      See \ref state_t::register_state for additional information.
+      See \ref data_t::register_state for additional information.
 
     \param[in] key The \e key for the state to access.
 
@@ -140,7 +143,7 @@ public:
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_state_(const const_string_t && key)
   {
-    return state_.dense_accessor<T, NS>(key);
+    return data_t::instance().dense_accessor<T, NS>(key);
   } // access_state_
 
   /*!
@@ -154,7 +157,7 @@ public:
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_type_()
   {
-    return state_.dense_accessors<T, NS>();
+    return data_t::instance().dense_accessors<T, NS>();
   } // access_type_
 
   /*!
@@ -173,7 +176,8 @@ public:
   template <typename T, typename P>
   decltype(auto) access_type_if_(P && predicate)
   {
-    return state_.dense_accessors<T, P>(std::forward<P>(predicate));
+    return data_t::instance().dense_accessors<T, P>(
+      std::forward<P>(predicate));
   } // access_type_if
 
 
@@ -194,9 +198,8 @@ public:
   template <typename T>
   decltype(auto) register_global_state_(const const_string_t && key,
     bitfield_t::field_type_t attributes = 0x0) {
-    
-    return state_.register_global_state<T>(key, attachment_site_t::global, attributes);
-
+    return data_t::instance().register_global_state<T>(
+      key, attachment_site_t::global, attributes);
   } // register_state_
 
   /*!
@@ -204,7 +207,7 @@ public:
 
     \tparam T Data type of underlying state.
     \tparam NS The namespace in which the state variable is registered.
-      See \ref state_t::register_state for additional information.
+      See \ref data_t::register_state for additional information.
 
     \param[in] key The \e key for the state to access.
 
@@ -213,7 +216,7 @@ public:
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_global_state_(const const_string_t && key)
   {
-    return state_.global_accessor<T, NS>(key);
+    return data_t::instance().global_accessor<T, NS>(key);
   } // access_state_
 
   /*!
@@ -227,7 +230,7 @@ public:
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_global_type_()
   {
-    return state_.global_accessors<T, NS>();
+    return data_t::instance().global_accessors<T, NS>();
   } // access_type_
 
   /*!
@@ -246,7 +249,8 @@ public:
   template <typename T, typename P>
   decltype(auto) access_global_type_if_(P && predicate)
   {
-    return state_.global_accessors<T, P>(std::forward<P>(predicate));
+    return data_t::instance().global_accessors<T, P>(
+      std::forward<P>(predicate));
   } // access_type_if
 
 
@@ -263,7 +267,7 @@ public:
    */
   decltype(auto) state_attributes_(const const_string_t && key)
   {
-    return state_.meta_data<>((key)).attributes;
+    return data_t::instance().meta_data<>((key)).attributes;
   } // state_attribtutes_
 
   /*--------------------------------------------------------------------------*
@@ -312,6 +316,7 @@ public:
 
   //! Default constructor
   burton_mesh_t() {}
+
   //! Copy constructor (disabled)
   burton_mesh_t(const burton_mesh_t &) = delete;
 
@@ -795,7 +800,7 @@ public:
     auto p = access_state_<point_t, flecsi_internal>("coordinates");
     p[num_vertices()] = pos;
 
-    auto v = mesh_.make<vertex_t>(state_);
+    auto v = mesh_.make<vertex_t>();
     mesh_.add_entity<0, 0>(v);
 
     return v;
@@ -835,11 +840,13 @@ public:
    */
   void init_parameters(size_t vertices)
   {
+    // FIXME: For now, we need to clear the mesh data to avoid
+    // multiple initializations of the data singleton
+    data_t::instance().reset();
+
     // register coordinate state
-    state_.register_state<point_t, flecsi_internal>(
+    data_t::instance().register_state<point_t, flecsi_internal>(
       "coordinates", vertices, attachment_site_t::vertices, persistent);
-
-
   } // init_parameters
 
   /*!
@@ -853,6 +860,17 @@ public:
 
     //mesh_.dump();
 
+    // Initialize corners
+    for (auto c : corners()) {
+      c->set_cell(cells(c).front());
+      c->set_edge1(edges(c).front());
+      c->set_edge2(edges(c).back());
+#if 0
+      c->set_edges(edges(c));
+#endif
+      c->set_vertex(vertices(c).front());
+    } // for
+
     // Initialize wedges
     for (auto w : wedges()) {
       w->set_cell(cells(w).front());
@@ -860,22 +878,22 @@ public:
       w->set_vertex(vertices(w).front());
     } // for
 
+    // get the data instance
+    data_t & data_ = data_t::instance();
 
     // register time state
-    auto soln_time = state_.register_global_state<real_t, flecsi_internal>(
+    auto soln_time = data_.register_global_state<real_t, flecsi_internal>(
       "time", attachment_site_t::global, persistent);
     soln_time = 0;
 
     // register some flags for identifying boundarys
-    auto point_flags = state_.register_state<bitfield_t, flecsi_internal>(
+    auto point_flags = data_.register_state<bitfield_t, flecsi_internal>(
       "point_flags", num_vertices(), attachment_site_t::vertices, persistent);
-    auto edge_flags = state_.register_state<bitfield_t, flecsi_internal>(
+    auto edge_flags = data_.register_state<bitfield_t, flecsi_internal>(
       "edge_flags", num_edges(), attachment_site_t::edges, persistent);
 
     // now set the boundary flags
     for ( auto e : edges() ) {
-      // set the edge pointer
-      e->set_state_ptr( &state_ );
       // get the points and cells attached to the edge
       auto points = vertices(e);
       auto zones = cells(e);
@@ -895,7 +913,6 @@ public:
  private:
   mesh_t mesh_;
 
-  burton_mesh_traits_t::mesh_state_t state_;
 
 }; // class burton_mesh_t
 

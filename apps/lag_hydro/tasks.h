@@ -163,7 +163,7 @@ int32_t evaluate_nodal_state( T & mesh ) {
 
   // get the number of dimensions and create a matrix
   constexpr size_t dims = T::dimension();
-  using matrix = matrix_t<real_t, dims>;
+  using matrix_t = matrix<real_t, dims, dims>;
   
   // access what we need
   vertex_state_accessor<T> vertex_state( mesh );
@@ -179,26 +179,46 @@ int32_t evaluate_nodal_state( T & mesh ) {
     auto corners = mesh.corners(v);
 
     // create the final matrix the point
-    matrix Mp(0);
+    matrix_t Mp(0);
+    vector_t rhs(0);
     
     for ( auto c : corners ) {
       // get the cell state (there is only one)
       auto state = cell_state(c);
-      // create a temporary for the corner matrix
-      matrix Mpc(0);
-      // the impedance
-      auto z = eqns_t::impedance( state );
+      // the cell quantities
+      auto zc = eqns_t::impedance( state );
+      auto pc = eqns_t::pressure( state );
+      auto uc = eqns_t::velocity( state );
       // the norms ( have area of whole edge built into them )
       auto wedges = c->wedges();
       cout << wedges.size() << endl;
       //auto n_plus  = (*wedge)->edge();//->normal();
       //auto n_minus = wedges.end()  ->edge();//->normal();
       // compute the 
-      vector_t n_plus( 1.0, 2.0 );
-      auto M_plus  = math::outer_product<matrix>( n_plus , n_plus  );
-      //auto M_minus = math::outer_product<matrix>( n_minus, n_minus );
-      
+      vector_t n_plus ( 1.0, 2.0 );
+      vector_t n_minus( 1.0, 2.0 );
+      auto M_plus  = math::outer_product( n_plus , n_plus  );
+      auto M_minus = math::outer_product( n_minus, n_minus );
+      // the final matrix
+      // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
+      auto Mpc = M_plus + M_minus;
+      Mpc *= zc / 2; // lpc is half the real edge length
+      // add to the global matrix
+      Mp += Mpc;
+      // compute the pressure coefficient
+      auto npc = n_plus + n_minus;
+      npc /= 2; // lpc is half the real edge length
+      // add the pressure and velocity contributions to the system
+      rhs += pc * npc;
+      ax_plus_y( Mpc, uc, rhs );      
     } // cell
+    
+    // now solve the system for the point velocity
+    auto uv = math::solve( Mp, rhs );
+    cout << uv << endl;
+
+    // get the vertex state (there is only one)
+    auto state = vertex_state(v);
 
   } // vertex
   //----------------------------------------------------------------------------

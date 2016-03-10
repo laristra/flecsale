@@ -34,14 +34,8 @@ namespace math {
 //!    to be stored in the array.
 ////////////////////////////////////////////////////////////////////////////////
 template <typename T, std::size_t D1, std::size_t D2> 
-using row_major_matrix = multi_array< layouts::row_major, T, D1, D2>;
+using matrix = multi_array<T, D1, D2>;
 
-
-template <typename T, std::size_t D1, std::size_t D2> 
-using col_major_matrix = multi_array< layouts::column_major, T, D1, D2>;
-
-
-#if 0
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Compute the dot product
 //! \tparam T  The array base value type.
@@ -51,31 +45,91 @@ using col_major_matrix = multi_array< layouts::column_major, T, D1, D2>;
 //! \return The result of the operation
 ////////////////////////////////////////////////////////////////////////////////
 template < 
-  typename M, typename T, std::size_t D
+  typename T, std::size_t D,
+  template<typename, std::size_t> typename C
 >
-std::enable_if_t< 
-  std::is_same< typename M::layout_type, detail::row_major_layout >::value, M
-> 
-outer_product(const vector<T, D> &a, const vector<T, D> &b)
+auto outer_product(const C<T, D> &a, const C<T, D> &b)
 {
+  matrix<T,D,D> tmp;
+  
+  // the result is symmetric, so use the iterator to make sure we are always
+  // looping in favorable order
+  auto it = tmp.begin();
+  
+  // this order does not matter
+  for ( auto i = 0; i<D; i++ )
+    for ( auto j = 0; j<D; j++ )
+      *it++ = a[i] * b[j];
 
+  return tmp;
 }
 
-#endif
 
-//template <typename T, std::size_t D>
-//auto outer_product(const vector<T, D> &a, const vector<T, D> &b)
-//{
-//  row_major_matrix<T,D,D> tmp;
-//  return tmp;
-//}
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the inverse of a square matrix
+//! \tparam T  The base value type.
+//! \tparam D  The matrix dimension.
+//! \param[in] mat  The matrix to invert
+//! \return The result of the operation
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename T, std::size_t D
+>
+auto inverse( const matrix<T, D, D> & mat )
+{
+  matrix<T,D,D> tmp;
+  auto a = mat(0,0);
+  auto b = mat(0,1);
+  auto c = mat(1,0);
+  auto d = mat(1,1);
+  tmp(0,0) =  d;
+  tmp(0,1) = -b;
+  tmp(1,0) = -c;
+  tmp(1,1) =  a;
+  auto denom = a*d - b*c;
+  assert( denom != T() );
+  tmp /= denom;
+  return tmp;
+}
 
-//template <typename T, std::size_t D>
-//auto outer_product(const vector<T, D> &a, const vector<T, D> &b)
-//{
-//  col_major_matrix<T,D,D> tmp;
-//  return tmp;
-//}
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the product of a matrix times a vector
+//! \tparam T  The base value type.
+//! \tparam D  The matrix/array dimension.
+//! \param[in] mat  The matrix
+//! \param[in] vec  The vector
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename T, std::size_t D,
+  template<typename, std::size_t> typename C
+>
+void ax_plus_y( const matrix<T, D, D> & A, const C<T,D> & x, C<T,D> & y )
+{
+  for ( auto i = 0; i<D; i++ ) {
+    for ( auto j = 0; j<D; j++ )
+      y[i] += A(i,j) * x[j];
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the product of a matrix times a vector
+//! \tparam T  The base value type.
+//! \tparam D  The matrix/array dimension.
+//! \param[in] mat  The matrix
+//! \param[in] vec  The vector
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename T, std::size_t D,
+  template<typename, std::size_t> typename C
+>
+auto solve( const matrix<T, D, D> & A, const C<T,D> & b )
+{
+  C<T,D> x(0);
+  auto inv = inverse(A);
+  ax_plus_y( inv, b, x );
+  return x;
+}
 
 } // namespace
 } // namespace
