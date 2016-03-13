@@ -306,6 +306,15 @@ public:
   //! Corner type.
   using corner_t = burton_mesh_types_t::corner_t;
 
+  using vertex_set_t = mesh_t::entity_set_t<0, 0>;
+
+  using edge_set_t = mesh_t::entity_set_t<1, 0>;
+
+  using cell_set_t = mesh_t::entity_set_t<2, 0>;
+
+  using corner_set_t = mesh_t::entity_set_t<1, 1>;
+
+  using wedge_set_t = mesh_t::entity_set_t<2, 1>;
 
   //! \brief The locations of different bits that we set as flags
   enum bits : size_t 
@@ -859,23 +868,36 @@ public:
     mesh_.init_bindings<1>();
 
     //mesh_.dump();
-
+    
     // Initialize corners
     for (auto c : corners()) {
-      c->set_cell(cells(c).front());
-      c->set_edge1(edges(c).front());
-      c->set_edge2(edges(c).back());
-#if 0
-      c->set_edges(edges(c));
-#endif
-      c->set_vertex(vertices(c).front());
-    } // for
 
-    // Initialize wedges
-    for (auto w : wedges()) {
-      w->set_cell(cells(w).front());
-      w->set_edge(edges(w).front());
-      w->set_vertex(vertices(w).front());
+      auto cl = cells(c).front();
+      auto es = edges(c);
+      auto vt = vertices(c).front();
+
+      c->set_cell(cl);
+      c->set_edge1(es.front());
+      c->set_edge2(es.back());
+#if 0
+      c->set_edges(es);
+#endif
+      c->set_vertex(vt);
+      
+      auto w1 = new wedge_t( mesh_ );
+      w1->set_cell(cl);
+      w1->set_edge(es.front());
+      w1->set_vertex(vt);
+      mesh_.add_entity<dimension(), 1>( w1 );
+
+      auto w2 = new wedge_t( mesh_ );
+      w2->set_cell(cl);
+      w2->set_edge(es.back());
+      w2->set_vertex(vt);
+      mesh_.add_entity<dimension(), 1>( w2 );
+
+      c->add_wedge(w1);
+      c->add_wedge(w2);
     } // for
 
     // get the data instance

@@ -33,53 +33,57 @@ namespace math {
 
 
 
-  struct row_major_ordering {
+struct row_major_ordering {
 
-    constexpr std::size_t stride(const std::size_t * ids, const std::size_t & N )
-    {
-      if ( N > 0 )
-        return ids[1] * stride( &ids[1], N-1 );
-      else 
-        return 1;
-    }
-    
-    template< std::size_t N, std::size_t... I >
-    constexpr std::array<std::size_t, N> ordering_helper( const std::size_t (&ids)[N], std::index_sequence<I...> ) 
-    {
-      return {{ stride( &ids[I], N-I-1 )... }};
-    }
-    
-    template< std::size_t N >
-    constexpr auto operator()( const std::size_t (&ids)[N] )    
-    {
-      return ordering_helper( ids, std::make_index_sequence<N>{} );
-    }
-    
-  };
+  using size_type = std::size_t;
 
-  struct col_major_ordering {
+  constexpr size_type stride(const size_type * ids, const size_type & N )
+  {
+    if ( N > 0 )
+      return ids[1] * stride( &ids[1], N-1 );
+    else 
+      return 1;
+  }
+  
+  template< size_type N, size_type... I >
+  constexpr std::array<size_type, N> ordering_helper( const size_type (&ids)[N], std::index_sequence<I...> ) 
+  {
+    return {{ stride( &ids[I], N-I-1 )... }};
+  }
+  
+  template< size_type N >
+  constexpr auto operator()( const size_type (&ids)[N] )    
+  {
+    return ordering_helper( ids, std::make_index_sequence<N>{} );
+  }
+  
+};
 
-    constexpr std::size_t stride(const std::size_t * ids, const std::size_t & N )
-    {
-      if ( N > 0 )
-        return ids[1] * stride( &ids[1], N-1 );
-      else 
-        return 1;
-    }
-    
-    template< std::size_t N, std::size_t... I >
-    constexpr std::array<std::size_t, N> ordering_helper( const std::size_t (&ids)[N], std::index_sequence<I...> ) 
-    {
-      return {{ stride( &ids[N-I-1], I )... }};
-    }
-    
-    template< std::size_t N >
-    constexpr auto operator()( const std::size_t (&ids)[N] )    
-    {
-      return ordering_helper( ids, std::make_index_sequence<N>{} );
-    }
-    
-  };
+struct col_major_ordering {
+
+  using size_type = std::size_t;
+
+  constexpr size_type stride(const size_type * ids, const size_type & N )
+  {
+    if ( N > 0 )
+      return ids[1] * stride( &ids[1], N-1 );
+    else 
+      return 1;
+  }
+  
+  template< size_type N, size_type... I >
+  constexpr std::array<size_type, N> ordering_helper( const size_type (&ids)[N], std::index_sequence<I...> ) 
+  {
+    return {{ stride( &ids[N-I-1], I )... }};
+  }
+  
+  template< size_type N >
+  constexpr auto operator()( const size_type (&ids)[N] )    
+  {
+    return ordering_helper( ids, std::make_index_sequence<N>{} );
+  }
+  
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 //!  \brief The dimensioned_array type provides a general base for defining
@@ -132,7 +136,7 @@ private:
   static constexpr size_type dims_[ dimensions ] = {N...};
 
   //! \brief The individual strides
-  static constexpr std::array<std::size_t, sizeof...(N)> strides_ = row_major_ordering{}( {N...} );
+  static constexpr std::array<size_type, sizeof...(N)> strides_ = row_major_ordering{}( {N...} );
 
 public:
 
@@ -232,17 +236,17 @@ public:
   }
 
   //! \brief return the ith element ( allows multiple dimensions )
-  template< std::size_t D >
+  template< size_type D >
   std::enable_if_t< D == dimensions, reference >
-  operator[](size_type (&ids)[D]) 
+  operator[](const size_type (&ids)[D]) 
   { 
     auto ind = element( ids );
     return elems_[ind];
   }
         
-  template<std::size_t D>
+  template<size_type D>
   std::enable_if_t< D == dimensions, const_reference >
-  operator[](size_type (&ids)[D]) const 
+  operator[](const size_type (&ids)[D]) const 
   {     
     auto ind = element( ids );
     return elems_[ind]; 
@@ -253,8 +257,8 @@ public:
   std::enable_if_t< sizeof...(Args) == sizeof...(N), reference >
   operator()(Args... i) 
   { 
-    assert_ranges( i... );
-    auto ind = element( i... );
+    assert_ranges( std::forward<Args>(i)... );
+    auto ind = element( std::forward<Args>(i)... );
     return elems_[ind];
   }
 
@@ -263,8 +267,8 @@ public:
   std::enable_if_t< sizeof...(Args) == sizeof...(N), const_reference >
   operator()(Args... i) const
   { 
-    assert_ranges( i... );
-    auto ind = element( i... );
+    assert_ranges( std::forward<Args>(i)... );
+    auto ind = element( std::forward<Args>(i)... );
     return elems_[ind];
   }
 
@@ -273,8 +277,8 @@ public:
   template< typename... Args >
   std::enable_if_t< sizeof...(Args) == sizeof...(N), reference >
   at(Args... i) { 
-    check_ranges(i...); 
-    auto ind = element( i... );
+    check_ranges( std::forward<Args>(i)... ); 
+    auto ind = element( std::forward<Args>(i)... );
     return elems_[ind];
   }
 
@@ -282,8 +286,8 @@ public:
   std::enable_if_t< sizeof...(Args) == sizeof...(N), const_reference >
   at(Args... i) const 
   { 
-    check_ranges(i...); 
-    auto ind = element( i... );
+    check_ranges( std::forward<Args>(i)... ); 
+    auto ind = element( std::forward<Args>(i)... );
     return elems_[ind];
   }
     
@@ -315,11 +319,11 @@ public:
 
   //! \brief return the size
   static constexpr size_type size() 
-  { return dims_[0]; }
+  { return elements; }
 
   //! \brief return the number of elements
   static constexpr size_type num_elements() 
-  { return elements; }
+  { return size(); }
 
   //! \brief return the number of dimensions
   static constexpr size_type num_dimensions() 
@@ -507,7 +511,7 @@ public:
   static constexpr
   auto element( Args&&... ids )
   {
-    return element( {std::forward<Args>(ids)...} );
+    return element( {static_cast<size_type>(ids)...} );
   }
 
   //! \brief check range (may be private because it is static)

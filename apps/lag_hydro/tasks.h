@@ -68,7 +68,7 @@ int32_t update_state_from_pressure( T & mesh ) {
 
   // get the collection accesor
   auto eos = access_global_state( mesh, "eos", eos_t );
-  cell_state_accessor<T> cell_state( mesh );
+  auto cell_state = cell_state_accessor<T>( mesh );
 
   for ( auto c : mesh.cells() ) {
     auto u = cell_state(c);
@@ -91,7 +91,7 @@ int32_t update_state_from_energy( T & mesh ) {
 
   // get the collection accesor
   auto eos = access_global_state( mesh, "eos", eos_t );
-  cell_state_accessor<T> cell_state( mesh );
+  auto cell_state = cell_state_accessor<T>( mesh );
 
   for ( auto c : mesh.cells() ) {
     auto u = cell_state(c);
@@ -112,12 +112,15 @@ template< typename E, typename T >
 int32_t evaluate_time_step( T & mesh ) {
 
   // access what we need
-  cell_state_accessor<T> cell_state( mesh );
+  auto cell_state = cell_state_accessor<T>( mesh );
+
+  auto dudt = access_state( mesh, "cell:residual", flux_data_t );
 
   auto delta_t = access_global_state( mesh, "time_step", real_t );
   real_t cfl = access_global_state( mesh, "cfl", real_t );
  
  
+  //----------------------------------------------------------------------------
   // Loop over each cell, computing the minimum time step,
   // which is also the maximum 1/dt
   real_t dt_inv(0);
@@ -126,27 +129,89 @@ int32_t evaluate_time_step( T & mesh ) {
 
     // get cell properties
     auto u = cell_state( c );
-    auto area = c->area();
+    auto lambda = E::fastest_wavespeed(u);
 
-    // loop over each edge
-    for ( auto e : mesh.edges(c) ) {
-      // estimate the length scale normal to the edge
-      auto delta_x = area / e->length();
-      // get the unit normal
-      auto norm = e->normal();
-      auto nunit = norm / abs(norm);
-      // compute the inverse of the time scale
-      auto dti =  E::fastest_wavespeed(u, nunit) / delta_x;
-      // check for the maximum value
-      dt_inv = std::max( dti, dt_inv );
-    } // edge
+    // loop over each edge do find the min edge length
+    auto edges = mesh.edges(c);
+    assert( edges.size() > 2 && "not enough edges in cell" );
+    auto eit = edges.begin();
+    auto min_length = eit->length();
+    std::for_each( ++eit, edges.end(), [&](auto && e) 
+    { 
+      min_length = std::min( e->length(), min_length );
+    });
+
+    // compute the inverse of the time scale
+    auto dti =  lambda / min_length;
+    // check for the maximum value
+    dt_inv = std::max( dti, dt_inv );
+
+    // now check the volume change
+    auto dVdt = E::volumetric_rate_of_change( dudt[c] );
+    dti = std::abs(dVdt) / c->area();
+    // check for the maximum value
+    dt_inv = std::max( dti, dt_inv );
 
   } // cell
+  //----------------------------------------------------------------------------
 
   assert( dt_inv > 0 && "infinite delta t" );
 
   // invert dt and apply cfl
   delta_t = cfl / dt_inv;
+
+  return 0;
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to compute corner quantities
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int32_t evaluate_corner_coef( T & mesh ) {
+
+  // get the number of dimensions and create a matrix
+  constexpr size_t dims = T::dimension();
+  
+  // access what we need
+  auto cell_state = cell_state_accessor<T>( mesh );
+
+  auto Mpc = access_state( mesh, "corner:matrix", matrix_t );
+  auto npc = access_state( mesh, "corner:normal", vector_t );
+
+  //----------------------------------------------------------------------------
+  // Loop over each corner
+  for ( auto cn : mesh.corners() ) {
+
+    // a corner connects to a cell and a vertex
+    auto cl = cn->cell();
+
+    // get the cell state (there is only one)
+    auto state = cell_state(cl);
+    // the cell quantities
+    auto zc = eqns_t::impedance( state );
+    
+    // get the two wedge normals of the corner
+    auto wedges = cn->wedges();
+    auto n_plus  = wedges.front()->cell_facet_normal();
+    auto n_minus = wedges.back() ->cell_facet_normal();
+
+    // compute the mass matrix
+    auto M_plus  = math::outer_product( n_plus , n_plus  );
+    auto M_minus = math::outer_product( n_minus, n_minus );
+    // the final matrix
+    // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
+    Mpc[cn] = M_plus + M_minus;
+    Mpc[cn] *= zc;
+    // compute the pressure coefficient
+    npc[cn] = n_plus + n_minus;
+  } // corner
+  //----------------------------------------------------------------------------
+
 
   return 0;
 
@@ -161,79 +226,88 @@ int32_t evaluate_time_step( T & mesh ) {
 template< typename T >
 int32_t evaluate_nodal_state( T & mesh ) {
 
+  // get epsilon
+  constexpr auto eps = std::numeric_limits<real_t>::epsilon();
+
   // get the number of dimensions and create a matrix
   constexpr size_t dims = T::dimension();
-  using matrix_t = matrix<real_t, dims, dims>;
   
   // access what we need
-  vertex_state_accessor<T> vertex_state( mesh );
-  cell_state_accessor<T>     cell_state( mesh );
+  auto cell_state = cell_state_accessor<T>( mesh );
+  auto vertex_vel = access_state( mesh, "node:velocity", vector_t );
+  auto Mpc = access_state( mesh, "corner:matrix", matrix_t );
+  auto npc = access_state( mesh, "corner:normal", vector_t );
 
   //----------------------------------------------------------------------------
   // Loop over each vertex
-  for ( auto v : mesh.vertices() ) {
-
-    if ( v->is_boundary() ) continue;
-    
-    // get the corners connected to this point
-    auto corners = mesh.corners(v);
+  for ( auto vt : mesh.vertices() ) {
 
     // create the final matrix the point
     matrix_t Mp(0);
     vector_t rhs(0);
-    
-    for ( auto c : corners ) {
+    vector_t np(0);
+
+    //--------------------------------------------------------------------------
+    // build point matrix
+    for ( auto cn : mesh.corners(vt) ) {
+      // corner attaches to one cell and one point
+      auto cl = cn->cell();
       // get the cell state (there is only one)
-      auto state = cell_state(c);
+      auto state = cell_state(cl);
       // the cell quantities
-      auto zc = eqns_t::impedance( state );
       auto pc = eqns_t::pressure( state );
       auto uc = eqns_t::velocity( state );
-      // the norms ( have area of whole edge built into them )
-      auto wedges = c->wedges();
-      cout << wedges.size() << endl;
-      //auto n_plus  = (*wedge)->edge();//->normal();
-      //auto n_minus = wedges.end()  ->edge();//->normal();
-      // compute the 
-      vector_t n_plus ( 1.0, 2.0 );
-      vector_t n_minus( 1.0, 2.0 );
-      auto M_plus  = math::outer_product( n_plus , n_plus  );
-      auto M_minus = math::outer_product( n_minus, n_minus );
-      // the final matrix
-      // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
-      auto Mpc = M_plus + M_minus;
-      Mpc *= zc / 2; // lpc is half the real edge length
       // add to the global matrix
-      Mp += Mpc;
-      // compute the pressure coefficient
-      auto npc = n_plus + n_minus;
-      npc /= 2; // lpc is half the real edge length
+      Mp += Mpc[cn];
+      // add to the normal vector
+      np += npc[cn];
       // add the pressure and velocity contributions to the system
-      rhs += pc * npc;
-      ax_plus_y( Mpc, uc, rhs );      
-    } // cell
-    
-    // now solve the system for the point velocity
-    auto uv = math::solve( Mp, rhs );
-    cout << uv << endl;
+      rhs += pc * npc[cn];
+      ax_plus_y( Mpc[cn], uc, rhs );      
+    } // corner
 
-    // get the vertex state (there is only one)
-    auto state = vertex_state(v);
+    //--------------------------------------------------------------------------
+    // now solve the system for the point velocity
+
+    //---------- boundary point
+    if ( vt->is_boundary() ) {
+      
+      // at boundary points, solve a larger system
+      math::matrix<real_t, dims+1, dims+1> Mp_b;
+      math::vector<real_t, dims+1> rhs_b;
+
+      // create the new matrix
+      // A = [ Mp       lpc*npc ]
+      //     [ lpc*npc  0
+      for ( auto i=0; i<dims; i++ ) {
+        Mp_b( i, dims ) = np[i];
+        Mp_b( dims, i ) = np[i];
+        for ( auto j=0; j<dims; j++ )
+          Mp_b( i, j ) = Mp(i,j);        
+      }
+      Mp_b( dims, dims ) = 0;
+
+      // create the new rhs
+      // y = [ pc*npc   bc ]
+      std::copy( rhs.begin(), rhs.end(), rhs_b.begin() );
+      rhs_b[ dims ] = 0;
+
+      // now solve it
+      auto res = math::solve( Mp_b, rhs_b );
+      for ( auto i=0; i<dims; i++ ) vertex_vel[vt][i] = res[i];
+      
+    }
+    //---------- internal point
+    else {
+      // make sure sum(lpc) = 0
+      assert( abs(np) < eps && "error in norms" );
+      // now solve for point velocity
+      vertex_vel[vt] = math::solve( Mp, rhs );
+    } // point type
 
   } // vertex
   //----------------------------------------------------------------------------
 
-
-  for ( auto e : mesh.edges() ) {
-
-    // get the cells/edges connected to this point
-    auto points = mesh.vertices(e);
-
-    std::cout << e->is_boundary() << " " << points[0]->is_boundary() << " " << points[1]->is_boundary() << std::endl;
-    if ( e->is_boundary() ) 
-      assert( points[0]->is_boundary() && points[1]->is_boundary() );
-
-  }
 
   return 0;
 
@@ -246,63 +320,58 @@ int32_t evaluate_nodal_state( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t evaluate_fluxes( T & mesh ) {
+int32_t evaluate_forces( T & mesh ) {
 
   // access what we need
-  auto flux = access_state( mesh, "flux", flux_data_t );
-  cell_state_accessor<T> cell_state( mesh );
+  auto dudt = access_state( mesh, "cell:residual", flux_data_t );
+
+  auto vertex_vel = access_state( mesh, "node:velocity", vector_t );
+
+  auto Mpc = access_state( mesh, "corner:matrix", matrix_t );
+  auto npc = access_state( mesh, "corner:normal", vector_t );
+
+  auto cell_state = cell_state_accessor<T>( mesh );
 
   //----------------------------------------------------------------------------
-  // TASK: loop over each edge and compute/store the flux
-  // fluxes are stored on each edge
-  for ( auto e : mesh.edges() ) {
+  // TASK: loop over each cell and compute the residual
+  for ( auto cl : mesh.cells() ) {
 
-    // get the normal and unit normal
-    // The normal always points towards the first cell in the list.
-    // So we flip it.  This makes it point from the first cell outward.
-    auto norm = - e->normal();
-    auto nunit = norm / abs(norm);
+    // local cell residual
+    math::fill( dudt[cl], 0.0 );
 
-    // get the cell neighbors
-    auto c = mesh.cells(e).to_vec();
-    auto cells = c.size();
+    // get the cell state (there is only one)
+    auto state = cell_state(cl);
+    // the cell quantities
+    auto pc = eqns_t::pressure( state );
+    auto uc = eqns_t::velocity( state );
 
+    //--------------------------------------------------------------------------
+    // compute subcell forces
+    for ( auto cn : mesh.corners(cl) ) {
 
-    // get the left state
-    auto w_left = cell_state( c[0] );    
+      // corner attaches to one point and zone
+      auto pt = cn->vertex();
+      // get the vertex velocity
+      auto uv = vertex_vel[pt];
 
-    // interior cell
-    if ( cells == 2 ) {
-      // Normal always points from the first cell to the second
-      // dot product below should always be the same sign ( positive )
-      auto cx_left = c[0]->centroid();
-      auto cx_right = c[1]->centroid();
-      auto delta = cx_right - cx_left;
-      auto dot = math::dot_product( norm, delta );
-      if ( dot < 0 ) norm = - norm;
-      assert( dot >= 0 && "interior normal points wrong way!!!!" );
-      // compute the interface flux
-      auto w_right = cell_state( c[1] );
-      flux[e] = flux_function( w_left, w_right, nunit );
-    } 
-    // boundary cell
-    else {
-      // Normal always points outside, so the result of this
-      // dot product below should always be the same sign ( positive )
-      auto mp = e->midpoint();
-      auto cx = c[0]->centroid();
-      auto delta = mp - cx;
-      auto dot = math::dot_product( norm, delta );
-      if ( dot < 0 ) norm = - norm;
-      assert( dot >= 0 && "boundary normal points inward!!!!" );
-      // compute the boundary flux
-      flux[e] = boundary_flux( w_left, nunit );
-    }
+      // compute the subcell force
+      // lpc*Pc*npc - Mpc*(uv-uc)
+      auto force =  pc * npc[cn];
+      auto delta_u = uc - uv;
+      ax_plus_y( Mpc[cn], delta_u, force );      
+
+      // the fluxes
+      auto dmass =  math::dot_product( npc[cn], uv );
+      auto dmom  = - force;
+      auto dener = - math::dot_product( force, uv );
+
+      // add contribution
+      math::plus_equal( dudt[cl], flux_data_t{dmass, dmom, dener} );
+      
+    }// corners    
+    //--------------------------------------------------------------------------
     
-    // scale the flux by the face area
-    math::multiplies_equal( flux[e], e->length() );
-    
-  } // for
+  } // cell
   //----------------------------------------------------------------------------
 
   return 0;
@@ -318,8 +387,9 @@ template< typename T >
 int32_t apply_update( T & mesh ) {
 
   // access what we need
-  auto flux = access_state( mesh, "flux", flux_data_t );
-  cell_state_accessor<T> cell_state( mesh );
+  auto dudt = access_state( mesh, "cell:residual", flux_data_t );
+
+  auto cell_state = cell_state_accessor<T>( mesh );
 
   // read only access
   real_t delta_t = access_global_state( mesh, "time_step", real_t );
@@ -327,34 +397,39 @@ int32_t apply_update( T & mesh ) {
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
   for ( auto cell : mesh.cells() ) {
-    
-    flux_data_t delta_u;
-    math::fill( delta_u, 0.0 );
-
-    // loop over each connected edge
-    for ( auto edge : mesh.edges(cell) ) {
-      
-      // get the cell neighbors
-      auto neigh = mesh.cells(edge).to_vec();
-      auto num_neigh = neigh.size();
-
-      // add the contribution to this cell only
-      if ( neigh[0] == cell )
-        math::minus_equal( delta_u, flux[edge] );
-      else
-        math::plus_equal( delta_u, flux[edge] );
-
-    } // edge
 
     // now compute the final update
-    math::multiplies_equal( delta_u, delta_t/cell->area() );
-    
+    auto delta_u = delta_t * dudt[cell];
+
     // apply the update
     auto u = cell_state( cell );
     eqns_t::update_state_from_flux( u, delta_u );
 
   } // for
   //----------------------------------------------------------------------------
+
+  return 0;
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to move the mesh
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int32_t move_mesh( T & mesh ) {
+
+  // access what we need
+  auto vel = access_state( mesh, "node:velocity", vector_t );
+
+  // read only access
+  real_t delta_t = access_global_state( mesh, "time_step", real_t );
+ 
+  // Loop over each cell, scattering the fluxes to the cell
+  for ( auto vt : mesh.vertices() )
+    vt->coordinates() += delta_t * vel[vt];
 
   return 0;
 

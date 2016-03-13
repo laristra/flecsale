@@ -392,6 +392,15 @@ bool operator==(const array<T,N>& lhs, const array<T,N>& rhs)
   return std::equal(lhs.begin(), lhs.end(), rhs.begin());
 }
 
+template<typename T, typename U, std::size_t N>
+bool operator==(const array<T,N>& lhs, const U& rhs)
+{
+  for ( auto i=0; i<N; i++ )
+    if ( lhs[i] != rhs ) 
+      return false;
+  return true;
+}
+
 template<typename T, std::size_t N>
 bool operator< (const array<T,N>& x, const array<T,N>& y) {
   return std::lexicographical_compare(x.begin(),x.end(),y.begin(),y.end());

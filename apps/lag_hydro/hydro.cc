@@ -53,7 +53,7 @@ int main(int argc, char** argv)
   constexpr real_t length_y = 0.1;
   
   // the CFL and final solution time
-  constexpr real_t CFL = 1.0;
+  constexpr real_t CFL = 0.5;
   constexpr real_t final_time = 0.2;
 
   // this is a lambda function to set the initial conditions
@@ -94,7 +94,6 @@ int main(int argc, char** argv)
   register_state(mesh, "cell:pressure", cells,   real_t, persistent);
   register_state(mesh, "cell:velocity", cells, vector_t, persistent);
 
-  register_state(mesh, "node:pressure", vertices,   real_t, persistent);
   register_state(mesh, "node:velocity", vertices, vector_t, persistent);
 
   register_state(mesh, "cell:density",         cells,   real_t, persistent);
@@ -137,7 +136,9 @@ int main(int argc, char** argv)
 
   // compute the fluxes.  here I am regestering a struct as the stored data
   // type since I will only ever be accesissing all the data at once.
-  register_state(mesh, "flux", edges, flux_data_t, temporary);
+  register_state(mesh, "cell:residual", cells, flux_data_t, temporary);
+  register_state(mesh, "corner:matrix", corners, matrix_t, temporary);
+  register_state(mesh, "corner:normal", corners, vector_t, temporary);
 
   // get the current time
   auto soln_time = mesh.get_time();
@@ -146,7 +147,16 @@ int main(int argc, char** argv)
   auto time_cnt = 0;
 
   do {   
+
+    // evaluate corner matrices and normals
+    apps::hydro::evaluate_corner_coef( mesh );
     
+    // compute the nodal velocity
+    apps::hydro::evaluate_nodal_state( mesh );
+
+    // compute the fluxes
+    apps::hydro::evaluate_forces( mesh );
+
     // compute the time step
     apps::hydro::evaluate_time_step<eqns_t>( mesh );
     
@@ -160,14 +170,12 @@ int main(int argc, char** argv)
          << ", dt = " << std::scientific << *time_step
          << std::endl;
 
-    // compute the fluxes
-    apps::hydro::evaluate_nodal_state( mesh );
-
-    // compute the fluxes
-    apps::hydro::evaluate_fluxes( mesh );
     
     // Loop over each cell, scattering the fluxes to the cell
     apps::hydro::apply_update( mesh );
+
+    // move the mesh
+    apps::hydro::move_mesh( mesh );
 
     // Update derived solution quantities
     apps::hydro::update_state_from_energy( mesh );

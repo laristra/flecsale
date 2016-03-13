@@ -64,7 +64,7 @@ public:
 
     //! \brief the variables in the primitive state
     enum index : size_t { 
-      volume = 0, 
+      mass = 0, 
       momentum, 
       energy,
       total
@@ -120,6 +120,8 @@ public:
 
   //! \brief  the type for holding the state data (mass, momentum, and energy)
   using flux_data_t = typename equations::data_t;
+  //! \brief  the type for holding refernces to flux data
+  using flux_ref_t = utils::reference_wrapper_t< flux_data_t >;
 
 
 
@@ -199,87 +201,11 @@ public:
   //! \param [in]  u   The solution state
   //! \return the fastest moving wave speed
   //============================================================================
-  template <typename V>
-  static auto fastest_wavespeed( const state_data_t & u, const V & norm )
+  static auto fastest_wavespeed( const state_data_t & u )
   {
     auto a = sound_speed( u );
     return a;
   }
-
-  //============================================================================
-  //! \brief Computes the change in conserved quantities between two states
-  //! \param [in]  ul   The left state
-  //! \param [in]  ur   The right state
-  //! \return ur - ul
-  //============================================================================
-  static auto solution_delta( 
-    const state_data_t & ul, const state_data_t & ur )
-  {
-    using math::get;
-
-    // get the conserved quatities
-    auto mass_l = density( ul );
-    auto mom_l  = mass_l*velocity( ul );
-    auto ener_l = mass_l*total_energy( ul );
-
-    auto mass_r = density( ur );
-    auto mom_r  = mass_r*velocity( ur );
-    auto ener_r = mass_r*total_energy( ur );
-
-    // compute the change
-    flux_data_t du;
-    get<equations::index::volume  >( du ) = mass_r - mass_l;
-    get<equations::index::momentum>( du ) = mom_r - mom_l;
-    get<equations::index::energy  >( du ) = ener_r - ener_l;
-
-    return du;
-
-  }
-
-  //============================================================================
-  //! \brief compute the flux in the normal direction
-  //! \param [in] normal The normal direction
-  //! \return the flux alligned with the normal direction
-  //============================================================================
-  template <typename V>
-  static auto flux( const state_data_t & u, const V & norm )
-  {
-
-    using math::get;
-    using math::dot_product;
-
-    // these may be independant or derived quantities
-    auto vel = velocity( u );
-    auto p   = pressure( u );
-
-    auto v_dot_n = dot_product( vel, norm );
-    auto pn = p*norm;
-      
-    // explicitly set the individual elements, and it is clear what is
-    // being set by using static indexing instead of wrapper functions
-    flux_data_t f;
-    get<equations::index::volume  >( f ) = -v_dot_n;     
-    get<equations::index::momentum>( f ) = pn;
-    get<equations::index::energy  >( f ) = v_dot_n * p;
-
-    return f;
-  }
-
-  //============================================================================
-  //! \brief The flux at the wall
-  //!
-  //! \param [in] u      the solution state
-  //! \param [in] norm  the normal direction
-  //! \return the flux
-  //============================================================================
-  template <typename V>
-  static auto wall_flux( const state_data_t & u, const V & norm )
-  {
-    auto p  = pressure( u );
-    auto pn = p*norm;
-    return flux_data_t{ 0.0, pn, 0.0 };
-  };
-
 
   //============================================================================
   //! \brief update the state from the pressure
@@ -299,7 +225,6 @@ public:
     assert( m > 0  );
     assert( v > 0  );
     assert( p > 0  );
-
 
     // can use aliases for clarity
     auto & d  = get<variables::index::density>( u );
@@ -326,23 +251,18 @@ public:
     using math::get;
 
     // access independant or derived quantities 
-    auto m = mass( u );
-    auto v = volume( u );
+    auto d = density( u );
     auto ie = internal_energy( u );
       
-    assert( m > 0  );
-    assert( v > 0  );
+    assert( d > 0  );
     assert( ie > 0  );
 
-
     // can use aliases for clarity
-    auto & d  = get<variables::index::density>( u );
     auto & p  = get<variables::index::pressure>( u );
     auto & t  = get<variables::index::temperature>( u );
     auto & ss = get<variables::index::sound_speed>( u );
 
     // explicitly set the individual elements
-    d  = m / v;
     p  = eos.compute_pressure_de( d, ie );
     t  = eos.compute_temperature_de( d, ie );
     ss = eos.compute_sound_speed_de( d, ie );
@@ -360,29 +280,40 @@ public:
     using math::abs;
 
     // get the conserved quatities
-    auto mass = density( u );
-    auto mom  = mass*velocity( u );
-    auto ener = mass*total_energy( u );
+    auto   m   = mass( u );
+    auto   svol= 1 / density( u );
+    auto & vel = get<variables::index::velocity>( u );
+    auto   et  = total_energy( u );
 
     // access independant or derived quantities 
-    mass += get<equations::index::volume  >( du );     
-    mom  += get<equations::index::momentum>( du );
-    ener += get<equations::index::energy  >( du );
+    svol += get<equations::index::mass    >( du ) / m;
+    vel  += get<equations::index::momentum>( du ) / m;
+    et   += get<equations::index::energy  >( du ) / m;
 
     // get aliases for clarity
     auto & d  = get<variables::index::density>( u );
-    auto & v  = get<variables::index::velocity>( u );
     auto & ie = get<variables::index::internal_energy>( u );
+    auto & vol= get<variables::index::volume>( u );
 
     // recompute solution quantities
-    d = mass;
-    v = mom / mass;
-    auto et = ener / mass;
-    ie = et - 0.5 * abs( v );
+    d = 1 / svol;
+    ie = et - 0.5 * abs( vel );
+    vol  = m * svol;
 
     assert( d > 0  );
     assert( ie > 0  );
 
+  }
+
+
+  //============================================================================
+  //! \brief return the volumetric rate of change from the residuals
+  //! \param [in]     du  The conservative change in state
+  //============================================================================
+  static auto volumetric_rate_of_change( const flux_data_t & dudt )
+  {
+    using math::get;
+    return get<equations::index::mass>( dudt );
   }
 
 };

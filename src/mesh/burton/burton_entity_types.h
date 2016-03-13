@@ -110,6 +110,17 @@ public:
     return c[mesh_entity_base_t<num_domains>::template id<0>()];
   } // coordinates
 
+  /*!
+    \brief Get the coordinates at a vertex from the state handle.
+    \return coordinates of vertex.
+    \remark this is the non const version
+   */
+  point_t & coordinates()
+  {
+    auto c = data_t::instance().dense_accessor<point_t, flecsi_internal>(
+      "coordinates");
+    return c[mesh_entity_base_t<num_domains>::template id<0>()];
+  } // coordinates
 
   //! is this a boundary
   bool is_boundary() const
@@ -427,9 +438,9 @@ class burton_wedge_t
     : public mesh_entity_t<2, burton_mesh_traits_t::num_domains>
 {
 public:
-  burton_wedge_t(){}
 
-  burton_wedge_t(const mesh_topology_base_t & mesh){}
+  burton_wedge_t(const mesh_topology_base_t & mesh) : mesh_(mesh)
+  {}
 
   //! Physics vector type.
   using vector_t = burton_mesh_traits_t::vector_t;
@@ -486,19 +497,22 @@ public:
     // Multiply normal by the sign of the dot between the normal and the vector
     // from c to e to get "outward facing" normal.
     auto e = edge()->midpoint();
-    auto v = vertex()->coordinates();
     auto c = cell()->centroid();
-    auto nrml = geom::normal(e,v);
+    auto nrml = 0.5 * edge()->normal();
     auto delta = e-c;
     auto dot = dot_product(nrml, delta);
     return nrml * math::sgn(dot);
   }
 
  private:
+
   burton_cell_t * cell_;
   burton_edge_t * edge_;
   burton_vertex_t * vertex_;
   burton_corner_t * corner_;
+
+  //! a reference to the mesh topology
+  const mesh_topology_base_t & mesh_;
 
 }; // struct burton_wedge_t
 
@@ -552,9 +566,9 @@ public:
 #if 0
   // FIXME: having to set/get the edges 1 and 2 is hacky. Need to review
   // this with Bergen to come up with a cleaner solution.
-  using entity_range_t = entity_range_t<1,1>;
+  using entity_set_t = entity_set_t<1,1>;
   //! Set the edges that a corner has.
-  void set_edges(entity_range_t edges) { edges_ = edges; }
+  void set_edges(entity_set_t edges) { edges_ = edges; }
 #endif
 
   //! Set the vertex that a corner has.
@@ -571,7 +585,7 @@ public:
 
 #if 0
   //! Get edges that a corner has.
-  const entity_range_t & edges() const { return edges_; }
+  const entity_set_t & edges() const { return edges_; }
 #endif
 
   //! Get the vertex that a corner has.
@@ -616,7 +630,7 @@ private:
   burton_edge_t * edge1_;
   burton_edge_t * edge2_;
 #if 0
-  entity_range_t  edges_;
+  entity_set_t  edges_;
 #endif
   burton_vertex_t * vertex_;
 

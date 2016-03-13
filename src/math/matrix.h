@@ -72,12 +72,10 @@ auto outer_product(const C<T, D> &a, const C<T, D> &b)
 //! \param[in] mat  The matrix to invert
 //! \return The result of the operation
 ////////////////////////////////////////////////////////////////////////////////
-template < 
-  typename T, std::size_t D
->
-auto inverse( const matrix<T, D, D> & mat )
+template < typename T >
+auto inverse( const matrix<T, 2, 2> & mat )
 {
-  matrix<T,D,D> tmp;
+  matrix<T,2,2> tmp;
   auto a = mat(0,0);
   auto b = mat(0,1);
   auto c = mat(1,0);
@@ -89,6 +87,46 @@ auto inverse( const matrix<T, D, D> & mat )
   auto denom = a*d - b*c;
   assert( denom != T() );
   tmp /= denom;
+  return tmp;
+}
+
+template < typename T >
+auto inverse( const matrix<T, 3, 3> & mat )
+{
+  matrix<T,3,3> tmp;
+
+  auto a11 = mat(0,0);
+  auto a12 = mat(0,1);
+  auto a13 = mat(0,2);
+
+  auto a21 = mat(1,0);
+  auto a22 = mat(1,1);
+  auto a23 = mat(1,2);
+
+  auto a31 = mat(2,0);
+  auto a32 = mat(2,1);
+  auto a33 = mat(2,2);
+
+  tmp(0,0) = a22*a33 - a32*a23;
+  tmp(0,1) = a13*a32 - a33*a12;
+  tmp(0,2) = a12*a23 - a22*a13;
+
+  tmp(1,0) = a23*a31 - a33*a21;
+  tmp(1,1) = a11*a33 - a31*a13;
+  tmp(1,2) = a13*a21 - a23*a11;
+
+  tmp(2,0) = a21*a32 - a31*a22;
+  tmp(2,1) = a12*a31 - a32*a11;
+  tmp(2,2) = a11*a22 - a21*a12;
+
+  auto denom = 
+    a11*a22*a33 + a12*a23*a31 + a13*a21*a32 - 
+    a31*a22*a13 - a32*a23*a11 - a33*a21*a12;
+
+  assert( denom != T() );
+  
+  tmp /= denom;
+  
   return tmp;
 }
 
