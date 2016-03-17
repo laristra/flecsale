@@ -138,15 +138,37 @@ auto inverse( const matrix<T, 3, 3> & mat )
 //! \param[in] vec  The vector
 ////////////////////////////////////////////////////////////////////////////////
 template < 
-  typename T, std::size_t D,
+  typename T, std::size_t D1, std::size_t D2,
   template<typename, std::size_t> typename C
 >
-void ax_plus_y( const matrix<T, D, D> & A, const C<T,D> & x, C<T,D> & y )
+void ax_plus_y( const matrix<T, D1, D2> & A, const C<T,D2> & x, C<T,D1> & y )
 {
-  for ( auto i = 0; i<D; i++ ) {
-    for ( auto j = 0; j<D; j++ )
+  for ( auto i = 0; i<D1; i++ ) {
+    for ( auto j = 0; j<D2; j++ )
       y[i] += A(i,j) * x[j];
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the product of a matrix times a vector
+//! \tparam T  The base value type.
+//! \tparam D  The matrix/array dimension.
+//! \param[in] mat  The matrix
+//! \param[in] vec  The vector
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename T, std::size_t D1, std::size_t D2,
+  template<typename, std::size_t> typename C
+>
+auto operator*( const matrix<T, D1, D2> & lhs, const C<T,D2> & rhs )
+{
+  C<T,D1> tmp;
+  for ( auto i = 0; i<D1; i++ ) {
+    tmp[i] = 0;
+    for ( auto j = 0; j<D2; j++ )
+      tmp[i] += lhs(i,j) * rhs[j];
+  }
+  return tmp;
 }
 
 

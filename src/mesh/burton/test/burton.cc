@@ -169,10 +169,10 @@ TEST_F(Burton, geometry) {
         << " with midpoint " << e->midpoint() << endl;
 
       CINCH_CAPTURE() << "          ++++ side_facet_normal: "
-        << w->side_facet_normal() << endl;
+        << w->facet_normal_left() << endl;
 
       CINCH_CAPTURE() << "          ++++ cell_facet_normal: "
-        << w->cell_facet_normal() << endl;
+        << w->facet_normal_right() << endl;
 
     } // for
 

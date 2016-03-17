@@ -15,6 +15,8 @@
 //! user includes
 #include "flecsi/mesh/mesh_topology.h"
 
+#include "ale/geom/area.h"
+#include "ale/geom/centroid.h"
 #include "ale/math/math.h"
 #include "ale/mesh/burton/burton_types.h"
 
@@ -67,37 +69,74 @@ vector_t burton_edge_t::normal() const
   } // burton_edge_t::normal
 
 /*----------------------------------------------------------------------------*
+ * burton_cell_t
+ *----------------------------------------------------------------------------*/
+real_t burton_cell_t::min_length() const
+  {
+    auto & mesh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh_);
+    auto vs = mesh.entities<0,0>(this);
+
+    // get one of the edges as a reference
+    auto edges = mesh.entities<1,0>(this);
+    auto min_length = edges.front()->length();
+ 
+    for ( auto vi : vs ) {
+      auto pi = vi->coordinates();
+      for ( auto vj : vs ) {
+        if ( vi == vj ) continue;
+        auto pj = vj->coordinates();
+        auto delta = pi - pj;
+        min_length = std::min( abs(delta), min_length );
+      }
+    }
+    return min_length;
+  }
+
+
+/*----------------------------------------------------------------------------*
  * burton_quadrilateral_cell_t
  *----------------------------------------------------------------------------*/
 
 point_t burton_quadrilateral_cell_t::centroid() const
   {
-    auto & mesh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh_);
-    auto vs = mesh.entities<0,0>(this);
+    auto & msh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh());
+    auto vs = msh.entities<0,0>(this);
 
-    auto tmp = vs[0]->coordinates();
-    tmp += vs[1]->coordinates();
-    tmp += vs[2]->coordinates();
-    tmp += vs[3]->coordinates();
-    tmp /= 4;
-
-    return tmp;
+    return geom::centroid( vs[0]->coordinates(), vs[1]->coordinates(), 
+                           vs[2]->coordinates(), vs[3]->coordinates() );
   } // burton_quadrilateral_cell_t::centroid
 
 real_t burton_quadrilateral_cell_t::area() const
   {
-    auto & mesh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh_);
-    auto vs = mesh.entities<0,0>(this);
+    auto & msh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh());
+    auto vs = msh.entities<0,0>(this);
 
-    auto p = vs[0]->coordinates() - vs[2]->coordinates();
-    auto q = vs[1]->coordinates() - vs[3]->coordinates();
-    
-    using math::cross_product;
-
-    auto det = cross_product( p, q );
-
-    return 0.5 * std::abs( det );
+    return geom::area( vs[0]->coordinates(), vs[1]->coordinates(), 
+                       vs[2]->coordinates(), vs[3]->coordinates() );
   } // burton_quadrilateral_cell_t::area
+    
+
+real_t burton_quadrilateral_cell_t::min_length() const
+  {
+    auto & msh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh());
+
+    // check the edges first
+    auto edges = msh.entities<1,0>(this);
+    auto eit = edges.begin();
+    auto min_length = eit->length();
+    std::for_each( ++eit, edges.end(), [&](auto && e) 
+    { 
+      min_length = std::min( e->length(), min_length );
+    });
+
+    // now check the diagonal
+    auto vs = msh.entities<0,0>(this);
+    min_length = std::min( abs( vs[0]->coordinates() - vs[2]->coordinates() ), min_length );
+    min_length = std::min( abs( vs[1]->coordinates() - vs[3]->coordinates() ), min_length );
+
+    return min_length;
+  }
+
 
 } // namespace mesh
 } // namespace ale

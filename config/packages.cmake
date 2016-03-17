@@ -56,6 +56,7 @@ set( TPL_INSTALL_PREFIX /path/to/third/party/install
                         "path to thirdparty install" )
 if (TPL_INSTALL_PREFIX)
   set(EXODUS_ROOT  ${TPL_INSTALL_PREFIX})
+  set(TECIO_ROOT  ${TPL_INSTALL_PREFIX})
 endif()
 
 
@@ -126,6 +127,26 @@ if(ENABLE_IO)
                                -ldl )
      include_directories( ${EXODUS_INCLUDE_DIR} )
      add_definitions( -DHAVE_EXODUS )
+  endif()
+
+  find_library ( TECIO_LIBRARY 
+                 NAMES tecio 
+                 PATHS ${TECIO_ROOT} 
+                 PATH_SUFFIXES lib
+                 NO_DEFAULT_PATH )
+
+  find_path    ( TECIO_INCLUDE_DIR 
+                 NAMES TECIO.h
+                 PATHS ${TECIO_ROOT} 
+                 PATH_SUFFIXES include
+                 NO_DEFAULT_PATH )
+
+  if (TECIO_LIBRARY AND TECIO_INCLUDE_DIR) 
+     message(STATUS "Found TECIO: ${TECIO_ROOT}")
+     set( TECIO_FOUND TRUE )
+     list( APPEND IO_LIBRARIES ${TECIO_LIBRARY} )
+     include_directories( ${TECIO_INCLUDE_DIR} )
+     add_definitions( -DHAVE_TECIO )
   endif()
 
   if ( NOT IO_LIBRARIES )

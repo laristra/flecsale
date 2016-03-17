@@ -19,7 +19,12 @@
 #pragma once
 
 //! system includes
+#include<cmath>
 #include<vector>
+
+//! user includes
+#include "ale/math/constants.h"
+#include "ale/math/matrix.h"
 
 namespace ale {
 namespace mesh {
@@ -112,6 +117,47 @@ T box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
 
   return box<T>( num_cells_x, num_cells_y, x0, y0, x1, y1 );
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Create a box mesh
+//!
+//! \param [in] num_cells_x,num_cells_y  the number of cells in the x and y dir
+//! \param [in] min_x,min_y              the min coordinate in the x and y dir
+//! \param [in] max_x,max_y              the max coordinate in the x and y dir
+//! \return a new mesh object
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+void rotate( T & mesh, std::size_t degrees ) 
+{
+  
+  // get some alias
+  using real_t = typename T::real_t;
+
+  // the number of dimensions
+  constexpr auto dims = T::num_dimensions();
+
+  // compute some angles
+  auto radians = degrees * math::pi / 180;
+  auto cos = std::cos( radians );
+  auto sin = std::sin( radians );
+
+  // create a rotation matrix
+  math::matrix< real_t, dims, dims > rot;
+
+  for ( auto i=0; i<dims; i++ ) rot(i, i) = 1;
+
+  rot(0, 0) = cos;
+  rot(0, 1) = -sin;
+  rot(1, 0) = sin;
+  rot(1, 1) = cos;
+
+  // transform the coords
+  for ( auto v : mesh.vertices() )
+    v->coordinates() = rot * v->coordinates();
+
+}
+
 
 } // namespace mesh
 } // namespace ale

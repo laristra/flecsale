@@ -91,7 +91,7 @@ flecsi::io_exodus_t<burton_mesh_t>::read( const std::string &name,
   assert(status == 0);
 
   // verify mesh dimension
-  assert(m.dimension() == exopar.num_dim);
+  assert(m.num_dimensions() == exopar.num_dim);
   auto num_nodes = exopar.num_nodes;
   auto num_elem = exopar.num_elem;
   auto num_elem_blk = exopar.num_elem_blk;
@@ -227,7 +227,7 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   assert(exoid >= 0);
 
   // get the general statistics
-  auto d = m.dimension();
+  auto num_dims = m.num_dimensions();
   auto num_nodes = m.num_vertices();
   auto num_elem = m.num_cells();
   auto num_elem_blk = 1;
@@ -235,7 +235,7 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   auto num_side_sets = 0;
 
   // initialize the file.
-  auto status = ex_put_init(exoid, "Exodus II output from flecsi.", d,
+  auto status = ex_put_init(exoid, "Exodus II output from flecsi.", num_dims,
     num_nodes, num_elem, num_elem_blk, num_node_sets, num_side_sets);
   assert(status == 0);
 
@@ -284,6 +284,10 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   // write field data
   //============================================================================
 
+  // get the iteration number
+  // - first step starts at 1
+  auto time_step = 1;
+
   //----------------------------------------------------------------------------
   // nodal field data
   //----------------------------------------------------------------------------
@@ -297,7 +301,7 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   num_nf += ispav.size();
   // real vectors persistent at vertices
   auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
-  num_nf += m.dimension()*rvpav.size();
+  num_nf += num_dims*rvpav.size();
 
   // variable extension for vectors
   std::string var_ext[3];
@@ -320,7 +324,7 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   } // for
   for(auto vf: rvpav) {
     auto label = vf.label();
-    for(int d=0; d < m.dimension(); ++d) {
+    for(int d=0; d < num_dims; ++d) {
       auto dim_label = label + var_ext[d];
       status = ex_put_var_name(exoid, "n", inum++, dim_label.c_str());
     } // for
@@ -333,19 +337,19 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   vector<ex_real_t> nf(num_nodes);
   for(auto sf: rspav) {
     for(auto v: m.vertices()) nf[v.id()] = sf[v];
-    status = ex_put_nodal_var(exoid, /* timestep */ 1, inum++, num_nodes, nf.data());
+    status = ex_put_nodal_var(exoid, time_step, inum++, num_nodes, nf.data());
     assert(status == 0);
   } // for
   for(auto sf: ispav) {
     // cast int fields to real_t
     for(auto v: m.vertices()) nf[v.id()] = (real_t)sf[v];
-    status = ex_put_nodal_var(exoid, /* timestep */ 1, inum++, num_nodes, nf.data());
+    status = ex_put_nodal_var(exoid, time_step, inum++, num_nodes, nf.data());
     assert(status == 0);
   } // for
   for(auto vf: rvpav) {
-    for(int d=0; d < m.dimension(); ++d) {
+    for(int d=0; d < num_dims; ++d) {
       for(auto v: m.vertices()) nf[v.id()] = vf[v][d];
-      status = ex_put_nodal_var(exoid, /* timestep */ 1, inum++, num_nodes, nf.data());
+      status = ex_put_nodal_var(exoid, time_step, inum++, num_nodes, nf.data());
       assert(status == 0);
     } // for
   } // for
@@ -365,7 +369,7 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   num_ef += ispac.size();
   // real vectors persistent at cells
   auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
-  num_ef += m.dimension()*rvpac.size();
+  num_ef += num_dims*rvpac.size();
 
 
   // put the number of element fields
@@ -386,7 +390,7 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   } // for
   for(auto vf: rvpac) {
     auto label = vf.label();
-    for(int d=0; d < m.dimension(); ++d) {
+    for(int d=0; d < num_dims; ++d) {
       auto dim_label = label + var_ext[d];
       status = ex_put_var_name(exoid, "e", inum++, dim_label.c_str());
     } // for
@@ -398,19 +402,19 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   vector<ex_real_t> ef(num_elem);
   for(auto sf: rspac) {
     for(auto c: m.cells()) ef[c.id()] = sf[c];
-    status = ex_put_elem_var(exoid, /* timestep */ 1, inum++, /* blkid */ 0, num_elem, ef.data());
+    status = ex_put_elem_var(exoid, time_step, inum++, /* blkid */ 0, num_elem, ef.data());
     assert(status == 0);
   } // for
   for(auto sf: ispac) {
     // cast int fields to real_t
     for(auto c: m.cells()) ef[c.id()] = (real_t)sf[c];
-    status = ex_put_elem_var(exoid, /* timestep */ 1, inum++, /* blkid */ 0, num_elem, ef.data());
+    status = ex_put_elem_var(exoid, time_step, inum++, /* blkid */ 0, num_elem, ef.data());
     assert(status == 0);
   } // for
   for(auto vf: rvpac) {
-    for(int d=0; d < m.dimension(); ++d) {
+    for(int d=0; d < num_dims; ++d) {
       for(auto c: m.cells()) ef[c.id()] = vf[c][d];
-      status = ex_put_elem_var(exoid, /* timestep */ 1, inum++, /* blkid */ 0, num_elem, ef.data());
+      status = ex_put_elem_var(exoid, time_step, inum++, /* blkid */ 0, num_elem, ef.data());
       assert(status == 0);
     } // for
   } // for
@@ -421,7 +425,7 @@ flecsi::io_exodus_t<burton_mesh_t>::write( const std::string &name,
   //============================================================================
   // set the time
   ex_real_t soln_time = m.get_time();
-  status = ex_put_time(exoid, /* timestep */ 1, &soln_time );
+  status = ex_put_time(exoid, time_step, &soln_time );
   assert(status == 0);
 
   // close

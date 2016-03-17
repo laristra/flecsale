@@ -66,6 +66,13 @@ using is_pointer_v = typename is_pointer<T>::value;
 template< class T, class U >
 constexpr bool is_same_v = is_same<T, U>::value;
 
+
+//==============================================================================
+//! \brief a is_arithmetic helper type
+//==============================================================================
+template< class T >
+constexpr bool is_arithmetic_v = is_arithmetic<T>::value;
+
 #endif
 
 } // namespace

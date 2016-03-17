@@ -19,8 +19,9 @@
 
 //! user includes
 #include "ale/math/tuple.h"
-#include <ale/math/math.h>
+#include "ale/math/math.h"
 #include "ale/math/vector.h"
+#include "ale/utils/const_string.h"
 
 namespace ale {
 namespace eqns {
@@ -49,6 +50,9 @@ public:
 
   //! the number of dimensions
   static constexpr size_t dimensions = N;
+
+  //! a minimum sound speed
+  static constexpr real_t min_sound_speed = 1.e-6;
 
   //============================================================================
   // \brief The equations struct
@@ -105,6 +109,18 @@ public:
     //! \brief the number of variables
     static constexpr size_t number(void)
     {  return index::total; }
+
+    //! \brief the number of variables
+    static constexpr std::array< utils::const_string, number() > names = 
+      { 
+        utils::const_string{"volume"}, 
+        utils::const_string{"mass"},
+        utils::const_string{"velocity"}, 
+        utils::const_string{"pressure"}, 
+        utils::const_string{"internal_energy"}, 
+        utils::const_string{"temperature"}, 
+        utils::const_string{"sound_speed"}
+      };
     
   };
 
@@ -196,6 +212,11 @@ public:
     return density(u) * sound_speed(u);
   }
 
+  static auto impedance_multiplier( const state_data_t & u )
+  { 
+    return 2.4 / 2;
+  }
+
   //============================================================================
   //! \brief Compute the fastest moving eigenvalue
   //! \param [in]  u   The solution state
@@ -237,6 +258,7 @@ public:
     ie = eos.compute_internal_energy_dp( d, p );
     t  = eos.compute_temperature_de( d, ie );
     ss = eos.compute_sound_speed_de( d, ie );
+    ss = std::max( ss, min_sound_speed );
   }
 
 
@@ -266,6 +288,7 @@ public:
     p  = eos.compute_pressure_de( d, ie );
     t  = eos.compute_temperature_de( d, ie );
     ss = eos.compute_sound_speed_de( d, ie );
+    ss = std::max( ss, min_sound_speed );
   }
 
 
@@ -281,27 +304,45 @@ public:
 
     // get the conserved quatities
     auto   m   = mass( u );
-    auto   svol= 1 / density( u );
     auto & vel = get<variables::index::velocity>( u );
     auto   et  = total_energy( u );
 
     // access independant or derived quantities 
-    svol += get<equations::index::mass    >( du ) / m;
     vel  += get<equations::index::momentum>( du ) / m;
     et   += get<equations::index::energy  >( du ) / m;
 
     // get aliases for clarity
-    auto & d  = get<variables::index::density>( u );
     auto & ie = get<variables::index::internal_energy>( u );
-    auto & vol= get<variables::index::volume>( u );
 
     // recompute solution quantities
-    d = 1 / svol;
-    ie = et - 0.5 * abs( vel );
-    vol  = m * svol;
+    ie = std::max( et - 0.5 * abs( vel ), 1.e-16 );
+
+    assert( ie > 0  );
+
+  }
+
+
+  //============================================================================
+  //! \brief apply an update from conservative fluxes
+  //! \param [in,out] u   The state to update
+  //! \param [in]     du  The conservative change in state
+  //============================================================================
+  static void update_volume( state_ref_t & u, real_t new_vol )
+  {
+    using math::get;
+
+    // get the conserved quatities
+    auto   m   = mass( u );
+
+    // get aliases for clarity
+    auto & vol = get<variables::index::volume>( u );
+    auto & d = get<variables::index::density>( u );
+
+    // recompute solution quantities
+    vol = new_vol;
+    d = m / vol;
 
     assert( d > 0  );
-    assert( ie > 0  );
 
   }
 
@@ -318,6 +359,14 @@ public:
 
 };
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+// a minimum sound speed
+// note: this has to be here
+////////////////////////////////////////////////////////////////////////////////
+template<typename T, size_t N>
+constexpr T lagrange_eqns_t<T,N>::min_sound_speed;
 
 } // namespace
 } // namespace

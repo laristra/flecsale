@@ -47,7 +47,7 @@ using vector_t = mesh_t::vector_t;
 
 using eos_t = eos::ideal_gas_t<real_t>;
 
-using eqns_t = eqns::euler_eqns_t<real_t, mesh_t::dimension()>;
+using eqns_t = eqns::euler_eqns_t<real_t, mesh_t::num_dimensions()>;
 using flux_data_t = eqns_t::flux_data_t;
 
 // explicitly use some other stuff

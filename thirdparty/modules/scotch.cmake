@@ -22,12 +22,14 @@ else ()
         set(SCOTCH_MAKE Makefile.inc.i686_pc_linux2)
         set(SCOTCH_CFLAGS "-DCOMMON_FILE_COMPRESS_GZ -DCOMMON_PTHREAD -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_RENAME -DSCOTCH_PTHREAD -Drestrict=__restrict")
     endif ()
-    set(SCOTCH_LDFLAGS "-lz -lm -lrt -lpthread")
+    set(SCOTCH_LDFLAGS "${ZLIB_LIBRARIES} -lm -lrt -lpthread")
 endif ()
 
 tpl_dowload_path( URL ${SCOTCH_URL} ${TPL_DOWNLOAD_PATH} )
 
 ExternalProject_Add( ${SCOTCH_NAME}
+  DEPENDS ${ZLIB_NAME}
+
  URL ${URL}/${SCOTCH_TGZ}
  URL_MD5 ${SCOTCH_MD5}
  UPDATE_COMMAND ""

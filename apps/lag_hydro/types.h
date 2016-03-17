@@ -45,11 +45,11 @@ using mesh_t = mesh::burton_mesh_t;
 using size_t = mesh_t::size_t;
 using real_t = mesh_t::real_t;
 using vector_t = mesh_t::vector_t;
-using matrix_t = math::matrix< real_t, mesh_t::dimension(), mesh_t::dimension() >;
+using matrix_t = math::matrix< real_t, mesh_t::num_dimensions(), mesh_t::num_dimensions() >;
 
 using eos_t = eos::ideal_gas_t<real_t>;
 
-using eqns_t = eqns::lagrange_eqns_t<real_t, mesh_t::dimension()>;
+using eqns_t = eqns::lagrange_eqns_t<real_t, mesh_t::num_dimensions()>;
 using flux_data_t = eqns_t::flux_data_t;
 
 // explicitly use some other stuff
@@ -77,14 +77,14 @@ public:
   //! \brief main constructor
   //! \param [in]  mesh  the mesh object
   constexpr cell_state_accessor( M & mesh ) :
-    m( access_state( mesh, "cell:mass",              real_t ) ),
-    V( access_state( mesh, "cell:volume",            real_t ) ),
-    p( access_state( mesh, "cell:pressure",          real_t ) ),
-    v( access_state( mesh, "cell:velocity",        vector_t ) ),
-    d( access_state( mesh, "cell:density",           real_t ) ),
-    e( access_state( mesh, "cell:internal_energy",   real_t ) ),
-    t( access_state( mesh, "cell:temperature",       real_t ) ),
-    a( access_state( mesh, "cell:sound_speed",       real_t ) )
+    m( access_state( mesh, "cell_mass",              real_t ) ),
+    V( access_state( mesh, "cell_volume",            real_t ) ),
+    p( access_state( mesh, "cell_pressure",          real_t ) ),
+    v( access_state( mesh, "cell_velocity",        vector_t ) ),
+    d( access_state( mesh, "cell_density",           real_t ) ),
+    e( access_state( mesh, "cell_internal_energy",   real_t ) ),
+    t( access_state( mesh, "cell_temperature",       real_t ) ),
+    a( access_state( mesh, "cell_sound_speed",       real_t ) )
   {}
 
   //! \brief main accessor
@@ -139,6 +139,18 @@ private:
   accessor_t<real_t>   t;
   accessor_t<real_t>   a;
        
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief A class to make setting the cfl easy
+////////////////////////////////////////////////////////////////////////////////
+struct time_constants_t {
+
+  real_t accoustic = 1.0;
+  real_t volume = 1.0;
+  real_t growth = 0.0; 
+
 };
 
 } // namespace hydro

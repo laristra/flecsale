@@ -17,6 +17,8 @@ set(mesh_HEADERS
   burton/burton_entity_types.h
   burton/burton.h
   burton/burton_io_exodus.h
+  burton/burton_io_tecplot.h
+  burton/burton_io_vtk.h
   burton/burton_mesh.h
   burton/burton_mesh_traits.h
   burton/burton_types.h

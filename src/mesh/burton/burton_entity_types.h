@@ -210,16 +210,24 @@ struct burton_cell_t
   using real_t = burton_mesh_traits_t::real_t;
 
   //! Constructor
-  burton_cell_t() = default;
-  burton_cell_t(const mesh_topology_base_t &) {};
+  burton_cell_t(const mesh_topology_base_t & mesh) : mesh_(mesh) 
+  {};
   //! Destructor
   virtual ~burton_cell_t() {}
+
+  //! get the mesh
+  const mesh_topology_base_t & mesh() const
+  { return mesh_; }
 
   //! the centroid
   virtual point_t centroid() const {}; // = 0; FIXME
 
   //! the area of the cell
   virtual real_t area() const {}; // = 0; FIXME
+
+  //! the minimum length in the cell
+  virtual real_t min_length() const;
+
 
   /*!
     \brief create_entities is a function that creates entities
@@ -253,6 +261,12 @@ struct burton_cell_t
   virtual std::vector<id_t> create_bound_entities(size_t from_domain,
       size_t to_domain, size_t dim, id_t ** ent_ids, id_t * c){};
 
+
+private:
+
+  //! a reference to the mesh topology
+  const mesh_topology_base_t & mesh_;
+
 }; // class burton_cell_t
 
 /*----------------------------------------------------------------------------*
@@ -268,15 +282,17 @@ struct burton_cell_t
 class burton_quadrilateral_cell_t : public burton_cell_t
 {
 public:
-  burton_quadrilateral_cell_t(mesh_topology_base_t & mesh) : mesh_(mesh)
-  {
-  }
+  burton_quadrilateral_cell_t(mesh_topology_base_t & mesh) : burton_cell_t(mesh)
+  { }
 
   //! the centroid
   point_t centroid() const override;
 
   //! the area of the cell
   real_t area() const override;
+
+  //! the minimum length in the cell
+  real_t min_length() const override;
 
   /*!
     \brief create_entities function for burton_quadrilateral_cell_t.
@@ -349,6 +365,7 @@ public:
 
     switch (dim) {
       // Corners
+      // The right edge is always first
       case 1:
         // corner 0
         c[0] = ent_ids[0][0]; // vertex 0
@@ -357,18 +374,18 @@ public:
 
         // corner 1
         c[3] = ent_ids[0][1]; // vertex 1
-        c[4] = ent_ids[1][0]; // edge 0, abuts vertex 1
-        c[5] = ent_ids[1][1]; // edge 1, abuts vertex 1
+        c[4] = ent_ids[1][1]; // edge 1, abuts vertex 1
+        c[5] = ent_ids[1][0]; // edge 0, abuts vertex 1
 
         // corner 2
         c[6] = ent_ids[0][2]; // vertex 2
-        c[7] = ent_ids[1][1]; // edge 1, abuts vertex 2
-        c[8] = ent_ids[1][2]; // edge 2, abuts vertex 2
+        c[7] = ent_ids[1][2]; // edge 2, abuts vertex 2
+        c[8] = ent_ids[1][1]; // edge 1, abuts vertex 2
 
         // corner 3
         c[9] = ent_ids[0][3]; // vertex 3
-        c[10] = ent_ids[1][2]; // edge 2, abuts vertex 3
-        c[11] = ent_ids[1][3]; // edge 3, abuts vertex 3
+        c[10] = ent_ids[1][3]; // edge 3, abuts vertex 3
+        c[11] = ent_ids[1][2]; // edge 2, abuts vertex 3
 
         return {3, 3, 3, 3};
 
@@ -414,12 +431,6 @@ public:
     } // switch
   } // create_bound_entities
 
-
-
-private:
-
-  //! a reference to the mesh topology
-  const mesh_topology_base_t & mesh_;
 
 }; // class burton_quadrilateral_cell_t
 
@@ -502,6 +513,25 @@ public:
     auto delta = e-c;
     auto dot = dot_product(nrml, delta);
     return nrml * math::sgn(dot);
+  }
+
+
+
+  /*!
+    \brief Get the cell facet normal for the wedge.
+    \return Cell facet normal vector.
+   */
+  vector_t facet_normal_left() const
+  {
+    auto e = edge()->midpoint();
+    auto v = vertex()->coordinates();
+    return { v[1] - e[1], e[0] - v[0] };
+  }
+  vector_t facet_normal_right() const
+  {
+    auto e = edge()->midpoint();
+    auto v = vertex()->coordinates();
+    return { e[1] - v[1], v[0] - e[0] };
   }
 
  private:

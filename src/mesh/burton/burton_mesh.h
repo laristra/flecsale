@@ -345,7 +345,7 @@ public:
       of the entities in the burton mesh, e.g., 3 for a three-dimensional
       burton mesh.
    */
-  static constexpr auto dimension()
+  static constexpr auto num_dimensions()
   {
     return burton_mesh_traits_t::dimension;
   } // dimension
@@ -370,6 +370,36 @@ public:
   auto set_time(real_t soln_time)
   {
     access_global_state_<real_t, flecsi_internal>("time") = soln_time;
+  }
+
+
+  /*!
+    \brief Set the time associated with the mesh
+   */
+  auto increment_time(real_t delta_time)
+  {
+    auto soln_time = access_global_state_<real_t, flecsi_internal>("time");
+    (*soln_time) += delta_time;
+    return *soln_time;
+  }
+
+  /*!
+    \brief Return the time associated with the mesh
+   */
+  auto get_time_step_counter()
+  {
+    auto step = access_global_state_<size_t, flecsi_internal>("time_step");
+    return *step;
+  }
+
+  /*!
+    \brief Set the time associated with the mesh
+   */
+  auto increment_time_step_counter(size_t delta = 1)
+  {
+    auto step = access_global_state_<size_t, flecsi_internal>("time_step");
+    (*step) += delta;
+    return *step;
   }
 
   /*--------------------------------------------------------------------------*
@@ -420,7 +450,7 @@ public:
     \return Vertices for entity \e e in domain \e M.
    */
   template <size_t M, class E>
-  auto vertices(domain_entity<M, E> & e)
+  auto vertices(const domain_entity<M, E> & e)
   {
     return mesh_.entities<0, M, 0>(e.entity());
   }
@@ -486,7 +516,7 @@ public:
     \return Edges for entity \e e in domain \e M.
    */
   template <size_t M, class E>
-  auto edges(domain_entity<M, E> & e)
+  auto edges(const domain_entity<M, E> & e)
   {
     return mesh_.entities<1, M, 0>(e.entity());
   } // edges
@@ -547,7 +577,7 @@ public:
    */
   size_t num_cells() const
   {
-    return mesh_.num_entities<dimension(), 0>();
+    return mesh_.num_entities<num_dimensions(), 0>();
   } // num_cells
 
   /*!
@@ -558,7 +588,7 @@ public:
    */
   auto cells() const
   {
-    return mesh_.entities<dimension(), 0>();
+    return mesh_.entities<num_dimensions(), 0>();
   } // cells
 
   /*!
@@ -569,7 +599,7 @@ public:
    */
   auto cells()
   {
-    return mesh_.entities<dimension(), 0>();
+    return mesh_.entities<num_dimensions(), 0>();
   } // cells
 
   /*!
@@ -584,7 +614,7 @@ public:
   template <class E>
   auto cells(E * e)
   {
-    return mesh_.entities<dimension(), 0>(e);
+    return mesh_.entities<num_dimensions(), 0>(e);
   } // cells
 
   /*!
@@ -598,9 +628,9 @@ public:
     \return Cells for entity \e e in domain \e M.
    */
   template <size_t M, class E>
-  auto cells(domain_entity<M, E> & e)
+  auto cells(const domain_entity<M, E> & e)
   {
-    return mesh_.entities<dimension(), M, 0>(e);
+    return mesh_.entities<num_dimensions(), M, 0>(e.entity());
   } // cells
 
   /*!
@@ -610,7 +640,7 @@ public:
    */
   auto cell_ids()
   {
-    return mesh_.entity_ids<dimension(), 0>();
+    return mesh_.entity_ids<num_dimensions(), 0>();
   } // cell_ids
 
   /*!
@@ -625,7 +655,7 @@ public:
   template <class E>
   auto cell_ids(E * e)
   {
-    return mesh_.entity_ids<dimension(), 0>(e);
+    return mesh_.entity_ids<num_dimensions(), 0>(e);
   } // cell_ids
 
   /*--------------------------------------------------------------------------*
@@ -639,7 +669,7 @@ public:
    */
   size_t num_wedges() const
   {
-    return mesh_.num_entities<dimension(), 1>();
+    return mesh_.num_entities<num_dimensions(), 1>();
   } // num_wedges
 
   /*!
@@ -650,7 +680,7 @@ public:
    */
   auto wedges()
   {
-    return mesh_.entities<dimension(), 1>();
+    return mesh_.entities<num_dimensions(), 1>();
   } // wedges
 
   /*!
@@ -665,7 +695,7 @@ public:
   template <class E>
   auto wedges(E * e)
   {
-    return mesh_.entities<dimension(), 1>(e);
+    return mesh_.entities<num_dimensions(), 1>(e);
   } // wedges
 
   /*!
@@ -680,7 +710,7 @@ public:
    */
   template<size_t M, class E>
   auto wedges(domain_entity<M, E> & e) {
-    return mesh_.entities<dimension(), M, 1>(e.entity());
+    return mesh_.entities<num_dimensions(), M, 1>(e.entity());
   }
 
   /*!
@@ -690,7 +720,7 @@ public:
    */
   auto wedge_ids()
   {
-    return mesh_.entity_ids<dimension(), 1>();
+    return mesh_.entity_ids<num_dimensions(), 1>();
   } // wedge_ids
 
   /*!
@@ -706,7 +736,7 @@ public:
   template <class E>
   auto wedge_ids(E * e)
   {
-    return mesh_.entity_ids<dimension(), 1>(e);
+    return mesh_.entity_ids<num_dimensions(), 1>(e);
   } // wedge_ids
 
   /*--------------------------------------------------------------------------*
@@ -826,7 +856,7 @@ public:
   {
     // FIXME: Add element types
     cell_t * c = mesh_.make<quadrilateral_cell_t>(mesh_);
-    mesh_.add_entity<dimension(), 0>(c);
+    mesh_.add_entity<num_dimensions(), 0>(c);
 
     // FIXME: Need to make mesh interface more general
     mesh_.init_cell<0>(c, verts);
@@ -873,8 +903,25 @@ public:
     for (auto c : corners()) {
 
       auto cl = cells(c).front();
-      auto es = edges(c);
+      auto es = edges(c).to_vec();
       auto vt = vertices(c).front();
+
+#if 0
+      // find the common vertex and make sure
+      // its the first one
+      auto vs0 = vertices( es.front() ).to_vec(); // need this to modify the list
+      auto vs1 = vertices( es.back()  ).to_vec(); // need this to modify the list
+      if ( vs0.front() != vt )
+        std::swap( vs0.front(), vs0.back() );
+      if ( vs1.front() != vt )
+        std::swap( vs1.front(), vs1.back() );
+
+      // find the angular direction between the two edges
+      auto dir0 = vs0.back()->coordinates() - vs0.front()->coordinates();
+      auto dir1 = vs1.back()->coordinates() - vs1.front()->coordinates();
+      auto det = cross_product( dir0, dir1 );
+      std::cout << det << std::endl;
+#endif
 
       c->set_cell(cl);
       c->set_edge1(es.front());
@@ -888,13 +935,13 @@ public:
       w1->set_cell(cl);
       w1->set_edge(es.front());
       w1->set_vertex(vt);
-      mesh_.add_entity<dimension(), 1>( w1 );
+      mesh_.add_entity<num_dimensions(), 1>( w1 );
 
       auto w2 = new wedge_t( mesh_ );
       w2->set_cell(cl);
       w2->set_edge(es.back());
       w2->set_vertex(vt);
-      mesh_.add_entity<dimension(), 1>( w2 );
+      mesh_.add_entity<num_dimensions(), 1>( w2 );
 
       c->add_wedge(w1);
       c->add_wedge(w2);
@@ -907,6 +954,10 @@ public:
     auto soln_time = data_.register_global_state<real_t, flecsi_internal>(
       "time", attachment_site_t::global, persistent);
     soln_time = 0;
+
+    auto step = data_.register_global_state<real_t, flecsi_internal>(
+      "time_step", attachment_site_t::global, persistent);
+    *step = 0;
 
     // register some flags for identifying boundarys
     auto point_flags = data_.register_state<bitfield_t, flecsi_internal>(

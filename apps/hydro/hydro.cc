@@ -33,8 +33,8 @@
 using namespace apps::hydro;
 
 // right now cases are hard coded
-//#define SOD
-#define SHOCK_BOX
+#define SOD
+//#define SHOCK_BOX
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
@@ -180,9 +180,7 @@ int main(int argc, char** argv)
 
   // get the current time
   auto soln_time = mesh.get_time();
-
-  // a counter for time steps
-  auto time_cnt = 0;
+  auto time_cnt  = mesh.get_time_step_counter();
 
   do {   
 
@@ -193,7 +191,7 @@ int main(int argc, char** argv)
     auto time_step = access_global_state( mesh, "time_step", real_t );   
     time_step = std::min( *time_step, final_time - soln_time );       
 
-    cout << "step =  " << std::setw(4) << time_cnt++
+    cout << "step =  " << std::setw(4) << time_cnt+1
          << std::setprecision(2)
          << ", time = " << std::scientific << soln_time
          << ", dt = " << std::scientific << *time_step
@@ -209,8 +207,8 @@ int main(int argc, char** argv)
     apps::hydro::update_state_from_energy( mesh );
 
     // update time
-    soln_time += *time_step;
-    mesh.set_time( soln_time );
+    soln_time = mesh.increment_time( *time_step );
+    time_cnt = mesh.increment_time_step_counter();
 
     // now output the solution
     apps::hydro::output(mesh, prefix);

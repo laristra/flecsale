@@ -455,8 +455,9 @@ auto operator+( const array<T,N>& lhs,
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
 template <typename T, typename U, std::size_t N>
-auto operator+( const array<T,N>& lhs, 
-                const U& rhs )
+std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, array<T,N> >
+operator+( const array<T,N>& lhs, 
+           const U& rhs )
 {
   array<T,N> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(),
@@ -465,8 +466,9 @@ auto operator+( const array<T,N>& lhs,
 }
 
 template <typename T, typename U, std::size_t N>
-auto operator+( const U& lhs, 
-                const array<T,N>& rhs )
+std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, array<T,N> >
+operator+( const U& lhs, 
+           const array<T,N>& rhs )
 {
   array<T,N> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(),
@@ -497,8 +499,9 @@ auto operator-( const array<T,N>& lhs,
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
 template <typename T, typename U, std::size_t N>
-auto operator-( const array<T,N>& lhs, 
-                const U& rhs )
+std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, array<T,N> >
+operator-( const array<T,N>& lhs, 
+           const U& rhs )
 {
   array<T,N> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(),
@@ -507,8 +510,9 @@ auto operator-( const array<T,N>& lhs,
 }
 
 template <typename T, typename U, std::size_t N>
-auto operator-( const U& lhs, 
-                const array<T,N>& rhs )
+std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, array<T,N> >
+operator-( const U& lhs, 
+           const array<T,N>& rhs )
 {
   array<T,N> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(),
@@ -540,8 +544,9 @@ auto operator*( const array<T,N>& lhs,
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
 template <typename T, typename U, std::size_t N>
-auto operator*( const array<T,N>& lhs, 
-                const U& rhs )
+std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, array<T,N> >
+operator*( const array<T,N>& lhs, 
+           const U& rhs )
 {
   array<T,N> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(),
@@ -550,8 +555,9 @@ auto operator*( const array<T,N>& lhs,
 }
 
 template <typename T, typename U, std::size_t N>
-auto operator*( const U& lhs,
-                const array<T,N>& rhs )
+std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, array<T,N> >
+operator*( const U & lhs,
+           const array<T,N>& rhs )
 {
   array<T,N> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(),
@@ -584,8 +590,9 @@ auto operator/( const array<T,N>& lhs,
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
 template <typename T, typename U, std::size_t N>
-auto operator/( const array<T,N>& lhs, 
-                const U& rhs )
+std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, array<T,N> >
+operator/( const array<T,N>& lhs, 
+           const U& rhs )
 {
   array<T,N> tmp;
   std::transform( lhs.begin(), lhs.end(), tmp.begin(),
@@ -594,8 +601,9 @@ auto operator/( const array<T,N>& lhs,
 }
 
 template <typename T, typename U, std::size_t N>
-auto operator/( const U& lhs, 
-                const array<T,N>& rhs )
+std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, array<T,N> >
+operator/( const U& lhs, 
+           const array<T,N>& rhs )
 {
   array<T,N> tmp;
   std::transform( rhs.begin(), rhs.end(), tmp.begin(),
@@ -616,18 +624,6 @@ auto & operator<<(std::ostream& os, const array<T,N>& a)
   for ( auto i : a ) os << " " << i;
   os << " )";
   return os;
-}
-
-//! \brief Compute the dot product
-//! \tparam T  The array base value type.
-//! \tparam D  The array dimension.
-//! \param[in] a  The first vector
-//! \param[in] b  The other vector
-//! \return The result of the operation
-template <typename T>
-auto cross_product(const array<T, 2> &a, const array<T, 2> &b) 
-{
-  return a[0]*b[1] - a[1]*b[0];
 }
 
 } // namespace

@@ -34,7 +34,7 @@ constexpr
 std::enable_if_t< 
   (sizeof...(Types) > 2 && utils::are_type_t<T,Types...>::value && 
    std::decay_t<T>::size() == 2), 
-  std::decay_t<T> >
+   std::decay_t< decltype( std::declval<T>()[0] ) > >
 area( T && t, Types&&... args )
 { 
   // initialize area

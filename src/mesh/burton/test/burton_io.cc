@@ -29,24 +29,7 @@ using ale::mesh::read_mesh;
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(Burton, write_exo) {
   // create state data on b
-  // register
-  register_state(mesh_, "pressure", cells, real_t, persistent);
-  register_state(mesh_, "region", cells, int, persistent);
-  register_state(mesh_, "velocity", vertices, vector_t, persistent);
-  // access
-  auto p = access_state(mesh_, "pressure", real_t);
-  auto r = access_state(mesh_, "region", int);
-  auto velocity = access_state(mesh_, "velocity", vector_t);
-  // initialize
-  for(auto c: mesh_.cells()) {
-    p[c] = c.id();
-    r[c] = mesh_.num_cells() - c.id();
-  } // for
-  // vertices
-  for (auto v: mesh_.vertices()) {
-    velocity[v][0] = v.id();
-    velocity[v][1] = 2.0*v.id();
-  } // for
+  create_data();
 
   // write the mesh
   string name("mesh.exo");
@@ -91,6 +74,45 @@ TEST(BurtonIO, read_g) {
   name = "mesh_out.g";
   ASSERT_FALSE(write_mesh(name, m));
 } // TEST_F
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief test writing an exodus file
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(Burton, write_dat) {
+  // create state data on b
+  create_data();
+  // write the mesh
+  string name("mesh.dat");
+  ASSERT_FALSE(write_mesh(name, mesh_));
+} // TEST_F
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief test writing an exodus file
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(Burton, write_plt) {
+  // create state data on b
+  create_data();
+  // write the mesh
+  string name("mesh.plt");
+  ASSERT_FALSE(write_mesh(name, mesh_));
+} // TEST_F
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief test writing an exodus file
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(Burton, write_vtk) {
+  // create state data on b
+  create_data();
+  // write the mesh
+  string name("mesh.vtk");
+  ASSERT_FALSE(write_mesh(name, mesh_));
+} // TEST_F
+
 
 /*~------------------------------------------------------------------------~--*
  * Formatting options

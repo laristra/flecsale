@@ -47,6 +47,7 @@ cmake \
     -DENABLE_EXODUS=ON \
     -DENABLE_METIS=ON \
     -DENABLE_SCOTCH=ON \
+    -DENABLE_TECIO=ON \
     ${TPL_DIR}
 
 #------------------------------------------------------------------------------#

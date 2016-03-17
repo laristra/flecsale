@@ -26,3 +26,8 @@ set(METIS_MD5 "5465e67079419a69e0116de24fce58fe")
 set(SCOTCH_URL http://gforge.inria.fr/frs/download.php/file/34618/)
 set(SCOTCH_TGZ scotch_6.0.4.tar.gz)
 set(SCOTCH_MD5 "d58b825eb95e1db77efe8c6ff42d329f")
+
+set(TECIO_URL http://download.tecplot.com/tecio/2013/)
+set(TECIO_TGZ tecio2013.tar)
+set(TECIO_MD5 "9dcfb785f57e061174334f14dccc717b")
+

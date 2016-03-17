@@ -30,7 +30,7 @@ using mesh_t   = ale::mesh::burton_mesh_t;
 //! \brief the mesh float type
 using real_t   = typename mesh_t::real_t;
 //! \brief the mesh dimensions
-static constexpr size_t dimension = mesh_t::dimension();
+static constexpr size_t dimensions = mesh_t::num_dimensions();
 
 //! \brief the point
 using point_t  = typename mesh_t::point_t;
@@ -109,8 +109,33 @@ protected:
   //---------------------------------------------------------------------------
   virtual void TearDown() { }
 
+
+
 public:
 
+  //---------------------------------------------------------------------------
+  //! \brief a utility for creating random data
+  //---------------------------------------------------------------------------
+  void create_data() {
+    // register
+    register_state(mesh_, "pressure", cells, real_t, persistent);
+    register_state(mesh_, "region", cells, int, persistent);
+    register_state(mesh_, "velocity", vertices, vector_t, persistent);
+    // access
+    auto p = access_state(mesh_, "pressure", real_t);
+    auto r = access_state(mesh_, "region", int);
+    auto velocity = access_state(mesh_, "velocity", vector_t);
+    // initialize
+    for(auto c: mesh_.cells()) {
+      p[c] = c.id();
+      r[c] = mesh_.num_cells() - c.id();
+    } // for
+    // vertices
+    for (auto v: mesh_.vertices()) {
+      velocity[v][0] = v.id();
+      velocity[v][1] = 2.0*v.id();
+    } // for
+  }
 
 
   //---------------------------------------------------------------------------

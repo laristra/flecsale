@@ -35,10 +35,10 @@ template< typename T, typename F >
 int32_t initial_conditions( T & mesh, F && ics ) {
 
   // get the collection accesor
-  auto M = access_state( mesh, "cell:mass",       real_t );
-  auto V = access_state( mesh, "cell:volume",     real_t );
-  auto p = access_state( mesh, "cell:pressure",   real_t );
-  auto v = access_state( mesh, "cell:velocity", vector_t );
+  auto M = access_state( mesh, "cell_mass",       real_t );
+  auto V = access_state( mesh, "cell_volume",     real_t );
+  auto p = access_state( mesh, "cell_pressure",   real_t );
+  auto v = access_state( mesh, "cell_velocity", vector_t );
 
   for ( auto c : mesh.cells() ) {
     // get the 
@@ -93,6 +93,8 @@ int32_t update_state_from_energy( T & mesh ) {
   auto eos = access_global_state( mesh, "eos", eos_t );
   auto cell_state = cell_state_accessor<T>( mesh );
 
+  auto dudt = access_state( mesh, "cell_residual", flux_data_t );
+
   for ( auto c : mesh.cells() ) {
     auto u = cell_state(c);
     eqns_t::update_state_from_energy( u, *eos );
@@ -114,16 +116,17 @@ int32_t evaluate_time_step( T & mesh ) {
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
 
-  auto dudt = access_state( mesh, "cell:residual", flux_data_t );
+  auto dudt = access_state( mesh, "cell_residual", flux_data_t );
 
-  auto delta_t = access_global_state( mesh, "time_step", real_t );
-  real_t cfl = access_global_state( mesh, "cfl", real_t );
+  auto time_step = access_global_state( mesh, "time_step", real_t );
+  auto cfl = access_global_state( mesh, "cfl", time_constants_t );
  
  
   //----------------------------------------------------------------------------
   // Loop over each cell, computing the minimum time step,
   // which is also the maximum 1/dt
-  real_t dt_inv(0);
+  real_t dt_acc_inv(0);
+  real_t dt_vol_inv(0);
 
   for ( auto c : mesh.cells() ) {
 
@@ -132,34 +135,49 @@ int32_t evaluate_time_step( T & mesh ) {
     auto lambda = E::fastest_wavespeed(u);
 
     // loop over each edge do find the min edge length
-    auto edges = mesh.edges(c);
-    assert( edges.size() > 2 && "not enough edges in cell" );
-    auto eit = edges.begin();
-    auto min_length = eit->length();
-    std::for_each( ++eit, edges.end(), [&](auto && e) 
-    { 
-      min_length = std::min( e->length(), min_length );
-    });
+    auto min_length = c->min_length();
 
     // compute the inverse of the time scale
-    auto dti =  lambda / min_length;
+    auto dti =  lambda / min_length / cfl->accoustic;
     // check for the maximum value
-    dt_inv = std::max( dti, dt_inv );
+    dt_acc_inv = std::max( dti, dt_acc_inv );
 
     // now check the volume change
     auto dVdt = E::volumetric_rate_of_change( dudt[c] );
-    dti = std::abs(dVdt) / c->area();
+    dti = std::abs(dVdt) / c->area() / cfl->volume;
     // check for the maximum value
-    dt_inv = std::max( dti, dt_inv );
+    dt_vol_inv = std::max( dti, dt_vol_inv );
 
   } // cell
   //----------------------------------------------------------------------------
 
-  assert( dt_inv > 0 && "infinite delta t" );
 
-  // invert dt and apply cfl
-  delta_t = cfl / dt_inv;
+  assert( dt_acc_inv > 0 && dt_vol_inv > 0 && "infinite delta t" );
+  
+  // get the individual cfls
+  auto dt_acc = cfl->accoustic / dt_acc_inv;
+  auto dt_vol = cfl->volume / dt_vol_inv;
+  auto dt_growth = cfl->growth*(*time_step);
 
+  // find the minimum one
+  auto dts = std::array<real_t,3> { dt_acc, dt_vol, dt_growth };
+  auto it = std::min_element( dts.begin(), dts.end() );
+
+  switch ( std::distance( dts.begin(), it ) ) {
+  case 0:
+    std::cout << "accoustic" << std::endl;
+    break;
+  case 1:
+    std::cout << "volume" << std::endl;
+    break;
+  case 2:
+    std::cout << "growth" << std::endl;
+    break;
+  };
+
+  // invert dt and check against growth
+  *time_step = *it;
+      
   return 0;
 
 }
@@ -175,13 +193,15 @@ template< typename T >
 int32_t evaluate_corner_coef( T & mesh ) {
 
   // get the number of dimensions and create a matrix
-  constexpr size_t dims = T::dimension();
+  constexpr size_t dims = T::num_dimensions();
   
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
 
-  auto Mpc = access_state( mesh, "corner:matrix", matrix_t );
-  auto npc = access_state( mesh, "corner:normal", vector_t );
+  auto vertex_vel = access_state( mesh, "node_velocity", vector_t );
+
+  auto Mpc = access_state( mesh, "corner_matrix", matrix_t );
+  auto npc = access_state( mesh, "corner_normal", vector_t );
 
   //----------------------------------------------------------------------------
   // Loop over each corner
@@ -189,29 +209,73 @@ int32_t evaluate_corner_coef( T & mesh ) {
 
     // a corner connects to a cell and a vertex
     auto cl = cn->cell();
+    auto vt = cn->vertex();
 
     // get the cell state (there is only one)
     auto state = cell_state(cl);
     // the cell quantities
-    auto zc = eqns_t::impedance( state );
+    auto dc = eqns_t::density( state );
+    auto uc = eqns_t::velocity( state );
+    auto ac = eqns_t::sound_speed( state );
+    auto Gc = eqns_t::impedance_multiplier( state );
     
+    // get the nodal state
+    auto uv = vertex_vel[vt];
+
     // get the two wedge normals of the corner
     auto wedges = cn->wedges();
     auto n_plus  = wedges.front()->cell_facet_normal();
     auto n_minus = wedges.back() ->cell_facet_normal();
+    auto l_plus  = abs(n_plus);
+    auto l_minus = abs(n_minus);
+    auto un_plus  = unit(n_plus);
+    auto un_minus = unit(n_minus);
+       
+    // estimate impedances
+    auto delta_u = uv - uc;
+    auto zc_minus = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_minus)) );
+    auto zc_plus  = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_plus )) );
 
     // compute the mass matrix
-    auto M_plus  = math::outer_product( n_plus , n_plus  );
-    auto M_minus = math::outer_product( n_minus, n_minus );
+    auto M_plus  = math::outer_product( un_plus , un_plus  );
+    auto M_minus = math::outer_product( un_minus, un_minus );
+    M_plus  *= zc_plus  * l_plus;
+    M_minus *= zc_minus * l_minus;
     // the final matrix
     // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
     Mpc[cn] = M_plus + M_minus;
-    Mpc[cn] *= zc;
     // compute the pressure coefficient
     npc[cn] = n_plus + n_minus;
   } // corner
   //----------------------------------------------------------------------------
 
+
+  return 0;
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to compute nodal quantities
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int32_t estimate_nodal_state( T & mesh ) {
+
+  // access what we need
+  auto cell_vel = access_state( mesh, "cell_velocity", vector_t );
+  auto vertex_vel = access_state( mesh, "node_velocity", vector_t );
+
+  //----------------------------------------------------------------------------
+  // Loop over each vertex
+  for ( auto v : mesh.vertices() ) {
+    vertex_vel[v] = 0.;
+    auto cells = mesh.cells(v);
+    for ( auto c : cells ) vertex_vel[v] += cell_vel[c];
+    vertex_vel[v] /= cells.size();
+  } // vertex
+  //----------------------------------------------------------------------------
 
   return 0;
 
@@ -230,13 +294,15 @@ int32_t evaluate_nodal_state( T & mesh ) {
   constexpr auto eps = std::numeric_limits<real_t>::epsilon();
 
   // get the number of dimensions and create a matrix
-  constexpr size_t dims = T::dimension();
+  constexpr size_t dims = T::num_dimensions();
   
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
-  auto vertex_vel = access_state( mesh, "node:velocity", vector_t );
-  auto Mpc = access_state( mesh, "corner:matrix", matrix_t );
-  auto npc = access_state( mesh, "corner:normal", vector_t );
+  auto vertex_vel = access_state( mesh, "node_velocity", vector_t );
+  auto Mpc = access_state( mesh, "corner_matrix", matrix_t );
+  auto npc = access_state( mesh, "corner_normal", vector_t );
+
+  //cout << endl;
 
   //----------------------------------------------------------------------------
   // Loop over each vertex
@@ -300,14 +366,45 @@ int32_t evaluate_nodal_state( T & mesh ) {
     //---------- internal point
     else {
       // make sure sum(lpc) = 0
-      assert( abs(np) < eps && "error in norms" );
+      //assert( abs(np) < eps && "error in norms" );
       // now solve for point velocity
       vertex_vel[vt] = math::solve( Mp, rhs );
     } // point type
 
+
+    //auto vx = vt->coordinates();    
+    //auto r = std::sqrt( vx[0]*vx[0] + vx[1]*vx[1] );
+    //if ( r < 0.11 )
+    //std::cout << vx << " => " << vertex_vel[vt] << std::endl;
+
   } // vertex
   //----------------------------------------------------------------------------
 
+
+#if 0
+  //----------------------------------------------------------------------------
+  // enforce the boundary conditions
+  for ( auto vt : mesh.vertices() ) {
+    for ( auto ed : mesh.edges(vt) ) {
+
+      if ( ed->is_boundary() ) {
+
+        // get the unit normal
+        auto n = unit( ed->normal() );
+        
+        // force the normal direction to zero to be sure
+        auto uv = vertex_vel[vt];
+        auto uv_n = dot_product( uv, n ) * n;
+        auto uv_t = uv - uv_n;
+
+        // take out the normal component
+        vertex_vel[vt] = uv_t;
+      }
+
+    } // edge
+  } // vertex
+  //----------------------------------------------------------------------------
+#endif
 
   return 0;
 
@@ -323,12 +420,12 @@ template< typename T >
 int32_t evaluate_forces( T & mesh ) {
 
   // access what we need
-  auto dudt = access_state( mesh, "cell:residual", flux_data_t );
+  auto dudt = access_state( mesh, "cell_residual", flux_data_t );
 
-  auto vertex_vel = access_state( mesh, "node:velocity", vector_t );
+  auto vertex_vel = access_state( mesh, "node_velocity", vector_t );
 
-  auto Mpc = access_state( mesh, "corner:matrix", matrix_t );
-  auto npc = access_state( mesh, "corner:normal", vector_t );
+  auto Mpc = access_state( mesh, "corner_matrix", matrix_t );
+  auto npc = access_state( mesh, "corner_normal", vector_t );
 
   auto cell_state = cell_state_accessor<T>( mesh );
 
@@ -384,29 +481,63 @@ int32_t evaluate_forces( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t apply_update( T & mesh ) {
+int32_t apply_update( T & mesh, real_t coef ) {
 
   // access what we need
-  auto dudt = access_state( mesh, "cell:residual", flux_data_t );
+  auto dudt = access_state( mesh, "cell_residual", flux_data_t );
 
   auto cell_state = cell_state_accessor<T>( mesh );
 
   // read only access
   real_t delta_t = access_global_state( mesh, "time_step", real_t );
+
+  // the time step factor
+  auto fact = coef * delta_t;
+
+  vector_t mom0(0), mom1(0);
+  real_t ener0(0), ener1(0);
+  //cout << endl;
  
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
   for ( auto cell : mesh.cells() ) {
 
+    // get the cell state
+    auto u = cell_state( cell );
+    
+    // pre update sums
+    auto m = eqns_t::mass(u);
+    auto v0 = eqns_t::velocity(u);
+    auto et0 = eqns_t::total_energy(u);
+    mom0  += m * v0;
+    ener0 += m * et0;
+
+    auto cx = cell->centroid();
+    auto r = std::sqrt( cx[0]*cx[0] + cx[1]*cx[1] );
+
     // now compute the final update
-    auto delta_u = delta_t * dudt[cell];
+    auto delta_u = fact * dudt[cell];
+
+    //if ( cell.id() == 2 ) {
+    //  std::cout << cx << " => " << std::get<1>( delta_u ) << " " << std::get<2>( delta_u ) << std::endl;
+    //}
 
     // apply the update
-    auto u = cell_state( cell );
     eqns_t::update_state_from_flux( u, delta_u );
+    eqns_t::update_volume( u, cell->area() );
 
+    // post update sums
+    auto v1 = eqns_t::velocity(u);
+    auto et1 = eqns_t::total_energy(u);
+    mom1  += m * v1;
+    ener1 += m * et1;
+
+    
   } // for
   //----------------------------------------------------------------------------
+
+  //std::cout << mom0 << " " << ener0 << std::endl;
+  //std::cout << mom1 << " " << ener1 << std::endl;
 
   return 0;
 
@@ -419,22 +550,120 @@ int32_t apply_update( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t move_mesh( T & mesh ) {
+int32_t move_mesh( T & mesh, real_t coef ) {
 
   // access what we need
-  auto vel = access_state( mesh, "node:velocity", vector_t );
+  auto vel = access_state( mesh, "node_velocity", vector_t );
 
   // read only access
   real_t delta_t = access_global_state( mesh, "time_step", real_t );
+
+  // the time step factor
+  auto fact = coef * delta_t;
  
   // Loop over each cell, scattering the fluxes to the cell
   for ( auto vt : mesh.vertices() )
-    vt->coordinates() += delta_t * vel[vt];
+    vt->coordinates() += fact * vel[vt];
 
   return 0;
 
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to save the coordinates
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int32_t save_coordinates( T & mesh ) {
+
+  // access what we need
+  auto coord0 = access_state( mesh, "node_coordinates", vector_t );
+
+  // Loop over vertices
+  for ( auto vt : mesh.vertices() )
+    coord0[vt] = vt->coordinates();
+
+  return 0;
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to restore the coordinates
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int32_t restore_coordinates( T & mesh ) {
+
+  // access what we need
+  auto coord0 = access_state( mesh, "node_coordinates", vector_t );
+
+  // Loop over vertices
+  for ( auto vt : mesh.vertices() )
+    vt->coordinates() = coord0[vt];
+
+  return 0;
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to save the coordinates
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int32_t save_solution( T & mesh ) {
+
+  // access what we need
+  auto vel  = access_state( mesh, "cell_velocity",   vector_t );
+  auto vel0 = access_state( mesh, "cell_velocity_0", vector_t );
+
+  auto ener  = access_state( mesh, "cell_internal_energy",   real_t );
+  auto ener0 = access_state( mesh, "cell_internal_energy_0", real_t );
+
+  // Loop over cells
+  for ( auto c : mesh.cells() ) {
+    vel0[c] = vel[c];
+    ener0[c] = ener[c];
+  }
+
+  return 0;
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to restore the coordinates
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int32_t restore_solution( T & mesh ) {
+
+  // access what we need
+  auto vel  = access_state( mesh, "cell_velocity",   vector_t );
+  auto vel0 = access_state( mesh, "cell_velocity_0", vector_t );
+
+  auto ener  = access_state( mesh, "cell_internal_energy",   real_t );
+  auto ener0 = access_state( mesh, "cell_internal_energy_0", real_t );
+
+  // Loop over cells
+  for ( auto c : mesh.cells() ) {
+    vel[c] = vel0[c];
+    ener[c] = ener0[c];
+  }
+
+  return 0;
+
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Output the solution
@@ -443,14 +672,19 @@ int32_t move_mesh( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t output( T & mesh, const std::string & prefix ) 
+int32_t output( T & mesh, 
+                const std::string & prefix, 
+                const std::string & postfix, 
+                size_t output_freq ) 
 {
-  static size_t cnt = 0;
+
+  auto cnt = mesh.get_time_step_counter();
+  if ( cnt % output_freq != 0 ) return 0;
 
   std::stringstream ss;
   ss << prefix;
   ss << std::setw( 7 ) << std::setfill( '0' ) << cnt++;
-  ss << ".exo";
+  ss << "."+postfix;
   
   mesh::write_mesh( ss.str(), mesh );
   
