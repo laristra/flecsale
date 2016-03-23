@@ -116,6 +116,8 @@ int32_t evaluate_time_step( T & mesh ) {
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
 
+  auto vertex_vel = access_state( mesh, "node_velocity", vector_t );
+
   auto dudt = access_state( mesh, "cell_residual", flux_data_t );
 
   auto time_step = access_global_state( mesh, "time_step", real_t );
@@ -131,8 +133,16 @@ int32_t evaluate_time_step( T & mesh ) {
   for ( auto c : mesh.cells() ) {
 
     // get cell properties
-    auto u = cell_state( c );
-    auto lambda = E::fastest_wavespeed(u);
+    auto state = cell_state( c );
+    auto uc = eqns_t::velocity( state );
+    auto ac = eqns_t::sound_speed( state );
+    auto Gc = eqns_t::impedance_multiplier( state );
+
+    // initial wavespeed without extra term
+    auto lambda = ac;
+    // check for max wavespeed with extra impedance term
+    for ( auto v : mesh.vertices(c) )
+      lambda = std::max( ac + Gc*abs( vertex_vel[v] - uc ), lambda );
 
     // loop over each edge do find the min edge length
     auto min_length = c->min_length();

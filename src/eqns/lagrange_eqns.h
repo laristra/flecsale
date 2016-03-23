@@ -214,18 +214,7 @@ public:
 
   static auto impedance_multiplier( const state_data_t & u )
   { 
-    return 2.4 / 2;
-  }
-
-  //============================================================================
-  //! \brief Compute the fastest moving eigenvalue
-  //! \param [in]  u   The solution state
-  //! \return the fastest moving wave speed
-  //============================================================================
-  static auto fastest_wavespeed( const state_data_t & u )
-  {
-    auto a = sound_speed( u );
-    return a;
+    return 20.0; // 2.4 / 2;
   }
 
   //============================================================================
