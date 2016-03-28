@@ -6,8 +6,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
+// system includes
+#include <typeindex>
+#include <typeinfo>
+#include <unordered_map>
+
 // user includes
 #include "write_binary.h"
+
+// uncomment to dump ascii
+// #define VTK_WRITE_ASCII
 
 namespace ale {
 namespace utils {
@@ -19,6 +27,12 @@ namespace utils {
 class vtk_writer {
 
 public :
+
+  /*! *************************************************************************
+   * type map
+   ****************************************************************************/
+  using type_map_t = std::unordered_map<std::type_index, std::string>;
+  static const type_map_t type_map;
 
   /*! *************************************************************************
    * element map
@@ -41,7 +55,12 @@ public :
   {
     
     // open file
+#ifdef VTK_WRITE_ASCII
+    file_.open(filename);
+#else
     file_.open(filename, std::ofstream::binary);
+#endif
+
     auto ierr = !file_.good();
     
     // check for errors
@@ -68,7 +87,11 @@ public :
     // write out version number in ascii
     file_ << "# vtk DataFile Version 3.0" << std::endl;
     file_ << title << std::endl;
+#ifdef VTK_WRITE_ASCII
+    file_ << "ASCII" << std::endl;
+#else
     file_ << "BINARY" << std::endl;
+#endif
     file_ << "DATASET UNSTRUCTURED_GRID" << std::endl;
     
     // check for write errors
@@ -79,66 +102,43 @@ public :
   }
 
 
-
-
   /*! *************************************************************************
    * write nodes
    ****************************************************************************/
   template< 
     template<typename,typename...> typename C, 
-    typename T = float, typename... Args 
+    typename T, typename... Args 
   >
   auto write_points( const C<T,Args...> & data, std::size_t npoints, std::size_t ndims )
   {
 
     assert( data.size() == npoints*ndims && "dimension mismatch" );
 
-    // check endienness, vtk needs big endian
-    bool swap = !isBigEndian();
-
     // points header
     file_ << "POINTS " << npoints;
-    file_ << " float" << std::endl;
+    file_ << " " << type_map.at( typeid(T) ) << std::endl;
+
+#ifdef VTK_WRITE_ASCII
 
     // write the data
-    if (swap)
-      for (auto val : data ) 
-        WriteBinaryFloatSwap( file_, val );
-    else
-      for (auto val : data ) 
-        WriteBinaryFloat( file_, val );
+    std::size_t cnt = 0;
+    for (std::size_t p=0; p<npoints; p++ ) {
+      for (std::size_t d=0; d<ndims; d++ ) 
+        file_ << data[cnt++] << " ";
+      file_ << std::endl;
+    }
 
-    // check for write errors
-    return !file_.good();
-               
-  }  
-
-  /*! *************************************************************************
-   * write nodes
-   ****************************************************************************/
-  template< 
-    template<typename,typename...> typename C, 
-    typename... Args 
-  >
-  auto write_points( const C<double,Args...> & data, std::size_t npoints, std::size_t ndims )
-  {
-
-    assert( data.size() == npoints*ndims && "dimension mismatch" );
-
-    // check endienness, vtk needs big endian
-    bool swap = !isBigEndian();
-
-    // points header
-    file_ << "POINTS " << npoints;
-    file_ << " double" << std::endl;
+#else
 
     // write the data
-    if (swap)
+    if ( isBigEndian() )
       for (auto val : data ) 
-        WriteBinaryDoubleSwap( file_, val );
+        WriteBinary<T>( file_, val );
     else
       for (auto val : data ) 
-        WriteBinaryDouble( file_, val );
+        WriteBinarySwap<T>( file_, val );
+
+#endif
 
     // check for write errors
     return !file_.good();
@@ -153,11 +153,12 @@ public :
   template< 
     template<typename...> typename C, 
     typename... Args 
-    >
+  >
   auto write_elements( const C<Args...> & data, cell_type_t cell_type ) 
   {
 
     using size_t = std::size_t;
+    using value_type = std::decay_t< decltype( data[0][0] )>;
 
     // figure out the size
     // per element: points plus # of points
@@ -168,51 +169,141 @@ public :
     auto nelem = data.size();
 
     // check endienness, vtk needs big endian
-    bool swap = !isBigEndian();
+    auto swap = !isBigEndian();
 
     // write the number of cells ( per element: 4 points plus # of points )
     file_ << "CELLS " << nelem << " " << size << std::endl;
+
+#ifdef VTK_WRITE_ASCII
+
+    // write the data
+    for ( const auto & elem : data ) {
+      file_ << elem.size() << " ";
+      for ( auto val : elem )
+        file_ << val << " ";
+      file_ << std::endl;
+    }
+    
+#else
 
     // write the data
     if (swap) {
 
       for ( const auto & elem : data ) {
-        WriteBinaryIntSwap(file_, elem.size());
+        WriteBinarySwap<value_type>(file_, static_cast<value_type>(elem.size()) );
         for ( auto val : elem )
-          WriteBinaryIntSwap(file_, val);                
+          WriteBinarySwap<value_type>(file_, val);                
       }
 
     } 
     else {
 
       for ( const auto & elem : data ) {
-        WriteBinaryInt(file_, elem.size());
+        WriteBinary<value_type>(file_, elem.size());
         for ( auto val : elem )
-          WriteBinaryInt(file_, val);                
+          WriteBinary<value_type>(file_, val);                
       }
       
     }
 
+#endif
+
     // write the cell types
     file_ << "CELL_TYPES " << nelem << std::endl;
 
-    auto type_id = static_cast<int>(cell_type);        
+    auto type_id = static_cast<value_type>(cell_type);
+
+#ifdef VTK_WRITE_ASCII
+
+    // write the data
+    for ( const auto & elem : data )
+      file_ << type_id << " ";
+    file_ << std::endl;
+    
+#else
 
     // now write it
     if (swap) 
       for ( const auto & elem : data )
-        WriteBinaryIntSwap(file_, type_id);
+        WriteBinarySwap<value_type>(file_, type_id);
 
     else
 
       for ( const auto & elem : data )
-        WriteBinaryInt(file_, type_id);    
+        WriteBinary<value_type>(file_, type_id);    
 
+#endif
 
     // check for write errors
     return !file_.good();
   
   }  
+
+
+  /*! *****************************************************************
+   * mark the start of cell data
+   ********************************************************************/
+  auto start_cell_data( std::size_t ncells ) 
+  {      
+    file_ << "CELL_DATA " << ncells << std::endl;    
+    return !file_.good();
+  }
+  
+  /*! *****************************************************************
+   * mark the start of cell data
+   ********************************************************************/
+  auto start_point_data( std::size_t npoints ) 
+  {   
+    file_ << "POINT_DATA " << npoints << std::endl;
+    return !file_.good();
+  }
+
+
+  /*! *****************************************************************
+   * write nodes
+   ********************************************************************/
+  template< 
+    template<typename,typename...> typename C, 
+    typename T, typename... Args 
+  >
+  auto write_field( const char* name, const C<T,Args...> & data, std::size_t ndims = 1 )
+  {
+
+    // header
+    file_ << "SCALARS " << name;
+    file_ << " " << type_map.at( typeid(T) );
+    file_ << " " << ndims << std::endl;
+    file_ << "LOOKUP_TABLE default" << std::endl;
+  
+
+#ifdef VTK_WRITE_ASCII
+
+    auto n = data.size() / ndims;
+    std::size_t cnt = 0;
+
+    for (std::size_t p=0; p<n; p++ ) {
+      for (std::size_t d=0; d<ndims; d++ ) 
+        file_ << data[cnt++] << " ";
+      file_ << std::endl;
+    }
+    
+#else
+    
+    // write the data
+    if ( isBigEndian() )
+      for (auto val : data ) 
+        WriteBinary<T>( file_, val );
+    else
+      for (auto val : data ) 
+        WriteBinarySwap<T>( file_, val );    
+  
+#endif
+    
+    // check for write errors
+    return !file_.good();
+               
+  }  
+
 
 private :
 
@@ -222,86 +313,6 @@ private :
 
 };
 
-
-#if 0
-
-
-/*! *****************************************************************
- * mark the start of cell data
- ********************************************************************/
-void vtk_start_cell_data( int n, int ier ) 
-{   
-
-  file_ << "CELL_DATA " << n << std::endl;
-
-  ier = !file_.good();
-}
-
-/*! *****************************************************************
- * mark the start of cell data
- ********************************************************************/
-void vtk_start_point_data( int n, int ier ) 
-{   
-
-  file_ << "POINT_DATA " << n << std::endl;
-
-  ier = !file_.good();
-}
-
-/*! *****************************************************************
- * write nodes
- ********************************************************************/
-void vtk_write_scalar( char* name, int n, void *data, int isDouble, int &ier ) 
-{
-
-  int i;
-  
-
-  // check endienness, vtk needs big endian
-  bool swap = !isBigEndian();
-
-
-
-
-  // header
-  file_ << "SCALARS " << name;
-
-  if ( isDouble == 0 )
-    file_ << " float" << std::endl;
-  else
-    file_ << " double" << std::endl;
-  
-  file_ << "LOOKUP_TABLE default" << std::endl;
-  
-
-  // write the data
-  if (isDouble == 0) {
-  
-    if (swap)
-      for (i=0; i<n; i++) 
-        WriteBinaryFloatSwap( file_, ((float*)data)[i] );
-    else
-      for (i=0; i<n; i++) 
-        WriteBinaryFloat( file_, ((float*)data)[i] );
-  
-  } else {
-    exit(-1);
-    if (swap)
-      for (i=0; i<n; i++)
-        WriteBinaryDoubleSwap( file_, (double)i );
-    else
-      for (i=0; i<n; i++)
-        WriteBinaryDouble( file_, ((double*)data)[i] );        
-  
-  }
-
-
-  // check for write errors
-  ier = !file_.good();
-               
-}  
-
-#endif
 
 } // namespace
 } // namespace

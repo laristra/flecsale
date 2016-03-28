@@ -8,11 +8,16 @@
 
 #pragma once
 
+// system includes
+#include <iostream>
+#include <fstream>
+
 namespace ale {
 namespace utils {
 
 //! data types
 using int32 = int;
+using int64 = long;
 using float32 = float;
 using float64 = double;
 
@@ -28,15 +33,16 @@ inline bool isBigEndian(void) {
 /*! *****************************************************************
  * The main binary writing functions
  ********************************************************************/
-template <class T> inline
-void WriteBinary(std::ostream &file, T buffer) {
+template <class T> 
+inline void WriteBinary(std::ostream &file, T buffer) {
   file.write(reinterpret_cast<char*>(&buffer), sizeof(T));
 }
 
-inline void WriteBinaryInt(std::ofstream &file, int32 buffer) 
-{ WriteBinary(file, buffer); }
+template <class T> 
+inline void WriteBinarySwap(std::ofstream &file, T buffer) {};
 
-inline void WriteBinaryIntSwap(std::ofstream &file, int32 buffer) 
+template <>
+inline void WriteBinarySwap(std::ofstream &file, int32 buffer) 
 { 
   union temp {
     int32  value;
@@ -53,10 +59,30 @@ inline void WriteBinaryIntSwap(std::ofstream &file, int32 buffer)
   file.write(out.c, sizeof(int32));
 }
 
-inline void WriteBinaryFloat(std::ofstream &file, float32 buffer) 
-{ WriteBinary(file, buffer); }
+template<>
+inline void WriteBinarySwap(std::ofstream &file, int64 buffer) 
+{ 
+  union temp {
+    float64  value;
+    char     c[8];
+  } in, out;
 
-inline void WriteBinaryFloatSwap(std::ofstream &file, float32 buffer) 
+  in.value = buffer;
+
+  out.c[0] = in.c[7];
+  out.c[1] = in.c[6];
+  out.c[2] = in.c[5];
+  out.c[3] = in.c[4];
+  out.c[4] = in.c[3];
+  out.c[5] = in.c[2];
+  out.c[6] = in.c[1];
+  out.c[7] = in.c[0];
+  
+  file.write(out.c, sizeof(int64));
+}
+
+template<>
+inline void WriteBinarySwap(std::ofstream &file, float32 buffer) 
 { 
   union temp {
     float32  value;
@@ -73,11 +99,8 @@ inline void WriteBinaryFloatSwap(std::ofstream &file, float32 buffer)
   file.write(out.c, sizeof(float32));
 }
 
-
-inline void WriteBinaryDouble(std::ofstream &file, float64 buffer) 
-{ WriteBinary(file, buffer); }
-
-inline void WriteBinaryDoubleSwap(std::ofstream &file, float64 buffer) 
+template<>
+inline void WriteBinarySwap(std::ofstream &file, float64 buffer) 
 { 
   union temp {
     float64  value;
@@ -97,6 +120,7 @@ inline void WriteBinaryDoubleSwap(std::ofstream &file, float64 buffer)
   
   file.write(out.c, sizeof(float64));
 }
+
 
 inline void WriteString(std::ofstream &file, const char *S) {
   int L = 0;

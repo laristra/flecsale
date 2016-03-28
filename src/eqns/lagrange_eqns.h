@@ -204,7 +204,7 @@ public:
     using math::abs;
     auto ie = internal_energy( u );
     auto vel = velocity( u );
-    return ie + 0.5 * abs( vel );
+    return ie + dot_product( vel, vel ) / 2;
   }
 
   static auto impedance( const state_data_t & u )
@@ -214,7 +214,7 @@ public:
 
   static auto impedance_multiplier( const state_data_t & u )
   { 
-    return 20.0; // 2.4 / 2;
+    return 2.4 / 2;
   }
 
   //============================================================================
@@ -289,22 +289,43 @@ public:
   static void update_state_from_flux( state_ref_t & u, const flux_data_t & du )
   {
     using math::get;
-    using math::abs;
 
     // get the conserved quatities
     auto   m   = mass( u );
     auto & vel = get<variables::index::velocity>( u );
-    auto   et  = total_energy( u );
+    auto & ie  = get<variables::index::internal_energy>( u );
 
-    // access independant or derived quantities 
-    vel  += get<equations::index::momentum>( du ) / m;
-    et   += get<equations::index::energy  >( du ) / m;
+    // get the changes
+    auto delta_u  = get<equations::index::momentum>( du ) / m;
+    auto delta_et = get<equations::index::energy>( du ) / m;
 
-    // get aliases for clarity
-    auto & ie = get<variables::index::internal_energy>( u );
+#if 0
+    
+    // store the old velocity
+    auto vel0 = vel;
+    
+    // update velocity
+    vel += delta_u;
 
-    // recompute solution quantities
-    ie = std::max( et - 0.5 * abs( vel ), 1.e-16 );
+    // average the velocity
+    vel0 = ( vel0 + vel ) / 2;
+
+    // compute internal energy
+    ie += delta_et - dot_product( vel0, delta_u );
+
+#else
+
+    // update total energy
+    auto et = total_energy(u) + delta_et;
+
+    // update velocity
+    vel += delta_u;
+
+    // compute new internal
+    ie = et - dot_product( vel, vel ) / 2;
+
+
+#endif
 
     assert( ie > 0  );
 

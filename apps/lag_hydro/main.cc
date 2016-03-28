@@ -212,7 +212,7 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix  = "sedov";
-  std::string postfix = "exo";
+  std::string postfix = "vtk";
 
   // output frequency
   constexpr size_t output_freq = 100;
@@ -227,7 +227,7 @@ int main(int argc, char** argv)
   // the CFL and final solution time
   constexpr time_constants_t 
     CFL = { .accoustic = 0.25, .volume = 0.1, .growth = 1.01 };
-  constexpr real_t initial_time_step = 1.e-7;
+  constexpr real_t initial_time_step = 1.e-5;
   constexpr real_t final_time = 1.0;
 
   // the value of gamma
@@ -247,7 +247,7 @@ int main(int argc, char** argv)
       constexpr real_t e0 = 0.244816;
       real_t d = 1.0;
       vector_t v = 0;
-      real_t p = 1.e-5;
+      real_t p = 1.e-6;
       auto r = sqrt( x[0]*x[0] + x[1]*x[1] );
       if ( r < delta_r  ) 
         p = (gamma - 1) * d * e0 / vol;
@@ -326,7 +326,7 @@ int main(int argc, char** argv)
 
   // now output the solution
   apps::hydro::output(mesh, prefix, postfix, 1);
-
+  
   //===========================================================================
   // Residual Evaluation
   //===========================================================================
@@ -373,11 +373,17 @@ int main(int argc, char** argv)
     auto time_step = access_global_state( mesh, "time_step", real_t );   
     time_step = std::min( *time_step, final_time - soln_time );       
 
+    auto ss = cout.precision();
+    cout.setf( std::ios::scientific );
+    cout.precision(2);
     cout << "step =  " << std::setw(4) << time_cnt+1
-         << std::setprecision(2)
-         << ", time = " << std::scientific << soln_time
-         << ", dt = " << std::scientific << *time_step
+         << ", time = " << soln_time
+         << ", dt = " << *time_step
          << std::endl;
+    cout.unsetf( std::ios::scientific );
+    cout.precision(ss);
+
+#if 1 // set to 0 for first order
 
     //--------------------------------------------------------------------------
     // Move to n+1/2
@@ -412,6 +418,8 @@ int main(int argc, char** argv)
     // restore the solution to n=0
     apps::hydro::restore_coordinates( mesh );
     apps::hydro::restore_solution( mesh );
+
+#endif
 
     // move the mesh to n+1
     apps::hydro::move_mesh( mesh, 1.0 );

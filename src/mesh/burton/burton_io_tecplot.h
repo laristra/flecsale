@@ -29,602 +29,638 @@
 #endif
 
 //! user includes
-#include "flecsi/io/io_tecplot.h"
+#include "flecsi/io/io_base.h"
 #include "ale/mesh/burton/burton_mesh.h"
 #include "ale/utils/errors.h"
 
 
-namespace flecsi {
-
-//! bring burton mesh to front of namespace
-using ale::mesh::burton_mesh_t;
-
-//! Register file extension "plt" with factory.
-static bool burton_tecplot_dat_registered =
-  flecsi::io_factory_t<burton_mesh_t>::instance().registerType("plt",
-    flecsi::create_io_tecplot_binary<burton_mesh_t>);
-
-//! Register file extension "dat" with factory.
-static bool burton_tecplot_plt_registered =
-  flecsi::io_factory_t<burton_mesh_t>::instance().registerType("dat",
-    flecsi::create_io_tecplot_ascii<burton_mesh_t>);
-
+namespace ale {
+namespace mesh {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! Implementation of tecplot mesh write for burton specialization.
-//!
-//! \param[in] name Write burton mesh \e m to \e name.
-//! \param[in] m Burton mesh to write to \e name.
-//!
-//! \return tecplot error code. 0 on success.
-//!
-//! FIXME: should allow for const mesh_t &
+/// \class io_tecplot_ascii_t io_tecplot.h
+/// \brief io_tecplot_ascii_t provides a derived type of io_base.h and registrations
+///   of the tecplot_ascii file extensions.
+///
+/// \tparam mesh_t Mesh to template io_base_t on.
 ////////////////////////////////////////////////////////////////////////////////
-template<>
-inline
-int32_t 
-flecsi::io_tecplot_ascii_t<burton_mesh_t>::write( const std::string &name,
-                                                  burton_mesh_t &m) 
-{
-
+struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
+  
+  //! Default constructor
+  burton_io_tecplot_ascii_t() {}
 
   //============================================================================
-  // setup
+  //! Implementation of tecplot mesh write for burton specialization.
+  //!
+  //! \param[in] name Write burton mesh \e m to \e name.
+  //! \param[in] m Burton mesh to write to \e name.
+  //!
+  //! \return tecplot error code. 0 on success.
+  //!
+  //! FIXME: should allow for const mesh_t &
   //============================================================================
+  int32_t write( const std::string &name, burton_mesh_t &m) 
+  {
 
-  std::cout << "Writing mesh to: " << name << std::endl;
 
-  // some aliazes
-  using std::endl;
-  using std::pair;
-  using std::make_pair;
-  using std::string;
-  using std::vector;
+    //--------------------------------------------------------------------------
+    // setup
+    //--------------------------------------------------------------------------
 
-  using   mesh_t = burton_mesh_t;
-  using   real_t = typename mesh_t::real_t;
-  using vector_t = typename mesh_t::vector_t;
+    std::cout << "Writing mesh to: " << name << std::endl;
 
-  // get the general statistics
-  auto num_dims  = m.num_dimensions();
+    // some aliazes
+    using std::endl;
+    using std::pair;
+    using std::make_pair;
+    using std::string;
+    using std::vector;
+
+    using   mesh_t = burton_mesh_t;
+    using   real_t = typename mesh_t::real_t;
+    using vector_t = typename mesh_t::vector_t;
+
+    // get the general statistics
+    auto num_dims  = m.num_dimensions();
 
   
-  // open the file for writing
-  std::ofstream ofs( name.c_str() );
-  assert( ofs.good() && "error opening file" );
+    // open the file for writing
+    std::ofstream ofs( name.c_str() );
+    assert( ofs.good() && "error opening file" );
+
+    //--------------------------------------------------------------------------
+    // collect field data
+    //--------------------------------------------------------------------------
+
+
+    // variable extension for vectors
+    std::string var_ext[3];
+    var_ext[0] = "_x"; var_ext[1] = "_y";  var_ext[2] = "_z";
+
+    // class for variable locations
+    enum class var_location_t 
+    {
+      cell = 0,
+        node = 1
+        };
+
+    // collect the variables
+    vector< pair<string,var_location_t> > variables;
+
+    // write the coordinate names
+    variables.emplace_back( make_pair( "x", var_location_t::node ) );
+    variables.emplace_back( make_pair( "y", var_location_t::node ) );
+
+
+    //----------------------------------------------------------------------------
+    // nodal field data
+    //----------------------------------------------------------------------------
+
+    int num_nf = 0; // number of nodal fields
+    // real scalars persistent at vertices
+    auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
+    num_nf += rspav.size();
+    // int scalars persistent at vertices
+    auto ispav = access_type_if(m, int, is_persistent_at(vertices));
+    num_nf += ispav.size();
+    // real vectors persistent at vertices
+    auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
+    num_nf += num_dims*rvpav.size();
+
+    // fill node variable names array
+    for(auto sf: rspav) 
+      variables.emplace_back( make_pair( sf.label(), var_location_t::node ) );
+    for(auto sf: ispav) 
+      variables.emplace_back( make_pair( sf.label(), var_location_t::node ) );
+    for(auto vf: rvpav) {
+      auto label = vf.label();
+      for(int d=0; d < num_dims; ++d) {
+        auto dim_label = label + var_ext[d];
+        variables.emplace_back( make_pair( dim_label, var_location_t::node ) );
+      } // for
+    } // for
+  
+
+    //----------------------------------------------------------------------------
+    // element field data
+    //----------------------------------------------------------------------------
+
+    int num_ef = 0; // number of element fields
+    // real scalars persistent at cells
+    auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
+    num_ef += rspac.size();
+    // int scalars persistent at cells
+    auto ispac = access_type_if(m, int, is_persistent_at(cells));
+    num_ef += ispac.size();
+    // real vectors persistent at cells
+    auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
+    num_ef += num_dims*rvpac.size();
+
+
+    // fill element variable names array
+    for(auto sf: rspac) 
+      variables.emplace_back( make_pair( sf.label(), var_location_t::cell ) );
+    for(auto sf: ispac) 
+      variables.emplace_back( make_pair( sf.label(), var_location_t::cell ) );
+    for(auto vf: rvpac) {
+      auto label = vf.label();
+      for(int d=0; d < num_dims; ++d) {
+        auto dim_label = label + var_ext[d];
+        variables.emplace_back( make_pair( dim_label, var_location_t::cell ) );
+      } // for
+    } // for
+
+      //--------------------------------------------------------------------------
+    // HEADER
+    //--------------------------------------------------------------------------
+
+
+    ofs << "TITLE = \"Tecplot output from flecsi.\"" << endl;
+    ofs << "FILETYPE = FULL" << endl;
+
+    ofs << "VARIABLES = " << endl;
+    for ( const auto & label : variables )
+      ofs << "\"" << label.first << "\" ";
+    ofs << endl;
+
+    ofs << "ZONE" << endl;
+    ofs << "T = \"quadrilateral zone block\" "
+        << "ZONETYPE=FEQUADRILATERAL "
+        << "NODES=" << m.num_vertices() << ", ELEMENTS=" << m.num_cells() << " "
+        << "DATAPACKING=BLOCK "
+        << "VARLOCATION=([" << num_dims+num_nf+1 << "-" << num_dims+num_nf+num_ef << "]=CELLCENTERED)"
+        << endl;
+
+    //--------------------------------------------------------------------------
+    // WRITE DATA
+    //--------------------------------------------------------------------------
+
+    // get the coordinates from the mesh.
+    for(int d=0; d < num_dims; ++d) {
+      for (auto v : m.vertices()) 
+        ofs << v->coordinates()[d] << " ";
+      ofs << endl;
+    } // for
+
+    //----------------------------------------------------------------------------
+    // nodal field data
+    //----------------------------------------------------------------------------
+
+    // node field buffer
+    for(auto sf: rspav) {
+      for(auto v: m.vertices()) ofs << sf[v] << " ";
+      ofs << endl;
+    } // for
+    for(auto sf: ispav) {
+      for(auto v: m.vertices()) ofs << sf[v] << " ";
+      ofs << endl;
+    } // for
+    for(auto vf: rvpav) {
+      for(int d=0; d < num_dims; ++d) {
+        for(auto v: m.vertices()) ofs << vf[v][d] << " ";
+        ofs << endl;
+      } // for
+    } // for
+
+    //----------------------------------------------------------------------------
+    // nodal field data
+    //----------------------------------------------------------------------------
+
+    // element field buffer
+    for(auto sf: rspac) {
+      for(auto c: m.cells()) ofs << sf[c] << " ";
+      ofs << endl;
+    } // for
+    for(auto sf: ispac) {
+      for(auto c: m.cells()) ofs << sf[c] << " ";
+      ofs << endl;
+    } // for
+    for(auto vf: rvpac) {
+      for(int d=0; d < num_dims; ++d) {
+        for(auto c: m.cells()) ofs << vf[c][d] << " ";
+        ofs << endl;
+      } // for
+    } // for
+
+      //--------------------------------------------------------------------------
+    // WRITE CONNECTIVITY
+    //--------------------------------------------------------------------------
+
+    // element definitions
+    auto i = 0;
+    for (auto c : m.cells()) {
+      for (auto v : m.vertices(c)) {
+        ofs << v.id() + 1 << " ";
+        i++;
+      } // for
+      ofs << endl;
+    } // for
+  
+      //--------------------------------------------------------------------------
+    // Finalize
+    //--------------------------------------------------------------------------
+  
+    // close file stream
+    ofs.close();
+
+    return 0;
+
+  } // io_tecplot_ascii_t::write
+
 
   //============================================================================
-  // collect field data
+  //! Implementation of tecplot mesh read for burton specialization.
+  //!
+  //! \param[in] name Read burton mesh \e m to \e name.
+  //! \param[in] m Burton mesh to Read to \e name.
+  //!
+  //! \return tecplot error code. 0 on success.
+  //!
   //============================================================================
-
-
-  // variable extension for vectors
-  std::string var_ext[3];
-  var_ext[0] = "_x"; var_ext[1] = "_y";  var_ext[2] = "_z";
-
-  // class for variable locations
-  enum class var_location_t 
+  int32_t read( const std::string &name, burton_mesh_t &m) 
   {
-    cell = 0,
-    node = 1
+    raise_implemented_error( "No tecplot read functionality has been implemented" );
   };
 
-  // collect the variables
-  vector< pair<string,var_location_t> > variables;
-
-  // write the coordinate names
-  variables.emplace_back( make_pair( "x", var_location_t::node ) );
-  variables.emplace_back( make_pair( "y", var_location_t::node ) );
-
-
-  //----------------------------------------------------------------------------
-  // nodal field data
-  //----------------------------------------------------------------------------
-
-  int num_nf = 0; // number of nodal fields
-  // real scalars persistent at vertices
-  auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
-  num_nf += rspav.size();
-  // int scalars persistent at vertices
-  auto ispav = access_type_if(m, int, is_persistent_at(vertices));
-  num_nf += ispav.size();
-  // real vectors persistent at vertices
-  auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
-  num_nf += num_dims*rvpav.size();
-
-  // fill node variable names array
-  for(auto sf: rspav) 
-    variables.emplace_back( make_pair( sf.label(), var_location_t::node ) );
-  for(auto sf: ispav) 
-    variables.emplace_back( make_pair( sf.label(), var_location_t::node ) );
-  for(auto vf: rvpav) {
-    auto label = vf.label();
-    for(int d=0; d < num_dims; ++d) {
-      auto dim_label = label + var_ext[d];
-      variables.emplace_back( make_pair( dim_label, var_location_t::node ) );
-    } // for
-  } // for
-  
-
-  //----------------------------------------------------------------------------
-  // element field data
-  //----------------------------------------------------------------------------
-
-  int num_ef = 0; // number of element fields
-  // real scalars persistent at cells
-  auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
-  num_ef += rspac.size();
-  // int scalars persistent at cells
-  auto ispac = access_type_if(m, int, is_persistent_at(cells));
-  num_ef += ispac.size();
-  // real vectors persistent at cells
-  auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
-  num_ef += num_dims*rvpac.size();
-
-
-  // fill element variable names array
-  for(auto sf: rspac) 
-    variables.emplace_back( make_pair( sf.label(), var_location_t::cell ) );
-  for(auto sf: ispac) 
-    variables.emplace_back( make_pair( sf.label(), var_location_t::cell ) );
-  for(auto vf: rvpac) {
-    auto label = vf.label();
-    for(int d=0; d < num_dims; ++d) {
-      auto dim_label = label + var_ext[d];
-      variables.emplace_back( make_pair( dim_label, var_location_t::cell ) );
-    } // for
-  } // for
-
-  //============================================================================
-  // HEADER
-  //============================================================================
-
-
-  ofs << "TITLE = \"Tecplot output from flecsi.\"" << endl;
-  ofs << "FILETYPE = FULL" << endl;
-
-  ofs << "VARIABLES = " << endl;
-  for ( const auto & label : variables )
-    ofs << "\"" << label.first << "\" ";
-  ofs << endl;
-
-  ofs << "ZONE" << endl;
-  ofs << "T = \"quadrilateral zone block\" "
-      << "ZONETYPE=FEQUADRILATERAL "
-      << "NODES=" << m.num_vertices() << ", ELEMENTS=" << m.num_cells() << " "
-      << "DATAPACKING=BLOCK "
-      << "VARLOCATION=([" << num_dims+num_nf+1 << "-" << num_dims+num_nf+num_ef << "]=CELLCENTERED)"
-      << endl;
-
-  //============================================================================
-  // WRITE DATA
-  //============================================================================
-
-  // get the coordinates from the mesh.
-  for(int d=0; d < num_dims; ++d) {
-    for (auto v : m.vertices()) 
-      ofs << v->coordinates()[d] << " ";
-    ofs << endl;
-  } // for
-
-  //----------------------------------------------------------------------------
-  // nodal field data
-  //----------------------------------------------------------------------------
-
-  // node field buffer
-  for(auto sf: rspav) {
-    for(auto v: m.vertices()) ofs << sf[v] << " ";
-    ofs << endl;
-  } // for
-  for(auto sf: ispav) {
-    for(auto v: m.vertices()) ofs << sf[v] << " ";
-    ofs << endl;
-  } // for
-  for(auto vf: rvpav) {
-    for(int d=0; d < num_dims; ++d) {
-      for(auto v: m.vertices()) ofs << vf[v][d] << " ";
-      ofs << endl;
-    } // for
-  } // for
-
-  //----------------------------------------------------------------------------
-  // nodal field data
-  //----------------------------------------------------------------------------
-
-  // element field buffer
-  for(auto sf: rspac) {
-    for(auto c: m.cells()) ofs << sf[c] << " ";
-    ofs << endl;
-  } // for
-  for(auto sf: ispac) {
-    for(auto c: m.cells()) ofs << sf[c] << " ";
-    ofs << endl;
-  } // for
-  for(auto vf: rvpac) {
-    for(int d=0; d < num_dims; ++d) {
-      for(auto c: m.cells()) ofs << vf[c][d] << " ";
-      ofs << endl;
-    } // for
-  } // for
-
-  //============================================================================
-  // WRITE CONNECTIVITY
-  //============================================================================
-
-  // element definitions
-  auto i = 0;
-  for (auto c : m.cells()) {
-    for (auto v : m.vertices(c)) {
-      ofs << v.id() + 1 << " ";
-      i++;
-    } // for
-    ofs << endl;
-  } // for
-  
-  //============================================================================
-  // Finalize
-  //============================================================================
-  
-  // close file stream
-  ofs.close();
-
-  return 0;
-
-} // io_tecplot_ascii_t::write
-
+}; // io_tecplot_ascii_t
 
 ////////////////////////////////////////////////////////////////////////////////
-//! Implementation of tecplot mesh read for burton specialization.
-//!
-//! \param[in] name Read burton mesh \e m to \e name.
-//! \param[in] m Burton mesh to Read to \e name.
-//!
-//! \return tecplot error code. 0 on success.
-//!
+/// \class io_tecplot_binary_t io_tecplot.h
+/// \brief io_tecplot_binary_t provides a derived type of io_base.h and registrations
+///   of the tecplot_binary file extensions.
+///
+/// \tparam mesh_t Mesh to template io_base_t on.
 ////////////////////////////////////////////////////////////////////////////////
-template<>
-inline
-int32_t 
-flecsi::io_tecplot_ascii_t<burton_mesh_t>::read( const std::string &name,
-                                                 burton_mesh_t &m) 
-{
-  raise_implemented_error( "No tecplot read functionality has been implemented" );
-};
+struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
 
+  //! Default constructor
+  burton_io_tecplot_binary_t() {}
 
-
-////////////////////////////////////////////////////////////////////////////////
-//! Implementation of tecplot mesh write for burton specialization.
-//!
-//! \param[in] name Write burton mesh \e m to \e name.
-//! \param[in] m Burton mesh to write to \e name.
-//!
-//! \return tecplot error code. 0 on success.
-//!
-//! FIXME: should allow for const mesh_t &
-////////////////////////////////////////////////////////////////////////////////
-template<>
-inline
-int32_t 
-flecsi::io_tecplot_binary_t<burton_mesh_t>::write( const std::string &name,
-                                                   burton_mesh_t &m) 
-{
+  //============================================================================
+  //! Implementation of tecplot mesh write for burton specialization.
+  //!
+  //! \param[in] name Write burton mesh \e m to \e name.
+  //! \param[in] m Burton mesh to write to \e name.
+  //!
+  //! \return tecplot error code. 0 on success.
+  //!
+  //! FIXME: should allow for const mesh_t &
+  //============================================================================
+  int32_t write( const std::string &name, burton_mesh_t &m) 
+  {
 
 #ifdef HAVE_TECIO
 
-  std::cout << "Writing mesh to: " << name << std::endl;
+    std::cout << "Writing mesh to: " << name << std::endl;
+    
+
+    //--------------------------------------------------------------------------
+    // setup
+    //--------------------------------------------------------------------------
+
+    // alias some types
+    using std::pair;
+    using std::make_pair;
+    using std::string;
+    using std::vector;
+
+    using   mesh_t = burton_mesh_t;
+    using   real_t = typename mesh_t::real_t;
+    using vector_t = typename mesh_t::vector_t;
+    using tec_real_t = real_t;
+    using tec_int_t = INTEGER4;
+
+    /* Open the file & write the datafile header information */
+    tec_int_t Debug     = 0; // Set to 0 for no debugging or 1 to debug
+    tec_int_t FileType  = 0; // 0=Tecplot binary (.plt) 1=Tecplot subzone (.szplt)
+
+    tec_int_t VIsDouble; // 0=Single 1=Double
+    if ( std::is_same_v<tec_real_t, float> )
+      VIsDouble = 0;
+    else if ( std::is_same_v<tec_real_t, double> )
+      VIsDouble = 1;
+    else
+      raise_implemented_error( "Can only output to tecplot with floats or doubls" );
+
+    // get the general statistics
+    tec_int_t num_dims  = m.num_dimensions();
+    tec_int_t num_nodes = m.num_vertices();
+    tec_int_t num_elem  = m.num_cells();
+    constexpr tec_int_t num_nodes_per_elem = 4;
+
+    // set the time
+    double soln_time = m.get_time();
+
+    // variable extension for vectors
+    std::string var_ext[3];
+    var_ext[0] = "_x"; var_ext[1] = "_y";  var_ext[2] = "_z";
+
+    // class for variable locations
+    enum class var_location_t 
+    {
+      cell = 0,
+        node = 1
+        };
+
+    // collect the variables
+    vector< pair<string,var_location_t> > variables;
+
+    // write the coordinate names
+    variables.emplace_back( make_pair( "x", var_location_t::node ) );
+    variables.emplace_back( make_pair( "y", var_location_t::node ) );
+
+    //--------------------------------------------------------------------------
+    // collect field data
+    //--------------------------------------------------------------------------
 
 
-  //============================================================================
-  // setup
-  //============================================================================
+    //----------------------------------------------------------------------------
+    // nodal field data
 
-  // alias some types
-  using std::pair;
-  using std::make_pair;
-  using std::string;
-  using std::vector;
+    // real scalars persistent at vertices
+    auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
+    // int scalars persistent at vertices
+    auto ispav = access_type_if(m, int, is_persistent_at(vertices));
+    // real vectors persistent at vertices
+    auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
 
-  using   mesh_t = burton_mesh_t;
-  using   real_t = typename mesh_t::real_t;
-  using vector_t = typename mesh_t::vector_t;
-  using tec_real_t = real_t;
-  using tec_int_t = INTEGER4;
-
-  /* Open the file & write the datafile header information */
-  tec_int_t Debug     = 0; // Set to 0 for no debugging or 1 to debug
-  tec_int_t FileType  = 0; // 0=Tecplot binary (.plt) 1=Tecplot subzone (.szplt)
-
-  tec_int_t VIsDouble; // 0=Single 1=Double
-  if ( std::is_same_v<tec_real_t, float> )
-    VIsDouble = 0;
-  else if ( std::is_same_v<tec_real_t, double> )
-    VIsDouble = 1;
-  else
-    raise_implemented_error( "Can only output to tecplot with floats or doubls" );
-
-  // get the general statistics
-  tec_int_t num_dims  = m.num_dimensions();
-  tec_int_t num_nodes = m.num_vertices();
-  tec_int_t num_elem  = m.num_cells();
-  constexpr tec_int_t num_nodes_per_elem = 4;
-
-  // set the time
-  double soln_time = m.get_time();
-
-  // variable extension for vectors
-  std::string var_ext[3];
-  var_ext[0] = "_x"; var_ext[1] = "_y";  var_ext[2] = "_z";
-
-  // class for variable locations
-  enum class var_location_t 
-  {
-    cell = 0,
-    node = 1
-  };
-
-  // collect the variables
-  vector< pair<string,var_location_t> > variables;
-
-  // write the coordinate names
-  variables.emplace_back( make_pair( "x", var_location_t::node ) );
-  variables.emplace_back( make_pair( "y", var_location_t::node ) );
-
-  //============================================================================
-  // collect field data
-  //============================================================================
-
-
-  //----------------------------------------------------------------------------
-  // nodal field data
-  //----------------------------------------------------------------------------
-
-  // real scalars persistent at vertices
-  auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
-  // int scalars persistent at vertices
-  auto ispav = access_type_if(m, int, is_persistent_at(vertices));
-  // real vectors persistent at vertices
-  auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
-
-  // fill node variable names array
-  for(auto sf: rspav) 
-    variables.emplace_back( make_pair( sf.label(), var_location_t::node ) );
-  for(auto sf: ispav) 
-    variables.emplace_back( make_pair( sf.label(), var_location_t::node ) );
-  for(auto vf: rvpav) {
-    auto label = vf.label();
-    for(int d=0; d < num_dims; ++d) {
-      auto dim_label = label + var_ext[d];
-      variables.emplace_back( make_pair( dim_label, var_location_t::node ) );
+    // fill node variable names array
+    for(auto sf: rspav) 
+      variables.emplace_back( make_pair( sf.label(), var_location_t::node ) );
+    for(auto sf: ispav) 
+      variables.emplace_back( make_pair( sf.label(), var_location_t::node ) );
+    for(auto vf: rvpav) {
+      auto label = vf.label();
+      for(int d=0; d < num_dims; ++d) {
+        auto dim_label = label + var_ext[d];
+        variables.emplace_back( make_pair( dim_label, var_location_t::node ) );
+      } // for
     } // for
-  } // for
   
 
-  //----------------------------------------------------------------------------
-  // element field data
-  //----------------------------------------------------------------------------
+      //----------------------------------------------------------------------------
+      // element field data
 
-  // real scalars persistent at cells
-  auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
-  // int scalars persistent at cells
-  auto ispac = access_type_if(m, int, is_persistent_at(cells));
-  // real vectors persistent at cells
-  auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
+      // real scalars persistent at cells
+    auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
+    // int scalars persistent at cells
+    auto ispac = access_type_if(m, int, is_persistent_at(cells));
+    // real vectors persistent at cells
+    auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
 
 
-  // fill element variable names array
-  for(auto sf: rspac) 
-    variables.emplace_back( make_pair( sf.label(), var_location_t::cell ) );
-  for(auto sf: ispac) 
-    variables.emplace_back( make_pair( sf.label(), var_location_t::cell ) );
-  for(auto vf: rvpac) {
-    auto label = vf.label();
-    for(int d=0; d < num_dims; ++d) {
-      auto dim_label = label + var_ext[d];
-      variables.emplace_back( make_pair( dim_label, var_location_t::cell ) );
+    // fill element variable names array
+    for(auto sf: rspac) 
+      variables.emplace_back( make_pair( sf.label(), var_location_t::cell ) );
+    for(auto sf: ispac) 
+      variables.emplace_back( make_pair( sf.label(), var_location_t::cell ) );
+    for(auto vf: rvpac) {
+      auto label = vf.label();
+      for(int d=0; d < num_dims; ++d) {
+        auto dim_label = label + var_ext[d];
+        variables.emplace_back( make_pair( dim_label, var_location_t::cell ) );
+      } // for
     } // for
-  } // for
 
-  //============================================================================
-  // WRITE HEADERS
-  //============================================================================
+    //--------------------------------------------------------------------------
+    // WRITE HEADERS
+    //--------------------------------------------------------------------------
+    
+    // create the variable name string
+    string var_string;
+    for ( const auto & label : variables )
+      var_string += label.first + " ";
 
-  // create the variable name string
-  string var_string;
-  for ( const auto & label : variables )
-    var_string += label.first + " ";
-
-  auto status = TECINI112( const_cast<char*>( "Tecplot output from flecsi." ),
-                           const_cast<char*>( var_string.c_str() ),
-                           const_cast<char*>( name.c_str() ),
-                           const_cast<char*>( "." ), // scratch dir
-                           &FileType,
-                           &Debug,
-                           &VIsDouble );
-  assert( status == 0 && "error with TECINI" );
+    auto status = TECINI112( const_cast<char*>( "Tecplot output from flecsi." ),
+                             const_cast<char*>( var_string.c_str() ),
+                             const_cast<char*>( name.c_str() ),
+                             const_cast<char*>( "." ), // scratch dir
+                             &FileType,
+                             &Debug,
+                             &VIsDouble );
+    assert( status == 0 && "error with TECINI" );
   
-  //----------------------------------------------------------------------------
-  // Create ZONE header
-  //----------------------------------------------------------------------------
+    //----------------------------------------------------------------------------
+    // Create ZONE header
+    //----------------------------------------------------------------------------
 
 
-  tec_int_t ZoneType = 3; // set the zone type to FEQuadrilateral
-  tec_int_t NumFaces = 0; // not used for for most zone types
-  tec_int_t ICellMax = 0; // reserved for future use
-  tec_int_t JCellMax = 0; // reserved for future use
-  tec_int_t KCellMax = 0; // reserved for future use
+    tec_int_t ZoneType = 3; // set the zone type to FEQuadrilateral
+    tec_int_t NumFaces = 0; // not used for for most zone types
+    tec_int_t ICellMax = 0; // reserved for future use
+    tec_int_t JCellMax = 0; // reserved for future use
+    tec_int_t KCellMax = 0; // reserved for future use
 
-  tec_int_t StrandID = 0; // StaticZone
-  tec_int_t ParentZn = 0; // no parent
-  tec_int_t IsBlock  = 1; // this is a Block
-  tec_int_t NumFaceConnections       = 0; // not used 
-  tec_int_t FaceNeighborMode         = 0; // not used
-  tec_int_t TotalNumFaceNodes        = 0; // not used
-  tec_int_t TotalNumBndryFaces       = 0; // not used
-  tec_int_t TotalNumBndryConnections = 0; // not used
-  tec_int_t ShareConnectivityFromZone = 0;  // pass 0 to indicate no sharign
-  tec_int_t * PassiveVarList = nullptr;
-  tec_int_t * ShareVarFromZone = nullptr;
+    tec_int_t StrandID = 0; // StaticZone
+    tec_int_t ParentZn = 0; // no parent
+    tec_int_t IsBlock  = 1; // this is a Block
+    tec_int_t NumFaceConnections       = 0; // not used 
+    tec_int_t FaceNeighborMode         = 0; // not used
+    tec_int_t TotalNumFaceNodes        = 0; // not used
+    tec_int_t TotalNumBndryFaces       = 0; // not used
+    tec_int_t TotalNumBndryConnections = 0; // not used
+    tec_int_t ShareConnectivityFromZone = 0;  // pass 0 to indicate no sharign
+    tec_int_t * PassiveVarList = nullptr;
+    tec_int_t * ShareVarFromZone = nullptr;
 
-  // create the variable location array
-  vector<tec_int_t> var_locations;
-  for ( const auto & var : variables )
-    var_locations.push_back( static_cast<tec_int_t>(var.second) );
+    // create the variable location array
+    vector<tec_int_t> var_locations;
+    for ( const auto & var : variables )
+      var_locations.push_back( static_cast<tec_int_t>(var.second) );
 
-  status = TECZNE112( const_cast<char*>( "Quadrilateral Zone" ),
-                      &ZoneType,
-                      &num_nodes,
-                      &num_elem,
-                      &NumFaces,
-                      &ICellMax,
-                      &JCellMax,
-                      &KCellMax,
-                      &soln_time,
-                      &StrandID,
-                      &ParentZn,
-                      &IsBlock,
-                      &NumFaceConnections,
-                      &FaceNeighborMode,
-                      &TotalNumFaceNodes,
-                      &TotalNumBndryFaces,
-                      &TotalNumBndryConnections,
-                      PassiveVarList,
-                      var_locations.data(),
-                      ShareVarFromZone,
-                      &ShareConnectivityFromZone);
+    status = TECZNE112( const_cast<char*>( "Quadrilateral Zone" ),
+                        &ZoneType,
+                        &num_nodes,
+                        &num_elem,
+                        &NumFaces,
+                        &ICellMax,
+                        &JCellMax,
+                        &KCellMax,
+                        &soln_time,
+                        &StrandID,
+                        &ParentZn,
+                        &IsBlock,
+                        &NumFaceConnections,
+                        &FaceNeighborMode,
+                        &TotalNumFaceNodes,
+                        &TotalNumBndryFaces,
+                        &TotalNumBndryConnections,
+                        PassiveVarList,
+                        var_locations.data(),
+                        ShareVarFromZone,
+                        &ShareConnectivityFromZone);
   
-  assert( status == 0 && "error with TECZNE" );
+    assert( status == 0 && "error with TECZNE" );
 
 
 
-  //============================================================================
-  // WRITE DATA
-  //============================================================================
+    //--------------------------------------------------------------------------
+    // WRITE DATA
+    //--------------------------------------------------------------------------
 
-  // a temporary for vector values
-  vector<tec_real_t> xvals( std::max( num_nodes, num_elem ) );
-  vector<tec_real_t> yvals( std::max( num_nodes, num_elem ) );
+    // a temporary for vector values
+    vector<tec_real_t> xvals( std::max( num_nodes, num_elem ) );
+    vector<tec_real_t> yvals( std::max( num_nodes, num_elem ) );
 
-  // get the coordinates from the mesh.
-  for (auto v : m.vertices()) {
-    xvals[v.id()] = v->coordinates()[0];
-    yvals[v.id()] = v->coordinates()[1];
-  } // for
+    // get the coordinates from the mesh.
+    for (auto v : m.vertices()) {
+      xvals[v.id()] = v->coordinates()[0];
+      yvals[v.id()] = v->coordinates()[1];
+    } // for
 
-  // write the coordinates to the file
-  status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
-  assert( status == 0 && "error with TECDAT" );
-
-  status = TECDAT112( &num_nodes, yvals.data(), &VIsDouble );
-  assert( status == 0 && "error with TECDAT" );
-
-  //----------------------------------------------------------------------------
-  // nodal field data
-  //----------------------------------------------------------------------------
-
-  // node field buffer
-  for(auto sf: rspav) {
-    for(auto v: m.vertices()) xvals[v.id()] = sf[v];
+      // write the coordinates to the file
     status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
     assert( status == 0 && "error with TECDAT" );
-  } // for
-  for(auto sf: ispav) {
-    // cast int fields to real_t
-    for(auto v: m.vertices()) xvals[v.id()] = (tec_real_t)sf[v];
-    status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
+
+    status = TECDAT112( &num_nodes, yvals.data(), &VIsDouble );
     assert( status == 0 && "error with TECDAT" );
-  } // for
-  for(auto vf: rvpav) {
-    for(int d=0; d < num_dims; ++d) {
-      for(auto v: m.vertices()) xvals[v.id()] = vf[v][d];
+
+    //----------------------------------------------------------------------------
+    // nodal field data
+
+    // node field buffer
+    for(auto sf: rspav) {
+      for(auto v: m.vertices()) xvals[v.id()] = sf[v];
       status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
       assert( status == 0 && "error with TECDAT" );
     } // for
-  } // for
+    for(auto sf: ispav) {
+      // cast int fields to real_t
+      for(auto v: m.vertices()) xvals[v.id()] = (tec_real_t)sf[v];
+      status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
+      assert( status == 0 && "error with TECDAT" );
+    } // for
+    for(auto vf: rvpav) {
+      for(int d=0; d < num_dims; ++d) {
+        for(auto v: m.vertices()) xvals[v.id()] = vf[v][d];
+        status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
+        assert( status == 0 && "error with TECDAT" );
+      } // for
+    } // for
 
-  //----------------------------------------------------------------------------
-  // cell field data
-  //----------------------------------------------------------------------------
+    //----------------------------------------------------------------------------
+    // cell field data
 
-  // element field buffer
-  for(auto sf: rspac) {
-    for(auto c: m.cells()) xvals[c.id()] = sf[c];
-    status = TECDAT112( &num_elem, xvals.data(), &VIsDouble );
-    assert( status == 0 && "error with TECDAT" );
-  } // for
-  for(auto sf: ispac) {
-    // cast int fields to real_t
-    for(auto c: m.cells()) xvals[c.id()] = (tec_real_t)sf[c];
-    status = TECDAT112( &num_elem, xvals.data(), &VIsDouble );
-    assert( status == 0 && "error with TECDAT" );
-  } // for
-  for(auto vf: rvpac) {
-    for(int d=0; d < num_dims; ++d) {
-      for(auto c: m.cells()) xvals[c.id()] = vf[c][d];
+    // element field buffer
+    for(auto sf: rspac) {
+      for(auto c: m.cells()) xvals[c.id()] = sf[c];
       status = TECDAT112( &num_elem, xvals.data(), &VIsDouble );
       assert( status == 0 && "error with TECDAT" );
     } // for
-  } // for
-
-  //============================================================================
-  // WRITE CONNECTIVITY
-  //============================================================================
-
-  // element definitions
-  vector<tec_int_t> elem_conn( num_elem * num_nodes_per_elem );
-  auto i = 0;
-  for (auto c : m.cells()) {
-    for (auto v : m.vertices(c)) {
-      elem_conn[i] = v.id() + 1;
-      i++;
+    for(auto sf: ispac) {
+      // cast int fields to real_t
+      for(auto c: m.cells()) xvals[c.id()] = (tec_real_t)sf[c];
+      status = TECDAT112( &num_elem, xvals.data(), &VIsDouble );
+      assert( status == 0 && "error with TECDAT" );
     } // for
-  } // for
+    for(auto vf: rvpac) {
+      for(int d=0; d < num_dims; ++d) {
+        for(auto c: m.cells()) xvals[c.id()] = vf[c][d];
+        status = TECDAT112( &num_elem, xvals.data(), &VIsDouble );
+        assert( status == 0 && "error with TECDAT" );
+      } // for
+    } // for
 
-  status = TECNOD112( elem_conn.data() );
-  assert( status == 0 && "error with TECNOD" );
+    //--------------------------------------------------------------------------
+    // WRITE CONNECTIVITY
+    //--------------------------------------------------------------------------
+
+    // element definitions
+    vector<tec_int_t> elem_conn( num_elem * num_nodes_per_elem );
+    auto i = 0;
+    for (auto c : m.cells()) {
+      for (auto v : m.vertices(c)) {
+        elem_conn[i] = v.id() + 1;
+        i++;
+      } // for
+    } // for
+
+    status = TECNOD112( elem_conn.data() );
+    assert( status == 0 && "error with TECNOD" );
 
 
-  //============================================================================
-  // CLOSE FILE
-  //============================================================================
+    //--------------------------------------------------------------------------
+    // CLOSE FILE
+    //--------------------------------------------------------------------------
 
-  status = TECEND112();
-  assert( status == 0 && "error with TECEND" );
+    status = TECEND112();
+    assert( status == 0 && "error with TECEND" );
 
   
-  return status;
+    return status;
 
 
 #else
 
-  std::cerr << "FLECSI not build with tecio support." << std::endl;
-  std::exit(1);
+    std::cerr << "FLECSI not build with tecio support." << std::endl;
+    std::exit(1);
 
-  return -1;
+    return -1;
 
 #endif
 
-} // io_tecplot_binary_t::write
+  } // io_tecplot_binary_t::write
+
+    //============================================================================
+    //! Implementation of tecplot mesh read for burton specialization.
+    //!
+    //! \param[in] name Read burton mesh \e m to \e name.
+    //! \param[in] m Burton mesh to Read to \e name.
+    //!
+    //! \return tecplot error code. 0 on success.
+    //!
+    //============================================================================
+  int32_t read( const std::string &name, burton_mesh_t &m) 
+  {
+    raise_implemented_error( "No tecplot read functionality has been implemented" );
+  };
+
+
+}; // io_tecplot_ascii_t
+
 
 ////////////////////////////////////////////////////////////////////////////////
-//! Implementation of tecplot mesh read for burton specialization.
+//! \brief Create an io_tecplot_ascii_t and return a pointer to the base class.
 //!
-//! \param[in] name Read burton mesh \e m to \e name.
-//! \param[in] m Burton mesh to Read to \e name.
+//! \tparam mesh_t Mesh type for io_tecplot_ascii_t.
 //!
-//! \return tecplot error code. 0 on success.
-//!
+//! \return Pointer to io_base_t base class of io_tecplot_ascii_t.
 ////////////////////////////////////////////////////////////////////////////////
-template<>
-inline
-int32_t 
-flecsi::io_tecplot_binary_t<burton_mesh_t>::read( const std::string &name,
-                                                  burton_mesh_t &m) 
+inline flecsi::io_base_t<burton_mesh_t> * create_io_tecplot_ascii()
 {
-  raise_implemented_error( "No tecplot read functionality has been implemented" );
-};
+  return new burton_io_tecplot_ascii_t;
+} // create_io_tecplot_ascii
 
-} // namespace flecsi
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Create an io_tecplot_binary_t and return a pointer to the base class.
+//!
+//! \tparam mesh_t Mesh type for io_tecplot_binary_t.
+//!
+//! \return Pointer to io_base_t base class of io_tecplot_binary_t.
+////////////////////////////////////////////////////////////////////////////////
+inline flecsi::io_base_t<burton_mesh_t> * create_io_tecplot_binary()
+{
+  return new burton_io_tecplot_binary_t;
+} // create_io_tecplot_binary
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! Register file extension "plt" with factory.
+////////////////////////////////////////////////////////////////////////////////
+static bool burton_tecplot_dat_registered =
+  flecsi::io_factory_t<burton_mesh_t>::instance().registerType(
+    "plt", create_io_tecplot_binary );
+
+////////////////////////////////////////////////////////////////////////////////
+//! Register file extension "dat" with factory.
+////////////////////////////////////////////////////////////////////////////////
+static bool burton_tecplot_plt_registered =
+  flecsi::io_factory_t<burton_mesh_t>::instance().registerType(
+    "dat", create_io_tecplot_ascii );
+
+
+} // namespace mesh
+} // namespace ale
 
 /*~-------------------------------------------------------------------------~-*
  * Formatting options

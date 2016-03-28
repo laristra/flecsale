@@ -21,8 +21,8 @@
 #include <iostream>
 
 // user includes
-#include "ale/common/types.h"
-#include "ale/math/matrix.h"
+#include "../../common/types.h"
+#include "../../math/matrix.h"
 
 
 // explicitly use some stuff

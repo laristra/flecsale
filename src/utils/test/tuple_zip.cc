@@ -18,8 +18,8 @@
 #include <string>
 
 // user includes
-#include "ale/utils/tuple_zip.h"
-#include "ale/utils/tuple_visit.h"
+#include "../../utils/tuple_zip.h"
+#include "../../utils/tuple_visit.h"
 
 
 // using declarations

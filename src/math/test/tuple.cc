@@ -21,8 +21,8 @@
 #include <iostream>
 
 // user includes
-#include "ale/common/types.h"
-#include "ale/math/tuple.h"
+#include "../../common/types.h"
+#include "../../math/tuple.h"
 
 
 // explicitly use some stuff

@@ -173,17 +173,23 @@ int32_t evaluate_time_step( T & mesh ) {
   auto dts = std::array<real_t,3> { dt_acc, dt_vol, dt_growth };
   auto it = std::min_element( dts.begin(), dts.end() );
 
+  cout << "Time step limit: ";
   switch ( std::distance( dts.begin(), it ) ) {
   case 0:
-    std::cout << "accoustic" << std::endl;
+    std::cout << "accoustic";
     break;
   case 1:
-    std::cout << "volume" << std::endl;
+    std::cout << "volume";
     break;
   case 2:
-    std::cout << "growth" << std::endl;
+    std::cout << "growth";
     break;
+  default:
+    std::cout << "unknown";
+    raise_runtime_error( "could not determine time step limit" );
+    break;    
   };
+  cout << endl;
 
   // invert dt and check against growth
   *time_step = *it;
@@ -234,8 +240,8 @@ int32_t evaluate_corner_coef( T & mesh ) {
 
     // get the two wedge normals of the corner
     auto wedges = cn->wedges();
-    auto n_plus  = wedges.front()->cell_facet_normal();
-    auto n_minus = wedges.back() ->cell_facet_normal();
+    auto n_plus  = wedges.front()->facet_normal_right();
+    auto n_minus = wedges.back() ->facet_normal_left();
     auto l_plus  = abs(n_plus);
     auto l_minus = abs(n_minus);
     auto un_plus  = unit(n_plus);
@@ -312,8 +318,6 @@ int32_t evaluate_nodal_state( T & mesh ) {
   auto Mpc = access_state( mesh, "corner_matrix", matrix_t );
   auto npc = access_state( mesh, "corner_normal", vector_t );
 
-  //cout << endl;
-
   //----------------------------------------------------------------------------
   // Loop over each vertex
   for ( auto vt : mesh.vertices() ) {
@@ -376,16 +380,11 @@ int32_t evaluate_nodal_state( T & mesh ) {
     //---------- internal point
     else {
       // make sure sum(lpc) = 0
-      //assert( abs(np) < eps && "error in norms" );
+      assert( abs(np) < eps && "error in norms" );
       // now solve for point velocity
       vertex_vel[vt] = math::solve( Mp, rhs );
     } // point type
 
-
-    //auto vx = vt->coordinates();    
-    //auto r = std::sqrt( vx[0]*vx[0] + vx[1]*vx[1] );
-    //if ( r < 0.11 )
-    //std::cout << vx << " => " << vertex_vel[vt] << std::endl;
 
   } // vertex
   //----------------------------------------------------------------------------
@@ -504,9 +503,9 @@ int32_t apply_update( T & mesh, real_t coef ) {
   // the time step factor
   auto fact = coef * delta_t;
 
-  vector_t mom0(0), mom1(0);
-  real_t ener0(0), ener1(0);
-  //cout << endl;
+  real_t mass(0);
+  vector_t mom(0);
+  real_t ener(0);
  
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
@@ -515,39 +514,34 @@ int32_t apply_update( T & mesh, real_t coef ) {
     // get the cell state
     auto u = cell_state( cell );
     
-    // pre update sums
-    auto m = eqns_t::mass(u);
-    auto v0 = eqns_t::velocity(u);
-    auto et0 = eqns_t::total_energy(u);
-    mom0  += m * v0;
-    ener0 += m * et0;
-
-    auto cx = cell->centroid();
-    auto r = std::sqrt( cx[0]*cx[0] + cx[1]*cx[1] );
-
     // now compute the final update
     auto delta_u = fact * dudt[cell];
-
-    //if ( cell.id() == 2 ) {
-    //  std::cout << cx << " => " << std::get<1>( delta_u ) << " " << std::get<2>( delta_u ) << std::endl;
-    //}
 
     // apply the update
     eqns_t::update_state_from_flux( u, delta_u );
     eqns_t::update_volume( u, cell->area() );
 
+#ifdef DEBUG
     // post update sums
-    auto v1 = eqns_t::velocity(u);
-    auto et1 = eqns_t::total_energy(u);
-    mom1  += m * v1;
-    ener1 += m * et1;
-
+    auto vel = eqns_t::velocity(u);
+    auto et = eqns_t::total_energy(u);
+    auto m  = eqns_t::mass(u);
+    mass += m;
+    mom  += m * vel;
+    ener += m * et;
+#endif
     
   } // for
   //----------------------------------------------------------------------------
 
-  //std::cout << mom0 << " " << ener0 << std::endl;
-  //std::cout << mom1 << " " << ener1 << std::endl;
+#ifdef DEBUG
+  auto ss = cout.precision();
+  cout.setf( std::ios::scientific );
+  cout.precision(8);
+  cout << "Sums: mass = " << mass << ", momentum = " << mom << ", energy = " << ener << endl;
+  cout.unsetf( std::ios::scientific );
+  cout.precision(ss);
+#endif
 
   return 0;
 

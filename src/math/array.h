@@ -88,6 +88,14 @@ public:
   //! \brief force the default copy constructor
   array(const array &) = default;
 
+
+  //! \brief fancier copy constructor
+  template <typename T2>
+  array(const array<T2,N> &rhs) 
+  {
+    std::copy(rhs.begin(),rhs.end(), begin());    
+  }
+
   //! \brief Constructor with initializer list
   //! \param[in] list the initializer list of values
   template <
@@ -268,11 +276,17 @@ public:
   // use std::move
   // http://stackoverflow.com/questions/11726171/numeric-vector-operator-overload-rvalue-reference-parameter
 
+  //!\brief  assignment with no type conversion
+  auto & operator= (const array<T,N>& rhs) {
+    if ( this != &rhs )
+      std::copy(rhs.begin(),rhs.end(), begin());    
+    return *this;
+  }
+
   //!\brief  assignment with type conversion
   template <typename T2>
   auto & operator= (const array<T2,N>& rhs) {
-    if ( this != &rhs )
-      std::copy(rhs.begin(),rhs.end(), begin());    
+    std::copy(rhs.begin(),rhs.end(), begin());    
     return *this;
   }
 

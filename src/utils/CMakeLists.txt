@@ -19,6 +19,10 @@ set(utils_HEADERS
   PARENT_SCOPE
 )
 
+set(utils_SOURCES
+  vtk.cc
+  PARENT_SCOPE
+)
 
 cinch_add_unit(utils
     SOURCES 

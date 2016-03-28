@@ -22,9 +22,9 @@
 #include <vector>
 
 // user includes
-#include "ale/common/types.h"
-#include "ale/eos/ideal_gas.h"
-#include "ale/utils/tasks.h"
+#include "../../common/types.h"
+#include "../../eos/ideal_gas.h"
+#include "../../utils/tasks.h"
 
 
 // explicitly use some stuff

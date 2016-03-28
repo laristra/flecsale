@@ -21,9 +21,9 @@
 #include <iostream>
 
 // user includes
-#include "ale/common/types.h"
-#include "ale/eqns/euler_eqns.h"
-#include "ale/eos/ideal_gas.h"
+#include "../../common/types.h"
+#include "../../eqns/euler_eqns.h"
+#include "../../eos/ideal_gas.h"
 
 
 // explicitly use some stuff

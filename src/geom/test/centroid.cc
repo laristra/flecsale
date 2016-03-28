@@ -21,9 +21,9 @@
 #include<vector>
 
 // user includes
-#include "ale/common/types.h"
-#include "ale/geom/centroid.h"
-#include "ale/geom/point.h"
+#include "../../common/types.h"
+#include "../../geom/centroid.h"
+#include "../../geom/point.h"
 
 // explicitly use some stuff
 using std::cout;

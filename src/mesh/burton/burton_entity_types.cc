@@ -15,10 +15,10 @@
 //! user includes
 #include "flecsi/mesh/mesh_topology.h"
 
-#include "ale/geom/area.h"
-#include "ale/geom/centroid.h"
-#include "ale/math/math.h"
-#include "ale/mesh/burton/burton_types.h"
+#include "../../geom/area.h"
+#include "../../geom/centroid.h"
+#include "../../math/math.h"
+#include "../../mesh/burton/burton_types.h"
 
 namespace ale {
 namespace mesh {

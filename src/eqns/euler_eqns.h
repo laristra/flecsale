@@ -170,10 +170,10 @@ public:
   static auto total_energy( const state_data_t & u )
   { 
     using math::get;
-    using math::abs;
+    using math::dot_product;
     auto ie = internal_energy( u );
     auto vel = velocity( u );
-    return ie + 0.5 * abs( vel );
+    return ie + dot_product( vel, vel ) / 2;
   }
 
   //============================================================================
