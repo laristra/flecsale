@@ -348,7 +348,10 @@ public:
   burton_mesh_t & operator=(burton_mesh_t &&) = default;
 
   //! Destructor
-  ~burton_mesh_t() {}
+  ~burton_mesh_t() {
+    // multiple initializations of the data singleton
+    data_t::instance().reset( mesh_.runtime_id() );
+  }
 
 
   /*!
