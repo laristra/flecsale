@@ -109,8 +109,8 @@ TEST_F(Burton, gradients) {
       (dudy*dxdx-dudx*dxdy) * denom;
 
     // make sure the gradient is 1
-    ASSERT_NEAR( 1, dudx_ave, tol );
-    ASSERT_NEAR( 1, dudy_ave, tol );
+    ASSERT_NEAR( 1, dudx_ave, test_tolerance );
+    ASSERT_NEAR( 1, dudy_ave, test_tolerance );
   }
 
   //---------------------------------------------------------------------------
@@ -164,11 +164,11 @@ TEST_F(Burton, gradients) {
       (dudy*dxdx-dudx*dxdy) * denom;
 
     // make sure the gradient is du/dx = {1,0} and du/dy = {0,1}
-    ASSERT_NEAR( 1, dudx_ave[0], tol );
-    ASSERT_NEAR( 0, dudx_ave[1], tol );
+    ASSERT_NEAR( 1, dudx_ave[0], test_tolerance );
+    ASSERT_NEAR( 0, dudx_ave[1], test_tolerance );
 
-    ASSERT_NEAR( 0, dudy_ave[0], tol );
-    ASSERT_NEAR( 1, dudy_ave[1], tol );
+    ASSERT_NEAR( 0, dudy_ave[0], test_tolerance );
+    ASSERT_NEAR( 1, dudy_ave[1], test_tolerance );
   }
 
 

@@ -21,8 +21,8 @@
 #include <cinchtest.h>
 
 //! user includes
-#include "ale/common/types.h"
-#include "ale/mesh/burton/burton.h"
+#include "../../../common/types.h"
+#include "../../../mesh/burton/burton.h"
 
 //! \brief the mesh type
 using mesh_t   = ale::mesh::burton_mesh_t;
@@ -65,7 +65,7 @@ public:
   static constexpr size_t height = 2;
 
   //! \brief some test tolerance
-  static constexpr real_t tol = ale::common::test_tolerance;
+  static constexpr real_t test_tolerance = ale::common::test_tolerance;
 
 protected:
   

@@ -15,9 +15,9 @@
 #pragma once
 
 #include "flecsi/mesh/mesh_types.h"
-#include "ale/geom/normal.h"
-#include "ale/math/math.h"
-#include "ale/mesh/burton/burton_mesh_traits.h"
+#include "../../geom/normal.h"
+#include "../../math/math.h"
+#include "../../mesh/burton/burton_mesh_traits.h"
 
 /*!
  * \file burton_entity_types.h
@@ -85,7 +85,7 @@ public:
   static constexpr size_t num_domains = burton_mesh_traits_t::num_domains;
 
   //! Constructor
-  burton_vertex_t() {}
+  burton_vertex_t(mesh_topology_base_t & mesh) : mesh_(mesh) {}
 
   /*!
     \brief Set the coordinates for a vertex.
@@ -95,7 +95,7 @@ public:
   void set_coordinates(const point_t & coordinates)
   {
     auto c = data_t::instance().dense_accessor<point_t, flecsi_internal>(
-      "coordinates");
+      "coordinates", mesh_.runtime_id() );
     c[mesh_entity_base_t<num_domains>::template id<0>()] = coordinates;
   } // set_coordinates
 
@@ -106,7 +106,7 @@ public:
   const point_t & coordinates() const
   {
     const auto c = data_t::instance().dense_accessor<point_t, flecsi_internal>(
-      "coordinates");
+      "coordinates", mesh_.runtime_id() );
     return c[mesh_entity_base_t<num_domains>::template id<0>()];
   } // coordinates
 
@@ -118,7 +118,7 @@ public:
   point_t & coordinates()
   {
     auto c = data_t::instance().dense_accessor<point_t, flecsi_internal>(
-      "coordinates");
+      "coordinates", mesh_.runtime_id() );
     return c[mesh_entity_base_t<num_domains>::template id<0>()];
   } // coordinates
 
@@ -126,9 +126,15 @@ public:
   bool is_boundary() const
   {
     auto flag =
-      data_t::instance().dense_accessor<bitfield_t, flecsi_internal>("point_flags");
+      data_t::instance().dense_accessor<bitfield_t, flecsi_internal>(
+        "point_flags", mesh_.runtime_id() );
     return flag[mesh_entity_base_t<num_domains>::template id<0>()].bitset(0);
   }
+
+ private:
+
+  //! a reference to the mesh topology
+  const mesh_topology_base_t & mesh_;
 
 }; // class burton_vertex_t
 
@@ -180,7 +186,8 @@ struct burton_edge_t
   bool is_boundary() const
   {
     auto flag =
-      data_t::instance().dense_accessor<bitfield_t, flecsi_internal>("edge_flags");
+      data_t::instance().dense_accessor<bitfield_t, flecsi_internal>(
+        "edge_flags", mesh_.runtime_id() );
     return flag[mesh_entity_base_t<num_domains>::template id<0>()].bitset(0);
   }
 
@@ -479,43 +486,6 @@ public:
 
   //! Get the corner that a wedge is in.
   const burton_corner_t * corner() const { return corner_; }
-
-  /*!
-    \brief Get the side facet normal for the wedge.
-    \return Side facet normal vector.
-   */
-  vector_t side_facet_normal() const
-  {
-    // Use the edge midpoint and the cell centroid to create the normal vector.
-    // Multiply normal by the sign of the dot between the normal and the vector
-    // from v to e to get "outward facing" normal.
-    auto c = cell()->centroid();
-    auto e = edge()->midpoint();
-    auto v = vertex()->coordinates();
-    auto nrml = geom::normal(c,e);
-    auto delta = e - v;
-    auto dot = dot_product(nrml, delta);
-    return nrml * math::sgn(dot);
-  }
-
-  /*!
-    \brief Get the cell facet normal for the wedge.
-    \return Cell facet normal vector.
-   */
-  vector_t cell_facet_normal() const
-  {
-    // Use the edge midpoint and vertex to create the normal vector.
-    // Multiply normal by the sign of the dot between the normal and the vector
-    // from c to e to get "outward facing" normal.
-    auto e = edge()->midpoint();
-    auto c = cell()->centroid();
-    auto nrml = 0.5 * edge()->normal();
-    auto delta = e-c;
-    auto dot = dot_product(nrml, delta);
-    return nrml * math::sgn(dot);
-  }
-
-
 
   /*!
     \brief Get the cell facet normal for the wedge.

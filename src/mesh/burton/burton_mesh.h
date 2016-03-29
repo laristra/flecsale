@@ -26,7 +26,7 @@
 #include "flecsi/data/data.h"
 #include "flecsi/execution/task.h"
 
-#include "ale/mesh/burton/burton_types.h"
+#include "../../mesh/burton/burton_types.h"
 
 namespace ale {
 namespace mesh {
@@ -105,23 +105,33 @@ public:
     switch (site) {
       case attachment_site_t::vertices:
         return data_.register_state<T>(
-            key, num_vertices(), attachment_site_t::vertices, attributes);
+            key, num_vertices(), mesh_.runtime_id(), 
+            attachment_site_t::vertices, attributes 
+        );
         break;
       case attachment_site_t::edges:
         return data_.register_state<T>(
-            key, num_edges(), attachment_site_t::edges, attributes);
+            key, num_edges(), mesh_.runtime_id(), 
+            attachment_site_t::edges, attributes
+        );
         break;
       case attachment_site_t::cells:
         return data_.register_state<T>(
-            key, num_cells(), attachment_site_t::cells, attributes);
+            key, num_cells(), mesh_.runtime_id(), 
+            attachment_site_t::cells, attributes 
+        );
         break;
       case attachment_site_t::corners:
         return data_.register_state<T>(
-            key, num_corners(), attachment_site_t::corners, attributes);
+            key, num_corners(), mesh_.runtime_id(), 
+            attachment_site_t::corners, attributes
+        );
         break;
       case attachment_site_t::wedges:
         return data_.register_state<T>(
-            key, num_wedges(), attachment_site_t::wedges, attributes);
+            key, num_wedges(), mesh_.runtime_id(), 
+            attachment_site_t::wedges, attributes
+        );
         break;
       default:
         assert(false && "Error: invalid state registration site.");
@@ -143,7 +153,7 @@ public:
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_state_(const const_string_t && key)
   {
-    return data_t::instance().dense_accessor<T, NS>(key);
+    return data_t::instance().dense_accessor<T, NS>( key, mesh_.runtime_id() );
   } // access_state_
 
   /*!
@@ -157,7 +167,7 @@ public:
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_type_()
   {
-    return data_t::instance().dense_accessors<T, NS>();
+    return data_t::instance().dense_accessors<T, NS>( mesh_.runtime_id() );
   } // access_type_
 
   /*!
@@ -177,7 +187,7 @@ public:
   decltype(auto) access_type_if_(P && predicate)
   {
     return data_t::instance().dense_accessors<T, P>(
-      std::forward<P>(predicate));
+      std::forward<P>(predicate), mesh_.runtime_id() );
   } // access_type_if
 
 
@@ -199,7 +209,8 @@ public:
   decltype(auto) register_global_state_(const const_string_t && key,
     bitfield_t::field_type_t attributes = 0x0) {
     return data_t::instance().register_global_state<T>(
-      key, attachment_site_t::global, attributes);
+      key, mesh_.runtime_id(), attachment_site_t::global, attributes
+    );
   } // register_state_
 
   /*!
@@ -216,7 +227,7 @@ public:
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_global_state_(const const_string_t && key)
   {
-    return data_t::instance().global_accessor<T, NS>(key);
+    return data_t::instance().global_accessor<T, NS>(key, mesh_.runtime_id());
   } // access_state_
 
   /*!
@@ -326,11 +337,11 @@ public:
   //! Default constructor
   burton_mesh_t() {}
 
-  //! Copy constructor (disabled)
-  burton_mesh_t(const burton_mesh_t &) = delete;
+  //! Assignment operator (default)
+  burton_mesh_t & operator=(const burton_mesh_t &) = default;
 
-  //! Assignment operator (disabled)
-  burton_mesh_t & operator=(const burton_mesh_t &) = delete;
+  //! Copy constructor
+  burton_mesh_t(const burton_mesh_t &src);
 
   //! allow move operations
   burton_mesh_t( burton_mesh_t && ) = default;
@@ -338,6 +349,8 @@ public:
 
   //! Destructor
   ~burton_mesh_t() {}
+
+
   /*!
     \brief Return the topological dimension of the burton mesh.
 
@@ -360,7 +373,7 @@ public:
    */
   auto get_time()
   {
-    auto soln_time = access_global_state_<real_t, flecsi_internal>("time");
+    auto soln_time = access_global_state_<real_t, flecsi_internal>( "time" );
     return *soln_time;
   }
 
@@ -369,7 +382,7 @@ public:
    */
   auto set_time(real_t soln_time)
   {
-    access_global_state_<real_t, flecsi_internal>("time") = soln_time;
+    access_global_state_<real_t, flecsi_internal>( "time" ) = soln_time;
   }
 
 
@@ -378,7 +391,7 @@ public:
    */
   auto increment_time(real_t delta_time)
   {
-    auto soln_time = access_global_state_<real_t, flecsi_internal>("time");
+    auto soln_time = access_global_state_<real_t, flecsi_internal>( "time" );
     (*soln_time) += delta_time;
     return *soln_time;
   }
@@ -388,7 +401,7 @@ public:
    */
   auto get_time_step_counter()
   {
-    auto step = access_global_state_<size_t, flecsi_internal>("time_step");
+    auto step = access_global_state_<size_t, flecsi_internal>( "time_step" );
     return *step;
   }
 
@@ -397,7 +410,7 @@ public:
    */
   auto increment_time_step_counter(size_t delta = 1)
   {
-    auto step = access_global_state_<size_t, flecsi_internal>("time_step");
+    auto step = access_global_state_<size_t, flecsi_internal>( "time_step" );
     (*step) += delta;
     return *step;
   }
@@ -480,6 +493,22 @@ public:
   {
     return mesh_.entity_ids<0, 0>(e);
   } // vertex_ids
+
+  /*!
+    \brief Return vertices for entity \e e in domain \e M.
+
+    \tparam M Domain.
+    \tparam E Entity type to get vertices for.
+
+    \param[in] e Entity to get vertices for.
+
+    \return Vertices for entity \e e in domain \e M.
+   */
+  template <size_t M, class E>
+  auto vertex_ids(const domain_entity<M, E> & e)
+  {
+    return mesh_.entity_ids<0, M, 0>(e.entity());
+  }
 
   /*--------------------------------------------------------------------------*
    * Edge Interface
@@ -839,7 +868,7 @@ public:
     auto p = access_state_<point_t, flecsi_internal>("coordinates");
     p[num_vertices()] = pos;
 
-    auto v = mesh_.make<vertex_t>();
+    auto v = mesh_.make<vertex_t>( mesh_ );
     mesh_.add_entity<0, 0>(v);
 
     return v;
@@ -877,15 +906,13 @@ public:
     \param[in] vertices The number of \e vertices to initialize the burton mesh
       with.
    */
-  void init_parameters(size_t vertices)
+  void init_parameters(size_t num_nodes)
   {
-    // FIXME: For now, we need to clear the mesh data to avoid
-    // multiple initializations of the data singleton
-    data_t::instance().reset();
-
     // register coordinate state
     data_t::instance().register_state<point_t, flecsi_internal>(
-      "coordinates", vertices, attachment_site_t::vertices, persistent);
+      "coordinates", num_nodes, mesh_.runtime_id(), 
+      attachment_site_t::vertices, persistent
+    );
   } // init_parameters
 
   /*!
@@ -894,42 +921,26 @@ public:
    */
   void init()
   {
+
     mesh_.init<0>();
     mesh_.init_bindings<1>();
 
     //mesh_.dump();
     
     // Initialize corners
-    for (auto c : corners()) {
+    for (auto cn : corners()) {
 
-      auto cl = cells(c).front();
-      auto es = edges(c).to_vec();
-      auto vt = vertices(c).front();
+      auto cl = cells(cn).front();
+      auto es = edges(cn);
+      auto vt = vertices(cn).front();
 
+      cn->set_cell(cl);
+      cn->set_edge1(es.front());
+      cn->set_edge2(es.back());
 #if 0
-      // find the common vertex and make sure
-      // its the first one
-      auto vs0 = vertices( es.front() ).to_vec(); // need this to modify the list
-      auto vs1 = vertices( es.back()  ).to_vec(); // need this to modify the list
-      if ( vs0.front() != vt )
-        std::swap( vs0.front(), vs0.back() );
-      if ( vs1.front() != vt )
-        std::swap( vs1.front(), vs1.back() );
-
-      // find the angular direction between the two edges
-      auto dir0 = vs0.back()->coordinates() - vs0.front()->coordinates();
-      auto dir1 = vs1.back()->coordinates() - vs1.front()->coordinates();
-      auto det = cross_product( dir0, dir1 );
-      std::cout << det << std::endl;
+      cn->set_edges(es);
 #endif
-
-      c->set_cell(cl);
-      c->set_edge1(es.front());
-      c->set_edge2(es.back());
-#if 0
-      c->set_edges(es);
-#endif
-      c->set_vertex(vt);
+      cn->set_vertex(vt);
       
       auto w1 = new wedge_t( mesh_ );
       w1->set_cell(cl);
@@ -943,8 +954,8 @@ public:
       w2->set_vertex(vt);
       mesh_.add_entity<num_dimensions(), 1>( w2 );
 
-      c->add_wedge(w1);
-      c->add_wedge(w2);
+      cn->add_wedge(w1);
+      cn->add_wedge(w2);
     } // for
 
     // get the data instance
@@ -952,18 +963,24 @@ public:
 
     // register time state
     auto soln_time = data_.register_global_state<real_t, flecsi_internal>(
-      "time", attachment_site_t::global, persistent);
+      "time", mesh_.runtime_id(), attachment_site_t::global, persistent
+    );
     soln_time = 0;
 
     auto step = data_.register_global_state<real_t, flecsi_internal>(
-      "time_step", attachment_site_t::global, persistent);
+      "time_step", mesh_.runtime_id(), attachment_site_t::global, persistent
+    );
     *step = 0;
 
     // register some flags for identifying boundarys
     auto point_flags = data_.register_state<bitfield_t, flecsi_internal>(
-      "point_flags", num_vertices(), attachment_site_t::vertices, persistent);
+      "point_flags", num_vertices(), mesh_.runtime_id(), 
+      attachment_site_t::vertices, persistent
+    );
     auto edge_flags = data_.register_state<bitfield_t, flecsi_internal>(
-      "edge_flags", num_edges(), attachment_site_t::edges, persistent);
+      "edge_flags", num_edges(), mesh_.runtime_id(), 
+      attachment_site_t::edges, persistent
+    );
 
     // now set the boundary flags
     for ( auto e : edges() ) {
@@ -981,6 +998,9 @@ public:
 
   } // init
 
+  /*
+    Print some statistics.
+   */
   friend std::ostream& operator<< (std::ostream& stream, const burton_mesh_t& mesh);
 
  private:
@@ -993,6 +1013,43 @@ public:
 /*----------------------------------------------------------------------------*
  * burton_mesh_t Friends
  *----------------------------------------------------------------------------*/
+
+
+/*!
+  \brief Copy constructor.
+
+  \param[in] the mesh to copy.
+
+ */
+inline
+burton_mesh_t::burton_mesh_t(const burton_mesh_t &src)
+{
+  
+  // FIXME!!!
+  auto & src_mesh = const_cast<burton_mesh_t&>( src );
+
+  std::vector<vertex_t*> vs;
+
+  init_parameters( src_mesh.num_vertices() );
+
+  for ( auto v : src_mesh.vertices() ) {
+    auto vert = create_vertex( v->coordinates() );
+    vs.emplace_back( std::move(vert) );
+  }
+
+  for ( auto c : src_mesh.cells() ) {
+    auto ids = src_mesh.vertex_ids( c );
+    create_cell(  { 
+        vs[ ids[0] ],
+        vs[ ids[1] ],
+        vs[ ids[2] ],
+        vs[ ids[3] ] } );   
+  } // for
+
+  mesh_.init();
+
+}
+
 
 /*!
   \brief Print some statistics.

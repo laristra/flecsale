@@ -30,12 +30,21 @@
 
 //! user includes
 #include "flecsi/io/io_base.h"
-#include "ale/mesh/burton/burton_mesh.h"
-#include "ale/utils/errors.h"
+#include "../../mesh/burton/burton_mesh.h"
+#include "../../utils/errors.h"
+#include "../../utils/string_utils.h"
 
 
 namespace ale {
 namespace mesh {
+
+//! class for variable locations
+enum class tec_var_location_t 
+{
+  cell = 0,
+  node = 1
+};
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \class io_tecplot_ascii_t io_tecplot.h
@@ -97,20 +106,18 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
     std::string var_ext[3];
     var_ext[0] = "_x"; var_ext[1] = "_y";  var_ext[2] = "_z";
 
-    // class for variable locations
-    enum class var_location_t 
-    {
-      cell = 0,
-        node = 1
-        };
-
     // collect the variables
-    vector< pair<string,var_location_t> > variables;
+    vector< pair<string,tec_var_location_t> > variables;
 
     // write the coordinate names
-    variables.emplace_back( make_pair( "x", var_location_t::node ) );
-    variables.emplace_back( make_pair( "y", var_location_t::node ) );
+    variables.emplace_back( make_pair( "x", tec_var_location_t::node ) );
+    variables.emplace_back( make_pair( "y", tec_var_location_t::node ) );
 
+
+    // a lambda function for validating strings
+    auto validate_string = []( auto && str ) {
+      return std::forward<decltype(str)>(str);
+    };
 
     //----------------------------------------------------------------------------
     // nodal field data
@@ -128,15 +135,19 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
     num_nf += num_dims*rvpav.size();
 
     // fill node variable names array
-    for(auto sf: rspav) 
-      variables.emplace_back( make_pair( sf.label(), var_location_t::node ) );
-    for(auto sf: ispav) 
-      variables.emplace_back( make_pair( sf.label(), var_location_t::node ) );
+    for(auto sf: rspav) {
+      auto label = validate_string( sf.label() );
+      variables.emplace_back( make_pair( label, tec_var_location_t::node ) );
+    }
+    for(auto sf: ispav) {
+      auto label = validate_string( sf.label() );
+      variables.emplace_back( make_pair( label, tec_var_location_t::node ) );
+    }
     for(auto vf: rvpav) {
-      auto label = vf.label();
+      auto label = validate_string( vf.label() );
       for(int d=0; d < num_dims; ++d) {
         auto dim_label = label + var_ext[d];
-        variables.emplace_back( make_pair( dim_label, var_location_t::node ) );
+        variables.emplace_back( make_pair( dim_label, tec_var_location_t::node ) );
       } // for
     } // for
   
@@ -158,15 +169,19 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
 
 
     // fill element variable names array
-    for(auto sf: rspac) 
-      variables.emplace_back( make_pair( sf.label(), var_location_t::cell ) );
-    for(auto sf: ispac) 
-      variables.emplace_back( make_pair( sf.label(), var_location_t::cell ) );
+    for(auto sf: rspac) {
+      auto label = validate_string( sf.label() );
+      variables.emplace_back( make_pair( label, tec_var_location_t::cell ) );
+    }
+    for(auto sf: ispac) {
+      auto label = validate_string( sf.label() );
+      variables.emplace_back( make_pair( label, tec_var_location_t::cell ) );
+    }
     for(auto vf: rvpac) {
-      auto label = vf.label();
+      auto label = validate_string( vf.label() );
       for(int d=0; d < num_dims; ++d) {
         auto dim_label = label + var_ext[d];
-        variables.emplace_back( make_pair( dim_label, var_location_t::cell ) );
+        variables.emplace_back( make_pair( dim_label, tec_var_location_t::cell ) );
       } // for
     } // for
 
@@ -355,23 +370,22 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     std::string var_ext[3];
     var_ext[0] = "_x"; var_ext[1] = "_y";  var_ext[2] = "_z";
 
-    // class for variable locations
-    enum class var_location_t 
-    {
-      cell = 0,
-        node = 1
-        };
-
     // collect the variables
-    vector< pair<string,var_location_t> > variables;
+    vector< pair<string,tec_var_location_t> > variables;
 
     // write the coordinate names
-    variables.emplace_back( make_pair( "x", var_location_t::node ) );
-    variables.emplace_back( make_pair( "y", var_location_t::node ) );
+    variables.emplace_back( make_pair( "x", tec_var_location_t::node ) );
+    variables.emplace_back( make_pair( "y", tec_var_location_t::node ) );
 
     //--------------------------------------------------------------------------
     // collect field data
     //--------------------------------------------------------------------------
+
+    // a lambda function for validating strings
+    auto validate_string = []( auto && str ) {
+      return utils::replace_all( std::forward<decltype(str)>(str), " ", "_" );;
+    };
+
 
 
     //----------------------------------------------------------------------------
@@ -385,23 +399,27 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
 
     // fill node variable names array
-    for(auto sf: rspav) 
-      variables.emplace_back( make_pair( sf.label(), var_location_t::node ) );
-    for(auto sf: ispav) 
-      variables.emplace_back( make_pair( sf.label(), var_location_t::node ) );
+    for(auto sf: rspav) {
+      auto label = validate_string( sf.label() );
+      variables.emplace_back( make_pair( label, tec_var_location_t::node ) );
+    }
+    for(auto sf: ispav) {
+      auto label = validate_string( sf.label() );      
+      variables.emplace_back( make_pair( label, tec_var_location_t::node ) );
+    }
     for(auto vf: rvpav) {
-      auto label = vf.label();
+      auto label = validate_string( vf.label() );
       for(int d=0; d < num_dims; ++d) {
         auto dim_label = label + var_ext[d];
-        variables.emplace_back( make_pair( dim_label, var_location_t::node ) );
+        variables.emplace_back( make_pair( dim_label, tec_var_location_t::node ) );
       } // for
     } // for
   
 
-      //----------------------------------------------------------------------------
-      // element field data
+    //----------------------------------------------------------------------------
+    // element field data
 
-      // real scalars persistent at cells
+    // real scalars persistent at cells
     auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
     // int scalars persistent at cells
     auto ispac = access_type_if(m, int, is_persistent_at(cells));
@@ -410,15 +428,19 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
 
 
     // fill element variable names array
-    for(auto sf: rspac) 
-      variables.emplace_back( make_pair( sf.label(), var_location_t::cell ) );
-    for(auto sf: ispac) 
-      variables.emplace_back( make_pair( sf.label(), var_location_t::cell ) );
+    for(auto sf: rspac) {
+      auto label = validate_string( sf.label() );
+      variables.emplace_back( make_pair( label, tec_var_location_t::cell ) );
+    }
+    for(auto sf: ispac) {
+      auto label = validate_string( sf.label() );
+      variables.emplace_back( make_pair( label, tec_var_location_t::cell ) );
+    }
     for(auto vf: rvpac) {
-      auto label = vf.label();
+      auto label = validate_string( vf.label() );
       for(int d=0; d < num_dims; ++d) {
         auto dim_label = label + var_ext[d];
-        variables.emplace_back( make_pair( dim_label, var_location_t::cell ) );
+        variables.emplace_back( make_pair( dim_label, tec_var_location_t::cell ) );
       } // for
     } // for
 

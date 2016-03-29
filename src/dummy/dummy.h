@@ -28,7 +28,7 @@
 #include <array>
 
 //! user includes could also go here ( note the path layout )
-//#include "ale/dummy/dummy.h"
+//#include "../dummy/dummy.h"
 
 // everything in src falls within the ale namespace
 namespace ale {

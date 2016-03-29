@@ -26,9 +26,9 @@
 
 //! user includes
 #include "flecsi/io/io_base.h"
-#include "ale/mesh/burton/burton_mesh.h"
-#include "ale/utils/errors.h"
-#include "ale/utils/vtk.h"
+#include "../../mesh/burton/burton_mesh.h"
+#include "../../utils/errors.h"
+#include "../../utils/vtk.h"
 
 
 namespace ale {
@@ -101,9 +101,10 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     // collect field data
     //--------------------------------------------------------------------------
 
-
-    // collect the variables
-    vector<string> variables;
+    // a lambda function for validating strings
+    auto validate_string = []( auto && str ) {
+      return std::forward<decltype(str)>(str);
+    };
 
     //----------------------------------------------------------------------------
     // nodal field data
@@ -115,19 +116,6 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     // real vectors persistent at vertices
     auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
 
-    // fill node variable names array
-    for(auto sf: rspav) 
-      variables.emplace_back( sf.label() );
-    for(auto sf: ispav) 
-      variables.emplace_back( sf.label() );
-    for(auto vf: rvpav) {
-      auto label = vf.label();
-      for(int d=0; d < num_dims; ++d) {
-        auto dim_label = label + var_ext[d];
-        variables.emplace_back( dim_label );
-      } // for
-    } // for
-  
     //----------------------------------------------------------------------------
     // element field data
 
@@ -139,26 +127,8 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
 
 
-    // fill element variable names array
-    for(auto sf: rspac) 
-      variables.emplace_back( sf.label() );
-    for(auto sf: ispac) 
-      variables.emplace_back( sf.label() );
-    for(auto vf: rvpac) {
-      auto label = vf.label();
-      for(int d=0; d < num_dims; ++d) {
-        auto dim_label = label + var_ext[d];
-        variables.emplace_back( dim_label );
-      } // for
-    } // for
-
     //--------------------------------------------------------------------------
     // WRITE HEADERS
-
-    // create the variable name string
-    string var_string;
-    for ( const auto & label : variables )
-      var_string += label + " ";
 
     // open the file
     vtk_writer writer;
@@ -221,25 +191,28 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
 
     // node field buffer
     for(auto sf: rspav) {
+      auto label = validate_string( sf.label() );
       for(auto v: m.vertices()) vals[v.id()] = sf[v];
-      status = writer.write_field( sf.label().c_str(), vals );
+      status = writer.write_field( label.c_str(), vals );
       assert( status == 0 && "error with point data" );
     } // for
     for(auto sf: ispav) {
+      auto label = validate_string( sf.label() );
       // cast int fields to real_t
       for(auto v: m.vertices()) ivals[v.id()] = sf[v];
-      status = writer.write_field( sf.label().c_str(), ivals );
+      status = writer.write_field( label.c_str(), ivals );
       assert( status == 0 && "error with point data" );
     } // for
 
     vals.resize( num_nodes * num_dims );
     for(auto vf: rvpav) {
+      auto label = validate_string( vf.label() );
       for(auto v: m.vertices()) {
         const auto & vec = vf[v];
         for ( auto i=0; i<num_dims; i++ ) 
           vals[ num_dims*v.id() + i ] = vec[i];
       } // for
-      status = writer.write_field( vf.label().c_str(), vals, num_dims );
+      status = writer.write_field( label.c_str(), vals, num_dims );
       assert( status == 0 && "error with cell data" );
     } // for
 
@@ -254,26 +227,29 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
 
     // element field buffer
     for(auto sf: rspac) {
+      auto label = validate_string( sf.label() );
       for(auto c: m.cells()) vals[c.id()] = sf[c];
-      status = writer.write_field( sf.label().c_str(), vals );
+      status = writer.write_field( label.c_str(), vals );
       assert( status == 0 && "error with cell data" );
     } // for
     for(auto sf: ispac) {
+      auto label = validate_string( sf.label() );
       // cast int fields to real_t
       for(auto c: m.cells()) ivals[c.id()] = sf[c];
-      status = writer.write_field( sf.label().c_str(), ivals );
+      status = writer.write_field( label.c_str(), ivals );
       assert( status == 0 && "error with cell data" );
     } // for
     
     // vectors
     vals.resize( num_elem * num_dims );
     for(auto vf: rvpac) {
+      auto label = validate_string( vf.label() );
       for(auto c: m.cells()) {
         const auto & vec = vf[c];
         for ( auto i=0; i<num_dims; i++ ) 
           vals[ num_dims*c.id() + i ] = vec[i];
       } // for
-      status = writer.write_field( vf.label().c_str(), vals, num_dims );
+      status = writer.write_field( label.c_str(), vals, num_dims );
       assert( status == 0 && "error with cell data" );
     } // for
 
@@ -284,6 +260,8 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     // Create ZONE header
     status = writer.close();
     assert( status == 0 && "error with close" );
+
+    return status;
 
 
   } // io_vtk_t::write

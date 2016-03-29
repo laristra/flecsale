@@ -39,6 +39,7 @@ set( mesh_LIBS
 cinch_add_unit(mesh
     SOURCES 
       burton/test/burton.cc
+      burton/test/burton_copy.cc
       burton/test/burton_io.cc
       burton/test/gradients.cc
     INPUTS burton/test/burton.blessed

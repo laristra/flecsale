@@ -19,7 +19,7 @@
 
 //! user includes
 #include "flecsi/io/io.h"
-#include "ale/mesh/burton/burton_mesh.h"
+#include "../../mesh/burton/burton_mesh.h"
 
 
 /*!
@@ -233,9 +233,9 @@ using flecsi::temporary;
  * Delayed includes
  *----------------------------------------------------------------------------*/
 
-#include "ale/mesh/burton/burton_io_exodus.h"
-#include "ale/mesh/burton/burton_io_tecplot.h"
-#include "ale/mesh/burton/burton_io_vtk.h"
+#include "../../mesh/burton/burton_io_exodus.h"
+#include "../../mesh/burton/burton_io_tecplot.h"
+#include "../../mesh/burton/burton_io_vtk.h"
 
 namespace ale {
 namespace mesh {

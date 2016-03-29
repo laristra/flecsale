@@ -8,6 +8,7 @@ set(utils_HEADERS
   const_string.h
   exceptions.h
   errors.h
+  string_utils.h
   static_for.h     detail/static_for.h
   tasks.h          detail/tasks.h
   template_helpers.h  detail/template_helpers.h

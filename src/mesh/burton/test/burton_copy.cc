@@ -10,37 +10,37 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file point.h
+ * \file burton_io.cc
  * 
- * \brief Provides a dimensioned array which functions as a vector.
+ * \brief Tests io of the burton mesh.
  *
  ******************************************************************************/
-#pragma once
 
 //! user includes
-#include "../math/vector.h"
-
-namespace ale {
-namespace geom {
-
+#include "burton_test.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-//!  \brief The dimensioned_array type provides a general base for defining
-//!  contiguous array types that have a specific dimension.
-//!
-//!  \tparam T The type of the array, e.g., P.O.D. type.
-//!  \tparam D The dimension of the array, i.e., the number of elements
-//!    to be stored in the array.
+//! \brief test copying the mesh
 ////////////////////////////////////////////////////////////////////////////////
-template <typename T, std::size_t D> 
-using point = math::vector<T,D>;
+TEST_F(Burton, copy) {
 
-  
+  for(auto v : mesh_.vertices()){
+    CINCH_CAPTURE() << "----------- vertex id: " << v.id()
+      << " with coordinates " << v->coordinates() << std::endl;
+  } // for
 
-} // namespace
-} // namespace
+  auto mesh_copy = mesh_;
 
-/*~-------------------------------------------------------------------------~-*
+  for(auto v : mesh_copy.vertices()){
+    CINCH_CAPTURE() << "----------- vertex id: " << v.id()
+      << " with coordinates " << v->coordinates() << std::endl;
+  } // for
+
+  std::cout << CINCH_DUMP() << std::endl;
+
+} // TEST
+
+/*~------------------------------------------------------------------------~--*
  * Formatting options
  * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/
+ *~------------------------------------------------------------------------~--*/

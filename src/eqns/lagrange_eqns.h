@@ -18,10 +18,10 @@
 #pragma once
 
 //! user includes
-#include "ale/math/tuple.h"
-#include "ale/math/math.h"
-#include "ale/math/vector.h"
-#include "ale/utils/const_string.h"
+#include "../math/tuple.h"
+#include "../math/math.h"
+#include "../math/vector.h"
+#include "../utils/const_string.h"
 
 namespace ale {
 namespace eqns {

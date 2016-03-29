@@ -28,7 +28,7 @@
 
 //! user includes
 #include "flecsi/io/io_base.h"
-#include "ale/mesh/burton/burton_mesh.h"
+#include "../../mesh/burton/burton_mesh.h"
 
 
 namespace ale {
@@ -282,6 +282,12 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
     // - first step starts at 1
     auto time_step = 1;
 
+
+    // a lambda function for validating strings
+    auto validate_string = []( auto && str ) {
+      return std::forward<decltype(str)>(str);
+    };
+
     //--------------------------------------------------------------------------
     // nodal field data
 
@@ -309,14 +315,16 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
     // fill node variable names array
     int inum = 1;
     for(auto sf: rspav) {
-      status = ex_put_var_name(exoid, "n", inum++, sf.label().c_str());
+      auto label = validate_string( sf.label() );      
+      status = ex_put_var_name(exoid, "n", inum++, label.c_str());
       assert(status == 0);
     } // for
     for(auto sf: ispav) {
-      status = ex_put_var_name(exoid, "n", inum++, sf.label().c_str());
+      auto label = validate_string( sf.label() );
+      status = ex_put_var_name(exoid, "n", inum++, label.c_str());
     } // for
     for(auto vf: rvpav) {
-      auto label = vf.label();
+      auto label = validate_string( vf.label() );
       for(int d=0; d < num_dims; ++d) {
         auto dim_label = label + var_ext[d];
         status = ex_put_var_name(exoid, "n", inum++, dim_label.c_str());
@@ -373,15 +381,17 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
     // fill element variable names array
     inum = 1;
     for(auto sf: rspac) {
-      status = ex_put_var_name(exoid, "e", inum++, sf.label().c_str());
+      auto label = validate_string( sf.label() );
+      status = ex_put_var_name(exoid, "e", inum++, label.c_str());
       assert(status == 0);
     } // for
     for(auto sf: ispac) {
-      status = ex_put_var_name(exoid, "e", inum++, sf.label().c_str());
+      auto label = validate_string( sf.label() );
+      status = ex_put_var_name(exoid, "e", inum++, label.c_str());
       assert(status == 0);
     } // for
     for(auto vf: rvpac) {
-      auto label = vf.label();
+      auto label = validate_string( vf.label() );
       for(int d=0; d < num_dims; ++d) {
         auto dim_label = label + var_ext[d];
         status = ex_put_var_name(exoid, "e", inum++, dim_label.c_str());

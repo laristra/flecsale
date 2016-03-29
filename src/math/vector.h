@@ -18,7 +18,7 @@
 #pragma once
 
 //! user includes
-#include "ale/math/array.h"
+#include "../math/array.h"
 
 namespace ale {
 namespace math {

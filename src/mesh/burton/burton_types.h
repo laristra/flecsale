@@ -16,8 +16,8 @@
 
 //! user incldues
 #include "flecsi/mesh/mesh_topology.h"
-#include "ale/mesh/burton/burton_mesh_traits.h"
-#include "ale/mesh/burton/burton_entity_types.h"
+#include "../../mesh/burton/burton_mesh_traits.h"
+#include "../../mesh/burton/burton_entity_types.h"
 
 /*!
  * \file burton_types.h

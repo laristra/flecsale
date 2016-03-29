@@ -48,18 +48,29 @@ TEST_F(Burton, mesh) {
 
   CINCH_CAPTURE() << separator;
   CINCH_CAPTURE() << "mesh" << endl;
+
   CINCH_CAPTURE() << separator;
   CINCH_CAPTURE() << "Vertices in mesh:" << endl;
-  for(auto v : mesh_.vertices()){
+
+  for(auto v : mesh_.vertices()) {
     CINCH_CAPTURE() << "----------- vertex id: " << v.id()
       << " with coordinates " << v->coordinates() << endl;
   } // for
 
   CINCH_CAPTURE() << separator;
   CINCH_CAPTURE() << "Edges in mesh:" << endl;
-  for(auto e : mesh_.edges()){
+
+  for(auto e : mesh_.edges()) {
     CINCH_CAPTURE() << "----------- edge id: " << e.id()
       << " with midpoint " << e->midpoint() << endl;
+  } // for
+
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "Cells in mesh:" << endl;
+
+  for(auto c : mesh_.cells()) {
+    CINCH_CAPTURE() << "----------- cell id: " << c.id()
+      << " with centroid " << c->centroid() << endl;
   } // for
 
   CINCH_CAPTURE() << separator;
@@ -67,10 +78,6 @@ TEST_F(Burton, mesh) {
 
   for(auto c : mesh_.corners()) {
     CINCH_CAPTURE() << "----------- corner id: " << c.id() << endl;
-
-    for(auto e: mesh_.edges(c)) {
-      CINCH_CAPTURE() << "       ++++ edge id: " << e.id() << endl;
-    } // for
   } // for
 
   CINCH_CAPTURE() << separator;
@@ -78,52 +85,92 @@ TEST_F(Burton, mesh) {
 
   for(auto w : mesh_.wedges()) {
     CINCH_CAPTURE() << "----------- wedge id: " << w.id() << endl;
-
-    for(auto c: mesh_.cells(w)) {
-      CINCH_CAPTURE() << "       ++++ cell id: " << c.id() << endl;
-    } // for
-
-    for(auto e: mesh_.edges(w)) {
-      CINCH_CAPTURE() << "       ++++ edge id: " << e.id() << endl;
-    } // for
-
-    for(auto v: mesh_.vertices(w)) {
-      CINCH_CAPTURE() << "       ++++ vertex id: " << v.id() << endl;
-    } // for
   } // for
 
   CINCH_CAPTURE() << separator;
   CINCH_CAPTURE() << "For each vertex:" << endl;
+
   for(auto v: mesh_.vertices()) {
-    CINCH_CAPTURE() << "^^^^^^^^Vertex id: " << v.id()
-      << " with coordinates " << v->coordinates() << endl;
-    CINCH_CAPTURE() << "    ----Wedges:" << endl;
-    for(auto w: mesh_.wedges(v)) {
-      CINCH_CAPTURE() << "    ++++ wedge id: " << w.id() << endl;
-    } // for
+    CINCH_CAPTURE() << "^^^^^^^^Vertex id: " << v.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Corners:" << endl;
+    for(auto c: mesh_.corners(v))
+      CINCH_CAPTURE() << "    ++++ corner id: " << c.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Cells:" << endl;
+    for(auto c: mesh_.cells(v))
+      CINCH_CAPTURE() << "    ++++ cell id: " << c.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Edges:" << endl;
+    for(auto e: mesh_.edges(v))
+      CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
+  } // for
+
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "For each edge:" << endl;
+
+  for(auto e : mesh_.edges()) {
+    CINCH_CAPTURE() << "^^^^^^^^Edge id: " << e.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Corners:" << endl;
+    for(auto cnr : mesh_.corners(e))
+      CINCH_CAPTURE() << "    ++++ corner id: " << cnr.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Cells:" << endl;
+    for(auto c : mesh_.cells(e))
+      CINCH_CAPTURE() << "    ++++ cell id: " << c.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Vertices:" << endl;
+    for(auto v : mesh_.vertices(e))
+      CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
+
   } // for
 
   CINCH_CAPTURE() << separator;
   CINCH_CAPTURE() << "For each cell:" << endl;
+
   for(auto c : mesh_.cells()) {
-    CINCH_CAPTURE() << "^^^^^^^^Cell id: " << c.id()
-      << " with centroid " << c->centroid() << endl;
-
-    CINCH_CAPTURE() << "    ----Edges:" << endl;
-    for(auto e : mesh_.edges(c)){
-      CINCH_CAPTURE() << "    ++++ edge id: " << e.id()
-        << " with midpoint " << e->midpoint() << endl;
-    } // for
-
-    CINCH_CAPTURE() << "    ----Wedges:" << endl;
-    for(auto w : mesh_.wedges(c)){
-      CINCH_CAPTURE() << "    ++++ wedge id: " << w.id() << endl;
-    } // for
+    CINCH_CAPTURE() << "^^^^^^^^Cell id: " << c.id() << endl;
 
     CINCH_CAPTURE() << "    ----Corners:" << endl;
-    for(auto cnr : mesh_.corners(c)){
+    for(auto cnr : mesh_.corners(c))
       CINCH_CAPTURE() << "    ++++ corner id: " << cnr.id() << endl;
-    } // for
+
+    CINCH_CAPTURE() << "    ----Edges:" << endl;
+    for(auto e : mesh_.edges(c))
+      CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Vertices:" << endl;
+    for(auto v : mesh_.vertices(c))
+      CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
+
+  } // for
+
+
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "For each corner:" << endl;
+
+  for(auto c : mesh_.corners()) {
+    CINCH_CAPTURE() << "^^^^^^^^Corner id: " << c.id() << endl;
+
+#if 0
+    CINCH_CAPTURE() << "    ----Wedges:" << endl;
+    for(auto w: mesh_.wedges(c)) 
+      CINCH_CAPTURE() << "    ++++ wedge id: " << w.id() << endl;
+#endif
+
+    CINCH_CAPTURE() << "    ----Cells:" << endl;
+    for(auto cl: mesh_.cells(c)) 
+      CINCH_CAPTURE() << "    ++++ cell id: " << cl.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Edges:" << endl;
+    for(auto e: mesh_.edges(c)) 
+      CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Vertices:" << endl;
+    for(auto v: mesh_.vertices(c)) 
+      CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
+
   } // for
 
 } // TEST_F
@@ -138,44 +185,68 @@ TEST_F(Burton, geometry) {
 
   CINCH_CAPTURE() << separator;
   CINCH_CAPTURE() << "geometry" << endl;
+
   CINCH_CAPTURE() << separator;
   for(auto c: mesh_.cells()) {
     auto xc = c->centroid();
+    auto area = c->area();
+
     CINCH_CAPTURE() << "---- cell id: " << c.id()
-      << " with centroid " << xc << endl;
+      << " with centroid " << xc << " and area " << area << endl;
+
     for(auto v : mesh_.vertices(c)){
       auto xv = v->coordinates();
       CINCH_CAPTURE() << "++++ vertex id: " << v.id()
         << " with coordinates " << xv << endl;
     } // for
+
   } // for
 
+
   CINCH_CAPTURE() << separator;
-  for(auto v: mesh_.vertices()) {
-    auto xv = v->coordinates();
-    CINCH_CAPTURE() << "^^^^ vertex id: " << v.id()
-      << " with coordinates " << xv << endl;
-    for(auto w: mesh_.wedges(v)) {
+  for(auto e: mesh_.edges()) {
+    auto xc = e->midpoint();
+    auto l = e->length();
+    auto n = e->normal();
 
-      CINCH_CAPTURE() << "     ---- wedge id: " << w.id() << endl;
+    CINCH_CAPTURE() << "---- edge id: " << e.id()
+      << " with midpoint " << xc << ", length " << l 
+      << " and normal " << n << endl;
 
-      // Why do we have to do .front()?
-      auto c = mesh_.cells(w).front();
-      CINCH_CAPTURE() << "          ++++ cell id: " << c.id()
-        << " with centroid " << c->centroid() << endl;
+    for(auto v : mesh_.vertices(e)){
+      auto xv = v->coordinates();
+      CINCH_CAPTURE() << "++++ vertex id: " << v.id()
+        << " with coordinates " << xv << endl;
+    } // for
 
-      auto e = mesh_.edges(w).front();
-      CINCH_CAPTURE() << "          ++++ edge id: " << e.id()
-        << " with midpoint " << e->midpoint() << endl;
+  } // for
 
-      CINCH_CAPTURE() << "          ++++ side_facet_normal: "
-        << w->facet_normal_left() << endl;
 
-      CINCH_CAPTURE() << "          ++++ cell_facet_normal: "
-        << w->facet_normal_right() << endl;
+  CINCH_CAPTURE() << separator;
+  for(auto c: mesh_.cells()) {
+    CINCH_CAPTURE() << "^^^^^^^^Cell id: " << c.id() << endl;
+
+    vector_t sum(0);
+
+    CINCH_CAPTURE() << "    ----Corners:" << endl;
+    for ( auto cn: mesh_.corners(c) ) {
+      
+     CINCH_CAPTURE() << "    ++++ corner id: " << cn.id() << endl;
+
+      for ( auto w: cn->wedges() ) {
+        auto left  = w->facet_normal_left();
+        auto right = w->facet_normal_right();
+        CINCH_CAPTURE() << "    .... wedge" << endl;
+        CINCH_CAPTURE() << "         facet_normal_left: "  << left << endl;
+        CINCH_CAPTURE() << "         facet_normal_right: " << right << endl;
+        sum += left;
+        sum += right;
+      } // for
 
     } // for
 
+    ASSERT_NEAR( 0, sum[0], test_tolerance );
+    ASSERT_NEAR( 0, sum[1], test_tolerance );
   } // for
 
 } // TEST_F
@@ -205,97 +276,114 @@ TEST_F(Burton, accessors) {
   };  
   register_global_state(mesh_, "const", data_t);
 
-  CINCH_CAPTURE() << "Accessing state with type real_t:" << endl;
+  CINCH_CAPTURE() << "Accessing state with type real_t" << endl;
 
+  std::vector<std::string> labels;
   auto vr = access_type(mesh_, real_t);
   for(auto v: vr) {
-    CINCH_CAPTURE() << "\t" << v.label() << " has type real_t" << endl;
+    std::cout << v.label() << std::endl;
+    labels.push_back(v.label());
   } // for
 
-  CINCH_CAPTURE() << endl;
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "pressure")
+    != labels.end());
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "density")
+    != labels.end());
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "total energy")
+    != labels.end());
+  labels.clear();
 
-  CINCH_CAPTURE() << "Accessing state with type data_t:" << endl;
+  CINCH_CAPTURE() << "Accessing state with type data_t" << endl;
 
   auto vd = access_type(mesh_, data_t);
   for(auto v: vd) {
-    CINCH_CAPTURE() << "\t" << v.label() << " has type data_t" << endl;
+    labels.push_back(v.label());
   } // for
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "const")
+    != labels.end());
+  labels.clear();
 
-  CINCH_CAPTURE() << endl;
-
-  CINCH_CAPTURE() << "Accessing state with type real_t at cells:" << endl;
+  CINCH_CAPTURE() << "Accessing state with type real_t at cells" << endl;
 
   auto va = access_type_if(mesh_, real_t, is_at(cells));
   for(auto v: va) {
-    CINCH_CAPTURE() << "\t" << v.label() <<
-      " has type real_t and is at cells" << endl;
+    labels.push_back(v.label());
   } // for
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "pressure")
+    != labels.end());
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "density")
+    != labels.end());
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "total energy")
+    != labels.end());
+  labels.clear();
 
-  CINCH_CAPTURE() << endl;
-
-  CINCH_CAPTURE() << "Accessing persistent state with type real_t at cells:"
+  CINCH_CAPTURE() << "Accessing persistent state with type real_t at cells"
     << endl;
 
   auto vp = access_type_if(mesh_, real_t, is_persistent_at(cells));
 
   for(auto v: vp) {
-    CINCH_CAPTURE() << "\t" << v.label() <<
-      " has type real_t and is persistent at cells" << endl;
+    labels.push_back(v.label());
   } // for
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "pressure")
+    != labels.end());
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "total energy")
+    != labels.end());
+  labels.clear();
 
-  CINCH_CAPTURE() << endl;
-
-  CINCH_CAPTURE() << "Accessing state with type vector_t at vertices:" << endl;
+  CINCH_CAPTURE() << "Accessing state with type vector_t at vertices" << endl;
 
   auto vv = access_type_if(mesh_, vector_t, is_at(vertices));
   for(auto v: vv) {
-    CINCH_CAPTURE() << "\t" << v.label() <<
-      " has type vector_t and is at vertices" << endl;
+    labels.push_back(v.label());
   } // for
-
-  CINCH_CAPTURE() << endl;
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "velocity")
+    != labels.end());
+  labels.clear();
 
   CINCH_CAPTURE()
-    << "Accessing persistent state with type vector_t at vertices:" << endl;
+    << "Accessing persistent state with type vector_t at vertices" << endl;
 
   auto vpv = access_type_if(mesh_, vector_t, is_persistent_at(vertices));
   for(auto v: vpv) {
-    CINCH_CAPTURE() << "\t" << v.label() <<
-      " has type vector_t and is persistent at vertices" << endl;
+    labels.push_back(v.label());
   } // for
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "velocity")
+    != labels.end());
+  labels.clear();
 
-  CINCH_CAPTURE() << endl;
-
-  CINCH_CAPTURE() << "Accessing state with type vector_t at edges:" << endl;
+  CINCH_CAPTURE() << "Accessing state with type vector_t at edges" << endl;
 
   auto ve = access_type_if(mesh_, vector_t, is_at(edges));
   for(auto v: ve) {
-    CINCH_CAPTURE() << "\t" << v.label() <<
-      " has type vector_t and is at edges" << endl;
+    labels.push_back(v.label());
   } // for
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "H")
+    != labels.end());
+  labels.clear();
 
-  CINCH_CAPTURE() << endl;
-
-  CINCH_CAPTURE() << "Accessing state with type point_t at vertices:" << endl;
+  CINCH_CAPTURE() << "Accessing state with type point_t at vertices" << endl;
 
   auto pv = access_type_if(mesh_, point_t, is_at(vertices));
   for(auto v: pv) {
-    CINCH_CAPTURE() << "\t" << v.label() <<
-      " has type point_t and is at vertices" << endl;
+    labels.push_back(v.label());
   } // for
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "point_is_persistent")
+    != labels.end());
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "point_not_persistent")
+    != labels.end());
+  labels.clear();
 
-  CINCH_CAPTURE() << endl;
-
-  CINCH_CAPTURE() << "Accessing persistent state with type point_t at vertices:"
+  CINCH_CAPTURE() << "Accessing persistent state with type point_t at vertices"
             << endl;
 
   auto ppv = access_type_if(mesh_, point_t, is_persistent_at(vertices));
   for(auto v: ppv) {
-    CINCH_CAPTURE() << "\t" << v.label() <<
-      " has type point_t and is persistent at vertices" << endl;
+    labels.push_back(v.label());
   } // for
-
-  CINCH_CAPTURE() << endl;
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "point_is_persistent")
+    != labels.end());
+  labels.clear();
 
 } // TEST_F
 
@@ -328,7 +416,6 @@ TEST_F(Burton, state) {
   auto H = access_state(mesh_, "H", vector_t);
   auto cd = access_state(mesh_, "cornerdata", int32_t);
   auto wd = access_state(mesh_, "wedgedata", bool);
-  auto c = access_global_state(mesh_, "const", data_t);
 
   // cells
   ASSERT_EQ(4, mesh_.num_cells());
@@ -390,9 +477,10 @@ TEST_F(Burton, state) {
   } // for
 
   // test global data
-  c = { 1, 2 };
-  ASSERT_EQ(1, c->x);  ASSERT_EQ(1, (*c).x);
-  ASSERT_EQ(2, c->y);  ASSERT_EQ(2, (*c).y);
+  auto cnst = access_global_state(mesh_, "const", data_t);
+  cnst = { 1, 2 };
+  ASSERT_EQ(1, cnst->x);  ASSERT_EQ(1, (*cnst).x);
+  ASSERT_EQ(2, cnst->y);  ASSERT_EQ(2, (*cnst).y);
 
 } // TEST_F
 
@@ -400,8 +488,8 @@ TEST_F(Burton, state) {
 //! \brief A final test to compare the blessed file and do CINCH_DUMP().
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(Burton, cinch_dump) {
-  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED("burton.blessed"));
   cout << CINCH_DUMP() << endl;
+  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED("burton.blessed"));
 }
 
 /*~------------------------------------------------------------------------~--*
