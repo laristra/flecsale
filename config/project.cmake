@@ -23,7 +23,7 @@ cinch_add_application_directory(examples)
 # Add library targets
 #------------------------------------------------------------------------------#
 
-cinch_add_library_target(ale src)
+cinch_add_library_target(ale ale)
 
 #------------------------------------------------------------------------------#
 # Set header suffix regular expression

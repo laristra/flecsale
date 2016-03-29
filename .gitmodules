@@ -3,4 +3,4 @@
 	url = git@github.com:losalamos/cinch.git
 [submodule "flexi"]
 	path = flecsi
-	url = git@github.com:flecsi/flecsi.git
+	url = git@github.com:losalamos/flecsi.git
