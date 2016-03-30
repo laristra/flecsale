@@ -48,6 +48,7 @@ cmake \
     -DENABLE_METIS=ON \
     -DENABLE_SCOTCH=ON \
     -DENABLE_TECIO=ON \
+    -DENABLE_SHAPO=ON \
     ${TPL_DIR}
 
 #------------------------------------------------------------------------------#

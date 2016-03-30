@@ -47,6 +47,8 @@ cmake_dependent_option(ENABLE_ZLIB "Enable zlib" ON
 
 option(ENABLE_TECIO "Enable TECIO and dependencies" OFF)
 
+option(ENABLE_SHAPO "Enable ShaPo and dependencies" OFF)
+
 
 # cmake functionality
 option(TPL_DOWNLOAD_ONLY "Download libraries to TPL_DOWNLOAD_PATH and exit" OFF)
@@ -102,6 +104,7 @@ include(exodus)
 include(metis)
 include(scotch)
 include(tecio)
+include(shapo)
 
 # 
 # 
