@@ -58,6 +58,7 @@ T box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
   // create the individual vertices
   using vertex_t = typename T::vertex_t;
   std::vector<vertex_t*> vs;
+  vs.reserve(num_vertex);
   
   auto delta_x = length_x / num_cells_x;
   auto delta_y = length_y / num_cells_y;
@@ -70,7 +71,7 @@ T box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
     for(size_t i = 0; i < num_vert_x; ++i) {
       auto x = min_x + i*delta_x;
       auto v = mesh.create_vertex( {x, y} );
-      vs.push_back(v);
+      vs.emplace_back( std::move(v) );
     }
     
   }
@@ -157,7 +158,6 @@ void rotate( T & mesh, std::size_t degrees )
     v->coordinates() = rot * v->coordinates();
 
 }
-
 
 } // namespace mesh
 } // namespace ale

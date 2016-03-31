@@ -15,11 +15,12 @@
  * \file burton_mesh.h
  * \authors bergen
  * \date Initial file creation: Sep 02, 2015
- */
+ ******************************************************************************/
 
 #pragma once
 
 //! system includes
+#include <set>
 #include <string>
 
 //! user includes
@@ -27,6 +28,7 @@
 #include "flecsi/execution/task.h"
 
 #include "../../mesh/burton/burton_types.h"
+#include "../../utils/errors.h"
 
 namespace ale {
 namespace mesh {
@@ -36,28 +38,62 @@ namespace mesh {
 //! the execution poly type
 using flecsi::execution_t;
 
-/*----------------------------------------------------------------------------*
- * class burton_mesh_t
- *----------------------------------------------------------------------------*/
-
-/*!
-  \class burton_mesh_t burton_mesh.h
-  \brief A specialization of the flecsi low-level mesh topology, state and
-    execution models.
- */
+////////////////////////////////////////////////////////////////////////////////
+/// \class burton_mesh_t burton_mesh.h
+/// \brief A specialization of the flecsi low-level mesh topology, state and
+///   execution models.
+////////////////////////////////////////////////////////////////////////////////
 class burton_mesh_t
 {
 public:
 
+  //============================================================================
+  // Typedefs
+  //============================================================================
+
   //! Type for storing instance of template specialized low level mesh.
   using mesh_t = mesh_topology_t<burton_mesh_types_t>;
-
 
   //! a compile string type
   using const_string_t = flecsi::const_string_t;
   
   //! a bitfield type
   using bitfield_t = flecsi::bitfield_t;
+
+  //! Floating point data type.
+  using real_t = burton_mesh_traits_t::real_t;
+
+  //! Floating point data type.
+  using size_t = burton_mesh_traits_t::size_t;
+
+  //! Point data type.
+  using point_t = burton_mesh_traits_t::point_t;
+
+  //! Physics vector type.
+  using vector_t = burton_mesh_traits_t::vector_t;
+
+  //! Vertex type.
+  using vertex_t = burton_mesh_types_t::vertex_t;
+
+  //! Edge type.
+  using edge_t = burton_mesh_types_t::edge_t;
+
+  //! Cell type.
+  using cell_t = burton_mesh_types_t::cell_t;
+
+  //! Wedge type.
+  using wedge_t = burton_mesh_types_t::wedge_t;
+
+  //! Corner type.
+  using corner_t = burton_mesh_types_t::corner_t;
+
+  //! \brief The locations of different bits that we set as flags
+  enum bits : size_t 
+  {
+    boundary = 0 //!< the boundary bit
+  };
+
+
 
   //! Type defining the execution policy.
 #ifndef MESH_EXECUTION_POLICY
@@ -69,33 +105,29 @@ public:
   //! Type defining the data attachment sites on the burton mesh.
   using attachment_site_t = burton_mesh_traits_t::attachment_site_t;
 
+  //! the data type
   using data_t = burton_mesh_traits_t::data_t;
 
-  /*!
-    \brief Accessor type.
+  //============================================================================
+  // Dense Accessors
+  //============================================================================
 
-    \tparam T The type of the underlying data to access.
-   */
+  //! \brief Accessor type.
+  //! \tparam T The type of the underlying data to access.
   template <typename T>
   using dense_accessor_t = data_t::dense_accessor_t<T>;
 
-  /*--------------------------------------------------------------------------*
-   * Dense Accessors
-   *--------------------------------------------------------------------------*/
-
-  /*!
-    \brief Register state for the named variable at the given attachment
-      site with attributes.
-
-    \tparam T The type of the underlying data to access.
-
-    \param[in] key A name for the state variable, e.g., "density".
-    \param[in] site The data attachement site where the state variable should
-      be defined.  Valid sites are defined in flecsi::burton_mesh_traits_t.
-    \param[in] attributes A bitfield specifying various attributes of the state.
-
-    \return An accessor to the newly registered state.
-   */
+  //! \brief Register state for the named variable at the given attachment
+  //!   site with attributes.
+  //!
+  //! \tparam T The type of the underlying data to access.
+  //!
+  //! \param[in] key A name for the state variable, e.g., "density".
+  //! \param[in] site The data attachement site where the state variable should
+  //!   be defined.  Valid sites are defined in flecsi::burton_mesh_traits_t.
+  //! \param[in] attributes A bitfield specifying various attributes of the state.
+  //!
+  //! \return An accessor to the newly registered state.
   template <typename T>
   decltype(auto) register_state_(const const_string_t && key,
       attachment_site_t site, bitfield_t::field_type_t attributes = 0x0)
@@ -139,50 +171,44 @@ public:
 
   } // register_state_
 
-  /*!
-    \brief Access state associated with \e key.
-
-    \tparam T Data type of underlying state.
-    \tparam NS The namespace in which the state variable is registered.
-      See \ref data_t::register_state for additional information.
-
-    \param[in] key The \e key for the state to access.
-
-    \return Accessor to the state with \e key.
-   */
+  //! \brief Access state associated with \e key.
+  //!
+  //! \tparam T Data type of underlying state.
+  //! \tparam NS The namespace in which the state variable is registered.
+  //!   See \ref data_t::register_state for additional information.
+  //!
+  //! \param[in] key The \e key for the state to access.
+  //!
+  //! \return Accessor to the state with \e key.
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_state_(const const_string_t && key)
   {
     return data_t::instance().dense_accessor<T, NS>( key, mesh_.runtime_id() );
   } // access_state_
 
-  /*!
-    \brief Access state registered with type \e T.
-
-    \tparam T All state variables of this type will be returned.
-    \tparam NS Namespace to use.
-
-    \return A vector of accessors to state registered with type \e T.
-   */
+  //! \brief Access state registered with type \e T.
+  //!
+  //! \tparam T All state variables of this type will be returned.
+  //! \tparam NS Namespace to use.
+  //!
+  //! \return A vector of accessors to state registered with type \e T.
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_type_()
   {
     return data_t::instance().dense_accessors<T, NS>( mesh_.runtime_id() );
   } // access_type_
 
-  /*!
-    \brief Access state registered with type \e T that matches predicate
-      function of type \e P.
-
-    \tparam T All state variables of this type will be returned that match
-      predicate \e P will be returned.
-    \tparam P Predicate function type.
-
-    \param[in] predicate Predicate function.
-
-    \return Accessors to the state variables of type \e T matching the
-      predicate function.
-   */
+  //! \brief Access state registered with type \e T that matches predicate
+  //!   function of type \e P.
+  //!
+  //! \tparam T All state variables of this type will be returned that match
+  //!   predicate \e P will be returned.
+  //! \tparam P Predicate function type.
+  //!
+  //! \param[in] predicate Predicate function.
+  //!
+  //! \return Accessors to the state variables of type \e T matching the
+  //!   predicate function.
   template <typename T, typename P>
   decltype(auto) access_type_if_(P && predicate)
   {
@@ -191,20 +217,18 @@ public:
   } // access_type_if
 
 
-  /*--------------------------------------------------------------------------*
-   * Global Accessors
-   *--------------------------------------------------------------------------*/
+  //============================================================================
+  // Global Accessors
+  //============================================================================
 
-  /*!
-    \brief Register state for the named variable with attributes.
-
-    \tparam T The type of the underlying data to access.
-
-    \param[in] key A name for the state variable, e.g., "density".
-    \param[in] attributes A bitfield specifying various attributes of the state.
-
-    \return An accessor to the newly registered state.
-   */
+  //! \brief Register state for the named variable with attributes.
+  //!
+  //! \tparam T The type of the underlying data to access.
+  //!
+  //! \param[in] key A name for the state variable, e.g., "density".
+  //! \param[in] attributes A bitfield specifying various attributes of the state.
+  //!
+  //! \return An accessor to the newly registered state.
   template <typename T>
   decltype(auto) register_global_state_(const const_string_t && key,
     bitfield_t::field_type_t attributes = 0x0) {
@@ -213,50 +237,44 @@ public:
     );
   } // register_state_
 
-  /*!
-    \brief Access state associated with \e key.
-
-    \tparam T Data type of underlying state.
-    \tparam NS The namespace in which the state variable is registered.
-      See \ref data_t::register_state for additional information.
-
-    \param[in] key The \e key for the state to access.
-
-    \return Accessor to the state with \e key.
-   */
+  //! \brief Access state associated with \e key.
+  //!
+  //! \tparam T Data type of underlying state.
+  //! \tparam NS The namespace in which the state variable is registered.
+  //!   See \ref data_t::register_state for additional information.
+  //!
+  //! \param[in] key The \e key for the state to access.
+  //!
+  //! \return Accessor to the state with \e key.
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_global_state_(const const_string_t && key)
   {
     return data_t::instance().global_accessor<T, NS>(key, mesh_.runtime_id());
   } // access_state_
 
-  /*!
-    \brief Access state registered with type \e T.
-
-    \tparam T All state variables of this type will be returned.
-    \tparam NS Namespace to use.
-
-    \return A vector of accessors to state registered with type \e T.
-   */
+  //! \brief Access state registered with type \e T.
+  //!
+  //! \tparam T All state variables of this type will be returned.
+  //! \tparam NS Namespace to use.
+  //!
+  //! \return A vector of accessors to state registered with type \e T.
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_global_type_()
   {
     return data_t::instance().global_accessors<T, NS>();
   } // access_type_
 
-  /*!
-    \brief Access state registered with type \e T that matches predicate
-      function of type \e P.
-
-    \tparam T All state variables of this type will be returned that match
-      predicate \e P will be returned.
-    \tparam P Predicate function type.
-
-    \param[in] predicate Predicate function.
-
-    \return Accessors to the state variables of type \e T matching the
-      predicate function.
-   */
+  //! \brief Access state registered with type \e T that matches predicate
+  //!   function of type \e P.
+  //!
+  //! \tparam T All state variables of this type will be returned that match
+  //!   predicate \e P will be returned.
+  //! \tparam P Predicate function type.
+  //!
+  //! \param[in] predicate Predicate function.
+  //!
+  //! \return Accessors to the state variables of type \e T matching the
+  //!   predicate function.
   template <typename T, typename P>
   decltype(auto) access_global_type_if_(P && predicate)
   {
@@ -265,74 +283,24 @@ public:
   } // access_type_if
 
 
-  /*--------------------------------------------------------------------------*
-   * General Accessors
-   *--------------------------------------------------------------------------*/
+  //============================================================================
+  // General Accessors
+  //============================================================================
 
-  /*!
-    \brief Return the attributes for the state with \e key.
-
-    \param[in] key The \e key for the state to return attributes for.
-
-    \return The attributes for the state with \e key.
-   */
+  //! \brief Return the attributes for the state with \e key.
+  //!
+  //! \param[in] key The \e key for the state to return attributes for.
+  //!
+  //! \return The attributes for the state with \e key.
   decltype(auto) state_attributes_(const const_string_t && key)
   {
     return data_t::instance().meta_data<>((key)).attributes;
   } // state_attribtutes_
 
-  /*--------------------------------------------------------------------------*
-   * FIXME: Other crap
-   *--------------------------------------------------------------------------*/
 
-  // Geometry
-  //! Floating point data type.
-  using real_t = burton_mesh_traits_t::real_t;
-
-  //! Floating point data type.
-  using size_t = burton_mesh_traits_t::size_t;
-
-  //! Point data type.
-  using point_t = burton_mesh_traits_t::point_t;
-
-  //! Physics vector type.
-  using vector_t = burton_mesh_traits_t::vector_t;
-
-  // Entity types
-  //! Vertex type.
-  using vertex_t = burton_mesh_types_t::vertex_t;
-
-  //! Edge type.
-  using edge_t = burton_mesh_types_t::edge_t;
-
-  //! Cell type.
-  using cell_t = burton_mesh_types_t::cell_t;
-
-  //! 2D quadrilateral cell type.
-  using quadrilateral_cell_t = burton_mesh_types_t::quadrilateral_cell_t;
-
-  //! Wedge type.
-  using wedge_t = burton_mesh_types_t::wedge_t;
-
-  //! Corner type.
-  using corner_t = burton_mesh_types_t::corner_t;
-
-  using vertex_set_t = mesh_t::entity_set_t<0, 0>;
-
-  using edge_set_t = mesh_t::entity_set_t<1, 0>;
-
-  using cell_set_t = mesh_t::entity_set_t<2, 0>;
-
-  using corner_set_t = mesh_t::entity_set_t<1, 1>;
-
-  using wedge_set_t = mesh_t::entity_set_t<2, 1>;
-
-  //! \brief The locations of different bits that we set as flags
-  enum bits : size_t 
-  {
-    boundary = 0 //!< the boundary bit
-  };
-
+  //============================================================================
+  // Constructors
+  //============================================================================
 
   //! Default constructor
   burton_mesh_t() {}
@@ -348,50 +316,42 @@ public:
   burton_mesh_t & operator=(burton_mesh_t &&) = default;
 
   //! Destructor
-  ~burton_mesh_t() {
+  ~burton_mesh_t() 
+  {
     // multiple initializations of the data singleton
     data_t::instance().reset( mesh_.runtime_id() );
   }
 
 
-  /*!
-    \brief Return the topological dimension of the burton mesh.
+  //============================================================================
+  // Accessors
+  //============================================================================
 
-    \return A non-negative number describing the highest dimension
-      of the entities in the burton mesh, e.g., 3 for a three-dimensional
-      burton mesh.
-   */
+  //! \brief Return the topological dimension of the burton mesh.
+  //!
+  //! \return A non-negative number describing the highest dimension
+  //!   of the entities in the burton mesh, e.g., 3 for a three-dimensional
+  //!   burton mesh.
   static constexpr auto num_dimensions()
   {
     return burton_mesh_traits_t::dimension;
   } // dimension
-
-  /*--------------------------------------------------------------------------*
-   * interface for some general things
-   *--------------------------------------------------------------------------*/
-
-
-  /*!
-    \brief Return the time associated with the mesh
-   */
+  
+  //! \brief Return the time associated with the mesh
   auto get_time()
   {
     auto soln_time = access_global_state_<real_t, flecsi_internal>( "time" );
     return *soln_time;
   }
 
-  /*!
-    \brief Set the time associated with the mesh
-   */
+  //! \brief Set the time associated with the mesh
   auto set_time(real_t soln_time)
   {
     access_global_state_<real_t, flecsi_internal>( "time" ) = soln_time;
   }
 
 
-  /*!
-    \brief Set the time associated with the mesh
-   */
+  //! \brief Set the time associated with the mesh
   auto increment_time(real_t delta_time)
   {
     auto soln_time = access_global_state_<real_t, flecsi_internal>( "time" );
@@ -399,18 +359,14 @@ public:
     return *soln_time;
   }
 
-  /*!
-    \brief Return the time associated with the mesh
-   */
+  //! \brief Return the time associated with the mesh
   auto get_time_step_counter()
   {
     auto step = access_global_state_<size_t, flecsi_internal>( "time_step" );
     return *step;
   }
 
-  /*!
-    \brief Set the time associated with the mesh
-   */
+  //! \brief Set the time associated with the mesh
   auto increment_time_step_counter(size_t delta = 1)
   {
     auto step = access_global_state_<size_t, flecsi_internal>( "time_step" );
@@ -418,454 +374,391 @@ public:
     return *step;
   }
 
-  /*--------------------------------------------------------------------------*
-   * Vertex Interface
-   *--------------------------------------------------------------------------*/
+  //============================================================================
+  // Vertex Interface
+  //============================================================================
 
-  /*!
-    \brief Return number of vertices in the burton mesh.
-
-    \return The number of vertices in the burton mesh.
-   */
+  //! \brief Return number of vertices in the burton mesh.
+  //! \return The number of vertices in the burton mesh.
   size_t num_vertices() const
   {
     return mesh_.num_entities<0, 0>();
   } // num_vertices
 
-  /*!
-    \brief Return all vertices in the burton mesh.
+  //! \brief Return all vertices in the burton mesh.
+  //! \return Return all vertices in the burton mesh as a sequence for use, e.g.,
+  //!   in range based for loops.
+  auto vertices() const { return mesh_.entities<0, 0>(); } // vertices
 
-    \return Return all vertices in the burton mesh as a sequence for use, e.g.,
-      in range based for loops.
-   */
-  auto vertices() { return mesh_.entities<0, 0>(); } // vertices
-  /*!
-    \brief Return vertices associated with entity instance of type \e E.
-
-    \tparam E entity type of instance to return vertices for.
-
-    \param[in] e instance of entity to return vertices for.
-
-    \return Return vertices associated with entity instance \e e as a
-      sequence.
-   */
+  //! \brief Return vertices associated with entity instance of type \e E.
+  //!
+  //! \tparam E entity type of instance to return vertices for.
+  //!
+  //! \param[in] e instance of entity to return vertices for.
+  //!
+  //! \return Return vertices associated with entity instance \e e as a
+  //!    sequence.
   template <class E>
-  auto vertices(E * e)
+  auto vertices(E * e) const
   {
     return mesh_.entities<0, 0>(e);
   } // vertices
 
-  /*!
-    \brief Return vertices for entity \e e in domain \e M.
-
-    \tparam M Domain.
-    \tparam E Entity type to get vertices for.
-
-    \param[in] e Entity to get vertices for.
-
-    \return Vertices for entity \e e in domain \e M.
-   */
+  //! \brief Return vertices for entity \e e in domain \e M.
+  //!
+  //! \tparam M Domain.
+  //! \tparam E Entity type to get vertices for.
+  //!
+  //! \param[in] e Entity to get vertices for.
+  //!
+  //! \return Vertices for entity \e e in domain \e M.
   template <size_t M, class E>
-  auto vertices(const domain_entity<M, E> & e)
+  auto vertices(const domain_entity<M, E> & e) const
   {
     return mesh_.entities<0, M, 0>(e.entity());
   }
 
-  /*!
-    \brief Return ids for all vertices in the burton mesh.
-
-    \return Ids for all vertices in the burton mesh.
-   */
-  auto vertex_ids()
+  //! \brief Return ids for all vertices in the burton mesh.
+  //!
+  //! \return Ids for all vertices in the burton mesh.
+  auto vertex_ids() const
   {
     return mesh_.entity_ids<0, 0>();
   } // vertex_ids
 
-  /*!
-    \brief Return vertex ids associated with entity instance of type \e E.
-
-    \tparam E entity type of instance to return vertex ids for.
-
-    \param[in] e instance of entity to return vertex ids for.
-
-    \return Return vertex ids associated with entity instance \e e as a
-      sequence.
-   */
+  //! \brief Return vertex ids associated with entity instance of type \e E.
+  //!
+  //! \tparam E entity type of instance to return vertex ids for.
+  //!
+  //! \param[in] e instance of entity to return vertex ids for.
+  //!
+  //! \return Return vertex ids associated with entity instance \e e as a
+  //!   sequence.
   template <class E>
-  auto vertex_ids(E * e)
+  auto vertex_ids(E * e) const
   {
     return mesh_.entity_ids<0, 0>(e);
   } // vertex_ids
 
-  /*!
-    \brief Return vertices for entity \e e in domain \e M.
-
-    \tparam M Domain.
-    \tparam E Entity type to get vertices for.
-
-    \param[in] e Entity to get vertices for.
-
-    \return Vertices for entity \e e in domain \e M.
-   */
+  //! \brief Return vertices for entity \e e in domain \e M.
+  //!
+  //! \tparam M Domain.
+  //! \tparam E Entity type to get vertices for.
+  //!
+  //! \param[in] e Entity to get vertices for.
+  //!
+  //! \return Vertices for entity \e e in domain \e M.
   template <size_t M, class E>
-  auto vertex_ids(const domain_entity<M, E> & e)
+  auto vertex_ids(const domain_entity<M, E> & e) const
   {
     return mesh_.entity_ids<0, M, 0>(e.entity());
   }
 
-  /*--------------------------------------------------------------------------*
-   * Edge Interface
-   *--------------------------------------------------------------------------*/
+  //! \brief Return boundary  vertices in the burton mesh.
+  //! \return Return all boundary vertices in the burton mesh as a sequence for use, e.g.,
+  //!   in range based for loops.
+  auto boundary_vertices() const
+  { 
+    auto verts = vertices();
+    auto bnd_verts = verts.filter(
+      [](auto v){ return v->is_boundary(); }
+    );
+    return bnd_verts;
+  }
 
-  /*!
-    \brief Return the number of burton mesh edges.
 
-    \return The number of burton mesh edges.
-   */
+  //============================================================================
+  // Edge Interface
+  //============================================================================
+
+  //! \brief Return the number of burton mesh edges.
+  //! \return The number of burton mesh edges.
   size_t num_edges() const
   {
     return mesh_.num_entities<1, 0>();
   } // num_edges
 
-  /*!
-    \brief Return all edges in the burton mesh.
-    \return Return all edges in the burton mesh as a sequence for use, e.g., in
-      range based for loops.
-   */
-  auto edges()
-  {
-    return mesh_.entities<1, 0>();
-  } // edges
+  //! \brief Return all edges in the burton mesh.
+  //! \return Return all edges in the burton mesh as a sequence for use, e.g., in
+  //!   range based for loops.
+  auto edges() const { return mesh_.entities<1, 0>(); } // edges
 
-  /*!
-    \brief Return edges for entity \e e in domain \e M.
-
-    \tparam M Domain.
-    \tparam E Entity type to get edges for.
-
-    \param[in] e Entity to get edges for.
-
-    \return Edges for entity \e e in domain \e M.
-   */
+  //! \brief Return edges for entity \e e in domain \e M.
+  //!
+  //! \tparam M Domain.
+  //! \tparam E Entity type to get edges for.
+  //!
+  //! \param[in] e Entity to get edges for.
+  //!
+  //! \return Edges for entity \e e in domain \e M.
   template <size_t M, class E>
-  auto edges(const domain_entity<M, E> & e)
+  auto edges(const domain_entity<M, E> & e) const
   {
     return mesh_.entities<1, M, 0>(e.entity());
   } // edges
 
-/*!
-  \brief Return edges associated with entity instance of type \e E.
-
-  \tparam E entity type of instance to return edges for.
-
-  \param[in] e instance of entity to return edges for.
-
-  \return Return edges associated with entity instance \e e as a sequence.
- */
-#if 0
-  template <size_t FM, class E>
-  auto edges(domain_entity<FM,E> & e) {
-    return mesh_.entities<1,FM,0>(e.entity());
-  } // edges
-#endif
-
-  /*!
-    \brief Return ids for all edges in the burton mesh.
-
-    \return Ids for all edges in the burton mesh.
-   */
-  auto edge_ids()
+  //! \brief Return ids for all edges in the burton mesh.
+  //!
+  //! \return Ids for all edges in the burton mesh.
+  auto edge_ids() const
   {
     return mesh_.entity_ids<1, 0>();
   } // edge_ids
 
-  /*!
-    \brief Return edge ids associated with entity instance of type \e E.
-
-    \tparam E entity type of instance to return edge ids for.
-
-    \param[in] e instance of entity to return edge ids for.
-
-    \return Return edge ids associated with entity instance \e e as a sequence.
-   */
+  //! \brief Return edge ids associated with entity instance of type \e E.
+  //!
+  //! \tparam E entity type of instance to return edge ids for.
+  //!
+  //! \param[in] e instance of entity to return edge ids for.
+  //!
+  //! \return Return edge ids associated with entity instance \e e as a sequence.
   template <class E>
-  auto edge_ids(E * e)
+  auto edge_ids(E * e) const
   {
     return mesh_.entity_ids<1, 0>(e);
   } // edge_ids
 
-  /*--------------------------------------------------------------------------*
-   * Face Interface
-   *--------------------------------------------------------------------------*/
+  //! \brief Return boundary edges in the burton mesh.
+  //! \return Return all boundary vertices in the burton mesh as a sequence for use, e.g.,
+  //!   in range based for loops.
+  auto boundary_edges() const
+  { 
+    auto es = edges();
+    auto bnd_es = es.filter(
+      [](auto e){ return e->is_boundary(); }
+    );
+    return bnd_es;
+  }
 
-  /*--------------------------------------------------------------------------*
-   * Cell Interface
-   *--------------------------------------------------------------------------*/
+  //============================================================================
+  // Cell Interface
+  //============================================================================
 
-  /*!
-    \brief Return the number of cells in the burton mesh.
-
-    \return The number of cells in the burton mesh.
-   */
+  //! \brief Return the number of cells in the burton mesh.
+  //! \return The number of cells in the burton mesh.
   size_t num_cells() const
   {
     return mesh_.num_entities<num_dimensions(), 0>();
   } // num_cells
 
-  /*!
-    \brief Return all cells in the burton mesh.
-
-    \return Return all cells in the burton mesh as a sequence for use, e.g.,
-      in range based for loops.
-   */
+  //! \brief Return all cells in the burton mesh.
+  //!
+  //! \return Return all cells in the burton mesh as a sequence for use, e.g.,
+  //!   in range based for loops.
   auto cells() const
   {
     return mesh_.entities<num_dimensions(), 0>();
   } // cells
 
-  /*!
-    \brief Return all cells in the burton mesh.
-
-    \return Return all cells in the burton mesh as a sequence for use, e.g.,
-      in range based for loops.
-   */
+  //! \brief Return all cells in the burton mesh.
+  //! \return Return all cells in the burton mesh as a sequence for use, e.g.,
+  //!   in range based for loops.
   auto cells()
   {
     return mesh_.entities<num_dimensions(), 0>();
   } // cells
 
-  /*!
-    \brief Return cells associated with entity instance of type \e E.
-
-    \tparam E entity type of instance to return cells for.
-
-    \param[in] e instance of entity to return cells for.
-
-    \return Return cells associated with entity instance \e e as a sequence.
-   */
+  //! \brief Return cells associated with entity instance of type \e E.
+  //!
+  //! \tparam E entity type of instance to return cells for.
+  //!
+  //! \param[in] e instance of entity to return cells for.
+  //!
+  //! \return Return cells associated with entity instance \e e as a sequence.
   template <class E>
   auto cells(E * e)
   {
     return mesh_.entities<num_dimensions(), 0>(e);
   } // cells
 
-  /*!
-    \brief Return cells for entity \e e in domain \e M.
-
-    \tparam M Domain.
-    \tparam E Entity type to get cells for.
-
-    \param[in] e Entity to get cells for.
-
-    \return Cells for entity \e e in domain \e M.
-   */
+  //! \brief Return cells for entity \e e in domain \e M.
+  //!
+  //! \tparam M Domain.
+  //! \tparam E Entity type to get cells for.
+  //!
+  //! \param[in] e Entity to get cells for.
+  //!
+  //! \return Cells for entity \e e in domain \e M.
   template <size_t M, class E>
   auto cells(const domain_entity<M, E> & e)
   {
     return mesh_.entities<num_dimensions(), M, 0>(e.entity());
   } // cells
 
-  /*!
-    \brief Return ids for all cells in the burton mesh.
-
-    \return Ids for all cells in the burton mesh.
-   */
+  //! \brief Return ids for all cells in the burton mesh.
+  //! \return Ids for all cells in the burton mesh.
   auto cell_ids()
   {
     return mesh_.entity_ids<num_dimensions(), 0>();
   } // cell_ids
 
-  /*!
-    \brief Return cell ids associated with entity instance of type \e E.
-
-    \tparam E entity type of instance to return cell ids for.
-
-    \param[in] e instance of entity to return cell ids for.
-
-    \return Return cell ids associated with entity instance \e e as a sequence.
-   */
+  //! \brief Return cell ids associated with entity instance of type \e E.
+  //!
+  //! \tparam E entity type of instance to return cell ids for.
+  //!
+  //! \param[in] e instance of entity to return cell ids for.
+  //!
+  //! \return Return cell ids associated with entity instance \e e as a sequence.
   template <class E>
   auto cell_ids(E * e)
   {
     return mesh_.entity_ids<num_dimensions(), 0>(e);
   } // cell_ids
 
-  /*--------------------------------------------------------------------------*
-   * Wedge Interface
-   *--------------------------------------------------------------------------*/
+  //! \brief Return the number of cells in the burton mesh.
+  //! \return The number of cells in the burton mesh.
+  auto cell_types() const
+  {
+    auto cs = cells();
+    using cell_type_t = decltype( cs[0]->type() );
+    std::set< cell_type_t > cell_types;
+    for ( auto c : cs ) cell_types.insert( c->type() );
+    return cell_types;
+  } // num_cells
 
-  /*!
-    \brief Return number of wedges in the burton mesh.
 
-    \return The number of wedges in the burton mesh.
-   */
+  //============================================================================
+  // Wedge Interface
+  //============================================================================
+
+  //! \brief Return number of wedges in the burton mesh.
+  //! \return The number of wedges in the burton mesh.
   size_t num_wedges() const
   {
     return mesh_.num_entities<num_dimensions(), 1>();
   } // num_wedges
 
-  /*!
-    \brief Return all wedges in the burton mesh.
-
-    \return Return all wedges in the burton mesh as a sequence for use, e.g.,
-      in range based for loops.
-   */
+  //! \brief Return all wedges in the burton mesh.
+  //! \return Return all wedges in the burton mesh as a sequence for use, e.g.,
+  //!   in range based for loops.
   auto wedges()
   {
     return mesh_.entities<num_dimensions(), 1>();
   } // wedges
 
-  /*!
-    \brief Return wedges associated with entity instance of type \e E.
-
-    \tparam E entity type of instance to return wedges for.
-
-    \param[in] e instance of entity to return wedges for.
-
-    \return Return wedges associated with entity instance \e e as a sequence.
-   */
+  //! \brief Return wedges associated with entity instance of type \e E.
+  //!
+  //! \tparam E entity type of instance to return wedges for.
+  //!
+  //! \param[in] e instance of entity to return wedges for.
+  //!
+  //! \return Return wedges associated with entity instance \e e as a sequence.
   template <class E>
   auto wedges(E * e)
   {
     return mesh_.entities<num_dimensions(), 1>(e);
   } // wedges
 
-  /*!
-    \brief Return wedges for entity \e e in domain \e M.
-
-    \tparam M Domain.
-    \tparam E Entity type to get wedges for.
-
-    \param[in] e Entity to get wedges for.
-
-    \return Wedges for entity \e e in domain \e M.
-   */
+  //! \brief Return wedges for entity \e e in domain \e M.
+  //!
+  //! \tparam M Domain.
+  //! \tparam E Entity type to get wedges for.
+  //!
+  //! \param[in] e Entity to get wedges for.
+  //!
+  //! \return Wedges for entity \e e in domain \e M.
   template<size_t M, class E>
   auto wedges(domain_entity<M, E> & e) {
     return mesh_.entities<num_dimensions(), M, 1>(e.entity());
   }
 
-  /*!
-    \brief Return ids for all wedges in the burton mesh.
-
-    \return Ids for all wedges in the burton mesh.
-   */
+  //! \brief Return ids for all wedges in the burton mesh.
+  //! \return Ids for all wedges in the burton mesh.
   auto wedge_ids()
   {
     return mesh_.entity_ids<num_dimensions(), 1>();
   } // wedge_ids
 
-  /*!
-    \brief Return wedge ids associated with entity instance of type \e E.
-
-    \tparam E entity type of instance to return wedge ids for.
-
-    \param[in] e instance of entity to return wedge ids for.
-
-    \return Return wedge ids associated with entity instance \e e as a
-      sequence.
-   */
+  //! \brief Return wedge ids associated with entity instance of type \e E.
+  //!
+  //! \tparam E entity type of instance to return wedge ids for.
+  //!
+  //! \param[in] e instance of entity to return wedge ids for.
+  //!
+  //! \return Return wedge ids associated with entity instance \e e as a
+  //!   sequence.
   template <class E>
   auto wedge_ids(E * e)
   {
     return mesh_.entity_ids<num_dimensions(), 1>(e);
   } // wedge_ids
 
-  /*--------------------------------------------------------------------------*
-   * Corner Interface
-   *--------------------------------------------------------------------------*/
+  //============================================================================
+  // Corner Interface
+  //============================================================================
 
-  /*!
-    \brief Return number of corners in the burton mesh.
-
-    \return The number of corners in the burton mesh.
-   */
+  //! \brief Return number of corners in the burton mesh.
+  //! \return The number of corners in the burton mesh.
   size_t num_corners() const
   {
     return mesh_.num_entities<1, 1>();
   } // num_corners
 
-  /*!
-    \brief Return all corners in the burton mesh.
-
-    \return Return all corners in the burton mesh as a sequence for use, e.g.,
-      in range based for loops.
-   */
+  //! \brief Return all corners in the burton mesh.
+  //! \return Return all corners in the burton mesh as a sequence for use, e.g.,
+  //!   in range based for loops.
   auto corners()
   {
     return mesh_.entities<1, 1>();
   } // corners
 
-  /*!
-    \brief Return corners associated with entity instance of type \e E.
-
-    \tparam E entity type of instance to return corners for.
-
-    \param[in] e instance of entity to return corners for.
-
-    \return Return corners associated with entity instance \e e as a sequence.
-   */
+  //! \brief Return corners associated with entity instance of type \e E.
+  //!
+  //! \tparam E entity type of instance to return corners for.
+  //!
+  //! \param[in] e instance of entity to return corners for.
+  //!
+  //! \return Return corners associated with entity instance \e e as a sequence.
   template <class E>
   auto corners(E * e)
   {
     return mesh_.entities<1, 1>(e);
   } // corners
 
-  /*!
-    \brief Return corners for entity \e e in domain \e M.
-
-    \tparam M Domain.
-    \tparam E Entity type to get corners for.
-
-    \param[in] e Entity to get corners for.
-
-    \return Corners for entity \e e in domain \e M.
-   */
+  //! \brief Return corners for entity \e e in domain \e M.
+  //!
+  //! \tparam M Domain.
+  //! \tparam E Entity type to get corners for.
+  //!
+  //! \param[in] e Entity to get corners for.
+  //!
+  //! \return Corners for entity \e e in domain \e M.
   template<size_t M, class E>
-  auto corners(domain_entity<M, E> & e) {
+  auto corners(domain_entity<M, E> & e) 
+  {
     return mesh_.entities<1, M, 1>(e.entity());
   }
 
-  /*!
-    \brief Return ids for all corners in the burton mesh.
-
-    \return Ids for all corners in the burton mesh.
-   */
+  //! \brief Return ids for all corners in the burton mesh.
+  //! \return Ids for all corners in the burton mesh.
   auto corner_ids()
   {
     return mesh_.entity_ids<1, 1>();
   } // corner_ids
 
-  /*!
-    \brief Return corner ids associated with entity instance of type \e E.
-
-    \tparam E entity type of instance to return corner ids for.
-
-    \param[in] e instance of entity to return corner ids for.
-
-    \return Return corner ids associated with entity instance \e e as a
-      sequence.
-   */
+  //! \brief Return corner ids associated with entity instance of type \e E.
+  //!
+  //! \tparam E entity type of instance to return corner ids for.
+  //!
+  //! \param[in] e instance of entity to return corner ids for.
+  //!
+  //! \return Return corner ids associated with entity instance \e e as a
+  //!   sequence.
   template <class E>
   auto corner_ids(E * e)
   {
     return mesh_.entity_ids<1, 1>(e);
   } // corner_ids
 
-  //
-  //
-  //
-  //
-  //
+  //============================================================================
+  // Mesh Creation
+  //============================================================================
 
-  /*!
-    \brief Create a vertex in the burton mesh.
-
-    \param[in] pos The position (coordinates) for the vertex.
-
-    \return Pointer to a vertex created at \e pos.
-   */
-  // FIXME: Complete changes to state storage
+  //! \brief Create a vertex in the burton mesh.
+  //!
+  //! \param[in] pos The position (coordinates) for the vertex.
+  //!
+  //! \return Pointer to a vertex created at \e pos.
   vertex_t * create_vertex(const point_t & pos)
   {
     auto p = access_state_<point_t, flecsi_internal>("coordinates");
@@ -877,38 +770,72 @@ public:
     return v;
   }
 
-  /*!
-    \brief Create a cell in the burton mesh.
 
-    \param[in] verts The vertices defining the cell.
-
-    \return Pointer to cell created with \e verts.
-   */
-  cell_t * create_cell(std::initializer_list<vertex_t *> verts)
+  //! \brief Create a cell in the burton mesh.
+  //!
+  //! \param[in] verts The vertices defining the cell.
+  //!
+  //! \return Pointer to cell created with \e verts.
+  template< typename V >
+  auto create_cell_(V && verts)
   {
-    // FIXME: Add element types
-    cell_t * c = mesh_.make<quadrilateral_cell_t>(mesh_);
+    
+    cell_t * c;
+
+    switch ( verts.size() ) {
+    case (2):
+      raise_runtime_error( "can't have 2 vertices" );
+    case (3):
+      c = mesh_.make< burton_mesh_types_t::triangle_cell_t >(mesh_);
+      break;
+    case (4):
+      c = mesh_.make< burton_mesh_types_t::quadrilateral_cell_t >(mesh_);
+      break;
+    default:
+      c = mesh_.make< burton_mesh_types_t::polygonal_cell_t >(mesh_);
+      break;
+    }
+
     mesh_.add_entity<num_dimensions(), 0>(c);
 
     // FIXME: Need to make mesh interface more general
-    mesh_.init_cell<0>(c, verts);
+    mesh_.init_cell<0>( c, std::forward<V>(verts) );
     return c;
   } // create_cell
 
-  /*!
-    \brief Dump the burton mesh to standard out.
-   */
+  //! \brief Create a cell in the burton mesh.
+  //!
+  //! \param[in] verts The vertices defining the cell.
+  //!
+  //! \return Pointer to cell created with \e verts.
+  template< typename V >
+  auto create_cell(V && verts)
+  {
+    return create_cell_( verts );
+  } // create_cell
+
+  
+  //! \brief Create a cell in the burton mesh.
+  //!
+  //! \param[in] verts The vertices defining the cell.
+  //!
+  //! \return Pointer to cell created with \e verts.
+  auto  create_cell( std::initializer_list<vertex_t *> verts ) {
+    return create_cell_( verts );
+  }
+
+  //! \brief Dump the burton mesh to standard out.
   void dump()
   {
     mesh_.dump();
   }
+    
 
-  /*!
-    \brief Initialize burton mesh state for the number of \e vertices.
 
-    \param[in] vertices The number of \e vertices to initialize the burton mesh
-      with.
-   */
+  //! \brief Initialize burton mesh state for the number of \e vertices.
+  //!
+  //! \param[in] vertices The number of \e vertices to initialize the burton mesh
+  //!   with.
   void init_parameters(size_t num_nodes)
   {
     // register coordinate state
@@ -918,10 +845,7 @@ public:
     );
   } // init_parameters
 
-  /*!
-    \brief Initialize the burton mesh.
-
-   */
+  //! \brief Initialize the burton mesh.
   void init()
   {
 
@@ -1001,29 +925,37 @@ public:
 
   } // init
 
-  /*
-    Print some statistics.
-   */
+  //============================================================================
+  // Operators
+  //============================================================================
+
+  //! Print some statistics.
   friend std::ostream& operator<< (std::ostream& stream, const burton_mesh_t& mesh);
 
+  //============================================================================
+  // Private Data 
+  //============================================================================
+
  private:
+
   mesh_t mesh_;
 
 
 }; // class burton_mesh_t
 
 
-/*----------------------------------------------------------------------------*
- * burton_mesh_t Friends
- *----------------------------------------------------------------------------*/
+////////////////////////////////////////////////////////////////////////////////
+// External Class Definitions
+////////////////////////////////////////////////////////////////////////////////
 
 
-/*!
-  \brief Copy constructor.
+//==============================================================================
+// Constructors
+//==============================================================================
 
-  \param[in] the mesh to copy.
-
- */
+//! \brief Copy constructor.
+//! 
+//! \param[in] the mesh to copy.
 inline
 burton_mesh_t::burton_mesh_t(const burton_mesh_t &src)
 {
@@ -1039,30 +971,30 @@ burton_mesh_t::burton_mesh_t(const burton_mesh_t &src)
     auto vert = create_vertex( v->coordinates() );
     vs.emplace_back( std::move(vert) );
   }
-
+ 
   for ( auto c : src_mesh.cells() ) {
     auto ids = src_mesh.vertex_ids( c );
-    create_cell(  { 
-        vs[ ids[0] ],
-        vs[ ids[1] ],
-        vs[ ids[2] ],
-        vs[ ids[3] ] } );   
+    auto n = ids.size();
+    std::vector<vertex_t*> elem_vs( n );
+    for ( auto i=0; i<n; i++ ) elem_vs[i] = vs[ ids[i] ];
+    create_cell( elem_vs );   
   } // for
 
   mesh_.init();
 
 }
 
+//==============================================================================
+// Friends
+//==============================================================================
 
-/*!
-  \brief Print some statistics.
-
-  \param[in] stream The stream to print to.
-
-  \param[in] mesh   The mesh object to print stats for.
-
-  \return the stream operator.
- */
+//!  \brief Print some statistics.
+//! 
+//!  \param[in] stream The stream to print to.
+//! 
+//!  \param[in] mesh   The mesh object to print stats for.
+//! 
+//!  \return the stream operator.
 inline
 std::ostream& operator<< (std::ostream& stream, const burton_mesh_t& mesh)
 {

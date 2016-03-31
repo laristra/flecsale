@@ -56,7 +56,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
   //!
   //! FIXME: should allow for const mesh_t &
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_t &m) 
+  int32_t write( const std::string &name, burton_mesh_t &m, bool binary ) override
   {
 
     std::cout << "Writing mesh to: " << name << std::endl;
@@ -81,7 +81,6 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     auto num_dims  = m.num_dimensions();
     auto num_nodes = m.num_vertices();
     auto num_elem  = m.num_cells();
-    constexpr auto num_nodes_per_elem = 4;
 
     // set the time
     auto soln_time = m.get_time();
@@ -132,7 +131,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
 
     // open the file
     vtk_writer writer;
-    auto status = writer.open( name.c_str() );  
+    auto status = writer.open( name.c_str(), binary );  
     assert( status == 0 && "error with open" );
   
     // Create ZONE header
@@ -153,10 +152,9 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     // get the coordinates from the mesh. unstructured always 3d
     for (auto v : m.vertices()) {
       const auto & coord = v->coordinates();
-      for ( auto i=0; i<num_dims; i++ ) 
-        vals[ 3*v.id() + i ] = coord[i];
-      for ( auto i=num_dims; i<3; i++ )
-        vals[ 3*v.id() + i ] = 0.0;
+      auto base = 3*v.id();
+      for ( auto i=0; i<num_dims; i++ ) vals[ base + i ] = coord[i];
+      for ( auto i=num_dims; i<3; i++ ) vals[ base + i ] = 0.0;
     } // for
 
     // write the coordinates to the file
@@ -165,19 +163,22 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
 
     //----------------------------------------------------------------------------
     // ellement connectivity
+    
+    vector< vector<vtk_int_t> > elem_conn( num_elem );
+    vector< vtk_writer::cell_type_t > elem_types( num_elem );
 
     // element definitions
-    vector< vector<vtk_int_t> > elem_conn( num_elem );
     for (auto c : m.cells()) {
       auto cid = c.id();
+      auto elem_verts = m.vertices(c);
+      auto num_nodes_per_elem = elem_verts.size();
       elem_conn[cid].resize( num_nodes_per_elem );
       auto vid = 0;
-      for (auto v : m.vertices(c)) {
-        elem_conn[cid][vid++] = v.id();
-      } // for
+      for (auto v : elem_verts) elem_conn[cid][vid++] = v.id();
+      elem_types[cid] = vtk_writer::cell_type_t::polygon;
     } // for
 
-    status = writer.write_elements( elem_conn, vtk_writer::cell_type_t::vtk_quad );
+    status = writer.write_elements( elem_conn, elem_types.data() );
     assert( status == 0 && "error with element conn" );
 
     //----------------------------------------------------------------------------
@@ -266,6 +267,24 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
 
   } // io_vtk_t::write
 
+
+  //============================================================================
+  //! Implementation of vtk mesh write for burton specialization.
+  //!
+  //! \param[in] name Write burton mesh \e m to \e name.
+  //! \param[in] m Burton mesh to write to \e name.
+  //!
+  //! \return vtk error code. 0 on success.
+  //!
+  //! \remark default to ascii
+  //!
+  //! FIXME: should allow for const mesh_t &
+  //============================================================================
+  int32_t write( const std::string &name, burton_mesh_t &m ) override
+  {
+    write( name, m, true );
+  }
+
   //============================================================================
   //! Implementation of vtk mesh read for burton specialization.
   //!
@@ -275,7 +294,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
   //! \return vtk error code. 0 on success.
   //!
   //============================================================================
-  int32_t read( const std::string &name, burton_mesh_t &m) 
+  int32_t read( const std::string &name, burton_mesh_t &m) override
   {
     raise_implemented_error( "No vtk read functionality has been implemented" );
   };

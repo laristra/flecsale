@@ -68,7 +68,7 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
   //!
   //! FIXME: should allow for const mesh_t &
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_t &m) 
+  int32_t write( const std::string &name, burton_mesh_t &m) override
   {
 
 
@@ -185,7 +185,7 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
       } // for
     } // for
 
-      //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     // HEADER
     //--------------------------------------------------------------------------
 
@@ -199,12 +199,17 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
     ofs << endl;
 
     ofs << "ZONE" << endl;
-    ofs << "T = \"quadrilateral zone block\" "
-        << "ZONETYPE=FEQUADRILATERAL "
-        << "NODES=" << m.num_vertices() << ", ELEMENTS=" << m.num_cells() << " "
-        << "DATAPACKING=BLOCK "
-        << "VARLOCATION=([" << num_dims+num_nf+1 << "-" << num_dims+num_nf+num_ef << "]=CELLCENTERED)"
-        << endl;
+    ofs << "T = \"zone block\" "
+        << "ZONETYPE=FEPOLYGON "
+        << "NODES=" << m.num_vertices() << " FACES=" << m.num_edges() << " ELEMENTS=" << m.num_cells() << " "
+        << "NumConnectedBoundaryFaces=0 TotalNumBoundaryConnections=0 DATAPACKING=BLOCK ";
+
+    auto ef_start = num_dims+num_nf+1;
+    auto ef_end = num_dims+num_nf+num_ef;
+    if ( num_ef > 0 )
+      ofs << "VARLOCATION=([" << ef_start << "-" << ef_end << "]=CELLCENTERED)";
+    
+    ofs << endl;
 
     //--------------------------------------------------------------------------
     // WRITE DATA
@@ -257,21 +262,38 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
       } // for
     } // for
 
-      //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     // WRITE CONNECTIVITY
     //--------------------------------------------------------------------------
 
-    // element definitions
-    auto i = 0;
-    for (auto c : m.cells()) {
-      for (auto v : m.vertices(c)) {
-        ofs << v.id() + 1 << " ";
-        i++;
-      } // for
+    // the nodes of each face
+    ofs << "#face nodes" << endl;
+    for (auto e : m.edges()) {
+      for (auto v : m.vertices(e))
+        ofs << v.id() + 1 << " "; // 1-based ids
       ofs << endl;
-    } // for
-  
-      //--------------------------------------------------------------------------
+    }
+
+    ofs << "#left elements" << endl;
+    for (auto e : m.edges()) {
+      auto cells = m.cells( e );
+      assert( cells.size() > 0 && "cell has no edges");
+      // always has left cell
+      ofs << cells[0].id() + 1 << " "; // 1-based ids
+    }
+    ofs << endl;
+
+
+    ofs << "#right elements" << endl;
+    for (auto e : m.edges()) {
+      auto cells = m.cells( e );
+      // boundary faces don't have right cell
+      auto id = ( cells.size() == 2 ) ? cells[1].id()+1 : 0;
+      ofs << id << " ";
+    }
+    ofs << endl;
+ 
+    //--------------------------------------------------------------------------
     // Finalize
     //--------------------------------------------------------------------------
   
@@ -292,7 +314,7 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
   //! \return tecplot error code. 0 on success.
   //!
   //============================================================================
-  int32_t read( const std::string &name, burton_mesh_t &m) 
+  int32_t read( const std::string &name, burton_mesh_t &m)  override
   {
     raise_implemented_error( "No tecplot read functionality has been implemented" );
   };
@@ -321,7 +343,7 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
   //!
   //! FIXME: should allow for const mesh_t &
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_t &m) 
+  int32_t write( const std::string &name, burton_mesh_t &m)  override
   {
 
 #ifdef HAVE_TECIO
@@ -360,8 +382,9 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     // get the general statistics
     tec_int_t num_dims  = m.num_dimensions();
     tec_int_t num_nodes = m.num_vertices();
+    tec_int_t num_edges = m.num_edges();
+    tec_int_t num_faces = num_edges;
     tec_int_t num_elem  = m.num_cells();
-    constexpr tec_int_t num_nodes_per_elem = 4;
 
     // set the time
     double soln_time = m.get_time();
@@ -461,13 +484,14 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
                              &Debug,
                              &VIsDouble );
     assert( status == 0 && "error with TECINI" );
+
   
     //----------------------------------------------------------------------------
     // Create ZONE header
     //----------------------------------------------------------------------------
 
 
-    tec_int_t ZoneType = 3; // set the zone type to FEQuadrilateral
+    tec_int_t ZoneType = 6; // set the zone type to FEPolygon
     tec_int_t NumFaces = 0; // not used for for most zone types
     tec_int_t ICellMax = 0; // reserved for future use
     tec_int_t JCellMax = 0; // reserved for future use
@@ -478,9 +502,9 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     tec_int_t IsBlock  = 1; // this is a Block
     tec_int_t NumFaceConnections       = 0; // not used 
     tec_int_t FaceNeighborMode         = 0; // not used
-    tec_int_t TotalNumFaceNodes        = 0; // not used
-    tec_int_t TotalNumBndryFaces       = 0; // not used
-    tec_int_t TotalNumBndryConnections = 0; // not used
+    tec_int_t TotalNumFaceNodes        = 2*num_faces; // total nodes for all faces
+    tec_int_t TotalNumBndryFaces       = 0; // boundary faces not used
+    tec_int_t TotalNumBndryConnections = 0; // boundary face connections not used
     tec_int_t ShareConnectivityFromZone = 0;  // pass 0 to indicate no sharign
     tec_int_t * PassiveVarList = nullptr;
     tec_int_t * ShareVarFromZone = nullptr;
@@ -490,11 +514,11 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     for ( const auto & var : variables )
       var_locations.push_back( static_cast<tec_int_t>(var.second) );
 
-    status = TECZNE112( const_cast<char*>( "Quadrilateral Zone" ),
+    status = TECZNE112( const_cast<char*>( "zone block" ),
                         &ZoneType,
                         &num_nodes,
                         &num_elem,
-                        &NumFaces,
+                        &num_faces,
                         &ICellMax,
                         &JCellMax,
                         &KCellMax,
@@ -587,17 +611,41 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     // WRITE CONNECTIVITY
     //--------------------------------------------------------------------------
 
-    // element definitions
-    vector<tec_int_t> elem_conn( num_elem * num_nodes_per_elem );
-    auto i = 0;
-    for (auto c : m.cells()) {
-      for (auto v : m.vertices(c)) {
-        elem_conn[i] = v.id() + 1;
-        i++;
-      } // for
-    } // for
+    tec_int_t * FaceNodeCounts            = nullptr; // This is NULL for polygonal zones
+    tec_int_t * FaceBndryConnectionCounts = nullptr; // not using boundary connections
+    tec_int_t * FaceBndryConnectionElems  = nullptr; // not using boundary connections
+    tec_int_t * FaceBndryConnectionZones  = nullptr; // not using boundary connections
 
-    status = TECNOD112( elem_conn.data() );
+    // element definitions
+    vector<tec_int_t> face_nodes( 2 * num_edges );
+    vector<tec_int_t> face_cell_right( num_edges );
+    vector<tec_int_t> face_cell_left ( num_edges );
+
+    auto f = 0, i = 0;
+    for (auto e : m.edges()) {
+      // the nodes of each face
+      for (auto v : m.vertices(e))
+        face_nodes[i++] = v.id() + 1; // 1-based ids      
+      // the cells of each face (1-based ids)
+      auto cells = m.cells( e );
+      assert( cells.size() > 0 && "cell has no edges");
+      // always has left cell
+      face_cell_left[f] = cells[0].id() + 1;
+      // boundary faces don't have right cell
+      face_cell_right[f] = ( cells.size() == 2 ) ? cells[1].id()+1 : 0;
+      // incrememnt 
+      f++;
+    }
+
+    status = TECPOLY112( 
+      FaceNodeCounts,
+      face_nodes.data(),
+      face_cell_left.data(),
+      face_cell_right.data(),
+      FaceBndryConnectionCounts,
+      FaceBndryConnectionElems,
+      FaceBndryConnectionZones
+    );
     assert( status == 0 && "error with TECNOD" );
 
 
@@ -632,7 +680,7 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     //! \return tecplot error code. 0 on success.
     //!
     //============================================================================
-  int32_t read( const std::string &name, burton_mesh_t &m) 
+  int32_t read( const std::string &name, burton_mesh_t &m)  override
   {
     raise_implemented_error( "No tecplot read functionality has been implemented" );
   };

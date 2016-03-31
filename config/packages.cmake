@@ -55,8 +55,10 @@ set( TPL_INSTALL_PREFIX /path/to/third/party/install
                         CACHE PATH
                         "path to thirdparty install" )
 if (TPL_INSTALL_PREFIX)
-  set(EXODUS_ROOT  ${TPL_INSTALL_PREFIX})
+  set(EXODUS_ROOT ${TPL_INSTALL_PREFIX})
   set(TECIO_ROOT  ${TPL_INSTALL_PREFIX})
+  set(ShaPo_DIR   ${TPL_INSTALL_PREFIX})
+  set(VTK_DIR     ${TPL_INSTALL_PREFIX})
 endif()
 
 
@@ -154,6 +156,42 @@ if(ENABLE_IO)
   endif()
 
 endif(ENABLE_IO)
+
+
+
+#------------------------------------------------------------------------------#
+# Enable shapo
+#------------------------------------------------------------------------------#
+
+option(ENABLE_SHAPO "Enable vornoi with shapo." OFF)
+if(ENABLE_SHAPO)
+
+  find_package(ShaPo HINTS ${ShaPo_DIR} )
+  
+  if (ShaPo_FOUND)
+    message(STATUS "Found ShaPo: ${ShaPo_DIR}")
+    include_directories( ${SHAPO_INCLUDE_DIRS} )  
+    include( ${ShaPo_CONFIG} )
+    include( ${SHAPO_USE_FILE} )
+    add_definitions( -DHAVE_SHAPO )
+  else ()
+    message( FATAL_ERROR "Need to specify SHAPO" )
+  endif()
+
+  if (ShaPo_FOUND)
+    find_package(VTK REQUIRED HINTS ${VTK_DIR} )
+    if (VTK_FOUND)
+      message(STATUS "Found VTK: ${VTK_DIR}")
+      include( ${VTK_CONFIG} )
+      include( ${VTK_USE_FILE} )
+      add_definitions( -DHAVE_VTK )    
+  else()
+    message(STATUS "Error: VTK could not be found.")
+  endif()
+
+endif()
+
+endif(ENABLE_SHAPO)
 
 
 #~---------------------------------------------------------------------------~-#

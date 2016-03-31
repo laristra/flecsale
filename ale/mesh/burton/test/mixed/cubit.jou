@@ -1,0 +1,26 @@
+# make the half circle
+create curve location 0 0 0  location 1.2 0 0
+sweep curve 1  zaxis angle 90
+
+# create the inner box
+create vertex 0 0.5 0
+create vertex 0.5 0.5 0
+create vertex 0.5 0 0
+create curve polyline vertex 6 7 8
+partition create surface 1  curve 6 5
+
+# mesh the inner surface
+surface 1  scheme TriMes
+mesh surface 1
+
+# mesh the outer surface
+surface 2  scheme pave
+mesh surface 2
+
+# make the regions
+block 1 surface 1 2
+
+# dump the file
+set large exodus file off
+export Genesis  "mixed.g" dimension 2 block 1  overwrite 
+

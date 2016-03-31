@@ -13,7 +13,6 @@
 #~----------------------------------------------------------------------------~#
 
 set(mesh_HEADERS
-  factory.h
   burton/burton_entity_types.h
   burton/burton.h
   burton/burton_io_exodus.h
@@ -22,6 +21,8 @@ set(mesh_HEADERS
   burton/burton_mesh.h
   burton/burton_mesh_traits.h
   burton/burton_types.h
+  factory.h
+  voronoi.h  detail/voronoi.h
   PARENT_SCOPE
 )
 
@@ -33,6 +34,7 @@ set(mesh_SOURCES
 
 set( mesh_LIBS 
   ${IO_LIBRARIES} 
+  ${SHAPO_LIBRARIES}
   flecsi 
 )
 
@@ -42,7 +44,10 @@ cinch_add_unit(mesh
       burton/test/burton_copy.cc
       burton/test/burton_io.cc
       burton/test/gradients.cc
-    INPUTS burton/test/burton.blessed
+      burton/test/voronoi.cc
+    INPUTS 
+      burton/test/burton.blessed
+      burton/test/mixed/mixed.g
     LIBRARIES ${mesh_LIBS} ale
 )
 

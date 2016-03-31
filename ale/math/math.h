@@ -201,6 +201,66 @@ T abs(const C<T,Args...> &a)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+// Elementwise min and max
+//////////////////////////////////////////////////////////////////////////////
+
+//! \brief Compute the elementwise min
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template< 
+  typename T, std::size_t... N,
+  template< typename, std::size_t... > typename A
+ >
+auto min(const A<T, N...> &a, const A<T, N...> &b) 
+{
+  A<T, N...> tmp;
+  for ( auto i=0; i<tmp.size(); i++ )
+    tmp[i] = std::min( a[i], b[i] );
+  return tmp;
+}
+
+template< template<typename...> typename C, typename T, typename...Args >
+auto min(const C<T,Args...> &a, const C<T,Args...> &b) 
+{
+  C<T,Args...> tmp;
+  for ( auto i=0; i<a.size(); i++ )
+    tmp[i] = std::min( a[i], b[i] );
+  return tmp;
+}
+
+
+//! \brief Compute the elementwise max
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template< 
+  typename T, std::size_t... N,
+  template< typename, std::size_t... > typename A
+ >
+auto max(const A<T, N...> &a, const A<T, N...> &b) 
+{
+  A<T, N...> tmp;
+  for ( auto i=0; i<tmp.size(); i++ )
+    tmp[i] = std::max( a[i], b[i] );
+  return tmp;
+}
+
+template< template<typename...> typename C, typename T, typename...Args >
+auto max(const C<T,Args...> &a, const C<T,Args...> &b) 
+{
+  C<T,Args...> tmp;
+  for ( auto i=0; i<a.size(); i++ )
+    tmp[i] = std::max( a[i], b[i] );
+  return tmp;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
 // Some general math functions
 //////////////////////////////////////////////////////////////////////////////
 

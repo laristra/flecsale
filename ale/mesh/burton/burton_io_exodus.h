@@ -88,6 +88,7 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
 
     // verify mesh dimension
     assert(m.num_dimensions() == exopar.num_dim);
+    auto num_dims = exopar.num_dim;
     auto num_nodes = exopar.num_nodes;
     auto num_elem = exopar.num_elem;
     auto num_elem_blk = exopar.num_elem_blk;
@@ -111,48 +112,101 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
       vs.push_back(v);
     } // for
 
-    // 1 block for now
-
     // read blocks
     vector<ex_index_t> blockids( num_elem_blk );
     status = ex_get_elem_blk_ids(exoid, blockids.data() );
     assert(status == 0);
 
-    char block_name[MAX_LINE_LENGTH];
-    status = ex_get_name(exoid, EX_ELEM_BLOCK, blockids[0], block_name);
-    assert(status == 0);
+    //--------------------------------------------------------------------------
+    // read each block
+    for ( auto iblk=0; iblk<exopar.num_elem_blk; iblk++ ) {
 
-    // get the info about this block
-    ex_index_t num_elem_this_blk = 0;
-    ex_index_t num_attr = 0;
-    ex_index_t num_nodes_per_elem = 0;
-    char elem_type[MAX_STR_LENGTH];
-    status = ex_get_elem_block(
-      exoid, blockids[0], elem_type, &num_elem_this_blk, &num_nodes_per_elem, &num_attr);
-    assert(status == 0);
+      auto elem_blk_id = blockids[iblk];
 
-    // verify that there is only one blk
-    assert( num_elem_this_blk == num_elem );
-    assert( num_elem_blk == 1 );
+      char block_name[MAX_LINE_LENGTH];
+      status = ex_get_name(exoid, EX_ELEM_BLOCK, elem_blk_id, block_name);
+      assert(status == 0);
 
-    // verify mesh has quads
-    assert(num_nodes_per_elem == 4);
-    assert(strcmp(elem_type, "quad") == 0);
+      // get the info about this block
+      ex_index_t num_elem_this_blk = 0;
+      ex_index_t num_attr = 0;
+      ex_index_t num_nodes_per_elem = 0;
+      char elem_type[MAX_STR_LENGTH];
+      status = ex_get_elem_block(
+        exoid, elem_blk_id, elem_type, &num_elem_this_blk, &num_nodes_per_elem, &num_attr);
+      assert(status == 0);
+      
+      //--------------------------------
+      // polygon data
+      if ( strcmp("nsided",elem_type) == 0 || strcmp("NSIDED",elem_type) == 0 ) {
 
-    // read element definitions
-    vector<ex_index_t> elt_conn(num_elem * num_nodes_per_elem);
-    status = ex_get_elem_conn(exoid, blockids[0], elt_conn.data());
-    assert(status == 0);
+        // the number of nodes per element is really the number of nodes in the whole block
+        auto num_nodes_this_blk = num_nodes_per_elem;
 
-    // create cells in mesh
-    for (size_t e = 0; e < num_elem; ++e) {
-      auto b = e*num_nodes_per_elem; // base offset into elt_conn
-      auto c = m.create_cell({ 
-          vs[elt_conn[b+0]-1],
-          vs[elt_conn[b+1]-1],
-          vs[elt_conn[b+2]-1],
-          vs[elt_conn[b+3]-1] });
+
+        // get the number of nodes per element
+        vector<ex_index_t> elem_node_counts(num_elem_this_blk);
+        status = ex_get_entity_count_per_polyhedra( 
+          exoid, EX_ELEM_BLOCK, elem_blk_id, elem_node_counts.data() );
+        assert(status == 0);
+
+        // read element definitions
+        vector<ex_index_t> elem_nodes(num_nodes_this_blk);
+        status = ex_get_elem_conn(exoid, elem_blk_id, elem_nodes.data());
+        assert(status == 0);
+        
+        // storage for element verts
+        vector<vertex_t *> elem_vs;
+        elem_vs.reserve( num_dims * elem_node_counts[0] );
+        
+        // create cells in mesh
+        auto base = 0;
+        for (size_t e = 0; e < num_elem_this_blk; ++e) {
+          elem_vs.clear();
+          // get the number of nodes
+          num_nodes_per_elem = elem_node_counts[e];
+          // copy local vertices into vector ( exodus uses 1 indexed arrays )
+          for ( auto v=0;  v<num_nodes_per_elem; v++ )
+            elem_vs.emplace_back( vs[ elem_nodes[base+v] - 1 ] );
+          // create acual cell
+          auto c = m.create_cell( elem_vs );
+          // base offset into elt_conn
+          base += num_nodes_per_elem;
+        }
+
+      }
+      //--------------------------------
+      // fixed element size
+      else {
+
+        // read element definitions
+        vector<ex_index_t> elt_conn(num_elem_this_blk * num_nodes_per_elem);
+        status = ex_get_elem_conn(exoid, elem_blk_id, elt_conn.data());
+        assert(status == 0);
+        
+        // storage for element verts
+        vector<vertex_t *> elem_vs;
+        elem_vs.reserve( num_nodes_per_elem );
+        
+        // create cells in mesh
+        for (size_t e = 0; e < num_elem_this_blk; ++e) {
+          elem_vs.clear();
+          // base offset into elt_conn
+          auto b = e*num_nodes_per_elem;
+          // copy local vertices into vector ( exodus uses 1 indexed arrays )
+          for ( auto v=0;  v<num_nodes_per_elem; v++ )
+            elem_vs.emplace_back( vs[ elt_conn[b+v]-1 ] );
+          // create acual cell
+          auto c = m.create_cell( elem_vs );
+        }
+
+      } // element type
+      //--------------------------------
+      
     }
+    // end blocks
+    //--------------------------------------------------------------------------
+
     m.init();
 
     // creating fields from an exodus file will be problematic since the type
@@ -204,6 +258,13 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
     using ex_real_t = real_t;
     using ex_index_t = int;
 
+    // the type map
+    const std::unordered_map<ex_index_t, std::string> ex_type_map = 
+      { 
+        { 3, "triangle" },
+        { 4,  "quad" },
+      };
+
 
     //--------------------------------------------------------------------------
     // initial setup
@@ -220,11 +281,15 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
       ex_create(name.c_str(), cmode, &CPU_word_size, &IO_word_size);
     assert(exoid >= 0);
 
+    // get the different types of cells in the mesh;
+    auto cell_types = m.cell_types();
+    auto num_cell_types = cell_types.size();
+
     // get the general statistics
     auto num_dims = m.num_dimensions();
     auto num_nodes = m.num_vertices();
     auto num_elem = m.num_cells();
-    auto num_elem_blk = 1;
+    auto num_elem_blk = num_cell_types;
     auto num_node_sets = 0;
     auto num_side_sets = 0;
 
@@ -252,27 +317,138 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
     status = ex_put_coord_names(exoid, (char **)coord_names);
     assert(status == 0);
 
+
+
+
+    //--------------------------------------------------------------------------
+    // Filter cells based on type
+    //--------------------------------------------------------------------------
+
+    // get all mesh cells
+    auto cells = m.cells();
+
+    // storage for the filtered cells
+    std::vector< decltype(cells) > cells_per_blk;
+    cells_per_blk.reserve( num_cell_types );
+
+    // create a list of cells for each block
+    for ( auto cell_type : cell_types ) {
+
+      // filter out the cells for this block
+      auto filtered_cells = cells.filter( 
+        [&]( auto c ){ return (c->type() == cell_type); } 
+      );
+      assert( filtered_cells.size() > 0 && " no cells in this block" );
+
+      // add this to the list
+      cells_per_blk.emplace_back( std::move( filtered_cells ) );      
+    }
+
+
+
+
+    //--------------------------------------------------------------------------
+    // Block connectivity
+    //--------------------------------------------------------------------------
+
+    // get the celltype iterator
+    auto cell_type_it = cell_types.begin();
+    
     // loop over element blocks
-    auto blockid = 0;
-    auto num_attr = 0;
-    auto num_nodes_per_elem = 4;
-    status = ex_put_elem_block(
-      exoid, blockid, "quad", num_elem, num_nodes_per_elem, num_attr);
-    assert(status == 0);
+    for ( auto iblk=0; iblk<num_cell_types; iblk++ ) {
 
-    // element definitions
-    vector<ex_index_t> elt_conn(num_elem * num_nodes_per_elem);
-    auto i = 0;
-    for (auto c : m.cells()) {
-      for (auto v : m.vertices(c)) {
-        elt_conn[i] = v.id() + 1; // 1 based index in exodus
-        i++;
-      } // for
-    } // for
+      // set the block header
+      auto elem_blk_id = iblk+1;
 
-    // write connectivity
-    status = ex_put_elem_conn(exoid, blockid, elt_conn.data());
-    assert(status == 0);
+      // get the celltype
+      auto cell_type = *(cell_type_it++);
+
+
+      //------------------------------------------------------------------------
+      // polygons
+      if ( cell_type == burton_cell_t::cell_type_t::polygon ) {
+        
+        // get the elements in this block
+        const auto & elem_this_blk = cells_per_blk[iblk];
+        auto num_elem_this_blk = elem_this_blk.size();
+      
+
+        // count how many vertices there are in this block
+        auto num_nodes_this_blk = 0;
+        for ( auto c : elem_this_blk ) {
+          auto verts = m.vertices( c );
+          num_nodes_this_blk += verts.size();
+        }
+
+        // set the block header
+        auto num_attr_per_elem = 0;
+        auto num_faces_per_elem = 0;
+        auto num_edges_per_elem = 0;
+        status = ex_put_block( 
+          exoid, EX_ELEM_BLOCK, elem_blk_id, "nsided", num_elem_this_blk, 
+          num_nodes_this_blk, num_edges_per_elem, num_faces_per_elem, 
+          num_attr_per_elem
+        );
+        assert(status == 0);
+
+        // build the connectivitiy list
+        vector<ex_index_t> elem_nodes( num_nodes_this_blk );
+        vector<ex_index_t> elem_node_counts( num_elem_this_blk );
+
+        auto f = 0, i = 0;
+        for ( auto c : elem_this_blk ) {
+          auto verts = m.vertices(c);
+          elem_node_counts[f++] = verts.size();
+          for (auto v : verts)
+            elem_nodes[i++] = v.id() + 1; // 1-based ids      
+        }
+       
+
+        // write connectivity
+        status = ex_put_conn(
+          exoid, EX_ELEM_BLOCK, elem_blk_id, elem_nodes.data(), 
+          nullptr, nullptr
+        );
+        assert(status == 0);
+        
+        // write counts
+        status = ex_put_entity_count_per_polyhedra(
+          exoid, EX_ELEM_BLOCK, elem_blk_id, elem_node_counts.data() 
+        );
+
+      }
+      //------------------------------------------------------------------------
+      // fixed types
+      else {
+        
+        // get the elements in this block
+        const auto & elem_this_blk = cells_per_blk[iblk];
+      
+        // set the block header
+        auto num_attr = 0;
+        auto num_nodes_per_elem = m.vertices( elem_this_blk[0] ).size();
+        auto num_elem_this_blk = elem_this_blk.size();
+        auto elem_type_str = ex_type_map.at( num_nodes_per_elem );
+        status = ex_put_elem_block(
+          exoid, elem_blk_id, elem_type_str.c_str(), num_elem_this_blk, num_nodes_per_elem, num_attr);
+        assert(status == 0);
+
+        // element definitions
+        vector<ex_index_t> elt_conn(num_elem_this_blk * num_nodes_per_elem);
+        auto i = 0;
+        for (auto c : elem_this_blk) 
+          for (auto v : m.vertices(c)) 
+            elt_conn[i++] = v.id() + 1; // 1 based index in exodus
+
+        // write connectivity
+        status = ex_put_elem_conn(exoid, elem_blk_id, elt_conn.data());
+        assert(status == 0);
+
+      }
+      // end types
+      //------------------------------------------------------------------------
+
+    }
 
     //--------------------------------------------------------------------------
     // write field data
@@ -289,7 +465,7 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
     };
 
     //--------------------------------------------------------------------------
-    // nodal field data
+    // nodal field data header
 
     int num_nf = 0; // number of nodal fields
     // real scalars persistent at vertices
@@ -332,6 +508,9 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
     } // for
 
 
+    //--------------------------------------------------------------------------
+    // nodal field data
+
     // write nodal fields
     inum = 1;
     // node field buffer
@@ -358,7 +537,7 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
 
 
     //--------------------------------------------------------------------------
-    // element field data
+    // element field data headers
 
     int num_ef = 0; // number of element fields
     // real scalars persistent at cells
@@ -398,29 +577,44 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
       } // for
     } // for
 
-    // write element fields
-    inum = 1;
-    // element field buffer
-    vector<ex_real_t> ef(num_elem);
-    for(auto sf: rspac) {
-      for(auto c: m.cells()) ef[c.id()] = sf[c];
-      status = ex_put_elem_var(exoid, time_step, inum++, /* blkid */ 0, num_elem, ef.data());
-      assert(status == 0);
-    } // for
-    for(auto sf: ispac) {
-      // cast int fields to real_t
-      for(auto c: m.cells()) ef[c.id()] = (real_t)sf[c];
-      status = ex_put_elem_var(exoid, time_step, inum++, /* blkid */ 0, num_elem, ef.data());
-      assert(status == 0);
-    } // for
-    for(auto vf: rvpac) {
-      for(int d=0; d < num_dims; ++d) {
-        for(auto c: m.cells()) ef[c.id()] = vf[c][d];
-        status = ex_put_elem_var(exoid, time_step, inum++, /* blkid */ 0, num_elem, ef.data());
+
+    //--------------------------------------------------------------------------
+    // element field data
+
+    // loop over element blocks, writing the filtered element data
+    for ( auto iblk=0; iblk<num_cell_types; iblk++ ) {
+
+      // get the elements in this block
+      const auto & elem_this_blk = cells_per_blk[iblk];
+
+      // stats for this block
+      auto elem_blk_id = iblk+1;
+      auto num_elem_this_blk = elem_this_blk.size();
+  
+      // write element fields
+      inum = 1;
+      // element field buffer
+      vector<ex_real_t> ef(num_elem_this_blk);
+      for(auto sf: rspac) {
+        for(auto c: elem_this_blk) ef[c.id()] = sf[c];
+        status = ex_put_elem_var(exoid, time_step, inum++, elem_blk_id, num_elem_this_blk, ef.data());
         assert(status == 0);
       } // for
-    } // for
+      for(auto sf: ispac) {
+        // cast int fields to real_t
+        for(auto c: elem_this_blk) ef[c.id()] = (real_t)sf[c];
+        status = ex_put_elem_var(exoid, time_step, inum++, elem_blk_id, num_elem_this_blk, ef.data());
+        assert(status == 0);
+      } // for
+      for(auto vf: rvpac) {
+        for(int d=0; d < num_dims; ++d) {
+          for(auto c: elem_this_blk) ef[c.id()] = vf[c][d];
+          status = ex_put_elem_var(exoid, time_step, inum++, elem_blk_id, num_elem_this_blk, ef.data());
+          assert(status == 0);
+        } // for
+      } // for
 
+    } // block
 
     //--------------------------------------------------------------------------
     // final setup

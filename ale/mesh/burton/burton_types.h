@@ -11,6 +11,11 @@
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
+/*!
+ * \file burton_types.h
+ * \authors bergen
+ * \date Initial file creation: Sep 02, 2015
+ ******************************************************************************/
 
 #pragma once
 
@@ -19,28 +24,19 @@
 #include "../../mesh/burton/burton_mesh_traits.h"
 #include "../../mesh/burton/burton_entity_types.h"
 
-/*!
- * \file burton_types.h
- * \authors bergen
- * \date Initial file creation: Sep 02, 2015
- */
-
 namespace ale {
 namespace mesh {
 
-/*----------------------------------------------------------------------------*
- * struct burton_mesh_types_t
- *----------------------------------------------------------------------------*/
-
-/*!
-  \class burton_mesh_types_t burton_types.h
-  \brief A collection of type information needed to specialize the flecsi
-    low-level mesh infrastructure for ALE methods.
-*/
+////////////////////////////////////////////////////////////////////////////////
+//! \class burton_mesh_types_t burton_types.h
+//! \brief A collection of type information needed to specialize the flecsi
+//!   low-level mesh infrastructure for ALE methods.
+////////////////////////////////////////////////////////////////////////////////
 struct burton_mesh_types_t {
-  /*--------------------------------------------------------------------------*
-   * Define local traits to satisfy mesh_topology requirements.
-   *--------------------------------------------------------------------------*/
+
+  //============================================================================
+  // Define local traits to satisfy mesh_topology requirements.
+  //============================================================================
 
   //! The dimension of the burton mesh picked up from burton_mesh_traits_t.
   static constexpr size_t dimension = burton_mesh_traits_t::dimension;
@@ -48,9 +44,9 @@ struct burton_mesh_types_t {
   //! The number of domains in burton mesh picked up from burton_mesh_traits_t.
   static constexpr size_t num_domains = burton_mesh_traits_t::num_domains;
 
-  /*--------------------------------------------------------------------------*
-   * Define basic types.
-   *--------------------------------------------------------------------------*/
+  //============================================================================
+  // Define basic types.
+  //============================================================================
 
   //! Type for burton mesh vertices.
   using vertex_t = burton_vertex_t;
@@ -62,8 +58,10 @@ struct burton_mesh_types_t {
   //! Type for burton mesh cells.
   using cell_t = burton_cell_t;
 
-  //! Type for burton mesh quadrilateral cells.
+  //! Types for burton mesh cells.
+  using triangle_cell_t = burton_triangle_cell_t;
   using quadrilateral_cell_t = burton_quadrilateral_cell_t;
+  using polygonal_cell_t = burton_polygonal_cell_t;
 
   //! Type for burton mesh corners.
   using corner_t = burton_corner_t;
@@ -71,9 +69,9 @@ struct burton_mesh_types_t {
   //! Type for burton mesh wedges.
   using wedge_t = burton_wedge_t;
 
-  /*--------------------------------------------------------------------------*
-   * Specify mesh parameterizations.
-   *--------------------------------------------------------------------------*/
+  //============================================================================
+  // Specify mesh parameterizations.
+  //============================================================================
 
   //! Definitions of burton mesh entities and their domain.
   // clang-format off

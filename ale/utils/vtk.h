@@ -14,9 +14,6 @@
 // user includes
 #include "write_binary.h"
 
-// uncomment to dump ascii
-// #define VTK_WRITE_ASCII
-
 namespace ale {
 namespace utils {
 
@@ -39,32 +36,29 @@ public :
    ****************************************************************************/
   enum class cell_type_t
   {
-    vtk_triangle = 2,
-    vtk_polygon = 7,
-    vtk_quad = 9,
-    vtk_tetra = 10,
-    vtk_hexahedron = 12,
-    vtk_wedge = 13,
-    vtk_pyramid = 14
+    triangle = 2,
+    polygon = 7,
+    quad = 9,
+    tetra = 10,
+    hexahedron = 12,
+    wedge = 13,
+    pyramid = 14
   };
 
   /*! *************************************************************************
    * Open a tecplot file for writing
    ****************************************************************************/
-  auto open( const char* filename ) 
+  auto open( const char* filename, bool binary = true ) 
   {
-    
-    // open file
-#ifdef VTK_WRITE_ASCII
-    file_.open(filename);
-#else
-    file_.open(filename, std::ofstream::binary);
-#endif
 
-    auto ierr = !file_.good();
+    // open file
+    if ( binary ) file_.open(filename, std::ofstream::binary);
+    else          file_.open(filename);
+
+    binary_ = binary;
     
     // check for errors
-    if (ierr) return ierr;
+    return !file_.good();
   }
 
 
@@ -87,11 +81,8 @@ public :
     // write out version number in ascii
     file_ << "# vtk DataFile Version 3.0" << std::endl;
     file_ << title << std::endl;
-#ifdef VTK_WRITE_ASCII
-    file_ << "ASCII" << std::endl;
-#else
-    file_ << "BINARY" << std::endl;
-#endif
+    if ( binary_ ) file_ << "BINARY" << std::endl;
+    else           file_ << "ASCII" << std::endl;
     file_ << "DATASET UNSTRUCTURED_GRID" << std::endl;
     
     // check for write errors
@@ -118,27 +109,33 @@ public :
     file_ << "POINTS " << npoints;
     file_ << " " << type_map.at( typeid(T) ) << std::endl;
 
-#ifdef VTK_WRITE_ASCII
 
+    //--------------------------------------------------------------------------
     // write the data
-    std::size_t cnt = 0;
-    for (std::size_t p=0; p<npoints; p++ ) {
-      for (std::size_t d=0; d<ndims; d++ ) 
-        file_ << data[cnt++] << " ";
-      file_ << std::endl;
+    if ( binary_ ) {
+
+      if ( isBigEndian() )
+        for (auto val : data ) 
+          WriteBinary<T>( file_, val );
+      else
+        for (auto val : data ) 
+          WriteBinarySwap<T>( file_, val );
+      
     }
+    //--------------------------------------------------------------------------
+    // ascii
+    else {
 
-#else
+      std::size_t cnt = 0;
+      for (std::size_t p=0; p<npoints; p++ ) {
+        for (std::size_t d=0; d<ndims; d++ ) 
+          file_ << data[cnt++] << " ";
+        file_ << std::endl;
+      }
 
-    // write the data
-    if ( isBigEndian() )
-      for (auto val : data ) 
-        WriteBinary<T>( file_, val );
-    else
-      for (auto val : data ) 
-        WriteBinarySwap<T>( file_, val );
+    }
+    //--------------------------------------------------------------------------
 
-#endif
 
     // check for write errors
     return !file_.good();
@@ -152,9 +149,10 @@ public :
    ********************************************************************/
   template< 
     template<typename...> typename C, 
+    typename T,
     typename... Args 
   >
-  auto write_elements( const C<Args...> & data, cell_type_t cell_type ) 
+  auto write_elements( const C<Args...> & data, const T * cell_type ) 
   {
 
     using size_t = std::size_t;
@@ -174,66 +172,70 @@ public :
     // write the number of cells ( per element: 4 points plus # of points )
     file_ << "CELLS " << nelem << " " << size << std::endl;
 
-#ifdef VTK_WRITE_ASCII
-
+    //--------------------------------------------------------------------------
     // write the data
-    for ( const auto & elem : data ) {
-      file_ << elem.size() << " ";
-      for ( auto val : elem )
-        file_ << val << " ";
-      file_ << std::endl;
+    if ( binary_ ) {
+
+      if (swap)
+        for ( const auto & elem : data ) {
+          WriteBinarySwap<value_type>(file_, static_cast<value_type>(elem.size()) );
+          for ( auto val : elem )
+            WriteBinarySwap<value_type>(file_, val);                
+        }
+      else
+        for ( const auto & elem : data ) {
+          WriteBinary<value_type>(file_, elem.size());
+          for ( auto val : elem )
+            WriteBinary<value_type>(file_, val);                
+        }
+
     }
-    
-#else
-
-    // write the data
-    if (swap) {
-
-      for ( const auto & elem : data ) {
-        WriteBinarySwap<value_type>(file_, static_cast<value_type>(elem.size()) );
-        for ( auto val : elem )
-          WriteBinarySwap<value_type>(file_, val);                
-      }
-
-    } 
+    //--------------------------------------------------------------------------
+    // ascii
     else {
 
       for ( const auto & elem : data ) {
-        WriteBinary<value_type>(file_, elem.size());
+        file_ << elem.size() << " ";
         for ( auto val : elem )
-          WriteBinary<value_type>(file_, val);                
+          file_ << val << " ";
+        file_ << std::endl;
       }
-      
-    }
 
-#endif
+    } // binary
+    //--------------------------------------------------------------------------
+    
 
     // write the cell types
     file_ << "CELL_TYPES " << nelem << std::endl;
+    std::size_t cell = 0;
 
-    auto type_id = static_cast<value_type>(cell_type);
-
-#ifdef VTK_WRITE_ASCII
-
+    //--------------------------------------------------------------------------
     // write the data
-    for ( const auto & elem : data )
-      file_ << type_id << " ";
-    file_ << std::endl;
+    if ( binary_ ) {
+
+      if (swap) 
+        for ( const auto & elem : data )
+          WriteBinarySwap<value_type>(
+            file_, static_cast<value_type>(cell_type[cell++]) 
+          );
+      else
+        for ( const auto & elem : data )
+          WriteBinary<value_type>(
+            file_, static_cast<value_type>(cell_type[cell++])
+          );    
+
+    } 
+    //--------------------------------------------------------------------------
+    // ascii
+    else {
+
+      for ( const auto & elem : data )
+        file_ << static_cast<value_type>(cell_type[cell++]) << " ";
+      file_ << std::endl;
+
+    } // binary 
+    //--------------------------------------------------------------------------
     
-#else
-
-    // now write it
-    if (swap) 
-      for ( const auto & elem : data )
-        WriteBinarySwap<value_type>(file_, type_id);
-
-    else
-
-      for ( const auto & elem : data )
-        WriteBinary<value_type>(file_, type_id);    
-
-#endif
-
     // check for write errors
     return !file_.good();
   
@@ -276,28 +278,34 @@ public :
     file_ << "LOOKUP_TABLE default" << std::endl;
   
 
-#ifdef VTK_WRITE_ASCII
-
-    auto n = data.size() / ndims;
-    std::size_t cnt = 0;
-
-    for (std::size_t p=0; p<n; p++ ) {
-      for (std::size_t d=0; d<ndims; d++ ) 
-        file_ << data[cnt++] << " ";
-      file_ << std::endl;
-    }
-    
-#else
-    
+    //--------------------------------------------------------------------------
     // write the data
-    if ( isBigEndian() )
-      for (auto val : data ) 
-        WriteBinary<T>( file_, val );
-    else
-      for (auto val : data ) 
-        WriteBinarySwap<T>( file_, val );    
+    if ( binary_ ) {
+
+      if ( isBigEndian() )
+        for (auto val : data ) 
+          WriteBinary<T>( file_, val );
+      else
+        for (auto val : data ) 
+          WriteBinarySwap<T>( file_, val );    
+
+    }
+    //--------------------------------------------------------------------------
+    // ascii
+    else {
+
+      auto n = data.size() / ndims;
+      std::size_t cnt = 0;
+      
+      for (std::size_t p=0; p<n; p++ ) {
+        for (std::size_t d=0; d<ndims; d++ ) 
+          file_ << data[cnt++] << " ";
+        file_ << std::endl;
+      }
+      
+    } // binary   
+    //--------------------------------------------------------------------------
   
-#endif
     
     // check for write errors
     return !file_.good();
@@ -310,6 +318,8 @@ private :
   //! \brief file pointer
   std::ofstream file_;
 
+  //! \brief a boolean defining whether this is binary
+  bool binary_;
 
 };
 

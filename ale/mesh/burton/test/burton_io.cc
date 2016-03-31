@@ -76,6 +76,33 @@ TEST(BurtonIO, read_g) {
 } // TEST_F
 
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief test reading an exodus file
+////////////////////////////////////////////////////////////////////////////////
+TEST(BurtonIO, read_mixed) {
+  mesh_t m;
+  // read mesh written by above test
+  string name("mixed.g");
+  ASSERT_FALSE(read_mesh(name, m));
+
+  // write m to a different file
+  name = "mixed_out.g";
+  ASSERT_FALSE(write_mesh(name, m));
+
+  // write m to a different file
+  name = "mixed_out.vtk";
+  ASSERT_FALSE(write_mesh(name, m));
+
+  // write m to a different file
+  name = "mixed_out.plt";
+  ASSERT_FALSE(write_mesh(name, m));
+
+  // write m to a different file
+  name = "mixed_out.dat";
+  ASSERT_FALSE(write_mesh(name, m));
+
+} // TEST_F
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test writing an exodus file
@@ -108,9 +135,15 @@ TEST_F(Burton, write_plt) {
 TEST_F(Burton, write_vtk) {
   // create state data on b
   create_data();
-  // write the mesh
-  string name("mesh.vtk");
+  // write the mesh in default format
+  string name("mesh_default.vtk");
   ASSERT_FALSE(write_mesh(name, mesh_));
+  // write the mesh in ascii
+  name = "mesh_ascii.vtk";
+  ASSERT_FALSE(write_mesh(name, mesh_, false));
+  // write it again in binary
+  name = "mesh_binary.vtk";
+  ASSERT_FALSE(write_mesh(name, mesh_, true));
 } // TEST_F
 
 
