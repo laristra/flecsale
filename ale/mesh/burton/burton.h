@@ -234,6 +234,8 @@ using flecsi::temporary;
 #include "../../mesh/burton/burton_io_exodus.h"
 #include "../../mesh/burton/burton_io_tecplot.h"
 #include "../../mesh/burton/burton_io_vtk.h"
+#include "../../mesh/burton/burton_io_vtu.h"
+#include "../../mesh/burton/burton_io_vtm.h"
 
 namespace ale {
 namespace mesh {

@@ -60,6 +60,9 @@ public:
   //! a bitfield type
   using bitfield_t = flecsi::bitfield_t;
 
+  //! Integer data type.
+  using integer_t = burton_mesh_traits_t::integer_t;
+
   //! Floating point data type.
   using real_t = burton_mesh_traits_t::real_t;
 
@@ -338,14 +341,14 @@ public:
   } // dimension
   
   //! \brief Return the time associated with the mesh
-  auto get_time()
+  auto time()
   {
     auto soln_time = access_global_state_<real_t, flecsi_internal>( "time" );
     return *soln_time;
   }
 
   //! \brief Set the time associated with the mesh
-  auto set_time(real_t soln_time)
+  void set_time(real_t soln_time)
   {
     access_global_state_<real_t, flecsi_internal>( "time" ) = soln_time;
   }
@@ -360,7 +363,7 @@ public:
   }
 
   //! \brief Return the time associated with the mesh
-  auto get_time_step_counter()
+  auto time_step_counter()
   {
     auto step = access_global_state_<size_t, flecsi_internal>( "time_step" );
     return *step;
@@ -553,7 +556,7 @@ public:
   //! \brief Return all cells in the burton mesh.
   //! \return Return all cells in the burton mesh as a sequence for use, e.g.,
   //!   in range based for loops.
-  auto cells()
+  auto cells() // FIXME const
   {
     return mesh_.entities<num_dimensions(), 0>();
   } // cells
@@ -566,7 +569,7 @@ public:
   //!
   //! \return Return cells associated with entity instance \e e as a sequence.
   template <class E>
-  auto cells(E * e)
+  auto cells(E * e) const
   {
     return mesh_.entities<num_dimensions(), 0>(e);
   } // cells
@@ -580,14 +583,14 @@ public:
   //!
   //! \return Cells for entity \e e in domain \e M.
   template <size_t M, class E>
-  auto cells(const domain_entity<M, E> & e)
+  auto cells(const domain_entity<M, E> & e) const
   {
     return mesh_.entities<num_dimensions(), M, 0>(e.entity());
   } // cells
 
   //! \brief Return ids for all cells in the burton mesh.
   //! \return Ids for all cells in the burton mesh.
-  auto cell_ids()
+  auto cell_ids() const
   {
     return mesh_.entity_ids<num_dimensions(), 0>();
   } // cell_ids
@@ -600,7 +603,7 @@ public:
   //!
   //! \return Return cell ids associated with entity instance \e e as a sequence.
   template <class E>
-  auto cell_ids(E * e)
+  auto cell_ids(E * e) const
   {
     return mesh_.entity_ids<num_dimensions(), 0>(e);
   } // cell_ids
@@ -631,7 +634,7 @@ public:
   //! \brief Return all wedges in the burton mesh.
   //! \return Return all wedges in the burton mesh as a sequence for use, e.g.,
   //!   in range based for loops.
-  auto wedges()
+  auto wedges() // FIXME const
   {
     return mesh_.entities<num_dimensions(), 1>();
   } // wedges
@@ -644,7 +647,7 @@ public:
   //!
   //! \return Return wedges associated with entity instance \e e as a sequence.
   template <class E>
-  auto wedges(E * e)
+  auto wedges(E * e) const
   {
     return mesh_.entities<num_dimensions(), 1>(e);
   } // wedges
@@ -658,13 +661,14 @@ public:
   //!
   //! \return Wedges for entity \e e in domain \e M.
   template<size_t M, class E>
-  auto wedges(domain_entity<M, E> & e) {
+  auto wedges(domain_entity<M, E> & e) const
+  {
     return mesh_.entities<num_dimensions(), M, 1>(e.entity());
   }
 
   //! \brief Return ids for all wedges in the burton mesh.
   //! \return Ids for all wedges in the burton mesh.
-  auto wedge_ids()
+  auto wedge_ids() const
   {
     return mesh_.entity_ids<num_dimensions(), 1>();
   } // wedge_ids
@@ -678,7 +682,7 @@ public:
   //! \return Return wedge ids associated with entity instance \e e as a
   //!   sequence.
   template <class E>
-  auto wedge_ids(E * e)
+  auto wedge_ids(E * e) const
   {
     return mesh_.entity_ids<num_dimensions(), 1>(e);
   } // wedge_ids
@@ -697,7 +701,7 @@ public:
   //! \brief Return all corners in the burton mesh.
   //! \return Return all corners in the burton mesh as a sequence for use, e.g.,
   //!   in range based for loops.
-  auto corners()
+  auto corners()  // FIXME const
   {
     return mesh_.entities<1, 1>();
   } // corners
@@ -710,7 +714,7 @@ public:
   //!
   //! \return Return corners associated with entity instance \e e as a sequence.
   template <class E>
-  auto corners(E * e)
+  auto corners(E * e) const
   {
     return mesh_.entities<1, 1>(e);
   } // corners
@@ -724,14 +728,14 @@ public:
   //!
   //! \return Corners for entity \e e in domain \e M.
   template<size_t M, class E>
-  auto corners(domain_entity<M, E> & e) 
+  auto corners(domain_entity<M, E> & e) const
   {
     return mesh_.entities<1, M, 1>(e.entity());
   }
 
   //! \brief Return ids for all corners in the burton mesh.
   //! \return Ids for all corners in the burton mesh.
-  auto corner_ids()
+  auto corner_ids() const
   {
     return mesh_.entity_ids<1, 1>();
   } // corner_ids
@@ -745,10 +749,54 @@ public:
   //! \return Return corner ids associated with entity instance \e e as a
   //!   sequence.
   template <class E>
-  auto corner_ids(E * e)
+  auto corner_ids(E * e) const
   {
     return mesh_.entity_ids<1, 1>(e);
   } // corner_ids
+
+
+  //============================================================================
+  // Region Interface
+  //============================================================================
+
+  //! \brief Return the number of regions in the burton mesh.
+  //! \return The number of regions in the burton mesh.
+  auto num_regions()
+  {
+    auto n = access_global_state_<size_t, flecsi_internal>( "num_regions" );
+    return *n;
+  } // num_cells
+
+  //! \brief Return the number of regions in the burton mesh.
+  //! \return The number of regions in the burton mesh.
+  void set_num_regions(size_t n)
+  {
+    access_global_state_<size_t, flecsi_internal>( "num_regions" ) = n;
+  } // num_cells
+
+  //! \brief Return all cells in the regions mesh.
+  //!
+  //! \return Return all cells in the burton mesh as a sequence for use, e.g.,
+  //!   in range based for loops.
+  auto regions()
+  {
+    // get the number of regions
+    auto n = num_regions();
+    // get the cells
+    auto cs = cells();
+    // create storage for regions
+    using set_type_t = decltype( mesh_.entities<num_dimensions(), 0>() );
+
+    // create a function to scatter the cells
+    using domain_entity_t = decltype( cells()[0] );
+    std::function< size_t(domain_entity_t c) > func = 
+      [](domain_entity_t c){ return c->region(); };
+
+    // now filter out the cells of each region
+    auto region_cells = cs.scatter( func );
+
+    return region_cells;
+  } // cells
 
   //============================================================================
   // Mesh Creation
@@ -922,6 +970,21 @@ public:
       }
     } // for
 
+    // identify the cell regions
+    auto cell_region = data_.register_state<size_t, flecsi_internal>(
+      "cell_region", num_cells(), mesh_.runtime_id(), 
+      attachment_site_t::cells, persistent
+    );
+
+    for ( auto c : cells() )
+      cell_region[c] = 0;
+
+    // list the regions
+    auto num_regions = data_.register_global_state<size_t, flecsi_internal>(
+      "num_regions", mesh_.runtime_id(), 
+      attachment_site_t::global, persistent
+    );
+    *num_regions = 1;
 
   } // init
 

@@ -79,7 +79,7 @@ TEST(BurtonIO, read_g) {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test reading an exodus file
 ////////////////////////////////////////////////////////////////////////////////
-TEST(BurtonIO, read_mixed) {
+TEST(BurtonIO, io_mixed) {
   mesh_t m;
   // read mesh written by above test
   string name("mixed.g");
@@ -91,6 +91,14 @@ TEST(BurtonIO, read_mixed) {
 
   // write m to a different file
   name = "mixed_out.vtk";
+  ASSERT_FALSE(write_mesh(name, m));
+
+  // write m to a different file
+  name = "mixed_out.vtu";
+  ASSERT_FALSE(write_mesh(name, m));
+
+  // write m to a different file
+  name = "mixed_out.vtm";
   ASSERT_FALSE(write_mesh(name, m));
 
   // write m to a different file

@@ -3,7 +3,7 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-set( ALE_LIBS ale flecsi ${IO_LIBRARIES} )
+set( ALE_LIBS ale flecsi ${IO_LIBRARIES} ${SHAPO_LIBRARIES} )
 
 add_subdirectory( hydro )
 add_subdirectory( lag_hydro )

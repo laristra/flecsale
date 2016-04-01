@@ -45,6 +45,143 @@ enum class tec_var_location_t
   node = 1
 };
 
+//! some tecplot typedefs
+using tec_real_t = burton_mesh_t::real_t;
+using tec_int_t = INTEGER4;
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! A mapping object utility for tecplot zones
+////////////////////////////////////////////////////////////////////////////////
+struct tec_zone_map_t {
+
+  //============================================================================
+  //! \brief constructor
+  //============================================================================
+  tec_zone_map_t( burton_mesh_t & m ) : 
+    mesh(m),
+    num_zones( m.num_regions() ), 
+    elem_zone_map( num_zones ),
+    local_elem_id( num_zones, 0 )
+  {
+    // determine a local cell zone ordering
+    for ( auto c : m.cells() ) {
+      auto reg_id = c->region();
+      elem_zone_map[reg_id][c] = local_elem_id[reg_id]++;
+    }
+  }
+      
+
+  //============================================================================
+  //! \brief create a region map
+  //============================================================================
+  template< typename T >
+  void build_face_map( size_t izone, const T & elem_this_zone ) {
+
+      
+     
+    // count how many edges there are in this block
+    std::set< burton_mesh_t::edge_t* > edges_this_zone; 
+    for ( auto c : elem_this_zone ) 
+      for ( auto e : mesh.edges( c ) )
+        edges_this_zone.insert( e );
+    auto num_edges_this_zone = edges_this_zone.size();
+
+
+    // faces are edges
+    num_faces_this_zone = num_edges_this_zone;
+
+    // face definitions
+    face_nodes.resize( 2 * num_faces_this_zone );
+    face_cell_right.resize( num_faces_this_zone );
+    face_cell_left .resize( num_faces_this_zone );
+
+    // for zone-connectivity
+    face_conn_counts.clear();
+    face_conn_elems.clear();
+    face_conn_zones.clear();
+      
+    auto f = 0, i = 0;
+    num_face_conn = 0;
+    for (auto e : edges_this_zone) {
+      // the nodes of each face
+      for (auto v : mesh.vertices(e))
+        face_nodes[i++] = v.id() + 1; // 1-based ids      
+      // the cells of each face (1-based ids)
+      auto cells = mesh.cells( e );
+      assert( cells.size() > 0 && "cell has no edges");
+      // initialize cells to no connections
+      face_cell_left [f] = 0;
+      face_cell_right[f] = 0;
+      // this region id
+      auto this_region = izone;
+      // always has left cell
+      auto left_cell = cells[0];
+      auto left_region = left_cell->region();
+      // left cell is local
+      if ( left_region == izone )
+        face_cell_left[f] = elem_zone_map[ this_region ].at( left_cell ) + 1;
+      // left cell is on another zone
+      else {
+        face_cell_left[f] = - (++num_face_conn);
+        face_conn_counts.emplace_back( 1 );
+        face_conn_elems.emplace_back( 
+          elem_zone_map[ left_region ].at( left_cell ) + 1 );
+        face_conn_zones.emplace_back( left_region + 1 );
+      }         
+      // boundary faces don't have right cell
+      if ( cells.size() > 1 ) {
+        auto right_cell = cells[1];
+        auto right_region = right_cell->region();
+        // right cell is local
+        if ( right_region == izone ) 
+          face_cell_right[f] = elem_zone_map[ this_region ].at( right_cell ) + 1;
+        // right cell is on another zone
+        else {
+          face_cell_right[f] = - (++num_face_conn);
+          face_conn_counts.emplace_back( 1 );
+          face_conn_elems.emplace_back( 
+            elem_zone_map[ right_region ].at( right_cell ) + 1 );
+          face_conn_zones.emplace_back( right_region );
+        }
+      }
+      // incrememnt 
+      f++;
+    }
+
+  }
+
+  //============================================================================
+  // Data
+  //============================================================================
+
+  //! \brief a referemce for the mesh
+  burton_mesh_t & mesh;
+
+  //! \brief number of zones
+  tec_int_t num_zones;
+
+  //! \brief for face-zone connectivity
+  tec_int_t num_faces_this_zone;
+  std::vector<tec_int_t> face_nodes;
+  std::vector<tec_int_t> face_cell_right;
+  std::vector<tec_int_t> face_cell_left;
+
+  //! \brief  for elememnt-zone connectivity
+  tec_int_t num_face_conn;
+  std::vector<tec_int_t> face_conn_counts;
+  std::vector<tec_int_t> face_conn_elems;
+  std::vector<tec_int_t> face_conn_zones;
+    
+  //! \brief  storage for the zone-element mapping
+  std::vector< 
+    std::map< burton_mesh_t::cell_t*, size_t > 
+  > elem_zone_map;
+    
+  //!  \brief  a local element counter
+  std::vector< size_t > local_elem_id;
+    
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \class io_tecplot_ascii_t io_tecplot.h
@@ -54,9 +191,11 @@ enum class tec_var_location_t
 /// \tparam mesh_t Mesh to template io_base_t on.
 ////////////////////////////////////////////////////////////////////////////////
 struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
+
   
   //! Default constructor
   burton_io_tecplot_ascii_t() {}
+
 
   //============================================================================
   //! Implementation of tecplot mesh write for burton specialization.
@@ -71,12 +210,12 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
   int32_t write( const std::string &name, burton_mesh_t &m) override
   {
 
+    //! general type aliases
+    using   mesh_t = burton_mesh_t;
+    using   real_t = typename mesh_t::real_t;
+    using integer_t= typename mesh_t::integer_t;
+    using vector_t = typename mesh_t::vector_t;
 
-    //--------------------------------------------------------------------------
-    // setup
-    //--------------------------------------------------------------------------
-
-    std::cout << "Writing mesh to: " << name << std::endl;
 
     // some aliazes
     using std::endl;
@@ -85,14 +224,18 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
     using std::string;
     using std::vector;
 
-    using   mesh_t = burton_mesh_t;
-    using   real_t = typename mesh_t::real_t;
-    using vector_t = typename mesh_t::vector_t;
 
-    // get the general statistics
-    auto num_dims  = m.num_dimensions();
+    // a lambda function for validating strings
+    auto validate_string = []( auto && str ) {
+      return std::forward<decltype(str)>(str);
+    };
 
-  
+    //--------------------------------------------------------------------------
+    // setup
+    //--------------------------------------------------------------------------
+
+    std::cout << "Writing mesh to: " << name << std::endl;
+
     // open the file for writing
     std::ofstream ofs( name.c_str() );
     assert( ofs.good() && "error opening file" );
@@ -101,6 +244,8 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
     // collect field data
     //--------------------------------------------------------------------------
 
+    // get the general statistics
+    auto num_dims  = m.num_dimensions();
 
     // variable extension for vectors
     std::string var_ext[3];
@@ -113,12 +258,6 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
     variables.emplace_back( make_pair( "x", tec_var_location_t::node ) );
     variables.emplace_back( make_pair( "y", tec_var_location_t::node ) );
 
-
-    // a lambda function for validating strings
-    auto validate_string = []( auto && str ) {
-      return std::forward<decltype(str)>(str);
-    };
-
     //----------------------------------------------------------------------------
     // nodal field data
     //----------------------------------------------------------------------------
@@ -128,7 +267,7 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
     auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
     num_nf += rspav.size();
     // int scalars persistent at vertices
-    auto ispav = access_type_if(m, int, is_persistent_at(vertices));
+    auto ispav = access_type_if(m, integer_t, is_persistent_at(vertices));
     num_nf += ispav.size();
     // real vectors persistent at vertices
     auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
@@ -161,7 +300,7 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
     auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
     num_ef += rspac.size();
     // int scalars persistent at cells
-    auto ispac = access_type_if(m, int, is_persistent_at(cells));
+    auto ispac = access_type_if(m, integer_t, is_persistent_at(cells));
     num_ef += ispac.size();
     // real vectors persistent at cells
     auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
@@ -185,6 +324,7 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
       } // for
     } // for
 
+
     //--------------------------------------------------------------------------
     // HEADER
     //--------------------------------------------------------------------------
@@ -198,101 +338,145 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
       ofs << "\"" << label.first << "\" ";
     ofs << endl;
 
-    ofs << "ZONE" << endl;
-    ofs << "T = \"zone block\" "
-        << "ZONETYPE=FEPOLYGON "
-        << "NODES=" << m.num_vertices() << " FACES=" << m.num_edges() << " ELEMENTS=" << m.num_cells() << " "
-        << "NumConnectedBoundaryFaces=0 TotalNumBoundaryConnections=0 DATAPACKING=BLOCK ";
+    //--------------------------------------------------------------------------
+    // Element-Zone connectivity
+    //--------------------------------------------------------------------------
 
-    auto ef_start = num_dims+num_nf+1;
-    auto ef_end = num_dims+num_nf+num_ef;
-    if ( num_ef > 0 )
-      ofs << "VARLOCATION=([" << ef_start << "-" << ef_end << "]=CELLCENTERED)";
+    auto num_zones = m.num_regions();
+   
+    // get the regions
+    auto region_cells = m.regions();
     
-    ofs << endl;
+    // create a region map
+    tec_zone_map_t mapping( m );
 
     //--------------------------------------------------------------------------
-    // WRITE DATA
+    // Loop over Regions
     //--------------------------------------------------------------------------
+  
+    for ( auto izn=0; izn<num_zones; izn++ ) {
 
-    // get the coordinates from the mesh.
-    for(int d=0; d < num_dims; ++d) {
-      for (auto v : m.vertices()) 
-        ofs << v->coordinates()[d] << " ";
-      ofs << endl;
-    } // for
+      // get the elements in this block
+      const auto & elem_this_zone = region_cells[izn];
+      auto num_elem_this_zone = elem_this_zone.size();
 
-    //----------------------------------------------------------------------------
-    // nodal field data
-    //----------------------------------------------------------------------------
+      //------------------------------------------------------------------------
+      // face/edge connectivity
 
-    // node field buffer
-    for(auto sf: rspav) {
-      for(auto v: m.vertices()) ofs << sf[v] << " ";
-      ofs << endl;
-    } // for
-    for(auto sf: ispav) {
-      for(auto v: m.vertices()) ofs << sf[v] << " ";
-      ofs << endl;
-    } // for
-    for(auto vf: rvpav) {
-      for(int d=0; d < num_dims; ++d) {
-        for(auto v: m.vertices()) ofs << vf[v][d] << " ";
+      mapping.build_face_map( izn, elem_this_zone );
+      
+      //------------------------------------------------------------------------
+      // Zone Header
+
+      ofs << "ZONE" << endl;
+      ofs << " T = \"region " << izn << "\"" << endl;
+      ofs << " ZONETYPE=FEPOLYGON" << endl;
+      ofs << " NODES=" << m.num_vertices() 
+          << " FACES=" << mapping.num_faces_this_zone
+          << " ELEMENTS=" << num_elem_this_zone << endl;
+      ofs << " NumConnectedBoundaryFaces=" << mapping.num_face_conn
+          << " TotalNumBoundaryConnections=" << mapping.num_face_conn << endl;
+      ofs << " DATAPACKING=BLOCK" << endl;
+      
+      auto nf_start = 1;
+      auto nf_end = num_dims + num_nf;
+      auto ef_start = nf_end + 1;
+      auto ef_end = nf_end + num_ef;
+      if ( num_ef > 0 )
+        ofs << " VARLOCATION=([" << ef_start << "-" << ef_end << "]=CELLCENTERED)" 
+            << endl;
+      
+      //------------------------------------------------------------------------
+      // Write Nodal Data for Zone 1 only
+      if ( izn == 0 ) {
+        
+        //----------------------------------------------------------------------
+        // WRITE coordinates
+      
+        // get the coordinates from the mesh.
+        for(int d=0; d < num_dims; ++d) {
+          for (auto v : m.vertices()) 
+            ofs << v->coordinates()[d] << " ";
+          ofs << endl;
+        } // for
+        
+        //------------------------------------------------------------------------
+        // nodal field data
+        
+        // node field buffer
+        for(auto sf: rspav) {
+          for(auto v: m.vertices()) ofs << sf[v] << " ";
+          ofs << endl;
+        } // for
+        for(auto sf: ispav) {
+          for(auto v: m.vertices()) ofs << sf[v] << " ";
+          ofs << endl;
+        } // for
+        for(auto vf: rvpav) {
+          for(int d=0; d < num_dims; ++d) {
+            for(auto v: m.vertices()) ofs << vf[v][d] << " ";
+            ofs << endl;
+          } // for
+        } // for
+
+      }
+      //------------------------------------------------------------------------
+      // all other zones share nodal data
+      else {
+
+        ofs << " VARSHARELIST=([" << nf_start << "-" << nf_end << "]=1)" << endl;         
+          
+      } // first zone
+
+
+      //------------------------------------------------------------------------
+      // cell field data
+
+      // element field buffer
+      for(auto sf: rspac) {
+        for(auto c: elem_this_zone) ofs << sf[c] << " ";
         ofs << endl;
       } // for
-    } // for
-
-    //----------------------------------------------------------------------------
-    // nodal field data
-    //----------------------------------------------------------------------------
-
-    // element field buffer
-    for(auto sf: rspac) {
-      for(auto c: m.cells()) ofs << sf[c] << " ";
-      ofs << endl;
-    } // for
-    for(auto sf: ispac) {
-      for(auto c: m.cells()) ofs << sf[c] << " ";
-      ofs << endl;
-    } // for
-    for(auto vf: rvpac) {
-      for(int d=0; d < num_dims; ++d) {
-        for(auto c: m.cells()) ofs << vf[c][d] << " ";
+      for(auto sf: ispac) {
+        for(auto c: elem_this_zone) ofs << sf[c] << " ";
         ofs << endl;
       } // for
-    } // for
+      for(auto vf: rvpac) {
+        for(int d=0; d < num_dims; ++d) {
+          for(auto c: elem_this_zone) ofs << vf[c][d] << " ";
+          ofs << endl;
+        } // for
+      } // for
 
-    //--------------------------------------------------------------------------
-    // WRITE CONNECTIVITY
-    //--------------------------------------------------------------------------
+      //------------------------------------------------------------------------
+      // WRITE CONNECTIVITY
 
-    // the nodes of each face
-    ofs << "#face nodes" << endl;
-    for (auto e : m.edges()) {
-      for (auto v : m.vertices(e))
-        ofs << v.id() + 1 << " "; // 1-based ids
+      ofs << "#face nodes" << endl;
+      for (auto i : mapping.face_nodes) ofs << i << " ";
       ofs << endl;
-    }
+      
+      ofs << "#left elements" << endl;
+      for (auto i : mapping.face_cell_left) ofs << i << " ";
+      ofs << endl;
+      
+      ofs << "#right elements" << endl;
+      for (auto i : mapping.face_cell_right) ofs << i << " ";
+      ofs << endl;
 
-    ofs << "#left elements" << endl;
-    for (auto e : m.edges()) {
-      auto cells = m.cells( e );
-      assert( cells.size() > 0 && "cell has no edges");
-      // always has left cell
-      ofs << cells[0].id() + 1 << " "; // 1-based ids
-    }
-    ofs << endl;
+      ofs << "#boundary connection counts" << endl;
+      for (auto i : mapping.face_conn_counts) ofs << i << " ";
+      ofs << endl;
 
+      ofs << "#boundary connection elements" << endl;
+      for (auto i : mapping.face_conn_elems) ofs << i << " ";
+      ofs << endl;
 
-    ofs << "#right elements" << endl;
-    for (auto e : m.edges()) {
-      auto cells = m.cells( e );
-      // boundary faces don't have right cell
-      auto id = ( cells.size() == 2 ) ? cells[1].id()+1 : 0;
-      ofs << id << " ";
-    }
-    ofs << endl;
+      ofs << "#boundary connection zones" << endl;
+      for (auto i : mapping.face_conn_zones) ofs << i << " ";
+      ofs << endl;
  
+    } // block
+
     //--------------------------------------------------------------------------
     // Finalize
     //--------------------------------------------------------------------------
@@ -349,23 +533,29 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
 #ifdef HAVE_TECIO
 
     std::cout << "Writing mesh to: " << name << std::endl;
-    
 
-    //--------------------------------------------------------------------------
-    // setup
-    //--------------------------------------------------------------------------
+    //! general type aliases
+    using   mesh_t = burton_mesh_t;
+    using   real_t = typename mesh_t::real_t;
+    using integer_t= typename mesh_t::integer_t;
+    using vector_t = typename mesh_t::vector_t;
 
-    // alias some types
+    // some aliazes
+    using std::endl;
     using std::pair;
     using std::make_pair;
     using std::string;
     using std::vector;
 
-    using   mesh_t = burton_mesh_t;
-    using   real_t = typename mesh_t::real_t;
-    using vector_t = typename mesh_t::vector_t;
-    using tec_real_t = real_t;
-    using tec_int_t = INTEGER4;
+    // a lambda function for validating strings
+    auto validate_string = []( auto && str ) {
+      return utils::replace_all( std::forward<decltype(str)>(str), " ", "_" );;
+    };
+
+
+    //--------------------------------------------------------------------------
+    // setup
+    //--------------------------------------------------------------------------
 
     /* Open the file & write the datafile header information */
     tec_int_t Debug     = 0; // Set to 0 for no debugging or 1 to debug
@@ -383,11 +573,17 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     tec_int_t num_dims  = m.num_dimensions();
     tec_int_t num_nodes = m.num_vertices();
     tec_int_t num_edges = m.num_edges();
-    tec_int_t num_faces = num_edges;
     tec_int_t num_elem  = m.num_cells();
+    tec_int_t num_zones = m.num_regions();
 
     // set the time
-    double soln_time = m.get_time();
+    double soln_time = m.time();
+
+
+
+    //--------------------------------------------------------------------------
+    // collect field data
+    //--------------------------------------------------------------------------
 
     // variable extension for vectors
     std::string var_ext[3];
@@ -400,16 +596,6 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     variables.emplace_back( make_pair( "x", tec_var_location_t::node ) );
     variables.emplace_back( make_pair( "y", tec_var_location_t::node ) );
 
-    //--------------------------------------------------------------------------
-    // collect field data
-    //--------------------------------------------------------------------------
-
-    // a lambda function for validating strings
-    auto validate_string = []( auto && str ) {
-      return utils::replace_all( std::forward<decltype(str)>(str), " ", "_" );;
-    };
-
-
 
     //----------------------------------------------------------------------------
     // nodal field data
@@ -417,7 +603,7 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     // real scalars persistent at vertices
     auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
     // int scalars persistent at vertices
-    auto ispav = access_type_if(m, int, is_persistent_at(vertices));
+    auto ispav = access_type_if(m, integer_t, is_persistent_at(vertices));
     // real vectors persistent at vertices
     auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
 
@@ -445,7 +631,7 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     // real scalars persistent at cells
     auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
     // int scalars persistent at cells
-    auto ispac = access_type_if(m, int, is_persistent_at(cells));
+    auto ispac = access_type_if(m, integer_t, is_persistent_at(cells));
     // real vectors persistent at cells
     auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
 
@@ -485,169 +671,197 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
                              &VIsDouble );
     assert( status == 0 && "error with TECINI" );
 
-  
-    //----------------------------------------------------------------------------
-    // Create ZONE header
-    //----------------------------------------------------------------------------
-
-
-    tec_int_t ZoneType = 6; // set the zone type to FEPolygon
-    tec_int_t NumFaces = 0; // not used for for most zone types
-    tec_int_t ICellMax = 0; // reserved for future use
-    tec_int_t JCellMax = 0; // reserved for future use
-    tec_int_t KCellMax = 0; // reserved for future use
-
-    tec_int_t StrandID = 0; // StaticZone
-    tec_int_t ParentZn = 0; // no parent
-    tec_int_t IsBlock  = 1; // this is a Block
-    tec_int_t NumFaceConnections       = 0; // not used 
-    tec_int_t FaceNeighborMode         = 0; // not used
-    tec_int_t TotalNumFaceNodes        = 2*num_faces; // total nodes for all faces
-    tec_int_t TotalNumBndryFaces       = 0; // boundary faces not used
-    tec_int_t TotalNumBndryConnections = 0; // boundary face connections not used
-    tec_int_t ShareConnectivityFromZone = 0;  // pass 0 to indicate no sharign
-    tec_int_t * PassiveVarList = nullptr;
-    tec_int_t * ShareVarFromZone = nullptr;
-
-    // create the variable location array
-    vector<tec_int_t> var_locations;
-    for ( const auto & var : variables )
-      var_locations.push_back( static_cast<tec_int_t>(var.second) );
-
-    status = TECZNE112( const_cast<char*>( "zone block" ),
-                        &ZoneType,
-                        &num_nodes,
-                        &num_elem,
-                        &num_faces,
-                        &ICellMax,
-                        &JCellMax,
-                        &KCellMax,
-                        &soln_time,
-                        &StrandID,
-                        &ParentZn,
-                        &IsBlock,
-                        &NumFaceConnections,
-                        &FaceNeighborMode,
-                        &TotalNumFaceNodes,
-                        &TotalNumBndryFaces,
-                        &TotalNumBndryConnections,
-                        PassiveVarList,
-                        var_locations.data(),
-                        ShareVarFromZone,
-                        &ShareConnectivityFromZone);
-  
-    assert( status == 0 && "error with TECZNE" );
 
 
 
     //--------------------------------------------------------------------------
-    // WRITE DATA
+    // Var locations
     //--------------------------------------------------------------------------
 
-    // a temporary for vector values
-    vector<tec_real_t> xvals( std::max( num_nodes, num_elem ) );
-    vector<tec_real_t> yvals( std::max( num_nodes, num_elem ) );
-
-    // get the coordinates from the mesh.
-    for (auto v : m.vertices()) {
-      xvals[v.id()] = v->coordinates()[0];
-      yvals[v.id()] = v->coordinates()[1];
-    } // for
-
-      // write the coordinates to the file
-    status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
-    assert( status == 0 && "error with TECDAT" );
-
-    status = TECDAT112( &num_nodes, yvals.data(), &VIsDouble );
-    assert( status == 0 && "error with TECDAT" );
-
-    //----------------------------------------------------------------------------
-    // nodal field data
-
-    // node field buffer
-    for(auto sf: rspav) {
-      for(auto v: m.vertices()) xvals[v.id()] = sf[v];
-      status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
-      assert( status == 0 && "error with TECDAT" );
-    } // for
-    for(auto sf: ispav) {
-      // cast int fields to real_t
-      for(auto v: m.vertices()) xvals[v.id()] = (tec_real_t)sf[v];
-      status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
-      assert( status == 0 && "error with TECDAT" );
-    } // for
-    for(auto vf: rvpav) {
-      for(int d=0; d < num_dims; ++d) {
-        for(auto v: m.vertices()) xvals[v.id()] = vf[v][d];
-        status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
-        assert( status == 0 && "error with TECDAT" );
-      } // for
-    } // for
-
-    //----------------------------------------------------------------------------
-    // cell field data
-
-    // element field buffer
-    for(auto sf: rspac) {
-      for(auto c: m.cells()) xvals[c.id()] = sf[c];
-      status = TECDAT112( &num_elem, xvals.data(), &VIsDouble );
-      assert( status == 0 && "error with TECDAT" );
-    } // for
-    for(auto sf: ispac) {
-      // cast int fields to real_t
-      for(auto c: m.cells()) xvals[c.id()] = (tec_real_t)sf[c];
-      status = TECDAT112( &num_elem, xvals.data(), &VIsDouble );
-      assert( status == 0 && "error with TECDAT" );
-    } // for
-    for(auto vf: rvpac) {
-      for(int d=0; d < num_dims; ++d) {
-        for(auto c: m.cells()) xvals[c.id()] = vf[c][d];
-        status = TECDAT112( &num_elem, xvals.data(), &VIsDouble );
-        assert( status == 0 && "error with TECDAT" );
-      } // for
-    } // for
-
-    //--------------------------------------------------------------------------
-    // WRITE CONNECTIVITY
-    //--------------------------------------------------------------------------
-
-    tec_int_t * FaceNodeCounts            = nullptr; // This is NULL for polygonal zones
-    tec_int_t * FaceBndryConnectionCounts = nullptr; // not using boundary connections
-    tec_int_t * FaceBndryConnectionElems  = nullptr; // not using boundary connections
-    tec_int_t * FaceBndryConnectionZones  = nullptr; // not using boundary connections
-
-    // element definitions
-    vector<tec_int_t> face_nodes( 2 * num_edges );
-    vector<tec_int_t> face_cell_right( num_edges );
-    vector<tec_int_t> face_cell_left ( num_edges );
-
-    auto f = 0, i = 0;
-    for (auto e : m.edges()) {
-      // the nodes of each face
-      for (auto v : m.vertices(e))
-        face_nodes[i++] = v.id() + 1; // 1-based ids      
-      // the cells of each face (1-based ids)
-      auto cells = m.cells( e );
-      assert( cells.size() > 0 && "cell has no edges");
-      // always has left cell
-      face_cell_left[f] = cells[0].id() + 1;
-      // boundary faces don't have right cell
-      face_cell_right[f] = ( cells.size() == 2 ) ? cells[1].id()+1 : 0;
-      // incrememnt 
-      f++;
+    // create the variable location array.  also, we write all nodal
+    // data to the first zone, and share the rest
+    vector<tec_int_t> var_locations, var_sharing;
+    for ( const auto & var : variables ) {
+      auto var_loc = var.second;
+      // cast var location to an integer
+      var_locations.push_back( static_cast<tec_int_t>(var_loc) );
+      // 0 means not shared, otherwise, share nodal data with first zone
+      auto share_var =  (var_loc == tec_var_location_t::node) ? 1 : 0;
+      var_sharing.push_back( share_var );
     }
 
-    status = TECPOLY112( 
-      FaceNodeCounts,
-      face_nodes.data(),
-      face_cell_left.data(),
-      face_cell_right.data(),
-      FaceBndryConnectionCounts,
-      FaceBndryConnectionElems,
-      FaceBndryConnectionZones
-    );
-    assert( status == 0 && "error with TECNOD" );
+    //--------------------------------------------------------------------------
+    // Element-Zone connectivity
+    //--------------------------------------------------------------------------
 
+    // get the regions
+    auto region_cells = m.regions();
+
+    // create a region map
+    tec_zone_map_t mapping( m );
+
+    //--------------------------------------------------------------------------
+    // Loop over Regions
+    //--------------------------------------------------------------------------
+  
+    for ( auto izn=0; izn<num_zones; izn++ ) {
+
+      // get the elements in this block
+      const auto & elem_this_zone = region_cells[izn];
+      tec_int_t num_elem_this_zone = elem_this_zone.size();
+
+      //------------------------------------------------------------------------
+      // face/edge connectivity
+      
+      mapping.build_face_map( izn, elem_this_zone );
+
+      //------------------------------------------------------------------------
+      // Create ZONE header
+
+      std::string ZoneTitle = "region " + std::to_string(izn);
+
+      tec_int_t ZoneType = 6; // set the zone type to FEPolygon
+      tec_int_t NumFaces = 0; // not used for for most zone types
+      tec_int_t ICellMax = 0; // reserved for future use
+      tec_int_t JCellMax = 0; // reserved for future use
+      tec_int_t KCellMax = 0; // reserved for future use
+
+      tec_int_t StrandID = 0; // StaticZone
+      tec_int_t ParentZn = 0; // no parent
+      tec_int_t IsBlock  = 1; // this is a Block
+      tec_int_t NumFaceConnections       = 0; // not used 
+      tec_int_t FaceNeighborMode         = 0; // not used
+      tec_int_t TotalNumFaceNodes        = 2*mapping.num_faces_this_zone; // total nodes for all faces
+      tec_int_t TotalNumBndryFaces       = mapping.num_face_conn; // number boundary connections
+      tec_int_t TotalNumBndryConnections = mapping.num_face_conn; // number boundary connections
+      tec_int_t ShareConnectivityFromZone = 0;  // pass 0 to indicate no sharign
+      tec_int_t * PassiveVarList = nullptr;
+      tec_int_t * ShareVarFromZone = nullptr;
+
+      // share nodal data from first zone
+      if ( izn > 0 ) ShareVarFromZone = var_sharing.data();
+
+      status = TECZNE112( const_cast<char*>( ZoneTitle.c_str() ),
+                          &ZoneType,
+                          &num_nodes,
+                          &num_elem_this_zone,
+                          &mapping.num_faces_this_zone,
+                          &ICellMax,
+                          &JCellMax,
+                          &KCellMax,
+                          &soln_time,
+                          &StrandID,
+                          &ParentZn,
+                          &IsBlock,
+                          &NumFaceConnections,
+                          &FaceNeighborMode,
+                          &TotalNumFaceNodes,
+                          &TotalNumBndryFaces,
+                          &TotalNumBndryConnections,
+                          PassiveVarList,
+                          var_locations.data(),
+                          ShareVarFromZone,
+                          &ShareConnectivityFromZone);
+      
+      assert( status == 0 && "error with TECZNE" );
+
+
+
+      // a temporary for vector values
+      vector<tec_real_t> xvals( std::max( num_nodes, num_elem ) );
+      vector<tec_real_t> yvals( std::max( num_nodes, num_elem ) );
+      
+
+      //------------------------------------------------------------------------
+      // Write Nodal Data for Zone 1 only
+      if ( izn == 0 ) {
+        
+        //----------------------------------------------------------------------
+        // write coordinates
+        
+        // get the coordinates from the mesh.
+        for (auto v : m.vertices()) {
+          xvals[v.id()] = v->coordinates()[0];
+          yvals[v.id()] = v->coordinates()[1];
+        } // for
+        
+        // write the coordinates to the file
+        status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
+        assert( status == 0 && "error with TECDAT" );
+
+        status = TECDAT112( &num_nodes, yvals.data(), &VIsDouble );
+        assert( status == 0 && "error with TECDAT" );
+
+        //----------------------------------------------------------------------
+        // nodal field data
+      
+        // node field buffer
+        for(auto sf: rspav) {
+          for(auto v: m.vertices()) xvals[v.id()] = sf[v];
+          status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
+          assert( status == 0 && "error with TECDAT" );
+        } // for
+        for(auto sf: ispav) {
+          // cast int fields to real_t
+          for(auto v: m.vertices()) xvals[v.id()] = (tec_real_t)sf[v];
+          status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
+          assert( status == 0 && "error with TECDAT" );
+        } // for
+        for(auto vf: rvpav) {
+          for(int d=0; d < num_dims; ++d) {
+            for(auto v: m.vertices()) xvals[v.id()] = vf[v][d];
+            status = TECDAT112( &num_nodes, xvals.data(), &VIsDouble );
+            assert( status == 0 && "error with TECDAT" );
+          } // for
+        } // for
+
+      } // first zone
+
+
+      //------------------------------------------------------------------------
+      // cell field data
+
+      // element field buffer
+      for(auto sf: rspac) {
+        auto cid = 0;
+        for(auto c: elem_this_zone) xvals[cid++] = sf[c];
+        status = TECDAT112( &num_elem_this_zone, xvals.data(), &VIsDouble );
+        assert( status == 0 && "error with TECDAT" );
+      } // for
+      for(auto sf: ispac) {
+        // cast int fields to real_t
+        auto cid = 0;
+        for(auto c: elem_this_zone) xvals[cid++] = (tec_real_t)sf[c];
+        status = TECDAT112( &num_elem_this_zone, xvals.data(), &VIsDouble );
+        assert( status == 0 && "error with TECDAT" );
+      } // for
+      for(auto vf: rvpac) {
+        for(int d=0; d < num_dims; ++d) {
+          auto cid = 0;
+          for(auto c: elem_this_zone) xvals[cid++] = vf[c][d];
+          status = TECDAT112( &num_elem_this_zone, xvals.data(), &VIsDouble );
+          assert( status == 0 && "error with TECDAT" );
+        } // for
+      } // for
+
+      //--------------------------------------------------------------------------
+      // WRITE CONNECTIVITY
+
+      tec_int_t * FaceNodeCounts = nullptr; // This is NULL for polygonal zones
+
+      status = TECPOLY112( 
+        FaceNodeCounts,
+        mapping.face_nodes.data(),
+        mapping.face_cell_left.data(),
+        mapping.face_cell_right.data(),
+        mapping.face_conn_counts.data(),
+        mapping.face_conn_elems.data(),
+        mapping.face_conn_zones.data()
+      );
+      assert( status == 0 && "error with TECNOD" );
+
+
+    } // blocks
 
     //--------------------------------------------------------------------------
     // CLOSE FILE

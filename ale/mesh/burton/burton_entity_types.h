@@ -239,6 +239,12 @@ struct burton_cell_t
   //! Type of floating point.
   using real_t = burton_mesh_traits_t::real_t;
 
+  //! Handle for accessing state at vertex.
+  using data_t = burton_mesh_traits_t::data_t;
+
+  //! Number of domains in the burton mesh.
+  static constexpr size_t num_domains = burton_mesh_traits_t::num_domains;
+
   //! The different cell types
   enum class cell_type_t {
     triangle,
@@ -247,7 +253,7 @@ struct burton_cell_t
   };
 
   //============================================================================
-  // Typedefs
+  // Constructors
   //============================================================================
 
   //! Constructor
@@ -276,6 +282,24 @@ struct burton_cell_t
 
   //! the cell type
   virtual cell_type_t type() const {}; // = 0; FIXME
+
+  //! get the region id
+  auto & region()
+  {
+    auto cell_regions =
+      data_t::instance().dense_accessor<size_t, flecsi_internal>(
+        "cell_region", mesh_.runtime_id() );
+    return cell_regions[mesh_entity_base_t<num_domains>::template id<0>()];
+  }
+
+  //! get the region id
+  auto region() const
+  {
+    auto cell_regions =
+      data_t::instance().dense_accessor<size_t, flecsi_internal>(
+        "cell_region", mesh_.runtime_id() );
+    return cell_regions[mesh_entity_base_t<num_domains>::template id<0>()];
+  }
 
   //----------------------------------------------------------------------------
   //! \brief create_entities is a function that creates entities

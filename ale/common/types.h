@@ -37,7 +37,14 @@ using real_t = float;
 #ifdef USE_64BIT_IDS
 using index_t = uint64_t;
 #else
-  using index_t = uint32_t;
+using index_t = uint32_t;
+#endif
+
+//! type of integer data to use
+#ifdef DOUBLE_PRECISION
+using integer_t = int64_t;
+#else
+using integer_t = int32_t;
 #endif
 
 //! a size type

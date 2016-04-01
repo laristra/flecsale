@@ -29,6 +29,8 @@ using mesh_t   = ale::mesh::burton_mesh_t;
 
 //! \brief the mesh float type
 using real_t   = typename mesh_t::real_t;
+//! \brief the mesh int type
+using integer_t= typename mesh_t::integer_t;
 //! \brief the mesh dimensions
 static constexpr size_t dimensions = mesh_t::num_dimensions();
 

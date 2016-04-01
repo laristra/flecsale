@@ -179,8 +179,8 @@ int main(int argc, char** argv)
   register_state(mesh, "flux", edges, flux_data_t, temporary);
 
   // get the current time
-  auto soln_time = mesh.get_time();
-  auto time_cnt  = mesh.get_time_step_counter();
+  auto soln_time = mesh.time();
+  auto time_cnt  = mesh.time_step_counter();
 
   do {   
 

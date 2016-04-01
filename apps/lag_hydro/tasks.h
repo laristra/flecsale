@@ -682,7 +682,7 @@ int32_t output( T & mesh,
                 size_t output_freq ) 
 {
 
-  auto cnt = mesh.get_time_step_counter();
+  auto cnt = mesh.time_step_counter();
   if ( cnt % output_freq != 0 ) return 0;
 
   std::stringstream ss;

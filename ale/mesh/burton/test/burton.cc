@@ -402,7 +402,7 @@ TEST_F(Burton, state) {
   register_state(mesh_, "pressure", cells, real_t, persistent);
   register_state(mesh_, "velocity", vertices, vector_t, persistent);
   register_state(mesh_, "H", edges, vector_t);
-  register_state(mesh_, "cornerdata", corners, int32_t);
+  register_state(mesh_, "cornerdata", corners, integer_t);
   register_state(mesh_, "wedgedata", wedges, bool);
 
   struct data_t {
@@ -414,7 +414,7 @@ TEST_F(Burton, state) {
   auto p = access_state(mesh_, "pressure", real_t);
   auto velocity = access_state(mesh_, "velocity", vector_t);
   auto H = access_state(mesh_, "H", vector_t);
-  auto cd = access_state(mesh_, "cornerdata", int32_t);
+  auto cd = access_state(mesh_, "cornerdata", integer_t);
   auto wd = access_state(mesh_, "wedgedata", bool);
 
   // cells

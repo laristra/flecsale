@@ -71,6 +71,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
 
     using   mesh_t = burton_mesh_t;
     using   real_t = typename mesh_t::real_t;
+    using integer_t= typename mesh_t::integer_t;
     using vector_t = typename mesh_t::vector_t;
     using vtk_real_t = real_t;
     using vtk_int_t = int;
@@ -83,7 +84,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     auto num_elem  = m.num_cells();
 
     // set the time
-    auto soln_time = m.get_time();
+    auto soln_time = m.time();
 
     // variable extension for vectors
     std::string var_ext[3];
@@ -111,7 +112,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     // real scalars persistent at vertices
     auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
     // int scalars persistent at vertices
-    auto ispav = access_type_if(m, int, is_persistent_at(vertices));
+    auto ispav = access_type_if(m, integer_t, is_persistent_at(vertices));
     // real vectors persistent at vertices
     auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
 
@@ -121,7 +122,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     // real scalars persistent at cells
     auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
     // int scalars persistent at cells
-    auto ispac = access_type_if(m, int, is_persistent_at(cells));
+    auto ispac = access_type_if(m, integer_t, is_persistent_at(cells));
     // real vectors persistent at cells
     auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
 

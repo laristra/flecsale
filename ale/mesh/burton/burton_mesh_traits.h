@@ -45,7 +45,6 @@ struct burton_mesh_traits_t {
   //! the bitfield type
   using bitfield_t = flecsi::bitfield_t;
 
-
   //! The dimension of the burton mesh.
   static constexpr size_t dimension = FLECSI_MESH_DIMENSION;
 
@@ -54,6 +53,9 @@ struct burton_mesh_traits_t {
 
   //! The type for floating-point values.
   using real_t = common::real_t;
+
+  //! The type for integer values.
+  using integer_t = common::integer_t;
 
   //! A point type with real_t data and mesh dimension.
   using point_t = geom::point<real_t, dimension>;

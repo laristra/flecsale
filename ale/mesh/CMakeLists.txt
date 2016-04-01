@@ -18,6 +18,8 @@ set(mesh_HEADERS
   burton/burton_io_exodus.h
   burton/burton_io_tecplot.h
   burton/burton_io_vtk.h
+  burton/burton_io_vtm.h
+  burton/burton_io_vtu.h
   burton/burton_mesh.h
   burton/burton_mesh_traits.h
   burton/burton_types.h
