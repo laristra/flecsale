@@ -17,15 +17,8 @@
  ******************************************************************************/
 #pragma once
 
-//! system includes
-#include <cinchtest.h>
-
-//! user includes
-#include "../../../common/types.h"
-#include "../../../mesh/burton/burton.h"
-
-//! \brief the mesh type
-using mesh_t   = ale::mesh::burton_mesh_t;
+//! test include
+#include "burton_test_base.h"
 
 //! \brief the mesh float type
 using real_t   = typename mesh_t::real_t;
@@ -54,7 +47,7 @@ using std::vector;
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test fixture for creating the mesh
 ////////////////////////////////////////////////////////////////////////////////
-class Burton : public ::testing::Test {
+class Burton : public BurtonTestBase {
 public: 
 
   //---------------------------------------------------------------------------
@@ -114,30 +107,6 @@ protected:
 
 
 public:
-
-  //---------------------------------------------------------------------------
-  //! \brief a utility for creating random data
-  //---------------------------------------------------------------------------
-  void create_data() {
-    // register
-    register_state(mesh_, "pressure", cells, real_t, persistent);
-    register_state(mesh_, "region", cells, int, persistent);
-    register_state(mesh_, "velocity", vertices, vector_t, persistent);
-    // access
-    auto p = access_state(mesh_, "pressure", real_t);
-    auto r = access_state(mesh_, "region", int);
-    auto velocity = access_state(mesh_, "velocity", vector_t);
-    // initialize
-    for(auto c: mesh_.cells()) {
-      p[c] = c.id();
-      r[c] = mesh_.num_cells() - c.id();
-    } // for
-    // vertices
-    for (auto v: mesh_.vertices()) {
-      velocity[v][0] = v.id();
-      velocity[v][1] = 2.0*v.id();
-    } // for
-  }
 
 
   //---------------------------------------------------------------------------

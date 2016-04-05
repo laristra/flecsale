@@ -30,10 +30,7 @@
 #endif
 
 #ifdef HAVE_VTK
-#  include <vtkCellType.h>
-#  include <vtkPoints.h>
-#  include <vtkSmartPointer.h>
-#  include <vtkUnstructuredGrid.h>
+#  include <vtkXMLUnstructuredGridReader.h>
 #  include <vtkXMLUnstructuredGridWriter.h>
 #endif
 
@@ -45,11 +42,14 @@
 //! user includes
 #include "flecsi/io/io_base.h"
 #include "../../mesh/burton/burton_mesh.h"
+#include "../../mesh/burton/burton_vtk_utils.h"
 #include "../../utils/errors.h"
 
 
 namespace ale {
 namespace mesh {
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \class io_vtu_t io_vtu.h
@@ -80,53 +80,8 @@ struct burton_io_vtu_t : public flecsi::io_base_t<burton_mesh_t> {
 
     std::cout << "Writing mesh to: " << name << std::endl;
 
-    // alias some types
-    using std::string;
-    using std::vector;
-
-    using   mesh_t = burton_mesh_t;
-    using   real_t = typename mesh_t::real_t;
-    using integer_t= typename mesh_t::integer_t;
-    using vector_t = typename mesh_t::vector_t;
-
-    using vtkRealType = double;
-
-    //--------------------------------------------------------------------------
-    // setup
-    //--------------------------------------------------------------------------
-
-    
-    // creat unstructured grid
-    auto ug = vtkSmartPointer<vtkUnstructuredGrid>::New();
-
-    // create points
-    auto points = vtkPoints::New();
-    points->SetNumberOfPoints( m.num_vertices() );
-    for ( auto v : m.vertices() ) {
-      auto id = v.id();
-      auto coord = v->coordinates();
-      vtkRealType x[3];
-      std::copy( coord.begin(), coord.end(), x );
-      points->SetPoint( id, x );
-    }
-
-    // transfer the points
-    ug->SetPoints(points);
-    points->Delete();
-
-    // create the cells
-    for ( auto c : m.cells() ) {
-      // get the vertices in this cell
-      auto vs = m.vertices(c);
-      auto n = vs.size();
-      // copy them to the vtk type
-      std::vector< vtkIdType > ids(n);
-      std::transform( vs.begin(), vs.end(), ids.begin(),
-                      [](auto && v) { return v.id(); } );
-      // set the cell vertices
-      ug->InsertNextCell(VTK_POLYGON, n, ids.data());
-    }
-    
+    // convert to vtk
+    auto ug = to_vtk( m );
 
     // write to file
     auto writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
@@ -139,8 +94,7 @@ struct burton_io_vtu_t : public flecsi::io_base_t<burton_mesh_t> {
 
 #else
 
-    std::cerr << "FLECSI not build with vtk support." << std::endl;
-    std::exit(1);
+    raise_implemented_error( "FLECSI not build with vtk support." );
 
     return -1;
 
@@ -161,7 +115,30 @@ struct burton_io_vtu_t : public flecsi::io_base_t<burton_mesh_t> {
   //============================================================================
   int32_t read( const std::string &name, burton_mesh_t &m) override
   {
-    raise_implemented_error( "No vtu read functionality has been implemented" );
+#ifdef HAVE_VTK
+
+    std::cout << "Reading mesh from: " << name << std::endl;
+
+    // Read solution
+    auto reader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+    reader->SetFileName( name.c_str() );
+    reader->Update();
+    auto ug = reader->GetOutput();
+
+    // convert vtk solution to a mesh
+    to_mesh( ug, m );
+
+
+    return 0;
+
+#else
+
+    raise_implemented_error( "FLECSI not build with vtk support." );
+
+    return -1;
+
+#endif
+
   };
 
 }; // struct io_vtu_t

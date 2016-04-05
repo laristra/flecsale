@@ -105,6 +105,7 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
 
     // put nodes into mesh
     vector<vertex_t *> vs;
+    vs.reserve( num_nodes );
     for (size_t i = 0; i < num_nodes; ++i) {
       point_t p = { static_cast<real_t>(xcoord[i]), 
                     static_cast<real_t>(ycoord[i]) };

@@ -11,6 +11,14 @@
 #include <typeinfo>
 #include <unordered_map>
 
+#ifdef HAVE_VTK
+#  include <vtkDoubleArray.h>
+#  include <vtkFloatArray.h>
+#  include <vtkIntArray.h>
+#  include <vtkLongArray.h>
+#  include <vtkLongLongArray.h>
+#endif
+
 // user includes
 #include "write_binary.h"
 
@@ -18,8 +26,48 @@ namespace ale {
 namespace utils {
 
 
+#ifdef HAVE_VTK 
+
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief a vtk writer class
+//! figure out the vtk array type at compile time
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+struct vtk_array_t {};
+
+template<>
+struct vtk_array_t<float>
+{ 
+  using type = vtkFloatArray;
+};
+
+template<>
+struct vtk_array_t<double>
+{ 
+  using type = vtkDoubleArray;
+};
+
+template<>
+struct vtk_array_t<int>
+{ 
+  using type = vtkIntArray;
+};
+
+template<>
+struct vtk_array_t<long>
+{ 
+  using type = vtkLongArray;
+};
+
+template<>
+struct vtk_array_t<long long>
+{ 
+  using type = vtkLongLongArray;
+};
+
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief a vtk writer class for legacy files
 ////////////////////////////////////////////////////////////////////////////////
 class vtk_writer {
 

@@ -1,0 +1,10 @@
+<VTKFile type="vtkMultiBlockDataSet" version="1.0" byte_order="LittleEndian" header_type="UInt64">
+  <vtkMultiBlockDataSet>
+    <Block index="0" name="Element Blocks">
+      <DataSet index="0" name="Unnamed block ID: 1 Type: SHELL4" file="mixed_0_0.vtu">
+      </DataSet>
+      <DataSet index="1" name="Unnamed block ID: 1001 Type: TRI3" file="mixed_1_0.vtu">
+      </DataSet>
+    </Block>
+  </vtkMultiBlockDataSet>
+</VTKFile>
