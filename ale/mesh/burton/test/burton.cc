@@ -305,7 +305,7 @@ TEST_F(Burton, accessors) {
 
   CINCH_CAPTURE() << "Accessing state with type real_t at cells" << endl;
 
-  auto va = access_type_if(mesh_, real_t, is_at(cells));
+  auto va = access_type_if(mesh_, real_t, is_at(mesh_,cells));
   for(auto v: va) {
     labels.push_back(v.label());
   } // for
@@ -320,7 +320,7 @@ TEST_F(Burton, accessors) {
   CINCH_CAPTURE() << "Accessing persistent state with type real_t at cells"
     << endl;
 
-  auto vp = access_type_if(mesh_, real_t, is_persistent_at(cells));
+  auto vp = access_type_if(mesh_, real_t, is_persistent_at(mesh_,cells));
 
   for(auto v: vp) {
     labels.push_back(v.label());
@@ -333,7 +333,7 @@ TEST_F(Burton, accessors) {
 
   CINCH_CAPTURE() << "Accessing state with type vector_t at vertices" << endl;
 
-  auto vv = access_type_if(mesh_, vector_t, is_at(vertices));
+  auto vv = access_type_if(mesh_, vector_t, is_at(mesh_,vertices));
   for(auto v: vv) {
     labels.push_back(v.label());
   } // for
@@ -344,7 +344,7 @@ TEST_F(Burton, accessors) {
   CINCH_CAPTURE()
     << "Accessing persistent state with type vector_t at vertices" << endl;
 
-  auto vpv = access_type_if(mesh_, vector_t, is_persistent_at(vertices));
+  auto vpv = access_type_if(mesh_, vector_t, is_persistent_at(mesh_,vertices));
   for(auto v: vpv) {
     labels.push_back(v.label());
   } // for
@@ -354,7 +354,7 @@ TEST_F(Burton, accessors) {
 
   CINCH_CAPTURE() << "Accessing state with type vector_t at edges" << endl;
 
-  auto ve = access_type_if(mesh_, vector_t, is_at(edges));
+  auto ve = access_type_if(mesh_, vector_t, is_at(mesh_,edges));
   for(auto v: ve) {
     labels.push_back(v.label());
   } // for
@@ -364,7 +364,7 @@ TEST_F(Burton, accessors) {
 
   CINCH_CAPTURE() << "Accessing state with type point_t at vertices" << endl;
 
-  auto pv = access_type_if(mesh_, point_t, is_at(vertices));
+  auto pv = access_type_if(mesh_, point_t, is_at(mesh_,vertices));
   for(auto v: pv) {
     labels.push_back(v.label());
   } // for
@@ -377,7 +377,7 @@ TEST_F(Burton, accessors) {
   CINCH_CAPTURE() << "Accessing persistent state with type point_t at vertices"
             << endl;
 
-  auto ppv = access_type_if(mesh_, point_t, is_persistent_at(vertices));
+  auto ppv = access_type_if(mesh_, point_t, is_persistent_at(mesh_,vertices));
   for(auto v: ppv) {
     labels.push_back(v.label());
   } // for

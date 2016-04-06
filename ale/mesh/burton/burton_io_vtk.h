@@ -59,7 +59,7 @@ namespace mesh {
 ///
 /// \tparam mesh_t Mesh to template io_base_t on.
 ////////////////////////////////////////////////////////////////////////////////
-struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
+struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
   //! Default constructor
   burton_io_vtk_t() {}
@@ -79,7 +79,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
   //!
   //! \remark this uses in vtk library writer
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_t &m, bool binary ) override
+  int32_t write( const std::string &name, burton_mesh_2d_t &m, bool binary ) override
   {
 
     std::cout << "Writing mesh to: " << name << std::endl;
@@ -112,7 +112,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
   //!
   //! \remark this uses in vtk library reader
   //============================================================================
-  int32_t read( const std::string &name, burton_mesh_t &m) override
+  int32_t read( const std::string &name, burton_mesh_2d_t &m) override
   {
 
     std::cout << "Reading mesh from: " << name << std::endl;
@@ -125,7 +125,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     auto ug = reader->GetOutput();
     
     // convert vtk solution to a mesh
-    to_mesh( ug, m );
+    m = to_mesh<burton_mesh_2d_t>( ug );
 
     return 0;
 
@@ -146,7 +146,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
   //! 
   //! \remark this uses in house vtk writer
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_t &m, bool binary ) override
+  int32_t write( const std::string &name, burton_mesh_2d_t &m, bool binary ) override
   {
 
     std::cout << "Writing mesh to: " << name << std::endl;
@@ -158,7 +158,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     // alias some types
     using std::vector;
 
-    using   mesh_t = burton_mesh_t;
+    using   mesh_t = burton_mesh_2d_t;
     using   real_t = typename mesh_t::real_t;
     using integer_t= typename mesh_t::integer_t;
     using vector_t = typename mesh_t::vector_t;
@@ -245,7 +245,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     vector<integer_t> ivals( num_nodes );
 
     // real scalars persistent at vertices
-    auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
+    auto rspav = access_type_if(m, real_t, is_persistent_at(m,vertices));
     for(auto sf: rspav) {
       auto label = validate_string( sf.label() );
       for(auto v: m.vertices()) vals[v.id()] = sf[v];
@@ -254,7 +254,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     } // for
 
     // int scalars persistent at vertices
-    auto ispav = access_type_if(m, integer_t, is_persistent_at(vertices));
+    auto ispav = access_type_if(m, integer_t, is_persistent_at(m,vertices));
     for(auto sf: ispav) {
       auto label = validate_string( sf.label() );
       for(auto v: m.vertices()) ivals[v.id()] = sf[v];
@@ -265,7 +265,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     vals.resize( num_nodes * num_dims );
 
     // real vectors persistent at vertices
-    auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
+    auto rvpav = access_type_if(m, vector_t, is_persistent_at(m,vertices));
     for(auto vf: rvpav) {
       auto label = validate_string( vf.label() );
       for(auto v: m.vertices()) {
@@ -290,7 +290,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     // element field data
 
     // real scalars persistent at cells
-    auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
+    auto rspac = access_type_if(m, real_t, is_persistent_at(m,cells));
     for(auto sf: rspac) {
       auto label = validate_string( sf.label() );
       for(auto c: m.cells()) vals[c.id()] = sf[c];
@@ -299,7 +299,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     } // for
 
     // int scalars persistent at cells
-    auto ispac = access_type_if(m, integer_t, is_persistent_at(cells));
+    auto ispac = access_type_if(m, integer_t, is_persistent_at(m,cells));
     for(auto sf: ispac) {
       auto label = validate_string( sf.label() );
       for(auto c: m.cells()) ivals[c.id()] = sf[c];
@@ -310,7 +310,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
     vals.resize( num_elem * num_dims );
 
     // real vectors persistent at cells
-    auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
+    auto rvpac = access_type_if(m, vector_t, is_persistent_at(m,cells));
     for(auto vf: rvpac) {
       auto label = validate_string( vf.label() );
       for(auto c: m.cells()) {
@@ -345,7 +345,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
   //!
   //! \remark no read support using in house vtk writer
   //============================================================================
-  int32_t read( const std::string &name, burton_mesh_t &m) override
+  int32_t read( const std::string &name, burton_mesh_2d_t &m) override
   {
     raise_implemented_error( "No vtk read functionality has been implemented" );
   };
@@ -364,7 +364,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
   //!
   //! FIXME: should allow for const mesh_t &
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_t &m ) override
+  int32_t write( const std::string &name, burton_mesh_2d_t &m ) override
   {
     write( name, m, true );
   }
@@ -378,7 +378,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_t> {
 //!
 //! \return Pointer to io_base_t base class of io_vtk_t.
 ////////////////////////////////////////////////////////////////////////////////
-inline flecsi::io_base_t<burton_mesh_t> * create_io_vtk()
+inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_vtk()
 {
   return new burton_io_vtk_t;
 } // create_io_vtk
@@ -388,7 +388,7 @@ inline flecsi::io_base_t<burton_mesh_t> * create_io_vtk()
 //! Register file extension "vtk" with factory.
 ////////////////////////////////////////////////////////////////////////////////
 static bool burton_vtk_dat_registered =
-  flecsi::io_factory_t<burton_mesh_t>::instance().registerType(
+  flecsi::io_factory_t<burton_mesh_2d_t>::instance().registerType(
     "vtk", create_io_vtk );
 
 

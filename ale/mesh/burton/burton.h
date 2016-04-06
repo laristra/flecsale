@@ -53,9 +53,9 @@ using flecsi::temporary;
   \param[in] ... The task input arguments (variadic list).  All arguments
    will be passed to the task when it is invoked.
  */
-#define execute(task, ...) \
-  ale::mesh::burton_mesh_t::mesh_execution_t::execute_task(task,    \
-    ##__VA_ARGS__)
+#define execute(mesh_,task, ...)                                    \
+  std::decay_t<decltype(mesh_)>::mesh_execution_t::execute_task(task,   \
+  ##__VA_ARGS__)
 
 ////////////////////////////////////////////////////////////////////////////////
 // State Interface
@@ -75,8 +75,9 @@ using flecsi::temporary;
     function of the user-defined meta data type.
  */
 #define register_state(mesh_, key, site, type, ...) \
-  (mesh_).template register_state_<type>((key), \
-  ale::mesh::burton_mesh_traits_t::attachment_site_t::site, ##__VA_ARGS__)
+  (mesh_).template register_state_<type>( (key),                        \
+  std::decay_t<decltype(mesh_)>::mesh_traits_t::attachment_site_t::site, \
+  ##__VA_ARGS__)
 
 /*!
   \brief Access state from a given \e mesh and \e key.
@@ -130,10 +131,10 @@ using flecsi::temporary;
   \return True if the state is registered at the specified
     attachment site, false, otherwise.
  */
-#define is_at(attachment_site)                                           \
-  [](const auto & a) -> bool {                                           \
-    return a.meta().site ==                                              \
-      ale::mesh::burton_mesh_traits_t::attachment_site_t::attachment_site; }
+#define is_at(mesh, attachment_site)                                    \
+  [](const auto & a) -> bool {                                          \
+    return a.meta().site ==                                             \
+    std::decay_t<decltype(mesh_)>::mesh_traits_t::attachment_site_t::attachment_site; }
 
 /*!
   \brief Select persistent state variables at an attachment site.
@@ -148,11 +149,11 @@ using flecsi::temporary;
   \return True if the state is persistent and is registered at
     the specified attachment site, false, otherwise.
  */
-#define is_persistent_at(attachment_site)                                \
-  [](const auto & a) -> bool {                                           \
-    flecsi::bitfield_t bf(a.meta().attributes);                          \
-    return a.meta().site ==                                              \
-      ale::mesh::burton_mesh_traits_t::attachment_site_t::attachment_site && \
+#define is_persistent_at(mesh_, attachment_site)                        \
+  [](const auto & a) -> bool {                                          \
+    flecsi::bitfield_t bf(a.meta().attributes);                         \
+    return a.meta().site ==                                             \
+      std::decay_t<decltype(mesh_)>::mesh_traits_t::attachment_site_t::attachment_site &&  \
       bf.bitsset(persistent); }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -228,6 +229,20 @@ using flecsi::temporary;
   (mesh).state_attributes_((key))
 
 ////////////////////////////////////////////////////////////////////////////////
+// Alias mesh types
+////////////////////////////////////////////////////////////////////////////////
+
+namespace ale {
+namespace mesh {
+
+//! some mesh types
+using burton_mesh_2d_t = burton_mesh_t<2>;
+using burton_mesh_3d_t = burton_mesh_t<3>;
+
+}
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Delayed includes
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -236,6 +251,10 @@ using flecsi::temporary;
 #include "../../mesh/burton/burton_io_vtk.h"
 #include "../../mesh/burton/burton_io_vtu.h"
 #include "../../mesh/burton/burton_io_vtm.h"
+
+////////////////////////////////////////////////////////////////////////////////
+// load some things
+////////////////////////////////////////////////////////////////////////////////
 
 namespace ale {
 namespace mesh {

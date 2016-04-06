@@ -46,7 +46,7 @@ enum class tec_var_location_t
 };
 
 //! some tecplot typedefs
-using tec_real_t = burton_mesh_t::real_t;
+using tec_real_t = burton_mesh_2d_t::real_t;
 using tec_int_t = INTEGER4;
 
 
@@ -58,7 +58,7 @@ struct tec_zone_map_t {
   //============================================================================
   //! \brief constructor
   //============================================================================
-  tec_zone_map_t( burton_mesh_t & m ) : 
+  tec_zone_map_t( burton_mesh_2d_t & m ) : 
     mesh(m),
     num_zones( m.num_regions() ), 
     elem_zone_map( num_zones ),
@@ -81,7 +81,7 @@ struct tec_zone_map_t {
       
      
     // count how many edges there are in this block
-    std::set< burton_mesh_t::edge_t* > edges_this_zone; 
+    std::set< burton_mesh_2d_t::edge_t* > edges_this_zone; 
     for ( auto c : elem_this_zone ) 
       for ( auto e : mesh.edges( c ) )
         edges_this_zone.insert( e );
@@ -156,7 +156,7 @@ struct tec_zone_map_t {
   //============================================================================
 
   //! \brief a referemce for the mesh
-  burton_mesh_t & mesh;
+  burton_mesh_2d_t & mesh;
 
   //! \brief number of zones
   tec_int_t num_zones;
@@ -175,7 +175,7 @@ struct tec_zone_map_t {
     
   //! \brief  storage for the zone-element mapping
   std::vector< 
-    std::map< burton_mesh_t::cell_t*, size_t > 
+    std::map< burton_mesh_2d_t::cell_t*, size_t > 
   > elem_zone_map;
     
   //!  \brief  a local element counter
@@ -190,7 +190,7 @@ struct tec_zone_map_t {
 ///
 /// \tparam mesh_t Mesh to template io_base_t on.
 ////////////////////////////////////////////////////////////////////////////////
-struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
+struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
   
   //! Default constructor
@@ -207,11 +207,11 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
   //!
   //! FIXME: should allow for const mesh_t &
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_t &m) override
+  int32_t write( const std::string &name, burton_mesh_2d_t &m) override
   {
 
     //! general type aliases
-    using   mesh_t = burton_mesh_t;
+    using   mesh_t = burton_mesh_2d_t;
     using   real_t = typename mesh_t::real_t;
     using integer_t= typename mesh_t::integer_t;
     using vector_t = typename mesh_t::vector_t;
@@ -264,13 +264,13 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
 
     int num_nf = 0; // number of nodal fields
     // real scalars persistent at vertices
-    auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
+    auto rspav = access_type_if(m, real_t, is_persistent_at(m,vertices));
     num_nf += rspav.size();
     // int scalars persistent at vertices
-    auto ispav = access_type_if(m, integer_t, is_persistent_at(vertices));
+    auto ispav = access_type_if(m, integer_t, is_persistent_at(m,vertices));
     num_nf += ispav.size();
     // real vectors persistent at vertices
-    auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
+    auto rvpav = access_type_if(m, vector_t, is_persistent_at(m,vertices));
     num_nf += num_dims*rvpav.size();
 
     // fill node variable names array
@@ -297,13 +297,13 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
 
     int num_ef = 0; // number of element fields
     // real scalars persistent at cells
-    auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
+    auto rspac = access_type_if(m, real_t, is_persistent_at(m,cells));
     num_ef += rspac.size();
     // int scalars persistent at cells
-    auto ispac = access_type_if(m, integer_t, is_persistent_at(cells));
+    auto ispac = access_type_if(m, integer_t, is_persistent_at(m,cells));
     num_ef += ispac.size();
     // real vectors persistent at cells
-    auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
+    auto rvpac = access_type_if(m, vector_t, is_persistent_at(m,cells));
     num_ef += num_dims*rvpac.size();
 
 
@@ -498,7 +498,7 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
   //! \return tecplot error code. 0 on success.
   //!
   //============================================================================
-  int32_t read( const std::string &name, burton_mesh_t &m)  override
+  int32_t read( const std::string &name, burton_mesh_2d_t &m)  override
   {
     raise_implemented_error( "No tecplot read functionality has been implemented" );
   };
@@ -512,7 +512,7 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_t> {
 ///
 /// \tparam mesh_t Mesh to template io_base_t on.
 ////////////////////////////////////////////////////////////////////////////////
-struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
+struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
   //! Default constructor
   burton_io_tecplot_binary_t() {}
@@ -527,7 +527,7 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
   //!
   //! FIXME: should allow for const mesh_t &
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_t &m)  override
+  int32_t write( const std::string &name, burton_mesh_2d_t &m)  override
   {
 
 #ifdef HAVE_TECIO
@@ -535,7 +535,7 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     std::cout << "Writing mesh to: " << name << std::endl;
 
     //! general type aliases
-    using   mesh_t = burton_mesh_t;
+    using   mesh_t = burton_mesh_2d_t;
     using   real_t = typename mesh_t::real_t;
     using integer_t= typename mesh_t::integer_t;
     using vector_t = typename mesh_t::vector_t;
@@ -601,11 +601,11 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     // nodal field data
 
     // real scalars persistent at vertices
-    auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
+    auto rspav = access_type_if(m, real_t, is_persistent_at(m,vertices));
     // int scalars persistent at vertices
-    auto ispav = access_type_if(m, integer_t, is_persistent_at(vertices));
+    auto ispav = access_type_if(m, integer_t, is_persistent_at(m,vertices));
     // real vectors persistent at vertices
-    auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
+    auto rvpav = access_type_if(m, vector_t, is_persistent_at(m,vertices));
 
     // fill node variable names array
     for(auto sf: rspav) {
@@ -629,11 +629,11 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     // element field data
 
     // real scalars persistent at cells
-    auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
+    auto rspac = access_type_if(m, real_t, is_persistent_at(m,cells));
     // int scalars persistent at cells
-    auto ispac = access_type_if(m, integer_t, is_persistent_at(cells));
+    auto ispac = access_type_if(m, integer_t, is_persistent_at(m,cells));
     // real vectors persistent at cells
-    auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
+    auto rvpac = access_type_if(m, vector_t, is_persistent_at(m,cells));
 
 
     // fill element variable names array
@@ -894,7 +894,7 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
     //! \return tecplot error code. 0 on success.
     //!
     //============================================================================
-  int32_t read( const std::string &name, burton_mesh_t &m)  override
+  int32_t read( const std::string &name, burton_mesh_2d_t &m)  override
   {
     raise_implemented_error( "No tecplot read functionality has been implemented" );
   };
@@ -910,7 +910,7 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_t> {
 //!
 //! \return Pointer to io_base_t base class of io_tecplot_ascii_t.
 ////////////////////////////////////////////////////////////////////////////////
-inline flecsi::io_base_t<burton_mesh_t> * create_io_tecplot_ascii()
+inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_tecplot_ascii()
 {
   return new burton_io_tecplot_ascii_t;
 } // create_io_tecplot_ascii
@@ -922,7 +922,7 @@ inline flecsi::io_base_t<burton_mesh_t> * create_io_tecplot_ascii()
 //!
 //! \return Pointer to io_base_t base class of io_tecplot_binary_t.
 ////////////////////////////////////////////////////////////////////////////////
-inline flecsi::io_base_t<burton_mesh_t> * create_io_tecplot_binary()
+inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_tecplot_binary()
 {
   return new burton_io_tecplot_binary_t;
 } // create_io_tecplot_binary
@@ -932,14 +932,14 @@ inline flecsi::io_base_t<burton_mesh_t> * create_io_tecplot_binary()
 //! Register file extension "plt" with factory.
 ////////////////////////////////////////////////////////////////////////////////
 static bool burton_tecplot_dat_registered =
-  flecsi::io_factory_t<burton_mesh_t>::instance().registerType(
+  flecsi::io_factory_t<burton_mesh_2d_t>::instance().registerType(
     "plt", create_io_tecplot_binary );
 
 ////////////////////////////////////////////////////////////////////////////////
 //! Register file extension "dat" with factory.
 ////////////////////////////////////////////////////////////////////////////////
 static bool burton_tecplot_plt_registered =
-  flecsi::io_factory_t<burton_mesh_t>::instance().registerType(
+  flecsi::io_factory_t<burton_mesh_2d_t>::instance().registerType(
     "dat", create_io_tecplot_ascii );
 
 

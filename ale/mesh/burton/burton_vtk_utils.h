@@ -40,16 +40,16 @@ namespace mesh {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief convert a burton mesh to a vtk unstructured grid
 ////////////////////////////////////////////////////////////////////////////////
-static auto to_vtk( burton_mesh_t & m ) 
+template< typename M >
+static auto to_vtk( M & m ) 
 {
 
   // alias some types
   using std::vector;
 
-  using   mesh_t = burton_mesh_t;
-  using   real_t = typename mesh_t::real_t;
-  using integer_t= typename mesh_t::integer_t;
-  using vector_t = typename mesh_t::vector_t;
+  using   real_t = typename M::real_t;
+  using integer_t= typename M::integer_t;
+  using vector_t = typename M::vector_t;
 
   using utils::vtk_array_t;
 
@@ -113,7 +113,7 @@ static auto to_vtk( burton_mesh_t & m )
   auto rvals = vtk_array_t<real_t>::type::New();
   rvals->SetNumberOfValues( num_vertices );
 
-  auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
+  auto rspav = access_type_if(m, real_t, is_persistent_at(m,vertices));
   for(auto sf: rspav) {
     auto label = validate_string( sf.label() );      
     rvals->SetName( label.c_str() );
@@ -127,7 +127,7 @@ static auto to_vtk( burton_mesh_t & m )
   auto ivals = vtk_array_t<integer_t>::type::New();
   ivals->SetNumberOfValues( num_vertices );
 
-  auto ispav = access_type_if(m, integer_t, is_persistent_at(vertices));
+  auto ispav = access_type_if(m, integer_t, is_persistent_at(m,vertices));
   for(auto sf: ispav) {
     auto label = validate_string( sf.label() );
     ivals->SetName( label.c_str() );
@@ -142,7 +142,7 @@ static auto to_vtk( burton_mesh_t & m )
   vvals->SetNumberOfComponents( 3 ); // always 3d
   vvals->SetNumberOfTuples( num_vertices );
 
-  auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
+  auto rvpav = access_type_if(m, vector_t, is_persistent_at(m,vertices));
   for(auto vf: rvpav) {
     auto label = validate_string( vf.label() );
     vvals->SetName( label.c_str() );
@@ -168,7 +168,7 @@ static auto to_vtk( burton_mesh_t & m )
   rvals = vtk_array_t<real_t>::type::New();
   rvals->SetNumberOfValues( num_cells );
 
-  auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
+  auto rspac = access_type_if(m, real_t, is_persistent_at(m,cells));
   for(auto sf: rspac) {
     auto label = validate_string( sf.label() );      
     rvals->SetName( label.c_str() );
@@ -182,7 +182,7 @@ static auto to_vtk( burton_mesh_t & m )
   ivals = vtk_array_t<integer_t>::type::New();
   ivals->SetNumberOfValues( num_cells );
 
-  auto ispac = access_type_if(m, integer_t, is_persistent_at(cells));
+  auto ispac = access_type_if(m, integer_t, is_persistent_at(m,cells));
   for(auto sf: ispac) {
     auto label = validate_string( sf.label() );
     ivals->SetName( label.c_str() );
@@ -197,7 +197,7 @@ static auto to_vtk( burton_mesh_t & m )
   vvals->SetNumberOfComponents( 3 ); // always 3d
   vvals->SetNumberOfTuples( num_cells );
 
-  auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
+  auto rvpac = access_type_if(m, vector_t, is_persistent_at(m,cells));
   for(auto vf: rvpac) {
     auto label = validate_string( vf.label() );
     vvals->SetName( label.c_str() );
@@ -222,23 +222,26 @@ static auto to_vtk( burton_mesh_t & m )
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief convert a vtk unstructured grid to a burton mesh
 ////////////////////////////////////////////////////////////////////////////////
-static void to_mesh( vtkUnstructuredGrid* ug, burton_mesh_t & m ) 
+template< typename M >
+static auto to_mesh( vtkUnstructuredGrid* ug ) 
 {
 
 
   // alias some types
   using std::vector;
 
-  using   mesh_t = burton_mesh_t;
-  using   real_t = typename mesh_t::real_t;
-  using integer_t= typename mesh_t::integer_t;
-  using vector_t = typename mesh_t::vector_t;
-  using  point_t = typename mesh_t::point_t;
-  using vertex_t = typename mesh_t::vertex_t;
+  using   real_t = typename M::real_t;
+  using integer_t= typename M::integer_t;
+  using vector_t = typename M::vector_t;
+  using  point_t = typename M::point_t;
+  using vertex_t = typename M::vertex_t;
 
   //----------------------------------------------------------------------------
   // setup
   //----------------------------------------------------------------------------
+  
+  // create a new mesh
+  M m;
   
   // some general mesh stats
   auto num_dims = m.num_dimensions();
@@ -297,6 +300,13 @@ static void to_mesh( vtkUnstructuredGrid* ug, burton_mesh_t & m )
   //----------------------------------------------------------------------------
 
   m.init();
+
+
+  for ( auto v : m.vertices() ) {
+    auto & coord = v->coordinates();
+  }
+
+  return m;
 
 }
 

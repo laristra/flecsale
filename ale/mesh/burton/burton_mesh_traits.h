@@ -30,23 +30,23 @@
 namespace ale {
 namespace mesh {
 
+////////////////////////////////////////////////////////////////////////////////
+/// \brief The mesh traits
+////////////////////////////////////////////////////////////////////////////////
+template< std::size_t N >
 struct burton_mesh_traits_t {
-
-/*!
-  Compile-time selection of mesh dimension.  Valid selections are 2 or 3.
- */
-#ifndef FLECSI_MESH_DIMENSION
-#define FLECSI_MESH_DIMENSION 2
-#endif // FLECSI_MESH_DIMENSION
 
   //! the size type
   using size_t = std::size_t;
+
+  //! the constant string type
+  using const_string_t = flecsi::const_string_t;
 
   //! the bitfield type
   using bitfield_t = flecsi::bitfield_t;
 
   //! The dimension of the burton mesh.
-  static constexpr size_t dimension = FLECSI_MESH_DIMENSION;
+  static constexpr size_t dimension = N;
 
   //! The number of mesh domains in the burton mesh.
   static constexpr size_t num_domains = 2;
@@ -66,17 +66,13 @@ struct burton_mesh_traits_t {
   //! Enumeration of the locations on the mesh where data may be sited.
   enum class attachment_site_t : size_t {
     vertices,
-#if FLECSI_MESH_DIMENSION >= 2
-    edges,
-#endif
-#if FLECSI_MESH_DIMENSION == 3
-    faces,
-#endif
-    cells,
-    corners,
-    wedges,
-    global
-  }; // enum class attachment_site_t
+      edges,
+      faces,
+      cells,
+      corners,
+      wedges,
+      global
+      }; // enum class attachment_site_t
 
   //! Enumeration of the available attributes on state data.
   enum class state_attribute_t : bitfield_t::field_type_t {
@@ -84,18 +80,18 @@ struct burton_mesh_traits_t {
     temporary = 1 // just a placeholder for now
   }; // enum class state_attribute_t
 
-  /*--------------------------------------------------------------------------*
-   * State type definitions
-   *--------------------------------------------------------------------------*/
+  //============================================================================
+  // State type definitions
+  //============================================================================
 
-  /*!
-    \brief Struct to hold meta data for private state. Meta data includes site
-      and attributes.
-   */
+  //! \brief Struct to hold meta data for private state. Meta data includes site
+  //!   and attributes.
   struct private_state_meta_data_t {
 
-    void initialize(attachment_site_t site_,
-      bitfield_t::field_type_t attributes_) {
+    void initialize(
+      attachment_site_t site_,
+      bitfield_t::field_type_t attributes_) 
+    {
       site = site_;
       attributes = attributes_;
     } // initialize
@@ -105,7 +101,7 @@ struct burton_mesh_traits_t {
 
   }; // struct private_state_meta_data_t
 
-//! A type definition of data_t based on the storage policy for the mesh.
+  //! A type definition of data_t based on the storage policy for the mesh.
 #ifndef MESH_STORAGE_POLICY
   using data_t = flecsi::data_model::data_t<private_state_meta_data_t>;
 #else

@@ -23,31 +23,34 @@
 namespace ale {
 namespace mesh {
 
-//!  the real type
-using real_t = burton_mesh_traits_t::real_t;
+//! Type for storing instance of template specialized low level mesh.
+using mesh_t = flecsi::mesh_topology_t< burton_mesh_types_t<2> >;
 
-//!  the vector type
-using vector_t = burton_mesh_traits_t::vector_t;
+// aliases for ease of use
+using edge_t = burton_edge_t<2>;
+using cell_t = burton_cell_t<2>;
+using triangle_cell_t = burton_triangle_cell_t<2>;
+using quadrilateral_cell_t = burton_quadrilateral_cell_t<2>;
+using polygonal_cell_t = burton_polygonal_cell_t<2>;
 
-//!  the point type
-using point_t = burton_mesh_traits_t::point_t;
 
 ////////////////////////////////////////////////////////////////////////////////
 // burton_edge_t
 ////////////////////////////////////////////////////////////////////////////////
-
-point_t burton_edge_t::midpoint() const
+template<>
+edge_t::point_t edge_t::midpoint() const
 {
-  auto & mesh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh_);
-  auto vs = mesh.entities<0,0>(this);
+  auto msh = static_cast<const mesh_t *>(mesh());
+  auto vs = msh->entities<0,0>(this);
 
-  return point_t{0.5*(vs[0]->coordinates() + vs[1]->coordinates())};
+  return {0.5*(vs[0]->coordinates() + vs[1]->coordinates())};
 } // burton_edge_t::midpoint
 
-real_t burton_edge_t::length() const
+template<>
+edge_t::real_t edge_t::length() const
 {
-  auto & mesh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh_);
-  auto vs = mesh.entities<0,0>(this);
+  auto msh = static_cast<const mesh_t *>(mesh());
+  auto vs = msh->entities<0,0>(this);
 
   auto & a = vs[0]->coordinates();
   auto & b = vs[1]->coordinates();
@@ -57,10 +60,11 @@ real_t burton_edge_t::length() const
   return std::sqrt( sqr(a[0]-b[0]) + sqr(a[1]-b[1]) );
 } // burton_edge_t::length
 
-vector_t burton_edge_t::normal() const
+template<>
+edge_t::vector_t edge_t::normal() const
 {
-  auto & mesh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh_);
-  auto vs = mesh.entities<0,0>(this);
+  auto msh = static_cast<const mesh_t *>(mesh());
+  auto vs = msh->entities<0,0>(this);
 
   auto & a = vs[0]->coordinates();
   auto & b = vs[1]->coordinates();
@@ -71,13 +75,14 @@ vector_t burton_edge_t::normal() const
 ////////////////////////////////////////////////////////////////////////////////
 // burton_cell_t
 ////////////////////////////////////////////////////////////////////////////////
-real_t burton_cell_t::min_length() const
+template<>
+cell_t::real_t cell_t::min_length() const
 {
-  auto & mesh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh_);
-  auto vs = mesh.entities<0,0>(this);
+  auto msh = static_cast<const mesh_t *>(mesh());
+  auto vs = msh->entities<0,0>(this);
 
   // get one of the edges as a reference
-  auto edges = mesh.entities<1,0>(this);
+  auto edges = msh->entities<1,0>(this);
   auto min_length = edges.front()->length();
  
   for ( auto vi : vs ) {
@@ -96,19 +101,21 @@ real_t burton_cell_t::min_length() const
 // burton_triangle_cell_t
 ////////////////////////////////////////////////////////////////////////////////
 
-point_t burton_triangle_cell_t::centroid() const
+template<>
+triangle_cell_t::point_t triangle_cell_t::centroid() const
 {
-  auto & msh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh());
-  auto vs = msh.entities<0,0>(this);
+  auto msh = static_cast<const mesh_t *>(mesh());
+  auto vs = msh->entities<0,0>(this);
 
   return math::average( 
     vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
 } // burton_triangle_cell_t::centroid
 
-real_t burton_triangle_cell_t::area() const
+template<>
+triangle_cell_t::real_t triangle_cell_t::area() const
 {
-  auto & msh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh());
-  auto vs = msh.entities<0,0>(this);
+  auto msh = static_cast<const mesh_t *>(mesh());
+  auto vs = msh->entities<0,0>(this);
 
   auto u = vs[1]->coordinates() - vs[0]->coordinates();
   auto v = vs[2]->coordinates() - vs[0]->coordinates();
@@ -117,12 +124,13 @@ real_t burton_triangle_cell_t::area() const
 } // burton_triangle_cell_t::area
     
 
-real_t burton_triangle_cell_t::min_length() const
+template<>
+triangle_cell_t::real_t triangle_cell_t::min_length() const
 {
-  auto & msh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh());
+  auto msh = static_cast<const mesh_t *>(mesh());
 
   // check the edges first
-  auto edges = msh.entities<1,0>(this);
+  auto edges = msh->entities<1,0>(this);
   auto eit = edges.begin();
   auto min_length = eit->length();
   std::for_each( ++eit, edges.end(), [&](auto && e) 
@@ -138,31 +146,34 @@ real_t burton_triangle_cell_t::min_length() const
 ////////////////////////////////////////////////////////////////////////////////
 
 
-point_t burton_quadrilateral_cell_t::centroid() const
+template<>
+quadrilateral_cell_t::point_t quadrilateral_cell_t::centroid() const
 {
-  auto & msh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh());
-  auto vs = msh.entities<0,0>(this);
+  auto msh = static_cast<const mesh_t *>(mesh());
+  auto vs = msh->entities<0,0>(this);
 
   return geom::centroid( vs[0]->coordinates(), vs[1]->coordinates(), 
                          vs[2]->coordinates(), vs[3]->coordinates() );
 } // burton_quadrilateral_cell_t::centroid
 
-real_t burton_quadrilateral_cell_t::area() const
+template<>
+quadrilateral_cell_t::real_t quadrilateral_cell_t::area() const
 {
-  auto & msh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh());
-  auto vs = msh.entities<0,0>(this);
+  auto msh = static_cast<const mesh_t *>(mesh());
+  auto vs = msh->entities<0,0>(this);
 
   return geom::area( vs[0]->coordinates(), vs[1]->coordinates(), 
                      vs[2]->coordinates(), vs[3]->coordinates() );
 } // burton_quadrilateral_cell_t::area
     
 
-real_t burton_quadrilateral_cell_t::min_length() const
+template<>
+quadrilateral_cell_t::real_t quadrilateral_cell_t::min_length() const
 {
-  auto & msh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh());
+  auto msh = static_cast<const mesh_t *>(mesh());
 
   // check the edges first
-  auto edges = msh.entities<1,0>(this);
+  auto edges = msh->entities<1,0>(this);
   auto eit = edges.begin();
   auto min_length = eit->length();
   std::for_each( ++eit, edges.end(), [&](auto && e) 
@@ -171,7 +182,7 @@ real_t burton_quadrilateral_cell_t::min_length() const
                  });
 
   // now check the diagonal
-  auto vs = msh.entities<0,0>(this);
+  auto vs = msh->entities<0,0>(this);
   min_length = std::min( abs( vs[0]->coordinates() - vs[2]->coordinates() ), min_length );
   min_length = std::min( abs( vs[1]->coordinates() - vs[3]->coordinates() ), min_length );
 
@@ -182,25 +193,26 @@ real_t burton_quadrilateral_cell_t::min_length() const
 // burton_polygonal_cell_t
 ////////////////////////////////////////////////////////////////////////////////
 
-point_t burton_polygonal_cell_t::centroid() const
+template<>
+polygonal_cell_t::point_t polygonal_cell_t::centroid() const
 {
-  auto & msh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh());
-  auto vs = msh.entities<0,0>(this);
+  auto msh = static_cast<const mesh_t *>(mesh());
+  auto vs = msh->entities<0,0>(this);
 
-  std::vector<vector_t> coords;
+  std::vector<point_t> coords;
   coords.reserve( 8 );
   for ( auto v : vs ) coords.emplace_back( v->coordinates() );
 
   return geom::centroid( coords );
 } // burton_polygonal_cell_t::centroid
 
-real_t burton_polygonal_cell_t::area() const
+template<>
+polygonal_cell_t::real_t polygonal_cell_t::area() const
 {
-  auto & msh = static_cast<const mesh_topology_t<burton_mesh_types_t> &>(mesh());
-  auto vs = msh.entities<0,0>(this);
+  auto msh = static_cast<const mesh_t *>(mesh());
+  auto vs = msh->entities<0,0>(this);
 
-
-  std::vector<vector_t> coords;
+  std::vector<point_t> coords;
   coords.reserve( 8 );
   for ( auto v : vs ) coords.emplace_back( v->coordinates() );
 

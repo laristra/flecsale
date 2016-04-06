@@ -41,7 +41,7 @@ namespace mesh {
 ///
 /// \tparam mesh_t Mesh to template io_base_t on.
 ////////////////////////////////////////////////////////////////////////////////
-struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
+struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
   //! Default constructor
   burton_io_exodus_t() {}
@@ -54,7 +54,7 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
   //!
   //! \return Exodus error code. 0 on success.
   //============================================================================
-  int32_t read( const std::string &name, burton_mesh_t &m) 
+  int32_t read( const std::string &name, burton_mesh_2d_t &m) 
   {
 
 #ifdef HAVE_EXODUS
@@ -63,7 +63,7 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
 
     // alias some types
     using std::vector;
-    using   mesh_t = burton_mesh_t;
+    using   mesh_t = burton_mesh_2d_t;
     using   real_t = typename mesh_t::real_t;
     using  point_t = typename mesh_t::point_t;
     using vector_t = typename mesh_t::vector_t;
@@ -257,7 +257,7 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
   //FIXME: should allow for const mesh_t &
   //int32_t io_exodus_t::write(
   //    const std::string &name, const mesh_t &m) {
-  int32_t write( const std::string &name, burton_mesh_t &m ) 
+  int32_t write( const std::string &name, burton_mesh_2d_t &m ) 
   {
 
 #ifdef HAVE_EXODUS
@@ -267,7 +267,7 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
     // alias some types
     using std::vector;
     using std::array;
-    using   mesh_t = burton_mesh_t;
+    using   mesh_t = burton_mesh_2d_t;
     using   real_t = typename mesh_t::real_t;
     using integer_t= typename mesh_t::integer_t;
     using vector_t = typename mesh_t::vector_t;
@@ -408,13 +408,13 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
 
     int num_nf = 0; // number of nodal fields
     // real scalars persistent at vertices
-    auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
+    auto rspav = access_type_if(m, real_t, is_persistent_at(m,vertices));
     num_nf += rspav.size();
     // int scalars persistent at vertices
-    auto ispav = access_type_if(m, integer_t, is_persistent_at(vertices));
+    auto ispav = access_type_if(m, integer_t, is_persistent_at(m,vertices));
     num_nf += ispav.size();
     // real vectors persistent at vertices
-    auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
+    auto rvpav = access_type_if(m, vector_t, is_persistent_at(m,vertices));
     num_nf += num_dims*rvpav.size();
 
     // variable extension for vectors
@@ -480,13 +480,13 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
 
     int num_ef = 0; // number of element fields
     // real scalars persistent at cells
-    auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
+    auto rspac = access_type_if(m, real_t, is_persistent_at(m,cells));
     num_ef += rspac.size();
     // int scalars persistent at cells
-    auto ispac = access_type_if(m, integer_t, is_persistent_at(cells));
+    auto ispac = access_type_if(m, integer_t, is_persistent_at(m,cells));
     num_ef += ispac.size();
     // real vectors persistent at cells
-    auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
+    auto rvpac = access_type_if(m, vector_t, is_persistent_at(m,cells));
     num_ef += num_dims*rvpac.size();
 
 
@@ -594,7 +594,7 @@ struct burton_io_exodus_t : public flecsi::io_base_t<burton_mesh_t> {
 //!
 //! \return Pointer to io_base_t base class of io_exodus_t.
 ////////////////////////////////////////////////////////////////////////////////
-inline flecsi::io_base_t<burton_mesh_t> * create_io_exodus()
+inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_exodus()
 {
   return new burton_io_exodus_t;
 } // create_io_exodus
@@ -608,14 +608,14 @@ inline flecsi::io_base_t<burton_mesh_t> * create_io_exodus()
 //! Register file extension "g" with factory.
 ////////////////////////////////////////////////////////////////////////////////
 static bool burton_exodus_g_registered =                 
-  flecsi::io_factory_t<burton_mesh_t>::instance().registerType(
+  flecsi::io_factory_t<burton_mesh_2d_t>::instance().registerType(
     "g", create_io_exodus );
 
 ////////////////////////////////////////////////////////////////////////////////
 //! Register file extension "exo" with factory.
 ////////////////////////////////////////////////////////////////////////////////
 static bool burton_exodus_exo_registered =
-  flecsi::io_factory_t<burton_mesh_t>::instance().registerType(
+  flecsi::io_factory_t<burton_mesh_2d_t>::instance().registerType(
     "exo", create_io_exodus );
 
 } // namespace mesh

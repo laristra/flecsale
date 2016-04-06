@@ -58,7 +58,7 @@ namespace mesh {
 ///
 /// \tparam mesh_t Mesh to template io_base_t on.
 ////////////////////////////////////////////////////////////////////////////////
-struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_t> {
+struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
   //! Default constructor
   burton_io_vtm_t() {}
@@ -73,7 +73,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_t> {
   //!
   //! FIXME: should allow for const mesh_t &
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_t &m ) override
+  int32_t write( const std::string &name, burton_mesh_2d_t &m ) override
   {
 
 #ifdef HAVE_VTK
@@ -84,7 +84,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_t> {
     using std::string;
     using std::vector;
 
-    using   mesh_t = burton_mesh_t;
+    using   mesh_t = burton_mesh_2d_t;
     using   size_t = typename mesh_t::size_t;
     using   real_t = typename mesh_t::real_t;
     using integer_t= typename mesh_t::integer_t;
@@ -171,7 +171,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_t> {
       auto rvals = vtk_array_t<real_t>::type::New();
       rvals->SetNumberOfValues( num_vertices );
       
-      auto rspav = access_type_if(m, real_t, is_persistent_at(vertices));
+      auto rspav = access_type_if(m, real_t, is_persistent_at(m,vertices));
       for(auto sf: rspav) {
         auto label = validate_string( sf.label() );      
         rvals->SetName( label.c_str() );
@@ -186,7 +186,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_t> {
       auto ivals = vtk_array_t<integer_t>::type::New();
       ivals->SetNumberOfValues( num_vertices );
 
-      auto ispav = access_type_if(m, integer_t, is_persistent_at(vertices));
+      auto ispav = access_type_if(m, integer_t, is_persistent_at(m,vertices));
       for(auto sf: ispav) {
         auto label = validate_string( sf.label() );
         ivals->SetName( label.c_str() );
@@ -202,7 +202,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_t> {
       vvals->SetNumberOfComponents( 3 ); // always 3d
       vvals->SetNumberOfTuples( num_vertices );
 
-      auto rvpav = access_type_if(m, vector_t, is_persistent_at(vertices));
+      auto rvpav = access_type_if(m, vector_t, is_persistent_at(m,vertices));
       for(auto vf: rvpav) {
         auto label = validate_string( vf.label() );
         vvals->SetName( label.c_str() );
@@ -229,7 +229,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_t> {
       rvals = vtk_array_t<real_t>::type::New();
       rvals->SetNumberOfValues( num_cells_this_block );
 
-      auto rspac = access_type_if(m, real_t, is_persistent_at(cells));
+      auto rspac = access_type_if(m, real_t, is_persistent_at(m,cells));
       for(auto sf: rspac) {
         auto label = validate_string( sf.label() );      
         rvals->SetName( label.c_str() );
@@ -244,7 +244,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_t> {
       ivals = vtk_array_t<integer_t>::type::New();
       ivals->SetNumberOfValues( num_cells_this_block );
 
-      auto ispac = access_type_if(m, integer_t, is_persistent_at(cells));
+      auto ispac = access_type_if(m, integer_t, is_persistent_at(m,cells));
       for(auto sf: ispac) {
         auto label = validate_string( sf.label() );
         ivals->SetName( label.c_str() );
@@ -260,7 +260,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_t> {
       vvals->SetNumberOfComponents( 3 ); // always 3d
       vvals->SetNumberOfTuples( num_cells_this_block );
 
-      auto rvpac = access_type_if(m, vector_t, is_persistent_at(cells));
+      auto rvpac = access_type_if(m, vector_t, is_persistent_at(m,cells));
       for(auto vf: rvpac) {
         auto label = validate_string( vf.label() );
         vvals->SetName( label.c_str() );
@@ -314,7 +314,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_t> {
   //! \return vtu error code. 0 on success.
   //!
   //============================================================================
-  int32_t read( const std::string &name, burton_mesh_t &m) override
+  int32_t read( const std::string &name, burton_mesh_2d_t &m) override
   {
 #ifdef HAVE_VTK
 
@@ -324,7 +324,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_t> {
     using std::string;
     using std::vector;
 
-    using   mesh_t = burton_mesh_t;
+    using   mesh_t = burton_mesh_2d_t;
     using   real_t = typename mesh_t::real_t;
     using integer_t= typename mesh_t::integer_t;
     using vector_t = typename mesh_t::vector_t;
@@ -560,7 +560,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_t> {
 //!
 //! \return Pointer to io_base_t base class of io_vtm_t.
 ////////////////////////////////////////////////////////////////////////////////
-inline flecsi::io_base_t<burton_mesh_t> * create_io_vtm()
+inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_vtm()
 {
   return new burton_io_vtm_t;
 } // create_io_vtm
@@ -570,7 +570,7 @@ inline flecsi::io_base_t<burton_mesh_t> * create_io_vtm()
 //! Register file extension "vtm" with factory.
 ////////////////////////////////////////////////////////////////////////////////
 static bool burton_vtm_dat_registered =
-  flecsi::io_factory_t<burton_mesh_t>::instance().registerType(
+  flecsi::io_factory_t<burton_mesh_2d_t>::instance().registerType(
     "vtm", create_io_vtm );
 
 

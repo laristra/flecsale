@@ -58,7 +58,7 @@ namespace mesh {
 ///
 /// \tparam mesh_t Mesh to template io_base_t on.
 ////////////////////////////////////////////////////////////////////////////////
-struct burton_io_vtu_t : public flecsi::io_base_t<burton_mesh_t> {
+struct burton_io_vtu_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
   //! Default constructor
   burton_io_vtu_t() {}
@@ -73,7 +73,7 @@ struct burton_io_vtu_t : public flecsi::io_base_t<burton_mesh_t> {
   //!
   //! FIXME: should allow for const mesh_t &
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_t &m ) override
+  int32_t write( const std::string &name, burton_mesh_2d_t &m ) override
   {
 
 #ifdef HAVE_VTK
@@ -113,7 +113,7 @@ struct burton_io_vtu_t : public flecsi::io_base_t<burton_mesh_t> {
   //! \return vtu error code. 0 on success.
   //!
   //============================================================================
-  int32_t read( const std::string &name, burton_mesh_t &m) override
+  int32_t read( const std::string &name, burton_mesh_2d_t &m) override
   {
 #ifdef HAVE_VTK
 
@@ -126,7 +126,7 @@ struct burton_io_vtu_t : public flecsi::io_base_t<burton_mesh_t> {
     auto ug = reader->GetOutput();
 
     // convert vtk solution to a mesh
-    to_mesh( ug, m );
+    m = to_mesh<burton_mesh_2d_t>( ug );
 
 
     return 0;
@@ -150,7 +150,7 @@ struct burton_io_vtu_t : public flecsi::io_base_t<burton_mesh_t> {
 //!
 //! \return Pointer to io_base_t base class of io_vtu_t.
 ////////////////////////////////////////////////////////////////////////////////
-inline flecsi::io_base_t<burton_mesh_t> * create_io_vtu()
+inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_vtu()
 {
   return new burton_io_vtu_t;
 } // create_io_vtu
@@ -160,7 +160,7 @@ inline flecsi::io_base_t<burton_mesh_t> * create_io_vtu()
 //! Register file extension "vtu" with factory.
 ////////////////////////////////////////////////////////////////////////////////
 static bool burton_vtu_dat_registered =
-  flecsi::io_factory_t<burton_mesh_t>::instance().registerType(
+  flecsi::io_factory_t<burton_mesh_2d_t>::instance().registerType(
     "vtu", create_io_vtu );
 
 

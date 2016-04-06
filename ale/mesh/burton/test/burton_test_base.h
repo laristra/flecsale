@@ -24,7 +24,7 @@
 #include "../../../mesh/burton/burton.h"
 
 //! \brief the mesh type
-using mesh_t   = ale::mesh::burton_mesh_t;
+using mesh_t   = ale::mesh::burton_mesh_2d_t;
 
 // some general using statements
 using std::string;

@@ -34,15 +34,12 @@ namespace ale {
 namespace mesh {
 
 
-
-//! the execution poly type
-using flecsi::execution_t;
-
 ////////////////////////////////////////////////////////////////////////////////
 /// \class burton_mesh_t burton_mesh.h
 /// \brief A specialization of the flecsi low-level mesh topology, state and
 ///   execution models.
 ////////////////////////////////////////////////////////////////////////////////
+template< std::size_t N >
 class burton_mesh_t
 {
 public:
@@ -51,44 +48,50 @@ public:
   // Typedefs
   //============================================================================
 
+  //! the mesh types
+  using mesh_types_t = burton_mesh_types_t<N>;
+
+  //! the mesh traits
+  using mesh_traits_t = typename mesh_types_t::mesh_traits_t;
+
   //! Type for storing instance of template specialized low level mesh.
-  using mesh_t = mesh_topology_t<burton_mesh_types_t>;
+  using mesh_t = flecsi::mesh_topology_t< mesh_types_t >;
 
   //! a compile string type
-  using const_string_t = flecsi::const_string_t;
+  using const_string_t = typename mesh_traits_t::const_string_t;
   
   //! a bitfield type
-  using bitfield_t = flecsi::bitfield_t;
+  using bitfield_t = typename mesh_traits_t::bitfield_t;
 
   //! Integer data type.
-  using integer_t = burton_mesh_traits_t::integer_t;
+  using integer_t = typename mesh_traits_t::integer_t;
 
   //! Floating point data type.
-  using real_t = burton_mesh_traits_t::real_t;
+  using real_t = typename mesh_traits_t::real_t;
 
   //! Floating point data type.
-  using size_t = burton_mesh_traits_t::size_t;
+  using size_t = typename mesh_traits_t::size_t;
 
   //! Point data type.
-  using point_t = burton_mesh_traits_t::point_t;
+  using point_t = typename mesh_traits_t::point_t;
 
   //! Physics vector type.
-  using vector_t = burton_mesh_traits_t::vector_t;
+  using vector_t = typename mesh_traits_t::vector_t;
 
   //! Vertex type.
-  using vertex_t = burton_mesh_types_t::vertex_t;
+  using vertex_t = typename mesh_types_t::vertex_t;
 
   //! Edge type.
-  using edge_t = burton_mesh_types_t::edge_t;
+  using edge_t = typename mesh_types_t::edge_t;
 
   //! Cell type.
-  using cell_t = burton_mesh_types_t::cell_t;
+  using cell_t = typename mesh_types_t::cell_t;
 
   //! Wedge type.
-  using wedge_t = burton_mesh_types_t::wedge_t;
+  using wedge_t = typename mesh_types_t::wedge_t;
 
   //! Corner type.
-  using corner_t = burton_mesh_types_t::corner_t;
+  using corner_t = typename mesh_types_t::corner_t;
 
   //! \brief The locations of different bits that we set as flags
   enum bits : size_t 
@@ -100,16 +103,16 @@ public:
 
   //! Type defining the execution policy.
 #ifndef MESH_EXECUTION_POLICY
-  using mesh_execution_t = execution_t<>;
+  using mesh_execution_t = flecsi::execution_t<>;
 #else
-  using mesh_execution_t = execution_t<MESH_EXECUTION_POLICY>;
+  using mesh_execution_t = flecsi::execution_t<MESH_EXECUTION_POLICY>;
 #endif
 
   //! Type defining the data attachment sites on the burton mesh.
-  using attachment_site_t = burton_mesh_traits_t::attachment_site_t;
+  using attachment_site_t = typename mesh_traits_t::attachment_site_t;
 
   //! the data type
-  using data_t = burton_mesh_traits_t::data_t;
+  using data_t = typename mesh_traits_t::data_t;
 
   //============================================================================
   // Dense Accessors
@@ -118,7 +121,7 @@ public:
   //! \brief Accessor type.
   //! \tparam T The type of the underlying data to access.
   template <typename T>
-  using dense_accessor_t = data_t::dense_accessor_t<T>;
+  using dense_accessor_t = typename data_t::template dense_accessor_t<T>;
 
   //! \brief Register state for the named variable at the given attachment
   //!   site with attributes.
@@ -132,38 +135,40 @@ public:
   //!
   //! \return An accessor to the newly registered state.
   template <typename T>
-  decltype(auto) register_state_(const const_string_t && key,
-      attachment_site_t site, bitfield_t::field_type_t attributes = 0x0)
+  decltype(auto) register_state_(
+    const const_string_t && key,
+    attachment_site_t site, 
+    typename bitfield_t::field_type_t attributes = 0x0 )
   {
     data_t & data_ = data_t::instance();
 
     switch (site) {
       case attachment_site_t::vertices:
-        return data_.register_state<T>(
+        return data_.template register_state<T>(
             key, num_vertices(), mesh_.runtime_id(), 
             attachment_site_t::vertices, attributes 
         );
         break;
       case attachment_site_t::edges:
-        return data_.register_state<T>(
+        return data_.template register_state<T>(
             key, num_edges(), mesh_.runtime_id(), 
             attachment_site_t::edges, attributes
         );
         break;
       case attachment_site_t::cells:
-        return data_.register_state<T>(
+        return data_.template register_state<T>(
             key, num_cells(), mesh_.runtime_id(), 
             attachment_site_t::cells, attributes 
         );
         break;
       case attachment_site_t::corners:
-        return data_.register_state<T>(
+        return data_.template register_state<T>(
             key, num_corners(), mesh_.runtime_id(), 
             attachment_site_t::corners, attributes
         );
         break;
       case attachment_site_t::wedges:
-        return data_.register_state<T>(
+        return data_.template register_state<T>(
             key, num_wedges(), mesh_.runtime_id(), 
             attachment_site_t::wedges, attributes
         );
@@ -186,7 +191,8 @@ public:
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_state_(const const_string_t && key)
   {
-    return data_t::instance().dense_accessor<T, NS>( key, mesh_.runtime_id() );
+    return data_t::instance().template dense_accessor<T, NS>( 
+      key, mesh_.runtime_id() );
   } // access_state_
 
   //! \brief Access state registered with type \e T.
@@ -198,7 +204,8 @@ public:
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_type_()
   {
-    return data_t::instance().dense_accessors<T, NS>( mesh_.runtime_id() );
+    return data_t::instance().template dense_accessors<T, NS>( 
+      mesh_.runtime_id() );
   } // access_type_
 
   //! \brief Access state registered with type \e T that matches predicate
@@ -215,7 +222,7 @@ public:
   template <typename T, typename P>
   decltype(auto) access_type_if_(P && predicate)
   {
-    return data_t::instance().dense_accessors<T, P>(
+    return data_t::instance().template dense_accessors<T, P>(
       std::forward<P>(predicate), mesh_.runtime_id() );
   } // access_type_if
 
@@ -233,9 +240,11 @@ public:
   //!
   //! \return An accessor to the newly registered state.
   template <typename T>
-  decltype(auto) register_global_state_(const const_string_t && key,
-    bitfield_t::field_type_t attributes = 0x0) {
-    return data_t::instance().register_global_state<T>(
+  decltype(auto) register_global_state_(
+    const const_string_t && key,
+    typename bitfield_t::field_type_t attributes = 0x0 ) 
+  {
+    return data_t::instance().template register_global_state<T>(
       key, mesh_.runtime_id(), attachment_site_t::global, attributes
     );
   } // register_state_
@@ -252,7 +261,7 @@ public:
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_global_state_(const const_string_t && key)
   {
-    return data_t::instance().global_accessor<T, NS>(key, mesh_.runtime_id());
+    return data_t::instance().template global_accessor<T, NS>(key, mesh_.runtime_id());
   } // access_state_
 
   //! \brief Access state registered with type \e T.
@@ -264,7 +273,7 @@ public:
   template <typename T, size_t NS = flecsi_user_space>
   decltype(auto) access_global_type_()
   {
-    return data_t::instance().global_accessors<T, NS>();
+    return data_t::instance().template global_accessors<T, NS>();
   } // access_type_
 
   //! \brief Access state registered with type \e T that matches predicate
@@ -281,7 +290,7 @@ public:
   template <typename T, typename P>
   decltype(auto) access_global_type_if_(P && predicate)
   {
-    return data_t::instance().global_accessors<T, P>(
+    return data_t::instance().template global_accessors<T, P>(
       std::forward<P>(predicate));
   } // access_type_if
 
@@ -297,7 +306,7 @@ public:
   //! \return The attributes for the state with \e key.
   decltype(auto) state_attributes_(const const_string_t && key)
   {
-    return data_t::instance().meta_data<>((key)).attributes;
+    return data_t::instance().template meta_data<>((key)).attributes;
   } // state_attribtutes_
 
 
@@ -312,11 +321,29 @@ public:
   burton_mesh_t & operator=(const burton_mesh_t &) = default;
 
   //! Copy constructor
-  burton_mesh_t(const burton_mesh_t &src);
+  burton_mesh_t(burton_mesh_t &src);
 
-  //! allow move operations
+  //! allow move construction
   burton_mesh_t( burton_mesh_t && ) = default;
-  burton_mesh_t & operator=(burton_mesh_t &&) = default;
+
+  //! move assignment
+  burton_mesh_t & operator=(burton_mesh_t && other)
+  {
+    // store old runtime id
+    auto runtime_id = other.mesh_.runtime_id();
+    // move the mesh
+    mesh_ = std::move( other.mesh_ );
+    // move the data
+    data_t::instance().move( runtime_id, mesh_.runtime_id() );
+    // reset each entity mesh pointer
+    for ( auto v : vertices() ) v->reset( mesh_ );
+    for ( auto e : edges() ) e->reset( mesh_ );
+    for ( auto c : cells() ) c->reset( mesh_ );
+    for ( auto c : corners() ) c->reset( mesh_ );
+    for ( auto w : wedges() ) w->reset( mesh_ );
+    // return mesh
+    return *this;
+  };
 
   //! Destructor
   ~burton_mesh_t() 
@@ -337,7 +364,7 @@ public:
   //!   burton mesh.
   static constexpr auto num_dimensions()
   {
-    return burton_mesh_traits_t::dimension;
+    return mesh_traits_t::dimension;
   } // dimension
   
   //! \brief Return the time associated with the mesh
@@ -385,13 +412,16 @@ public:
   //! \return The number of vertices in the burton mesh.
   size_t num_vertices() const
   {
-    return mesh_.num_entities<0, 0>();
+    return mesh_.template num_entities<0, 0>();
   } // num_vertices
 
   //! \brief Return all vertices in the burton mesh.
   //! \return Return all vertices in the burton mesh as a sequence for use, e.g.,
   //!   in range based for loops.
-  auto vertices() const { return mesh_.entities<0, 0>(); } // vertices
+  auto vertices() const 
+  { 
+    return mesh_.template entities<0, 0>(); 
+  } // vertices
 
   //! \brief Return vertices associated with entity instance of type \e E.
   //!
@@ -404,7 +434,7 @@ public:
   template <class E>
   auto vertices(E * e) const
   {
-    return mesh_.entities<0, 0>(e);
+    return mesh_.template entities<0, 0>(e);
   } // vertices
 
   //! \brief Return vertices for entity \e e in domain \e M.
@@ -416,9 +446,9 @@ public:
   //!
   //! \return Vertices for entity \e e in domain \e M.
   template <size_t M, class E>
-  auto vertices(const domain_entity<M, E> & e) const
+  auto vertices(const flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.entities<0, M, 0>(e.entity());
+    return mesh_.template entities<0, M, 0>(e.entity());
   }
 
   //! \brief Return ids for all vertices in the burton mesh.
@@ -426,7 +456,7 @@ public:
   //! \return Ids for all vertices in the burton mesh.
   auto vertex_ids() const
   {
-    return mesh_.entity_ids<0, 0>();
+    return mesh_.template entity_ids<0, 0>();
   } // vertex_ids
 
   //! \brief Return vertex ids associated with entity instance of type \e E.
@@ -440,7 +470,7 @@ public:
   template <class E>
   auto vertex_ids(E * e) const
   {
-    return mesh_.entity_ids<0, 0>(e);
+    return mesh_.template entity_ids<0, 0>(e);
   } // vertex_ids
 
   //! \brief Return vertices for entity \e e in domain \e M.
@@ -452,9 +482,9 @@ public:
   //!
   //! \return Vertices for entity \e e in domain \e M.
   template <size_t M, class E>
-  auto vertex_ids(const domain_entity<M, E> & e) const
+  auto vertex_ids(const flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.entity_ids<0, M, 0>(e.entity());
+    return mesh_.template entity_ids<0, M, 0>(e.entity());
   }
 
   //! \brief Return boundary  vertices in the burton mesh.
@@ -478,13 +508,13 @@ public:
   //! \return The number of burton mesh edges.
   size_t num_edges() const
   {
-    return mesh_.num_entities<1, 0>();
+    return mesh_.template num_entities<1, 0>();
   } // num_edges
 
   //! \brief Return all edges in the burton mesh.
   //! \return Return all edges in the burton mesh as a sequence for use, e.g., in
   //!   range based for loops.
-  auto edges() const { return mesh_.entities<1, 0>(); } // edges
+  auto edges() const { return mesh_.template entities<1, 0>(); } // edges
 
   //! \brief Return edges for entity \e e in domain \e M.
   //!
@@ -495,9 +525,9 @@ public:
   //!
   //! \return Edges for entity \e e in domain \e M.
   template <size_t M, class E>
-  auto edges(const domain_entity<M, E> & e) const
+  auto edges(const flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.entities<1, M, 0>(e.entity());
+    return mesh_.template entities<1, M, 0>(e.entity());
   } // edges
 
   //! \brief Return ids for all edges in the burton mesh.
@@ -505,7 +535,7 @@ public:
   //! \return Ids for all edges in the burton mesh.
   auto edge_ids() const
   {
-    return mesh_.entity_ids<1, 0>();
+    return mesh_.template entity_ids<1, 0>();
   } // edge_ids
 
   //! \brief Return edge ids associated with entity instance of type \e E.
@@ -518,7 +548,7 @@ public:
   template <class E>
   auto edge_ids(E * e) const
   {
-    return mesh_.entity_ids<1, 0>(e);
+    return mesh_.template entity_ids<1, 0>(e);
   } // edge_ids
 
   //! \brief Return boundary edges in the burton mesh.
@@ -541,7 +571,7 @@ public:
   //! \return The number of cells in the burton mesh.
   size_t num_cells() const
   {
-    return mesh_.num_entities<num_dimensions(), 0>();
+    return mesh_.template num_entities<num_dimensions(), 0>();
   } // num_cells
 
   //! \brief Return all cells in the burton mesh.
@@ -550,7 +580,7 @@ public:
   //!   in range based for loops.
   auto cells() const
   {
-    return mesh_.entities<num_dimensions(), 0>();
+    return mesh_.template entities<num_dimensions(), 0>();
   } // cells
 
   //! \brief Return all cells in the burton mesh.
@@ -558,7 +588,7 @@ public:
   //!   in range based for loops.
   auto cells() // FIXME const
   {
-    return mesh_.entities<num_dimensions(), 0>();
+    return mesh_.template entities<num_dimensions(), 0>();
   } // cells
 
   //! \brief Return cells associated with entity instance of type \e E.
@@ -571,7 +601,7 @@ public:
   template <class E>
   auto cells(E * e) const
   {
-    return mesh_.entities<num_dimensions(), 0>(e);
+    return mesh_.template entities<num_dimensions(), 0>(e);
   } // cells
 
   //! \brief Return cells for entity \e e in domain \e M.
@@ -583,16 +613,16 @@ public:
   //!
   //! \return Cells for entity \e e in domain \e M.
   template <size_t M, class E>
-  auto cells(const domain_entity<M, E> & e) const
+  auto cells(const flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.entities<num_dimensions(), M, 0>(e.entity());
+    return mesh_.template entities<num_dimensions(), M, 0>(e.entity());
   } // cells
 
   //! \brief Return ids for all cells in the burton mesh.
   //! \return Ids for all cells in the burton mesh.
   auto cell_ids() const
   {
-    return mesh_.entity_ids<num_dimensions(), 0>();
+    return mesh_.template entity_ids<num_dimensions(), 0>();
   } // cell_ids
 
   //! \brief Return cell ids associated with entity instance of type \e E.
@@ -605,7 +635,7 @@ public:
   template <class E>
   auto cell_ids(E * e) const
   {
-    return mesh_.entity_ids<num_dimensions(), 0>(e);
+    return mesh_.template entity_ids<num_dimensions(), 0>(e);
   } // cell_ids
 
   //! \brief Return the number of cells in the burton mesh.
@@ -628,7 +658,7 @@ public:
   //! \return The number of wedges in the burton mesh.
   size_t num_wedges() const
   {
-    return mesh_.num_entities<num_dimensions(), 1>();
+    return mesh_.template num_entities<num_dimensions(), 1>();
   } // num_wedges
 
   //! \brief Return all wedges in the burton mesh.
@@ -636,7 +666,7 @@ public:
   //!   in range based for loops.
   auto wedges() // FIXME const
   {
-    return mesh_.entities<num_dimensions(), 1>();
+    return mesh_.template entities<num_dimensions(), 1>();
   } // wedges
 
   //! \brief Return wedges associated with entity instance of type \e E.
@@ -649,7 +679,7 @@ public:
   template <class E>
   auto wedges(E * e) const
   {
-    return mesh_.entities<num_dimensions(), 1>(e);
+    return mesh_.template entities<num_dimensions(), 1>(e);
   } // wedges
 
   //! \brief Return wedges for entity \e e in domain \e M.
@@ -661,16 +691,16 @@ public:
   //!
   //! \return Wedges for entity \e e in domain \e M.
   template<size_t M, class E>
-  auto wedges(domain_entity<M, E> & e) const
+  auto wedges(flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.entities<num_dimensions(), M, 1>(e.entity());
+    return mesh_.template entities<num_dimensions(), M, 1>(e.entity());
   }
 
   //! \brief Return ids for all wedges in the burton mesh.
   //! \return Ids for all wedges in the burton mesh.
   auto wedge_ids() const
   {
-    return mesh_.entity_ids<num_dimensions(), 1>();
+    return mesh_.template entity_ids<num_dimensions(), 1>();
   } // wedge_ids
 
   //! \brief Return wedge ids associated with entity instance of type \e E.
@@ -684,7 +714,7 @@ public:
   template <class E>
   auto wedge_ids(E * e) const
   {
-    return mesh_.entity_ids<num_dimensions(), 1>(e);
+    return mesh_.template entity_ids<num_dimensions(), 1>(e);
   } // wedge_ids
 
   //============================================================================
@@ -695,7 +725,7 @@ public:
   //! \return The number of corners in the burton mesh.
   size_t num_corners() const
   {
-    return mesh_.num_entities<1, 1>();
+    return mesh_.template num_entities<1, 1>();
   } // num_corners
 
   //! \brief Return all corners in the burton mesh.
@@ -703,7 +733,7 @@ public:
   //!   in range based for loops.
   auto corners()  // FIXME const
   {
-    return mesh_.entities<1, 1>();
+    return mesh_.template entities<1, 1>();
   } // corners
 
   //! \brief Return corners associated with entity instance of type \e E.
@@ -716,7 +746,7 @@ public:
   template <class E>
   auto corners(E * e) const
   {
-    return mesh_.entities<1, 1>(e);
+    return mesh_.template entities<1, 1>(e);
   } // corners
 
   //! \brief Return corners for entity \e e in domain \e M.
@@ -728,16 +758,16 @@ public:
   //!
   //! \return Corners for entity \e e in domain \e M.
   template<size_t M, class E>
-  auto corners(domain_entity<M, E> & e) const
+  auto corners(flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.entities<1, M, 1>(e.entity());
+    return mesh_.template entities<1, M, 1>(e.entity());
   }
 
   //! \brief Return ids for all corners in the burton mesh.
   //! \return Ids for all corners in the burton mesh.
   auto corner_ids() const
   {
-    return mesh_.entity_ids<1, 1>();
+    return mesh_.template entity_ids<1, 1>();
   } // corner_ids
 
   //! \brief Return corner ids associated with entity instance of type \e E.
@@ -751,7 +781,7 @@ public:
   template <class E>
   auto corner_ids(E * e) const
   {
-    return mesh_.entity_ids<1, 1>(e);
+    return mesh_.template entity_ids<1, 1>(e);
   } // corner_ids
 
 
@@ -785,7 +815,9 @@ public:
     // get the cells
     auto cs = cells();
     // create storage for regions
-    using set_type_t = decltype( mesh_.entities<num_dimensions(), 0>() );
+    using set_type_t = decltype( 
+      mesh_.template entities<num_dimensions(), 0>() 
+    );
 
     // create a function to scatter the cells
     using domain_entity_t = decltype( cells()[0] );
@@ -812,8 +844,8 @@ public:
     auto p = access_state_<point_t, flecsi_internal>("coordinates");
     p[num_vertices()] = pos;
 
-    auto v = mesh_.make<vertex_t>( mesh_ );
-    mesh_.add_entity<0, 0>(v);
+    auto v = mesh_.template make<vertex_t>( mesh_ );
+    mesh_.template add_entity<0, 0>(v);
 
     return v;
   }
@@ -831,23 +863,23 @@ public:
     cell_t * c;
 
     switch ( verts.size() ) {
-    case (2):
-      raise_runtime_error( "can't have 2 vertices" );
+    case (1,2):
+      raise_runtime_error( "can't have <3 vertices" );
     case (3):
-      c = mesh_.make< burton_mesh_types_t::triangle_cell_t >(mesh_);
+      c = mesh_.template make< typename mesh_types_t::triangle_cell_t >(mesh_);
       break;
     case (4):
-      c = mesh_.make< burton_mesh_types_t::quadrilateral_cell_t >(mesh_);
+      c = mesh_.template make< typename mesh_types_t::quadrilateral_cell_t >(mesh_);
       break;
     default:
-      c = mesh_.make< burton_mesh_types_t::polygonal_cell_t >(mesh_);
+      c = mesh_.template make< typename mesh_types_t::polygonal_cell_t >(mesh_);
       break;
     }
 
-    mesh_.add_entity<num_dimensions(), 0>(c);
+    mesh_.template add_entity<num_dimensions(), 0>(c);
 
     // FIXME: Need to make mesh interface more general
-    mesh_.init_cell<0>( c, std::forward<V>(verts) );
+    mesh_.template init_cell<0>( c, std::forward<V>(verts) );
     return c;
   } // create_cell
 
@@ -887,7 +919,7 @@ public:
   void init_parameters(size_t num_nodes)
   {
     // register coordinate state
-    data_t::instance().register_state<point_t, flecsi_internal>(
+    data_t::instance().template register_state<point_t, flecsi_internal>(
       "coordinates", num_nodes, mesh_.runtime_id(), 
       attachment_site_t::vertices, persistent
     );
@@ -897,8 +929,8 @@ public:
   void init()
   {
 
-    mesh_.init<0>();
-    mesh_.init_bindings<1>();
+    mesh_.template init<0>();
+    mesh_.template init_bindings<1>();
 
     //mesh_.dump();
     
@@ -921,13 +953,13 @@ public:
       w1->set_cell(cl);
       w1->set_edge(es.front());
       w1->set_vertex(vt);
-      mesh_.add_entity<num_dimensions(), 1>( w1 );
+      mesh_.template add_entity<num_dimensions(), 1>( w1 );
 
       auto w2 = new wedge_t( mesh_ );
       w2->set_cell(cl);
       w2->set_edge(es.back());
       w2->set_vertex(vt);
-      mesh_.add_entity<num_dimensions(), 1>( w2 );
+      mesh_.template add_entity<num_dimensions(), 1>( w2 );
 
       cn->add_wedge(w1);
       cn->add_wedge(w2);
@@ -937,22 +969,23 @@ public:
     data_t & data_ = data_t::instance();
 
     // register time state
-    auto soln_time = data_.register_global_state<real_t, flecsi_internal>(
-      "time", mesh_.runtime_id(), attachment_site_t::global, persistent
-    );
+    auto soln_time = 
+      data_.template register_global_state<real_t, flecsi_internal>(
+        "time", mesh_.runtime_id(), attachment_site_t::global, persistent
+      );
     soln_time = 0;
 
-    auto step = data_.register_global_state<real_t, flecsi_internal>(
+    auto step = data_.template register_global_state<real_t, flecsi_internal>(
       "time_step", mesh_.runtime_id(), attachment_site_t::global, persistent
     );
     *step = 0;
 
     // register some flags for identifying boundarys
-    auto point_flags = data_.register_state<bitfield_t, flecsi_internal>(
+    auto point_flags = data_.template register_state<bitfield_t, flecsi_internal>(
       "point_flags", num_vertices(), mesh_.runtime_id(), 
       attachment_site_t::vertices, persistent
     );
-    auto edge_flags = data_.register_state<bitfield_t, flecsi_internal>(
+    auto edge_flags = data_.template register_state<bitfield_t, flecsi_internal>(
       "edge_flags", num_edges(), mesh_.runtime_id(), 
       attachment_site_t::edges, persistent
     );
@@ -971,7 +1004,7 @@ public:
     } // for
 
     // identify the cell regions
-    auto cell_region = data_.register_state<size_t, flecsi_internal>(
+    auto cell_region = data_.template register_state<size_t, flecsi_internal>(
       "cell_region", num_cells(), mesh_.runtime_id(), 
       attachment_site_t::cells, persistent
     );
@@ -980,10 +1013,11 @@ public:
       cell_region[c] = 0;
 
     // list the regions
-    auto num_regions = data_.register_global_state<size_t, flecsi_internal>(
-      "num_regions", mesh_.runtime_id(), 
-      attachment_site_t::global, persistent
-    );
+    auto num_regions = 
+      data_.template register_global_state<size_t, flecsi_internal>(
+        "num_regions", mesh_.runtime_id(), 
+        attachment_site_t::global, persistent
+      );
     *num_regions = 1;
 
   } // init
@@ -993,7 +1027,8 @@ public:
   //============================================================================
 
   //! Print some statistics.
-  friend std::ostream& operator<< (std::ostream& stream, const burton_mesh_t& mesh);
+  template< std::size_t M >
+  friend std::ostream& operator<< (std::ostream& stream, const burton_mesh_t<M>& mesh);
 
   //============================================================================
   // Private Data 
@@ -1019,8 +1054,9 @@ public:
 //! \brief Copy constructor.
 //! 
 //! \param[in] the mesh to copy.
+template< std::size_t N >
 inline
-burton_mesh_t::burton_mesh_t(const burton_mesh_t &src)
+burton_mesh_t<N>::burton_mesh_t(burton_mesh_t &src)
 {
   
   // FIXME!!!
@@ -1030,11 +1066,13 @@ burton_mesh_t::burton_mesh_t(const burton_mesh_t &src)
 
   init_parameters( src_mesh.num_vertices() );
 
+  // create vertices
   for ( auto v : src_mesh.vertices() ) {
     auto vert = create_vertex( v->coordinates() );
     vs.emplace_back( std::move(vert) );
   }
- 
+
+  // create cells
   for ( auto c : src_mesh.cells() ) {
     auto ids = src_mesh.vertex_ids( c );
     auto n = ids.size();
@@ -1043,7 +1081,17 @@ burton_mesh_t::burton_mesh_t(const burton_mesh_t &src)
     create_cell( elem_vs );   
   } // for
 
-  mesh_.init();
+  // initialize everything
+  init();
+
+  auto src_cells = src.cells();
+
+  // override the region ids
+  auto num_reg = src.num_regions();
+  for ( auto c : cells() ) 
+    c->region() = src_cells[c.id()]->region();
+  set_num_regions( num_reg );
+
 
 }
 
@@ -1058,8 +1106,9 @@ burton_mesh_t::burton_mesh_t(const burton_mesh_t &src)
 //!  \param[in] mesh   The mesh object to print stats for.
 //! 
 //!  \return the stream operator.
+template< std::size_t M >
 inline
-std::ostream& operator<< (std::ostream& stream, const burton_mesh_t& mesh)
+std::ostream& operator<< (std::ostream& stream, const burton_mesh_t<M>& mesh)
 {
   using std::endl;
   stream << "Burton mesh:" << endl;

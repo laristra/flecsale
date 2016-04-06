@@ -25,6 +25,7 @@
 #include "../../geom/normal.h"
 #include "../../math/math.h"
 #include "../../mesh/burton/burton_mesh_traits.h"
+#include "../../utils/errors.h"
 
 
 namespace ale {
@@ -34,33 +35,47 @@ namespace mesh {
 // Expose some types
 ////////////////////////////////////////////////////////////////////////////////
 
-//! the flecsi mesh topology type
-using flecsi::mesh_topology_t;
-//! the flecsi mesh topology type
-using mesh_topology_base_t = flecsi::mesh_topology_base_t;
-
-//! the flexi domain type
-using flecsi::domain_;
-//! the flexi domain entity type
-using flecsi::domain_entity;
-//! the flecsi entity group
-using flecsi::entity_group;
-//! the flecsi mesh enity
-using flecsi::mesh_entity_t;
-
-
 //! some flexi flags
 using flecsi::persistent;
 using flecsi::flecsi_internal;
 using flecsi::flecsi_user_space;
 
-// some flecsi types
-using flecsi::id_t;
-using flecsi::id_vector_t;
-
 // forward declarations
+template< std::size_t N >
 class burton_corner_t;
+
+template< std::size_t N >
 class burton_wedge_t;
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The base for all entity types
+////////////////////////////////////////////////////////////////////////////////
+class burton_entity_base_t 
+{
+public:
+
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = flecsi::mesh_topology_base_t;
+
+  //! Constructor
+  burton_entity_base_t(mesh_topology_base_t & mesh) : mesh_(&mesh) {}
+
+  //! \brief reset the mesh pointer
+  void reset(mesh_topology_base_t & mesh) 
+  { 
+    mesh_ = &mesh; 
+  }
+
+  //! get the mesh
+  auto mesh() const
+  { return mesh_; }
+
+ private:
+
+  //! a reference to the mesh topology
+  const mesh_topology_base_t * mesh_ = nullptr;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \class burton_vertex_t burton_entity_types.h
@@ -69,8 +84,10 @@ class burton_wedge_t;
 //!
 //! \tparam N The domain of the vertex.
 ////////////////////////////////////////////////////////////////////////////////
+template< std::size_t N >
 class burton_vertex_t
-  : public mesh_entity_t<0, burton_mesh_traits_t::num_domains>
+  : public flecsi::mesh_entity_t<0, burton_mesh_traits_t<N>::num_domains>,
+    public burton_entity_base_t
 {
 public:
 
@@ -78,24 +95,39 @@ public:
   // Typedefs
   //============================================================================
 
+  //! the mesh traits
+  using mesh_traits_t = burton_mesh_traits_t<N>;
+
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = typename burton_entity_base_t::mesh_topology_base_t;
+
   //! Type containing coordinates of the vertex.
-  using point_t = burton_mesh_traits_t::point_t;
+  using point_t = typename mesh_traits_t::point_t;
 
   //! Handle for accessing state at vertex.
-  using data_t = burton_mesh_traits_t::data_t;
+  using data_t = typename mesh_traits_t::data_t;
 
   //! the bitfield type
-  using bitfield_t = burton_mesh_traits_t::bitfield_t;
+  using bitfield_t = typename mesh_traits_t::bitfield_t;
 
   //! Number of domains in the burton mesh.
-  static constexpr size_t num_domains = burton_mesh_traits_t::num_domains;
+  static constexpr size_t num_domains = mesh_traits_t::num_domains;
 
   //============================================================================
   // Constructors
   //============================================================================
 
   //! Constructor
-  burton_vertex_t(mesh_topology_base_t & mesh) : mesh_(mesh) {}
+  burton_vertex_t(mesh_topology_base_t & mesh) : burton_entity_base_t(mesh) 
+  {}
+
+  //! dissallow copying
+  burton_vertex_t( burton_vertex_t & ) = delete;
+  burton_vertex_t & operator=( burton_vertex_t & ) = delete;
+
+  //! dissallow moving
+  burton_vertex_t( burton_vertex_t && ) = delete;
+  burton_vertex_t & operator=( burton_vertex_t && ) = delete;
 
   //============================================================================
   // Accessors / Modifiers
@@ -105,8 +137,9 @@ public:
   //! \param[in] coordinates Coordinates value to set for vertex.
   void set_coordinates(const point_t & coordinates)
   {
-    auto c = data_t::instance().dense_accessor<point_t, flecsi_internal>(
-      "coordinates", mesh_.runtime_id() );
+    using flecsi::mesh_entity_base_t;
+    auto c = data_t::instance().template dense_accessor<point_t, flecsi_internal>(
+      "coordinates", mesh()->runtime_id() );
     c[mesh_entity_base_t<num_domains>::template id<0>()] = coordinates;
   } // set_coordinates
 
@@ -114,8 +147,9 @@ public:
   //! \return coordinates of vertex.
   const point_t & coordinates() const
   {
-    const auto c = data_t::instance().dense_accessor<point_t, flecsi_internal>(
-      "coordinates", mesh_.runtime_id() );
+    using flecsi::mesh_entity_base_t;
+    const auto c = data_t::instance().template dense_accessor<point_t, flecsi_internal>(
+      "coordinates", mesh()->runtime_id() );
     return c[mesh_entity_base_t<num_domains>::template id<0>()];
   } // coordinates
 
@@ -124,28 +158,21 @@ public:
   //! \remark this is the non const version
   point_t & coordinates()
   {
-    auto c = data_t::instance().dense_accessor<point_t, flecsi_internal>(
-      "coordinates", mesh_.runtime_id() );
+    using flecsi::mesh_entity_base_t;
+    auto c = data_t::instance().template dense_accessor<point_t, flecsi_internal>(
+      "coordinates", mesh()->runtime_id() );
     return c[mesh_entity_base_t<num_domains>::template id<0>()];
   } // coordinates
 
   //! is this a boundary
   bool is_boundary() const
   {
+    using flecsi::mesh_entity_base_t;
     auto flag =
-      data_t::instance().dense_accessor<bitfield_t, flecsi_internal>(
-        "point_flags", mesh_.runtime_id() );
+      data_t::instance().template dense_accessor<bitfield_t, flecsi_internal>(
+        "point_flags", mesh()->runtime_id() );
     return flag[mesh_entity_base_t<num_domains>::template id<0>()].anybitset();
   }
-
-  //============================================================================
-  // Private Data
-  //============================================================================
-
- private:
-
-  //! a reference to the mesh topology
-  const mesh_topology_base_t & mesh_;
 
 }; // class burton_vertex_t
 
@@ -156,37 +183,54 @@ public:
 //!
 //! \tparam N The domain of the edge.
 ////////////////////////////////////////////////////////////////////////////////
+template< std::size_t N >
 struct burton_edge_t
-    : public mesh_entity_t<1, burton_mesh_traits_t::num_domains> {
+  : public flecsi::mesh_entity_t<1, burton_mesh_traits_t<N>::num_domains>,
+    public burton_entity_base_t
+{
 
   //============================================================================
   // Typedefs
   //============================================================================
 
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = typename burton_entity_base_t::mesh_topology_base_t;
+
+  //! the mesh traits
+  using mesh_traits_t = burton_mesh_traits_t<N>;
+
   //! Type of floating point.
-  using real_t = burton_mesh_traits_t::real_t;
+  using real_t = typename mesh_traits_t::real_t;
 
   //! Type containing coordinates of the vertex.
-  using point_t = burton_mesh_traits_t::point_t;
+  using point_t = typename mesh_traits_t::point_t;
 
   //! Type vector type.
-  using vector_t = burton_mesh_traits_t::vector_t;
+  using vector_t = typename mesh_traits_t::vector_t;
 
   //! the bitfield type
-  using bitfield_t = burton_mesh_traits_t::bitfield_t;
+  using bitfield_t = typename mesh_traits_t::bitfield_t;
 
   //! Number of domains in the burton mesh.
-  static constexpr size_t num_domains = burton_mesh_traits_t::num_domains;
+  static constexpr size_t num_domains = mesh_traits_t::num_domains;
 
   //! Handle for accessing state at vertex.
-  using data_t = burton_mesh_traits_t::data_t;
+  using data_t = typename mesh_traits_t::data_t;
 
   //============================================================================
   // Constructors
   //============================================================================
 
   //! the constructor
-  burton_edge_t(mesh_topology_base_t & mesh) : mesh_(mesh) {}
+  burton_edge_t(mesh_topology_base_t & mesh) : burton_entity_base_t(mesh) {}
+
+  //! dissallow copying
+  burton_edge_t( burton_edge_t & ) = delete;
+  burton_edge_t & operator=( burton_edge_t & ) = delete;
+
+  //! dissallow moving
+  burton_edge_t( burton_edge_t && ) = delete;
+  burton_edge_t & operator=( burton_edge_t && ) = delete;
 
   //============================================================================
   // Accessors / Modifiers
@@ -204,20 +248,12 @@ struct burton_edge_t
   //! is this a boundary
   bool is_boundary() const
   {
+    using flecsi::mesh_entity_base_t;
     auto flag =
-      data_t::instance().dense_accessor<bitfield_t, flecsi_internal>(
-        "edge_flags", mesh_.runtime_id() );
+      data_t::instance().template dense_accessor<bitfield_t, flecsi_internal>(
+        "edge_flags", mesh()->runtime_id() );
     return flag[mesh_entity_base_t<num_domains>::template id<0>()].anybitset();
   }
-
-  //============================================================================
-  // Private Data
-  //============================================================================
-
- private:
-
-  //! a reference to the mesh topology
-  const mesh_topology_base_t & mesh_;
 
 }; // struct burton_edge_t
 
@@ -226,24 +262,36 @@ struct burton_edge_t
 //! \brief The burton_cell_t type provides an interface for managing and
 //!   geometry and state associated with mesh cells.
 ////////////////////////////////////////////////////////////////////////////////
+template< std::size_t N >
 struct burton_cell_t
-    : public mesh_entity_t<2, burton_mesh_traits_t::num_domains> {
+  : public flecsi::mesh_entity_t<2, burton_mesh_traits_t<N>::num_domains>,
+    public burton_entity_base_t
+{
 
   //============================================================================
   // Typedefs
   //============================================================================
 
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = typename burton_entity_base_t::mesh_topology_base_t;
+
+  //! the mesh traits
+  using mesh_traits_t = burton_mesh_traits_t<N>;
+
   //! Type containing coordinates of the vertex.
-  using point_t = burton_mesh_traits_t::point_t;
+  using point_t = typename mesh_traits_t::point_t;
 
   //! Type of floating point.
-  using real_t = burton_mesh_traits_t::real_t;
+  using real_t = typename mesh_traits_t::real_t;
+
+  // the flecsi id type
+  using id_t = flecsi::id_t;
 
   //! Handle for accessing state at vertex.
-  using data_t = burton_mesh_traits_t::data_t;
+  using data_t = typename mesh_traits_t::data_t;
 
   //! Number of domains in the burton mesh.
-  static constexpr size_t num_domains = burton_mesh_traits_t::num_domains;
+  static constexpr size_t num_domains = mesh_traits_t::num_domains;
 
   //! The different cell types
   enum class cell_type_t {
@@ -257,47 +305,60 @@ struct burton_cell_t
   //============================================================================
 
   //! Constructor
-  burton_cell_t(const mesh_topology_base_t & mesh) : mesh_(mesh) 
+  burton_cell_t(mesh_topology_base_t & mesh) : burton_entity_base_t(mesh) 
   {};
+
   //! Destructor
   virtual ~burton_cell_t() {}
+
+  //! dissallow copying
+  burton_cell_t( burton_cell_t & ) = delete;
+  burton_cell_t & operator=( burton_cell_t & ) = delete;
+
+  //! dissallow moving
+  burton_cell_t( burton_cell_t && ) = delete;
+  burton_cell_t & operator=( burton_cell_t && ) = delete;
 
 
   //============================================================================
   // Accessors / Modifiers
   //============================================================================
 
-  //! get the mesh
-  const mesh_topology_base_t & mesh() const
-  { return mesh_; }
-
   //! the centroid
-  virtual point_t centroid() const {}; // = 0; FIXME
+  virtual point_t centroid() const 
+  { raise_runtime_error("you should never get here"); };
+
 
   //! the area of the cell
-  virtual real_t area() const {}; // = 0; FIXME
+  virtual real_t area() const
+  { raise_runtime_error("you should never get here"); };
+
 
   //! the minimum length in the cell
   virtual real_t min_length() const;
 
   //! the cell type
-  virtual cell_type_t type() const {}; // = 0; FIXME
+  virtual cell_type_t type() const
+  { raise_runtime_error("you should never get here"); };
+
 
   //! get the region id
   auto & region()
   {
+    using flecsi::mesh_entity_base_t;
     auto cell_regions =
-      data_t::instance().dense_accessor<size_t, flecsi_internal>(
-        "cell_region", mesh_.runtime_id() );
+      data_t::instance().template dense_accessor<size_t, flecsi_internal>(
+        "cell_region", mesh()->runtime_id() );
     return cell_regions[mesh_entity_base_t<num_domains>::template id<0>()];
   }
 
   //! get the region id
   auto region() const
   {
+    using flecsi::mesh_entity_base_t;
     auto cell_regions =
-      data_t::instance().dense_accessor<size_t, flecsi_internal>(
-        "cell_region", mesh_.runtime_id() );
+      data_t::instance().template dense_accessor<size_t, flecsi_internal>(
+        "cell_region", mesh()->runtime_id() );
     return cell_regions[mesh_entity_base_t<num_domains>::template id<0>()];
   }
 
@@ -316,8 +377,8 @@ struct burton_cell_t
   //!   entity and b) the number of vertices per collection.
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_entities(
-      size_t dim, id_t * e, id_t * v, size_t vertex_count) 
-  {}
+    size_t dim, id_t * e, id_t * v, size_t vertex_count) 
+  { raise_runtime_error("you should never get here"); };
 
   //----------------------------------------------------------------------------
   //! \brief create_bound_entities binds mesh entities across domains.
@@ -334,16 +395,7 @@ struct burton_cell_t
   virtual std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, id_t ** ent_ids, 
     size_t * ent_counts, id_t * c ) 
-  {}
-
-  //============================================================================
-  // Private Data
-  //============================================================================
-
-private:
-
-  //! a reference to the mesh topology
-  const mesh_topology_base_t & mesh_;
+  { raise_runtime_error("you should never get here"); };
 
 }; // class burton_cell_t
 
@@ -353,15 +405,42 @@ private:
 //! \brief The burton_triangle_t type provides a derived instance of
 //!   burton_cell_t for 2D triangle cells.
 ////////////////////////////////////////////////////////////////////////////////
-class burton_triangle_cell_t : public burton_cell_t
+template< std::size_t N >
+class burton_triangle_cell_t : public burton_cell_t<N>
 {
 public:
+
+  //============================================================================
+  // Typedefs
+  //============================================================================
+
+  //! the base cell type
+  using cell_base_t = burton_cell_t<N>;
+
+  //! the mesh topology type
+  using mesh_topology_base_t = typename cell_base_t::mesh_topology_base_t;
+
+  //! the mesh traits
+  using mesh_traits_t = typename cell_base_t::mesh_traits_t;
+
+  //! Type containing coordinates of the vertex.
+  using point_t = typename mesh_traits_t::point_t;
+
+  //! Type of floating point.
+  using real_t = typename mesh_traits_t::real_t;
+
+  //! The cell type identifier.
+  using cell_type_t = typename cell_base_t::cell_type_t;
+
+  // the id type
+  using id_t = typename cell_base_t::id_t;
 
   //============================================================================
   // Constructors
   //============================================================================
 
-  burton_triangle_cell_t(mesh_topology_base_t & mesh) : burton_cell_t(mesh)
+  //! default constructor
+  burton_triangle_cell_t(mesh_topology_base_t & mesh) : cell_base_t(mesh)
   { }
 
   //============================================================================
@@ -378,12 +457,12 @@ public:
   real_t min_length() const override;
 
   //! the cell type
-  burton_cell_t::cell_type_t type() const override 
-  { return burton_cell_t::cell_type_t::triangle; };
+  cell_type_t type() const override 
+  { return cell_type_t::triangle; };
 
   //! \brief create_entities function for burton_triangle_cell_t.
   inline std::vector<id_t> create_entities(
-      size_t dim, id_t * e, id_t * v, size_t vertex_count )
+      size_t dim, id_t * e, id_t * v, size_t vertex_count ) override
   {
     assert( vertex_count == 3 );
     e[0] = v[0];
@@ -401,7 +480,7 @@ public:
   //! \brief create_bound_entities function for burton_triangle_cell_t.
   inline std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, id_t ** ent_ids, 
-    size_t * ent_counts, id_t * c )
+    size_t * ent_counts, id_t * c )  override
   {
     assert( ent_counts[0] == 3 );
     switch (dim) {
@@ -469,15 +548,42 @@ public:
 //! \brief The burton_quadrilateral_t type provides a derived instance of
 //!   burton_cell_t for 2D quadrilateral cells.
 ////////////////////////////////////////////////////////////////////////////////
-class burton_quadrilateral_cell_t : public burton_cell_t
+template< std::size_t N >
+class burton_quadrilateral_cell_t : public burton_cell_t<N>
 {
 public:
+
+  //============================================================================
+  // Typedefs
+  //============================================================================
+
+  //! the base cell type
+  using cell_base_t = burton_cell_t<N>;
+
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = typename cell_base_t::mesh_topology_base_t;
+
+  //! the mesh traits
+  using mesh_traits_t = typename cell_base_t::mesh_traits_t;
+
+  //! Type containing coordinates of the vertex.
+  using point_t = typename mesh_traits_t::point_t;
+
+  //! Type of floating point.
+  using real_t = typename mesh_traits_t::real_t;
+
+  //! The cell type identifier.
+  using cell_type_t = typename cell_base_t::cell_type_t;
+
+  // the id type
+  using id_t = typename cell_base_t::id_t;
 
   //============================================================================
   // Constructors
   //============================================================================
 
-  burton_quadrilateral_cell_t(mesh_topology_base_t & mesh) : burton_cell_t(mesh)
+  //! main constructor
+  burton_quadrilateral_cell_t(mesh_topology_base_t & mesh) : cell_base_t(mesh)
   { }
 
   //============================================================================
@@ -494,12 +600,12 @@ public:
   real_t min_length() const override;
 
   //! the cell type
-  burton_cell_t::cell_type_t type() const override 
-  { return burton_cell_t::cell_type_t::quadrilateral; };
+  cell_type_t type() const override 
+  { return cell_type_t::quadrilateral; };
 
   //! \brief create_entities function for burton_quadrilateral_cell_t.
   inline std::vector<id_t> create_entities(
-      size_t dim, id_t * e, id_t * v, size_t vertex_count)
+      size_t dim, id_t * e, id_t * v, size_t vertex_count)  override
   {
     assert( vertex_count == 4 );
     e[0] = v[0];
@@ -565,7 +671,7 @@ public:
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, id_t ** ent_ids, 
-    size_t * ent_counts, id_t * c )
+    size_t * ent_counts, id_t * c ) override
   {
     assert( ent_counts[0] == 4 );
     switch (dim) {
@@ -645,15 +751,42 @@ public:
 //! \brief The burton_polygonal_t type provides a derived instance of
 //!   burton_cell_t for 2D polygonal cells.
 ////////////////////////////////////////////////////////////////////////////////
-class burton_polygonal_cell_t : public burton_cell_t
+template< std::size_t N >
+class burton_polygonal_cell_t : public burton_cell_t<N>
 {
 public:
+
+  //============================================================================
+  // Typedefs
+  //============================================================================
+
+  //! the base cell type
+  using cell_base_t = burton_cell_t<N>;
+
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = typename cell_base_t::mesh_topology_base_t;
+
+  //! the mesh traits
+  using mesh_traits_t = typename cell_base_t::mesh_traits_t;
+
+  //! Type containing coordinates of the vertex.
+  using point_t = typename mesh_traits_t::point_t;
+
+  //! Type of floating point.
+  using real_t = typename mesh_traits_t::real_t;
+
+  //! The cell type identifier.
+  using cell_type_t = typename cell_base_t::cell_type_t;
+
+  // the id type
+  using id_t = typename cell_base_t::id_t;
 
   //============================================================================
   // Constructors
   //============================================================================
 
-  burton_polygonal_cell_t(mesh_topology_base_t & mesh) : burton_cell_t(mesh)
+  //! default constructor
+  burton_polygonal_cell_t(mesh_topology_base_t & mesh) : cell_base_t(mesh)
   { }
 
   //============================================================================
@@ -667,12 +800,12 @@ public:
   real_t area() const override;
 
   //! the cell type
-  burton_cell_t::cell_type_t type() const override 
-  { return burton_cell_t::cell_type_t::polygon; };
+  cell_type_t type() const override 
+  { return cell_type_t::polygon; };
 
   //! \brief create_entities function for burton_polygonal_cell_t.
   inline std::vector<id_t> create_entities(
-      size_t dim, id_t * e, id_t * v, size_t vertex_count)
+      size_t dim, id_t * e, id_t * v, size_t vertex_count) override
   {
     auto vp = v[vertex_count - 1];
     for ( auto i=0, ind=0; i<vertex_count; i++ ) {
@@ -687,7 +820,7 @@ public:
   //!  \brief create_bound_entities function for burton_polygonal_cell_t.
   inline std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, id_t ** ent_ids, 
-    size_t * ent_counts, id_t * c )
+    size_t * ent_counts, id_t * c ) override
   {
     auto vertex_count = ent_counts[0];
 
@@ -737,8 +870,10 @@ public:
 //!
 //! \tparam N The domain of the wedge.
 ////////////////////////////////////////////////////////////////////////////////
+template< std::size_t N >
 class burton_wedge_t
-    : public mesh_entity_t<2, burton_mesh_traits_t::num_domains>
+  : public flecsi::mesh_entity_t<2, burton_mesh_traits_t<N>::num_domains>,
+    public burton_entity_base_t
 {
 public:
 
@@ -746,44 +881,75 @@ public:
   // Typedefs
   //============================================================================
 
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = typename burton_entity_base_t::mesh_topology_base_t;
+
+  //! the mesh traits
+  using mesh_traits_t = burton_mesh_traits_t<N>;
+
   //! Physics vector type.
-  using vector_t = burton_mesh_traits_t::vector_t;
+  using vector_t = typename mesh_traits_t::vector_t;
+
+  //! the base vertex type
+  using vertex_t = burton_vertex_t<N>;
+
+  //! the base edge type
+  using edge_t = burton_edge_t<N>;
+
+  //! the base cell type
+  using cell_t = burton_cell_t<N>;
+
+  //! the base corner type
+  using corner_t = burton_corner_t<N>;
+
+#if 0
+  //! the mesh type
+  using edge_set_t = entity_set_t<1, 0>;
+#endif
 
   //============================================================================
   // Constructors
   //============================================================================
 
-  burton_wedge_t(const mesh_topology_base_t & mesh) : mesh_(mesh)
+  //! default constructor
+  burton_wedge_t(mesh_topology_base_t & mesh) : burton_entity_base_t(mesh)
   {}
 
+  //! dissallow copying
+  burton_wedge_t( burton_wedge_t & ) = delete;
+  burton_wedge_t & operator=( burton_wedge_t & ) = delete;
+
+  //! dissallow moving
+  burton_wedge_t( burton_wedge_t && ) = delete;
+  burton_wedge_t & operator=( burton_wedge_t && ) = delete;
 
   //============================================================================
   // Accessors / Modifiers
   //============================================================================
 
   //! Set the cell that a wedge is in.
-  void set_cell(burton_cell_t * cell) { cell_ = cell; }
+  void set_cell(cell_t * cell) { cell_ = cell; }
 
   //! Set the edge that a wedge has.
-  void set_edge(burton_edge_t * edge) { edge_ = edge; }
+  void set_edge(edge_t * edge) { edge_ = edge; }
 
   //! Set the vertex that a wedge has.
-  void set_vertex(burton_vertex_t * vertex) { vertex_ = vertex; }
+  void set_vertex(vertex_t * vertex) { vertex_ = vertex; }
 
   //! Set the corner that a wedge is in.
-  void set_corner(burton_corner_t * corner) { corner_ = corner; }
+  void set_corner(corner_t * corner) { corner_ = corner; }
 
   //! Get the cell that a wedge is in.
-  const burton_cell_t * cell() const { return cell_; }
+  const cell_t * cell() const { return cell_; }
 
   //! Get the edge that a wedge has.
-  const burton_edge_t * edge() const { return edge_; }
+  const edge_t * edge() const { return edge_; }
 
   //! Get the vertex that a wedge has.
-  const burton_vertex_t * vertex() const { return vertex_; }
+  const vertex_t * vertex() const { return vertex_; }
 
   //! Get the corner that a wedge is in.
-  const burton_corner_t * corner() const { return corner_; }
+  const corner_t * corner() const { return corner_; }
 
   //! \brief Get the cell facet normal for the wedge.
   //! \return Cell facet normal vector.
@@ -806,13 +972,10 @@ public:
 
  private:
 
-  burton_cell_t * cell_;
-  burton_edge_t * edge_;
-  burton_vertex_t * vertex_;
-  burton_corner_t * corner_;
-
-  //! a reference to the mesh topology
-  const mesh_topology_base_t & mesh_;
+  cell_t * cell_;
+  edge_t * edge_;
+  vertex_t * vertex_;
+  corner_t * corner_;
 
 }; // struct burton_wedge_t
 
@@ -823,8 +986,10 @@ public:
 //!
 //! \tparam N The domain of the corner.
 ////////////////////////////////////////////////////////////////////////////////
+template< std::size_t N >
 class burton_corner_t
-    : public mesh_entity_t<1, burton_mesh_traits_t::num_domains>
+  : public flecsi::mesh_entity_t<1, burton_mesh_traits_t<N>::num_domains>,
+    public burton_entity_base_t
 {
 public:
 
@@ -832,20 +997,48 @@ public:
   // Typedefs
   //============================================================================
 
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = typename burton_entity_base_t::mesh_topology_base_t;
+
+  //! the mesh traits
+  using mesh_traits_t = burton_mesh_traits_t<N>;
+
   //! Type of floating point.
-  using real_t = burton_mesh_traits_t::real_t;
+  using real_t = typename mesh_traits_t::real_t;
 
   //! Type containing coordinates of a vertex.
-  using point_t = burton_mesh_traits_t::point_t;
+  using point_t = typename mesh_traits_t::point_t;
 
   //! Type vector type.
-  using vector_t = burton_mesh_traits_t::vector_t;
+  using vector_t = typename mesh_traits_t::vector_t;
+
+  //! the base vertex type
+  using vertex_t = burton_vertex_t<N>;
+
+  //! the base edge type
+  using edge_t = burton_edge_t<N>;
+
+  //! the base cell type
+  using cell_t = burton_cell_t<N>;
+
+  //! the base wedge type
+  using wedge_t = burton_wedge_t<N>;
 
   //============================================================================
   // Constructors
   //============================================================================
 
-  burton_corner_t(const mesh_topology_base_t & mesh) : mesh_(mesh) {}
+  //! default constructor
+  burton_corner_t(mesh_topology_base_t & mesh) : burton_entity_base_t(mesh) 
+  {}
+
+  //! dissallow copying
+  burton_corner_t( burton_corner_t & ) = delete;
+  burton_corner_t & operator=( burton_corner_t & ) = delete;
+
+  //! dissallow moving
+  burton_corner_t( burton_corner_t && ) = delete;
+  burton_corner_t & operator=( burton_corner_t && ) = delete;
 
   //============================================================================
   // Accessors / Modifiers
@@ -854,65 +1047,39 @@ public:
   //! \brief Add a wedge to the mesh.
   //!
   //! \param[in] w The wedge to add to the mesh.
-  void add_wedge(burton_wedge_t * w)
+  void add_wedge(wedge_t * w)
   {
     wedges_.add(w);
     w->set_corner(this);
   }
 
   //! Set the cell that a corner is in.
-  void set_cell(burton_cell_t * cell) { cell_ = cell; }
+  void set_cell(cell_t * cell) { cell_ = cell; }
 
   //! Set the first edge that a corner has.
-  void set_edge1(burton_edge_t * edge) { edge1_ = edge; }
+  void set_edge1(edge_t * edge) { edge1_ = edge; }
 
   //! Set the second edge that a corner has.
-  void set_edge2(burton_edge_t * edge) { edge2_ = edge; }
+  void set_edge2(edge_t * edge) { edge2_ = edge; }
 
   //! Set the vertex that a corner has.
-  void set_vertex(burton_vertex_t * vertex) { vertex_ = vertex; }
+  void set_vertex(vertex_t * vertex) { vertex_ = vertex; }
 
   //! Get the cell that a corner is in.
-  const burton_cell_t * cell() const { return cell_; }
+  const cell_t * cell() const { return cell_; }
 
   //! Get edge1 that a corner has.
-  const burton_edge_t * edge1() const { return edge1_; }
+  const edge_t * edge1() const { return edge1_; }
 
   //! Get edge2 that a corner has.
-  const burton_edge_t * edge2() const { return edge2_; }
+  const edge_t * edge2() const { return edge2_; }
 
   //! Get the vertex that a corner has.
-  const burton_vertex_t * vertex() const { return vertex_; }
+  const vertex_t * vertex() const { return vertex_; }
 
-  //! the area of the corner
-  real_t area() {
-    /*
-      Area of a quadrilateral. No sides parallel.
-
-                 D
-          /-------------\
-         /                \
-      B /                   \  C
-       /                      \
-      /-------------------------\
-                 A
-
-      area = 1/2 mag(A X B) + 1/2 mag(C X D)
-     */
-
-    auto p = edge1()->midpoint() - edge2()->midpoint();
-    auto q = vertex()->coordinates() - cell()->centroid();
-    
-    using math::cross_product;
-
-    auto det = cross_product( p, q );
-
-    return 0.5 * std::abs( det );
-  }
-
-   //! \brief Get the wedges for the mesh.
-   //! \return The wedges in the mesh.
-  entity_group<burton_wedge_t> & wedges() { return wedges_; } // wedges
+  //! \brief Get the wedges for the mesh.
+  //! \return The wedges in the mesh.
+  auto & wedges() { return wedges_; } // wedges
 
   //============================================================================
   // Private Data
@@ -920,14 +1087,11 @@ public:
 
 private:
 
-  entity_group<burton_wedge_t> wedges_;
-  burton_cell_t * cell_;
-  burton_edge_t * edge1_;
-  burton_edge_t * edge2_;
-  burton_vertex_t * vertex_;
-
-  //! a reference to the mesh topology
-  const mesh_topology_base_t & mesh_;
+  flecsi::entity_group<wedge_t> wedges_;
+  cell_t * cell_;
+  edge_t * edge1_;
+  edge_t * edge2_;
+  vertex_t * vertex_;
 
 }; // class burton_corner_t
 
