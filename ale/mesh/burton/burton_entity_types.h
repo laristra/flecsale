@@ -902,11 +902,6 @@ public:
   //! the base corner type
   using corner_t = burton_corner_t<N>;
 
-#if 0
-  //! the mesh type
-  using edge_set_t = entity_set_t<1, 0>;
-#endif
-
   //============================================================================
   // Constructors
   //============================================================================
@@ -1056,11 +1051,8 @@ public:
   //! Set the cell that a corner is in.
   void set_cell(cell_t * cell) { cell_ = cell; }
 
-  //! Set the first edge that a corner has.
-  void set_edge1(edge_t * edge) { edge1_ = edge; }
-
-  //! Set the second edge that a corner has.
-  void set_edge2(edge_t * edge) { edge2_ = edge; }
+  //! Set the an edge that a corner has.
+  void add_edge(edge_t * edge) { edges_.add(edge); }
 
   //! Set the vertex that a corner has.
   void set_vertex(vertex_t * vertex) { vertex_ = vertex; }
@@ -1069,10 +1061,7 @@ public:
   const cell_t * cell() const { return cell_; }
 
   //! Get edge1 that a corner has.
-  const edge_t * edge1() const { return edge1_; }
-
-  //! Get edge2 that a corner has.
-  const edge_t * edge2() const { return edge2_; }
+  auto & edges() const { return edges_; }
 
   //! Get the vertex that a corner has.
   const vertex_t * vertex() const { return vertex_; }
@@ -1088,9 +1077,8 @@ public:
 private:
 
   flecsi::entity_group<wedge_t> wedges_;
+  flecsi::entity_group<edge_t> edges_;
   cell_t * cell_;
-  edge_t * edge1_;
-  edge_t * edge2_;
   vertex_t * vertex_;
 
 }; // class burton_corner_t

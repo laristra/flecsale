@@ -942,11 +942,8 @@ public:
       auto vt = vertices(cn).front();
 
       cn->set_cell(cl);
-      cn->set_edge1(es.front());
-      cn->set_edge2(es.back());
-#if 0
-      cn->set_edges(es);
-#endif
+      cn->add_edge(es.front());
+      cn->add_edge(es.back());
       cn->set_vertex(vt);
       
       auto w1 = new wedge_t( mesh_ );
