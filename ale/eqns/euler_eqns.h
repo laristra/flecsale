@@ -374,7 +374,7 @@ public:
     d = mass;
     v = mom / mass;
     auto et = ener / mass;
-    ie = et - 0.5 * abs( v );
+    ie = et - 0.5 * dot_product( v, v );
 
     assert( d > 0  );
     assert( ie > 0  );
