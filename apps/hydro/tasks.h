@@ -120,14 +120,14 @@ int32_t evaluate_time_step( T & mesh ) {
 
     // get cell properties
     auto u = state( c );
-    auto area = c->area();
+    auto vol = c->volume();
 
-    // loop over each edge
-    for ( auto e : mesh.edges(c) ) {
-      // estimate the length scale normal to the edge
-      auto delta_x = area / e->length();
+    // loop over each face
+    for ( auto f : mesh.faces(c) ) {
+      // estimate the length scale normal to the face
+      auto delta_x = vol / f->area();
       // get the unit normal
-      auto norm = e->normal();
+      auto norm = f->normal();
       auto nunit = norm / abs(norm);
       // compute the inverse of the time scale
       auto dti =  E::fastest_wavespeed(u, nunit) / delta_x;
@@ -162,52 +162,36 @@ int32_t evaluate_fluxes( T & mesh ) {
   //----------------------------------------------------------------------------
   // TASK: loop over each edge and compute/store the flux
   // fluxes are stored on each edge
-  for ( auto e : mesh.edges() ) {
+  for ( auto f : mesh.faces() ) {
 
     // get the normal and unit normal
     // The normal always points towards the first cell in the list.
     // So we flip it.  This makes it point from the first cell outward.
-    auto norm = - e->normal();
-    auto nunit = norm / abs(norm);
+    auto norm = - f->normal();
+    auto nunit = unit( norm );
 
     // get the cell neighbors
-    auto cells = mesh.cells(e);
+    auto cells = mesh.cells(f);
     auto num_cells = cells.size();
 
 
     // get the left state
     auto w_left = state( cells[0] );    
 
+    // compute the face flux
+    //
     // interior cell
     if ( num_cells == 2 ) {
-      // Normal always points from the first cell to the second
-      // dot product below should always be the same sign ( positive )
-      auto cx_left  = cells[0]->centroid();
-      auto cx_right = cells[1]->centroid();
-      auto delta = cx_right - cx_left;
-      auto dot = math::dot_product( norm, delta );
-      if ( dot < 0 ) norm = - norm;
-      assert( dot >= 0 && "interior normal points wrong way!!!!" );
-      // compute the interface flux
       auto w_right = state( cells[1] );
-      flux[e] = flux_function( w_left, w_right, nunit );
+      flux[f] = flux_function( w_left, w_right, nunit );
     } 
     // boundary cell
     else {
-      // Normal always points outside, so the result of this
-      // dot product below should always be the same sign ( positive )
-      auto mp = e->midpoint();
-      auto cx = cells[0]->centroid();
-      auto delta = mp - cx;
-      auto dot = math::dot_product( norm, delta );
-      if ( dot < 0 ) norm = - norm;
-      assert( dot >= 0 && "boundary normal points inward!!!!" );
-      // compute the boundary flux
-      flux[e] = boundary_flux( w_left, nunit );
+      flux[f] = boundary_flux( w_left, nunit );
     }
     
     // scale the flux by the face area
-    math::multiplies_equal( flux[e], e->length() );
+    math::multiplies_equal( flux[f], f->area() );
     
   } // for
   //----------------------------------------------------------------------------
@@ -233,31 +217,31 @@ int32_t apply_update( T & mesh ) {
  
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
-  for ( auto cell : mesh.cells() ) {
+  for ( auto c : mesh.cells() ) {
     
     flux_data_t delta_u;
     math::fill( delta_u, 0.0 );
 
     // loop over each connected edge
-    for ( auto edge : mesh.edges(cell) ) {
+    for ( auto f : mesh.faces(c) ) {
       
       // get the cell neighbors
-      auto neigh = mesh.cells(edge).to_vec();
+      auto neigh = mesh.cells(f);
       auto num_neigh = neigh.size();
 
       // add the contribution to this cell only
-      if ( neigh[0] == cell )
-        math::minus_equal( delta_u, flux[edge] );
+      if ( neigh[0] == c )
+        math::minus_equal( delta_u, flux[f] );
       else
-        math::plus_equal( delta_u, flux[edge] );
+        math::plus_equal( delta_u, flux[f] );
 
     } // edge
 
     // now compute the final update
-    math::multiplies_equal( delta_u, delta_t/cell->area() );
+    math::multiplies_equal( delta_u, delta_t/c->volume() );
     
     // apply the update
-    auto u = state( cell );
+    auto u = state( c );
     eqns_t::update_state_from_flux( u, delta_u );
 
   } // for
@@ -267,7 +251,6 @@ int32_t apply_update( T & mesh ) {
 
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Output the solution
 //!
@@ -275,14 +258,19 @@ int32_t apply_update( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t output( T & mesh, const std::string & prefix ) 
+int32_t output( T & mesh, 
+                const std::string & prefix, 
+                const std::string & postfix, 
+                size_t output_freq ) 
 {
-  static size_t cnt = 0;
+
+  auto cnt = mesh.time_step_counter();
+  if ( cnt % output_freq != 0 ) return 0;
 
   std::stringstream ss;
   ss << prefix;
   ss << std::setw( 7 ) << std::setfill( '0' ) << cnt++;
-  ss << ".exo";
+  ss << "."+postfix;
   
   mesh::write_mesh( ss.str(), mesh );
   

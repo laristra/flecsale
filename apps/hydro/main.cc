@@ -50,6 +50,10 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix = "sod";
+  std::string postfix = "dat";
+
+  // output frequency
+  constexpr size_t output_freq = 1;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 100;
@@ -82,6 +86,10 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix = "shock_box";
+  std::string postfix = "plt";
+
+  // output frequency
+  constexpr size_t output_freq = 1;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 100;
@@ -168,7 +176,7 @@ int main(int argc, char** argv)
 
 
   // now output the solution
-  apps::hydro::output(mesh, prefix);
+  apps::hydro::output(mesh, prefix, postfix, 1);
 
   //===========================================================================
   // Residual Evaluation
@@ -176,7 +184,7 @@ int main(int argc, char** argv)
 
   // compute the fluxes.  here I am regestering a struct as the stored data
   // type since I will only ever be accesissing all the data at once.
-  register_state(mesh, "flux", edges, flux_data_t, temporary);
+  register_state(mesh, "flux", faces, flux_data_t, temporary);
 
   // get the current time
   auto soln_time = mesh.time();
@@ -211,7 +219,7 @@ int main(int argc, char** argv)
     time_cnt = mesh.increment_time_step_counter();
 
     // now output the solution
-    apps::hydro::output(mesh, prefix);
+    apps::hydro::output(mesh, prefix, postfix, output_freq);
 
   } while ( soln_time < final_time );
 
@@ -220,6 +228,8 @@ int main(int argc, char** argv)
   // Post-process
   //===========================================================================
     
+  // now output the solution
+  apps::hydro::output(mesh, prefix, postfix, 1);
 
   // success
   return 0;

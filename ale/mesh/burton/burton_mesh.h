@@ -150,34 +150,46 @@ public:
 
     switch (site) {
       case attachment_site_t::vertices:
-        return data_.template register_state<T>(
+        return 
+          data_.template register_state<T>(
             key, num_vertices(), mesh_.runtime_id(), 
             attachment_site_t::vertices, attributes 
-        );
+          );
         break;
       case attachment_site_t::edges:
-        return data_.template register_state<T>(
+        return 
+          data_.template register_state<T>(
             key, num_edges(), mesh_.runtime_id(), 
             attachment_site_t::edges, attributes
-        );
+          );
+        break;
+      case attachment_site_t::faces:
+        return 
+          data_.template register_state<T>(
+            key, num_faces(), mesh_.runtime_id(), 
+            attachment_site_t::faces, attributes 
+          );
         break;
       case attachment_site_t::cells:
-        return data_.template register_state<T>(
+        return 
+          data_.template register_state<T>(
             key, num_cells(), mesh_.runtime_id(), 
             attachment_site_t::cells, attributes 
-        );
+          );
         break;
       case attachment_site_t::corners:
-        return data_.template register_state<T>(
+        return
+          data_.template register_state<T>(
             key, num_corners(), mesh_.runtime_id(), 
             attachment_site_t::corners, attributes
-        );
+          );
         break;
       case attachment_site_t::wedges:
-        return data_.template register_state<T>(
+        return 
+          data_.template register_state<T>(
             key, num_wedges(), mesh_.runtime_id(), 
             attachment_site_t::wedges, attributes
-        );
+          );
         break;
       default:
         assert(false && "Error: invalid state registration site.");
@@ -570,6 +582,81 @@ public:
   }
 
   //============================================================================
+  // Face Interface
+  //============================================================================
+
+  //! \brief Return the number of faces in the burton mesh.
+  //! \return The number of faces in the burton mesh.
+  size_t num_faces() const
+  {
+    return mesh_.template num_entities<num_dimensions()-1, 0>();
+  } // num_faces
+
+  //! \brief Return all faces in the burton mesh.
+  //!
+  //! \return Return all faces in the burton mesh as a sequence for use, e.g.,
+  //!   in range based for loops.
+  auto faces() const
+  {
+    return mesh_.template entities<num_dimensions()-1, 0>();
+  } // faces
+
+  //! \brief Return all faces in the burton mesh.
+  //! \return Return all faces in the burton mesh as a sequence for use, e.g.,
+  //!   in range based for loops.
+  auto faces() // FIXME const
+  {
+    return mesh_.template entities<num_dimensions()-1, 0>();
+  } // faces
+
+  //! \brief Return faces associated with entity instance of type \e E.
+  //!
+  //! \tparam E entity type of instance to return faces for.
+  //!
+  //! \param[in] e instance of entity to return faces for.
+  //!
+  //! \return Return faces associated with entity instance \e e as a sequence.
+  template <class E>
+  auto faces(E * e) const
+  {
+    return mesh_.template entities<num_dimensions()-1, 0>(e);
+  } // faces
+
+  //! \brief Return faces for entity \e e in domain \e M.
+  //!
+  //! \tparam M Domain.
+  //! \tparam E Entity type to get faces for.
+  //!
+  //! \param[in] e Entity to get faces for.
+  //!
+  //! \return Faces for entity \e e in domain \e M.
+  template <size_t M, class E>
+  auto faces(const flecsi::domain_entity<M, E> & e) const
+  {
+    return mesh_.template entities<num_dimensions()-1, M, 0>(e.entity());
+  } // faces
+
+  //! \brief Return ids for all faces in the burton mesh.
+  //! \return Ids for all faces in the burton mesh.
+  auto face_ids() const
+  {
+    return mesh_.template entity_ids<num_dimensions()-1, 0>();
+  } // face_ids
+
+  //! \brief Return face ids associated with entity instance of type \e E.
+  //!
+  //! \tparam E entity type of instance to return face ids for.
+  //!
+  //! \param[in] e instance of entity to return face ids for.
+  //!
+  //! \return Return face ids associated with entity instance \e e as a sequence.
+  template <class E>
+  auto face_ids(E * e) const
+  {
+    return mesh_.template entity_ids<num_dimensions()-1, 0>(e);
+  } // face_ids
+
+  //============================================================================
   // Cell Interface
   //============================================================================
 
@@ -862,7 +949,10 @@ public:
   //! \param[in] verts The vertices defining the cell.
   //!
   //! \return Pointer to cell created with \e verts.
-  template< typename V >
+  template< 
+    typename V,
+    typename = typename std::enable_if_t< dimensions == 2 >
+  >
   auto create_cell_(V && verts)
   {
     
@@ -888,6 +978,44 @@ public:
     mesh_.template init_cell<0>( c, std::forward<V>(verts) );
     return c;
   } // create_cell
+
+#if 0
+  //! \brief Create a cell in the burton mesh.
+  //!
+  //! \param[in] verts The vertices defining the cell.
+  //!
+  //! \return Pointer to cell created with \e verts.
+  template< 
+    typename V,
+    typename std::enable_if_t< dimensions == 3 >* = nullptr
+  >
+  auto create_cell_(V && verts)
+  {
+    
+    cell_t * c;
+
+    switch ( verts.size() ) {
+    case (1,2):
+      raise_runtime_error( "can't have <3 vertices" );
+    case (3):
+      c = mesh_.template make< burton_tetrahedron_t<dimensions> >(mesh_);
+      break;
+    case (4):
+      c = mesh_.template make< burton_hexahedron_t<dimensions> >(mesh_);
+      break;
+    default:
+      c = mesh_.template make< burton_polyhedron_t<dimensions> >(mesh_);
+      break;
+    }
+
+    mesh_.template add_entity<num_dimensions(), 0>(c);
+
+    // FIXME: Need to make mesh interface more general
+    mesh_.template init_cell<0>( c, std::forward<V>(verts) );
+    return c;
+  } // create_cell
+#endif
+
 
   //! \brief Create a cell in the burton mesh.
   //!

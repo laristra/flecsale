@@ -274,6 +274,15 @@ struct burton_edge_t
     return std::sqrt( sqr(a[0]-b[0]) + sqr(a[1]-b[1]) );
   }
 
+  //! in 2d, this doubles as a face, so the area is the same as the length
+  //! \remark this is only enabled in 2d
+  template< 
+    typename = typename std::enable_if_t< N == 2 > 
+  >
+  real_t area() const
+  {
+    return length();
+  }
 
   //! the edge normal
   vector_t normal() const
@@ -403,6 +412,14 @@ struct burton_cell_t
   //! the area of the cell
   virtual real_t area() const
   { raise_runtime_error("you should never get here"); };
+
+  //! in 2d, t
+  //! \remark this is only enabled in 2d
+  template< 
+    typename = typename std::enable_if_t< N == 2 > 
+  >
+  real_t volume() const
+  { return area(); }
 
 
   //! the minimum length in the cell

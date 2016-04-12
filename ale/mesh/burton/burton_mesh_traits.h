@@ -64,15 +64,16 @@ struct burton_mesh_traits_t {
   using vector_t = math::vector<real_t, dimension>;
 
   //! Enumeration of the locations on the mesh where data may be sited.
-  enum class attachment_site_t : size_t {
+  enum class attachment_site_t : size_t 
+  {
     vertices,
-      edges,
-      faces,
-      cells,
-      corners,
-      wedges,
-      global
-      }; // enum class attachment_site_t
+    edges,
+    faces,
+    cells,
+    corners,
+    wedges,
+    global
+  };
 
   //! Enumeration of the available attributes on state data.
   enum class state_attribute_t : bitfield_t::field_type_t {
