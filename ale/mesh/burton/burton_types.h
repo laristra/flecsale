@@ -22,10 +22,30 @@
 //! user incldues
 #include "flecsi/mesh/mesh_topology.h"
 #include "../../mesh/burton/burton_mesh_traits.h"
-#include "../../mesh/burton/burton_entity_types.h"
+//#include "../../mesh/burton/burton_entity_types.h"
 
 namespace ale {
 namespace mesh {
+
+////////////////////////////////////////////////////////////////////////////////
+// forward declaration
+////////////////////////////////////////////////////////////////////////////////
+
+template< std::size_t N >
+class burton_vertex_t;
+
+template< std::size_t N >
+class burton_edge_t;
+
+template< std::size_t N >
+class burton_cell_t;
+
+template< std::size_t N >
+class burton_corner_t;
+
+template< std::size_t N >
+class burton_wedge_t;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \class burton_mesh_types_t burton_types.h
@@ -33,14 +53,22 @@ namespace mesh {
 //!   low-level mesh infrastructure for ALE methods.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
-struct burton_mesh_types_t {
+struct burton_mesh_types_t {};
+
+////////////////////////////////////////////////////////////////////////////////
+//! \class burton_mesh_types_t burton_types.h
+//! \brief A collection of type information needed to specialize the flecsi
+//!   low-level mesh infrastructure for ALE methods.
+////////////////////////////////////////////////////////////////////////////////
+template<>
+struct burton_mesh_types_t<2> {
 
   //============================================================================
   // Define local traits to satisfy mesh_topology requirements.
   //============================================================================
 
   //! the mesh traites
-  using mesh_traits_t = burton_mesh_traits_t<N>;
+  using mesh_traits_t = burton_mesh_traits_t<2>;
 
   //! The dimension of the burton mesh picked up from burton_mesh_traits_t.
   static constexpr size_t dimension = mesh_traits_t::dimension;
@@ -53,25 +81,19 @@ struct burton_mesh_types_t {
   //============================================================================
 
   //! Type for burton mesh vertices.
-  using vertex_t = burton_vertex_t<N>;
+  using vertex_t = burton_vertex_t<dimension>;
 
   //! Type for burton mesh edges.
-  using edge_t = burton_edge_t<N>;
+  using edge_t = burton_edge_t<dimension>;
 
-  // Cell types
   //! Type for burton mesh cells.
-  using cell_t = burton_cell_t<N>;
-
-  //! Types for burton mesh cells.
-  using triangle_cell_t = burton_triangle_cell_t<N>;
-  using quadrilateral_cell_t = burton_quadrilateral_cell_t<N>;
-  using polygonal_cell_t = burton_polygonal_cell_t<N>;
+  using cell_t = burton_cell_t<dimension>;
 
   //! Type for burton mesh corners.
-  using corner_t = burton_corner_t<N>;
+  using corner_t = burton_corner_t<dimension>;
 
   //! Type for burton mesh wedges.
-  using wedge_t = burton_wedge_t<N>;
+  using wedge_t = burton_wedge_t<dimension>;
 
   //============================================================================
   // Specify mesh parameterizations.

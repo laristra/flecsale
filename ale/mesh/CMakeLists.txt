@@ -26,14 +26,19 @@ set(mesh_HEADERS
   burton/burton_vtk_utils.h
   factory.h
   voronoi.h  detail/voronoi.h
+
+  burton/burton_triangle.h
+  burton/burton_quadrilateral.h
+  burton/burton_polygon.h
+
   PARENT_SCOPE
 )
 
 
-set(mesh_SOURCES
-  burton/burton_entity_types.cc
-  PARENT_SCOPE
-)
+# set(mesh_SOURCES
+#   burton/burton_entity_types.cc
+#   PARENT_SCOPE
+# )
 
 set( mesh_LIBS 
   ${IO_LIBRARIES} 

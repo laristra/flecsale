@@ -237,7 +237,7 @@ namespace mesh {
 
 //! some mesh types
 using burton_mesh_2d_t = burton_mesh_t<2>;
-using burton_mesh_3d_t = burton_mesh_t<3>;
+//using burton_mesh_3d_t = burton_mesh_t<3>;
 
 }
 }

@@ -28,6 +28,9 @@
 #include "flecsi/execution/task.h"
 
 #include "../../mesh/burton/burton_types.h"
+#include "../../mesh/burton/burton_triangle.h"
+#include "../../mesh/burton/burton_quadrilateral.h"
+#include "../../mesh/burton/burton_polygon.h"
 #include "../../utils/errors.h"
 
 namespace ale {
@@ -54,8 +57,11 @@ public:
   //! the mesh traits
   using mesh_traits_t = typename mesh_types_t::mesh_traits_t;
 
+  //! the number of dimensions
+  static constexpr auto dimensions = mesh_traits_t::dimension;
+
   //! Type for storing instance of template specialized low level mesh.
-  using mesh_t = flecsi::mesh_topology_t< mesh_types_t >;
+  using mesh_topology_t = burton_mesh_topology_t< dimensions >;
 
   //! a compile string type
   using const_string_t = typename mesh_traits_t::const_string_t;
@@ -364,7 +370,7 @@ public:
   //!   burton mesh.
   static constexpr auto num_dimensions()
   {
-    return mesh_traits_t::dimension;
+    return dimensions;
   } // dimension
   
   //! \brief Return the time associated with the mesh
@@ -866,13 +872,13 @@ public:
     case (1,2):
       raise_runtime_error( "can't have <3 vertices" );
     case (3):
-      c = mesh_.template make< typename mesh_types_t::triangle_cell_t >(mesh_);
+      c = mesh_.template make< burton_triangle_t<dimensions> >(mesh_);
       break;
     case (4):
-      c = mesh_.template make< typename mesh_types_t::quadrilateral_cell_t >(mesh_);
+      c = mesh_.template make< burton_quadrilateral_t<dimensions> >(mesh_);
       break;
     default:
-      c = mesh_.template make< typename mesh_types_t::polygonal_cell_t >(mesh_);
+      c = mesh_.template make< burton_polygon_t<dimensions> >(mesh_);
       break;
     }
 
@@ -1033,7 +1039,7 @@ public:
 
  private:
 
-  mesh_t mesh_;
+  mesh_topology_t mesh_;
 
 
 }; // class burton_mesh_t

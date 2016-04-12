@@ -66,7 +66,7 @@ template <
   typename T,
   template<typename, std::size_t> typename C
 >
-auto cross_product(const C<T, 2> &a, const C<T, 2> &b) 
+T cross_product(const C<T, 2> &a, const C<T, 2> &b) 
 {
   return a[0]*b[1] - a[1]*b[0];
 }
