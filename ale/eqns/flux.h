@@ -18,7 +18,7 @@
 #pragma once
 
 //! user includes
-#include "../math/math.h" 
+#include "ale/math/math.h" 
 
 namespace ale {
 namespace eqns {

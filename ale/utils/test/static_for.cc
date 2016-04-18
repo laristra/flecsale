@@ -1,12 +1,12 @@
 /*~--------------------------------------------------------------------------~*
  *  @@@@@@@@ @@       @@@@@@@@ @@     @@ @@
- * /@@///// /@@      /@@///// //@@   @@ /@@
+ ale/ale/@@    ale/ale//@@   @@ /@@
  * /@@      /@@      /@@       //@@ @@  /@@
  * /@@@@@@@ /@@      /@@@@@@@   //@@@   /@@
- * /@@////  /@@      /@@////     @@/@@  /@@
+ ale/ale/@@    ale////     @@/@@  /@@
  * /@@      /@@      /@@        @@ //@@ /@@
- * /@@      /@@@@@@@@/@@@@@@@@ @@   //@@/@@
- * //       //////// //////// //     // // 
+ * /@@      /@@@@@@@@/@@@@@@@@ @@  ale/@@
+ * //     ale/ale/ale// //   ale// 
  * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
@@ -17,7 +17,7 @@
 #include <iostream>
 
 // user includes
-#include "../../utils/static_for.h"
+#include "ale/utils/static_for.h"
 
 
 // using declarations

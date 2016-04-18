@@ -43,9 +43,9 @@
 
 //! user includes
 #include "flecsi/io/io_base.h"
-#include "../../mesh/burton/burton_mesh.h"
-#include "../../mesh/burton/burton_vtk_utils.h"
-#include "../../utils/errors.h"
+#include "ale/mesh/burton/burton_mesh.h"
+#include "ale/mesh/vtk_utils.h"
+#include "ale/utils/errors.h"
 
 
 namespace ale {
@@ -159,6 +159,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     using std::vector;
 
     using   mesh_t = burton_mesh_2d_t;
+    using   size_t = typename mesh_t::size_t;
     using   real_t = typename mesh_t::real_t;
     using integer_t= typename mesh_t::integer_t;
     using vector_t = typename mesh_t::vector_t;
@@ -227,7 +228,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
       auto elem_verts = m.vertices(c);
       auto num_nodes_per_elem = elem_verts.size();
       elem_conn[cid].resize( num_nodes_per_elem );
-      auto vid = 0;
+      size_t vid = 0;
       for (auto v : elem_verts) elem_conn[cid][vid++] = v.id();
       elem_types[cid] = vtk_writer::cell_type_t::polygon;
     } // for

@@ -24,7 +24,7 @@
 
 //! user includes
 #include "flecsi/io/io.h"
-#include "../../mesh/burton/burton_mesh.h"
+#include "ale/mesh/burton/burton_mesh.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -237,7 +237,7 @@ namespace mesh {
 
 //! some mesh types
 using burton_mesh_2d_t = burton_mesh_t<2>;
-//using burton_mesh_3d_t = burton_mesh_t<3>;
+using burton_mesh_3d_t = burton_mesh_t<3>;
 
 }
 }
@@ -246,11 +246,11 @@ using burton_mesh_2d_t = burton_mesh_t<2>;
 // Delayed includes
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "../../mesh/burton/burton_io_exodus.h"
-#include "../../mesh/burton/burton_io_tecplot.h"
-#include "../../mesh/burton/burton_io_vtk.h"
-#include "../../mesh/burton/burton_io_vtu.h"
-#include "../../mesh/burton/burton_io_vtm.h"
+#include "ale/mesh/burton/burton_io_exodus.h"
+#include "ale/mesh/burton/burton_io_tecplot.h"
+#include "ale/mesh/burton/burton_io_vtk.h"
+#include "ale/mesh/burton/burton_io_vtu.h"
+#include "ale/mesh/burton/burton_io_vtm.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // load some things

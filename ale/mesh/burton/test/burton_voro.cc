@@ -20,14 +20,14 @@
 #include "burton_voro_test.h"
 
 //! user includes
-#include "../../../mesh/voronoi.h"
+#include "ale/mesh/voronoi.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test reading an exodus file
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(BurtonVoro, constrained) {
-  mesh_t m;
+TEST_F(burton_voro, constrained) {
+  mesh_2d_t m;
   // read mesh written by above test
   string name("mixed.g");
   ASSERT_FALSE(read_mesh(name, m));

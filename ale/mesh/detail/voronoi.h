@@ -81,15 +81,15 @@ void to_file( const Container<Types...> & a,
 
   if (myfile.is_open()) {
 
-    auto cnt = 0;
-    auto n = a.size() / blksize;
+    std::size_t cnt = 0;
+    std::size_t n = a.size() / blksize;
 
     myfile << "id = " << 0 << endl;
     myfile << "nb = " << n << endl;
     myfile << "vals = " << endl;
 
-    for ( auto i = 0; i < n; i++ ) {
-      for ( auto j = 0; j < blksize; j++ )
+    for ( std::size_t i = 0; i < n; i++ ) {
+      for ( std::size_t j = 0; j < blksize; j++ )
         myfile << std::setprecision(17) << std::scientific << a[cnt++] << " ";
       myfile << endl;      
     }
@@ -139,7 +139,7 @@ void extract_boundaries(
   auto max_point = min_point;
 
   // now set the actual coordinates
-  auto bid = 0;
+  size_t bid = 0;
   for ( auto v : bnd_points ) {
     // keep track of the index mapping
     point_to_bnd_point_id[v.id()] = bid;
@@ -385,7 +385,7 @@ mesh_t transfer_mesh( const Tessellator & tess )
   points->GetPoint(0, max_point.data() );
 
   // now copy the points
-  for( auto p=0; p<num_points; p++ ) {
+  for( size_t p=0; p<num_points; p++ ) {
     // get the point
     auto x = points->GetPoint(p);
     // copy to new array
@@ -424,7 +424,7 @@ mesh_t transfer_mesh( const Tessellator & tess )
   zone_points.reserve( num_dims*num_dims );
 
   // now create the cells
-  for( auto z=0; z<num_zones; z++ ) {
+  for( size_t z=0; z<num_zones; z++ ) {
     // clear the points array
     zone_points.clear();
     // get the number of cells

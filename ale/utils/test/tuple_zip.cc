@@ -1,12 +1,12 @@
 /*~--------------------------------------------------------------------------~*
  *  @@@@@@@@ @@       @@@@@@@@ @@     @@ @@
- * /@@///// /@@      /@@///// //@@   @@ /@@
+ ale/ale/@@    ale/ale//@@   @@ /@@
  * /@@      /@@      /@@       //@@ @@  /@@
  * /@@@@@@@ /@@      /@@@@@@@   //@@@   /@@
- * /@@////  /@@      /@@////     @@/@@  /@@
+ ale/ale/@@    ale////     @@/@@  /@@
  * /@@      /@@      /@@        @@ //@@ /@@
- * /@@      /@@@@@@@@/@@@@@@@@ @@   //@@/@@
- * //       //////// //////// //     // // 
+ * /@@      /@@@@@@@@/@@@@@@@@ @@  ale/@@
+ * //     ale/ale/ale// //   ale// 
  * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
@@ -18,8 +18,8 @@
 #include <string>
 
 // user includes
-#include "../../utils/tuple_zip.h"
-#include "../../utils/tuple_visit.h"
+#include "ale/utils/tuple_zip.h"
+#include "ale/utils/tuple_visit.h"
 
 
 // using declarations

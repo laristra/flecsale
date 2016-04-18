@@ -40,6 +40,13 @@ using enable_if_t = typename enable_if<B,T>::type;
 template< class T >
 using remove_reference_t = typename remove_reference<T>::type;
 
+
+//==============================================================================
+//! \brief a remove_pointer helper type
+//==============================================================================
+template< class T >
+using remove_pointer_t = typename remove_pointer<T>::type;
+
 //==============================================================================
 //! \brief a decay helper type
 //==============================================================================

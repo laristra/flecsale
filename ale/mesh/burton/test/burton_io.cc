@@ -24,10 +24,10 @@
 #ifdef HAVE_EXODUS 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief test reading  an exodus file
+//! \brief test reading/writing an exodus file
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(BurtonIO, read_write_exo) {
-  mesh_t m;
+TEST_F(burton_io, read_write_exo_2d) {
+  mesh_2d_t m;
   // read mesh written by above test
   string name("mixed.exo");
   ASSERT_FALSE(read_mesh(name, m));
@@ -39,10 +39,25 @@ TEST_F(BurtonIO, read_write_exo) {
 } // TEST_F
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief test reading an exodus file
+//! \brief test reading/writing  an exodus file
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(BurtonIO, read_write_g) {
-  mesh_t m;
+TEST_F(burton_io, read_write_exo_3d) {
+  mesh_3d_t m;
+  // read mesh written by above test
+  string name("box-nfaced.exo");
+  ASSERT_FALSE(read_mesh(name, m));
+  // create state data on b
+  create_data(m);
+  // write m to a different file
+  name = output_prefix()+".exo";
+  ASSERT_FALSE(write_mesh(name, m));
+} // TEST_F
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief test reading/writing  an exodus file
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(burton_io, read_write_g_2d) {
+  mesh_2d_t m;
   // read mesh written by above test
   string name("mixed.g");
   ASSERT_FALSE(read_mesh(name, m));
@@ -54,10 +69,26 @@ TEST_F(BurtonIO, read_write_g) {
 } // TEST_F
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief test reading/writing  an exodus file
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(burton_io, read_write_g_3d) {
+  mesh_3d_t m;
+  // read mesh written by above test
+  string name("box-tet.g");
+  ASSERT_FALSE(read_mesh(name, m));
+  // create state data on b
+  create_data(m);
+  // write m to a different file
+  name = output_prefix()+".g";
+  ASSERT_FALSE(write_mesh(name, m));
+} // TEST_F
+
+
+////////////////////////////////////////////////////////////////////////////////
 //! \brief test reading an exodus file
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(BurtonIO, read_write_voro) {
-  mesh_t m;
+TEST_F(burton_io, read_write_voro_2d) {
+  mesh_2d_t m;
   // read mesh written by above test
   string name("voro.g");
   ASSERT_FALSE(read_mesh(name, m));
@@ -70,8 +101,8 @@ TEST_F(BurtonIO, read_write_voro) {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test writing an exodus file
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(BurtonIO, write_dat) {
-  mesh_t m;
+TEST_F(burton_io, write_dat_2d) {
+  mesh_2d_t m;
   // read mesh written by above test
   string name("mixed.g");
   ASSERT_FALSE(read_mesh(name, m));
@@ -89,8 +120,8 @@ TEST_F(BurtonIO, write_dat) {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test writing an exodus file
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(BurtonIO, write_plt) {
-  mesh_t m;
+TEST_F(burton_io, write_plt_2d) {
+  mesh_2d_t m;
   // read mesh written by above test
   string name("mixed.g");
   ASSERT_FALSE(read_mesh(name, m));
@@ -106,8 +137,8 @@ TEST_F(BurtonIO, write_plt) {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test writing an exodus file
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(BurtonIO, write_vtk) {
-  mesh_t m;
+TEST_F(burton_io, write_vtk_2d) {
+  mesh_2d_t m;
   // read mesh written by above test
   string name("mixed.g");
   ASSERT_FALSE(read_mesh(name, m));
@@ -135,8 +166,8 @@ TEST_F(BurtonIO, write_vtk) {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test writing an vtk file
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(BurtonIO, read_write_vtk) {
-  mesh_t m;
+TEST_F(burton_io, read_write_vtk_2d) {
+  mesh_2d_t m;
   // read mesh written by above test
   string name("mixed.vtk");
   ASSERT_FALSE(read_mesh(name, m));
@@ -150,8 +181,8 @@ TEST_F(BurtonIO, read_write_vtk) {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test writing an exodus file
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(BurtonIO, read_write_vtu) {
-  mesh_t m;
+TEST_F(burton_io, read_write_vtu_2d) {
+  mesh_2d_t m;
   // read mesh written by above test
   string name("mixed.vtu");
   ASSERT_FALSE(read_mesh(name, m));
@@ -166,8 +197,8 @@ TEST_F(BurtonIO, read_write_vtu) {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test writing an exodus file
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(BurtonIO, read_write_vtm) {
-  mesh_t m;
+TEST_F(burton_io, read_write_vtm_2d) {
+  mesh_2d_t m;
   // read mesh written by above test
   string name("mixed.vtm");
   ASSERT_FALSE(read_mesh(name, m));

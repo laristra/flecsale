@@ -1,0 +1,30 @@
+# create the box
+brick x 1 y 1 z 1
+
+# mesh the box
+volume 1  scheme Tetmesh
+mesh volume 1
+
+# make the regions
+block 1 volume 1
+
+# dump the file
+set large exodus file off
+export Genesis  "box-tet.g" dimension 3 block 1  overwrite 
+
+# remesh using hexes
+reset
+
+# create the box
+brick x 1 y 1 z 1
+
+# mesh the box
+volume 1  scheme map
+mesh volume 1
+
+# make the regions
+block 1 volume 1
+
+# dump the file
+set large exodus file off
+export Genesis  "box-hex.g" dimension 3 block 1  overwrite 

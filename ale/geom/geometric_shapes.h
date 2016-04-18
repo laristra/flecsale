@@ -30,7 +30,8 @@ enum class geometric_shapes_t
   quadrilateral,
   polygon,
   tetrahedron,
-  hexahedron 
+  hexahedron,
+  polyhedron
 };
 
 

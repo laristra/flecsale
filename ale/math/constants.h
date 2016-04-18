@@ -18,7 +18,7 @@
 #pragma once
 
 // user includes
-#include "../common/types.h"
+#include "ale/common/types.h"
 
 namespace ale {
 namespace math {

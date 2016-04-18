@@ -47,7 +47,7 @@ int32_t initial_conditions( T & mesh, F && ics ) {
     real_t d;
     std::tie( d, v[c], p[c] ) = std::forward<F>(ics)( x );
     // set mass and volume now
-    auto vol = c->area();
+    auto vol = c->volume();
     M[c] = d*vol;
     V[c] = vol;
   }
@@ -154,7 +154,7 @@ int32_t evaluate_time_step( T & mesh ) {
 
     // now check the volume change
     auto dVdt = E::volumetric_rate_of_change( dudt[c] );
-    dti = std::abs(dVdt) / c->area() / cfl->volume;
+    dti = std::abs(dVdt) / c->volume() / cfl->volume;
     // check for the maximum value
     dt_vol_inv = std::max( dti, dt_vol_inv );
 
@@ -390,30 +390,6 @@ int32_t evaluate_nodal_state( T & mesh ) {
   //----------------------------------------------------------------------------
 
 
-#if 0
-  //----------------------------------------------------------------------------
-  // enforce the boundary conditions
-  for ( auto vt : mesh.vertices() ) {
-    for ( auto ed : mesh.edges(vt) ) {
-
-      if ( ed->is_boundary() ) {
-
-        // get the unit normal
-        auto n = unit( ed->normal() );
-        
-        // force the normal direction to zero to be sure
-        auto uv = vertex_vel[vt];
-        auto uv_n = dot_product( uv, n ) * n;
-        auto uv_t = uv - uv_n;
-
-        // take out the normal component
-        vertex_vel[vt] = uv_t;
-      }
-
-    } // edge
-  } // vertex
-  //----------------------------------------------------------------------------
-#endif
 
   return 0;
 
@@ -519,7 +495,7 @@ int32_t apply_update( T & mesh, real_t coef ) {
 
     // apply the update
     eqns_t::update_state_from_flux( u, delta_u );
-    eqns_t::update_volume( u, cell->area() );
+    eqns_t::update_volume( u, cell->volume() );
 
 #ifdef DEBUG
     // post update sums

@@ -21,10 +21,12 @@
 #include <cinchtest.h>
 
 //! user includes
-#include "../../../mesh/burton/burton.h"
+#include "ale/mesh/burton/burton.h"
 
 //! \brief the mesh type
-using mesh_t   = ale::mesh::burton_mesh_2d_t;
+using mesh_2d_t   = ale::mesh::burton_mesh_2d_t;
+//! \brief the mesh type
+using mesh_3d_t   = ale::mesh::burton_mesh_3d_t;
 
 // some general using statements
 using std::string;
@@ -34,7 +36,7 @@ using ale::mesh::read_mesh;
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief base test fixture for burton
 ////////////////////////////////////////////////////////////////////////////////
-class BurtonTestBase : public ::testing::Test {
+class burton_test_base : public ::testing::Test {
 protected:
 
   //---------------------------------------------------------------------------

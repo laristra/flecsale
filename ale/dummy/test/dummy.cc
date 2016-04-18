@@ -42,7 +42,7 @@
 //
 
 //! this include is needed to get the dummy functionality so we can test it
-#include "../../dummy/dummy.h"
+#include "ale/dummy/dummy.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////

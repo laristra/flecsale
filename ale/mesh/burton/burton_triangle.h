@@ -20,9 +20,9 @@
 #pragma once
 
 //! user includes
-#include "../../geom/geometric_shapes.h"
-#include "../../math/math.h"
-#include "../../mesh/burton/burton_entity_types.h"
+#include "ale/geom/geometric_shapes.h"
+#include "ale/math/math.h"
+#include "ale/mesh/burton/burton_entity_types.h"
 
 
 namespace ale {
@@ -35,7 +35,7 @@ namespace mesh {
 //!   burton_cell_t for 2D triangle cells.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
-class burton_triangle_t : public burton_cell_t<N>
+class burton_triangle_t : public burton_element_t<N,2>
 {
 public:
 
@@ -44,22 +44,22 @@ public:
   //============================================================================
 
   //! the base cell type
-  using base_t = burton_cell_t<N>;
+  using base_t = burton_element_t<N,2>;
 
   //! the mesh topology type
-  using mesh_topology_base_t = typename base_t::mesh_topology_base_t;
+  using typename base_t::mesh_topology_base_t;
 
   //! the mesh traits
-  using mesh_traits_t = typename base_t::mesh_traits_t;
+  using typename base_t::mesh_traits_t;
 
   //! Type containing coordinates of the vertex.
-  using point_t = typename mesh_traits_t::point_t;
+  using typename base_t::point_t;
 
   //! Type of floating point.
-  using real_t = typename mesh_traits_t::real_t;
+  using typename base_t::real_t;
 
   // the id type
-  using id_t = typename base_t::id_t;
+  using typename base_t::id_t;
 
   //============================================================================
   // Constructors
@@ -89,10 +89,11 @@ public:
   real_t area() const override
   {
     auto vs = vertices();
-    auto u = vs[1]->coordinates() - vs[0]->coordinates();
-    auto v = vs[2]->coordinates() - vs[0]->coordinates();
-    auto cross = cross_product( u, v );
-    return std::abs( cross ) / 2;
+    //auto u = vs[1]->coordinates() - vs[0]->coordinates();
+    //auto v = vs[2]->coordinates() - vs[0]->coordinates();
+    //auto cross = cross_product( u, v );
+    //return std::abs( cross ) / 2;
+    return 0;
   }
 
   //! the minimum length in the cell
@@ -116,11 +117,15 @@ public:
   geom::geometric_shapes_t type() const override 
   { return geom::geometric_shapes_t::triangle; };
 
+  //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_triangle_cell_t.
+  //----------------------------------------------------------------------------
   inline std::vector<id_t> create_entities(
       size_t dim, id_t * e, id_t * v, size_t vertex_count ) override
   {
+    assert( dim == 1 );
     assert( vertex_count == 3 );
+
     e[0] = v[0];
     e[1] = v[1];
 
@@ -133,65 +138,74 @@ public:
     return {2, 2, 2};
   } // create_entities
 
+  //----------------------------------------------------------------------------
   //! \brief create_bound_entities function for burton_triangle_cell_t.
+  //----------------------------------------------------------------------------
   inline std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, id_t ** ent_ids, 
     size_t * ent_counts, id_t * c )  override
   {
     assert( ent_counts[0] == 3 );
     switch (dim) {
+
+      //------------------------------------------------------------------------
       // Corners
       // The right edge is always first
-      case 1:
-        // corner 0
-        c[0] = ent_ids[0][0]; // vertex 0
-        c[1] = ent_ids[1][0]; // edge 0, abuts vertex 0
-        c[2] = ent_ids[1][2]; // edge 3, abuts vertex 0
+    case 1:
+      // corner 0
+      c[0] = ent_ids[0][0]; // vertex 0
+      c[1] = ent_ids[1][0]; // edge 0, abuts vertex 0
+      c[2] = ent_ids[1][2]; // edge 3, abuts vertex 0
+      
+      // corner 1
+      c[3] = ent_ids[0][1]; // vertex 1
+      c[4] = ent_ids[1][1]; // edge 1, abuts vertex 1
+      c[5] = ent_ids[1][0]; // edge 0, abuts vertex 1
 
-        // corner 1
-        c[3] = ent_ids[0][1]; // vertex 1
-        c[4] = ent_ids[1][1]; // edge 1, abuts vertex 1
-        c[5] = ent_ids[1][0]; // edge 0, abuts vertex 1
+      // corner 2
+      c[6] = ent_ids[0][2]; // vertex 2
+      c[7] = ent_ids[1][2]; // edge 2, abuts vertex 2
+      c[8] = ent_ids[1][1]; // edge 1, abuts vertex 2
 
-        // corner 2
-        c[6] = ent_ids[0][2]; // vertex 2
-        c[7] = ent_ids[1][2]; // edge 2, abuts vertex 2
-        c[8] = ent_ids[1][1]; // edge 1, abuts vertex 2
+      return {3, 3, 3};
 
-        return {3, 3, 3};
-
+      //------------------------------------------------------------------------
+      // Failure
       // Wedges
-      case 2:
+    case 2:
 
-        // wedge 0
-        c[0] = ent_ids[0][0]; // vertex 0
-        c[1] = ent_ids[1][2]; // edge 2
+      // wedge 0
+      c[0] = ent_ids[0][0]; // vertex 0
+      c[1] = ent_ids[1][2]; // edge 2
 
-        // wedge 1
-        c[2] = ent_ids[0][0]; // vertex 0
-        c[3] = ent_ids[1][0]; // edge 0
+      // wedge 1
+      c[2] = ent_ids[0][0]; // vertex 0
+      c[3] = ent_ids[1][0]; // edge 0
 
-        // wedge 2
-        c[4] = ent_ids[0][1]; // vertex 1
-        c[5] = ent_ids[1][0]; // edge 0
+      // wedge 2
+      c[4] = ent_ids[0][1]; // vertex 1
+      c[5] = ent_ids[1][0]; // edge 0
 
-        // wedge 3
-        c[6] = ent_ids[0][1]; // vertex 1
-        c[7] = ent_ids[1][1]; // edge 1
+      // wedge 3
+      c[6] = ent_ids[0][1]; // vertex 1
+      c[7] = ent_ids[1][1]; // edge 1
 
-        // wedge 4
-        c[8] = ent_ids[0][2]; // vertex 2
-        c[9] = ent_ids[1][1]; // edge 1
+      // wedge 4
+      c[8] = ent_ids[0][2]; // vertex 2
+      c[9] = ent_ids[1][1]; // edge 1
 
-        // wedge 5
-        c[10] = ent_ids[0][2]; // vertex 2
-        c[11] = ent_ids[1][2]; // edge 2
+      // wedge 5
+      c[10] = ent_ids[0][2]; // vertex 2
+      c[11] = ent_ids[1][2]; // edge 2
 
-        return {2, 2, 2, 2, 2, 2};
+      return {2, 2, 2, 2, 2, 2};
 
-      default:
-        assert(false && "Unknown bound entity type");
+      //------------------------------------------------------------------------
+      // Failure
+    default:
+      raise_runtime_error("Unknown bound entity type");
     } // switch
+
   } // create_bound_entities
 
 

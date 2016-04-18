@@ -20,19 +20,20 @@
 //! test include
 #include "burton_test_base.h"
 
-//! \brief the mesh float type
-using real_t   = typename mesh_t::real_t;
-//! \brief the mesh int type
-using integer_t= typename mesh_t::integer_t;
-//! \brief the vector type
-using vector_t = typename mesh_t::vector_t;
-
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief A utility for creating data
 ////////////////////////////////////////////////////////////////////////////////
 template< typename M >
 void create_data(M & mesh ) 
 {
+
+  //! \brief the mesh float type
+  using real_t   = typename M::real_t;
+  //! \brief the mesh int type
+  using integer_t= typename M::integer_t;
+  //! \brief the vector type
+  using vector_t = typename M::vector_t;
+
   // register
   register_state(mesh, "pressure", cells, real_t, persistent);
   register_state(mesh, "region", cells, integer_t, persistent);
@@ -58,4 +59,4 @@ void create_data(M & mesh )
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test fixture for creating the mesh
 ////////////////////////////////////////////////////////////////////////////////
-class BurtonIO : public BurtonTestBase {};
+class burton_io : public burton_test_base {};

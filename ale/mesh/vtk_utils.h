@@ -27,14 +27,61 @@
 #  include <vtkPoints.h>
 #  include <vtkSmartPointer.h>
 #  include <vtkUnstructuredGrid.h>
+
+#  include <vtkDoubleArray.h>
+#  include <vtkFloatArray.h>
+#  include <vtkIntArray.h>
+#  include <vtkLongArray.h>
+#  include <vtkLongLongArray.h>
 #endif
 
 //! user includes
-#include "../../utils/vtk.h"
+#include "ale/io/vtk.h"
 
 
 namespace ale {
 namespace mesh {
+
+#ifdef HAVE_VTK 
+
+////////////////////////////////////////////////////////////////////////////////
+//! figure out the vtk array type at compile time
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+struct vtk_array_t {};
+
+template<>
+struct vtk_array_t<float>
+{ 
+  using type = vtkFloatArray;
+};
+
+template<>
+struct vtk_array_t<double>
+{ 
+  using type = vtkDoubleArray;
+};
+
+template<>
+struct vtk_array_t<int>
+{ 
+  using type = vtkIntArray;
+};
+
+template<>
+struct vtk_array_t<long>
+{ 
+  using type = vtkLongArray;
+};
+
+template<>
+struct vtk_array_t<long long>
+{ 
+  using type = vtkLongLongArray;
+};
+
+#endif
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -44,6 +91,8 @@ template< typename M >
 static auto to_vtk( M & m ) 
 {
 
+#ifdef HAVE_VTK 
+
   // alias some types
   using std::vector;
 
@@ -51,7 +100,6 @@ static auto to_vtk( M & m )
   using integer_t= typename M::integer_t;
   using vector_t = typename M::vector_t;
 
-  using utils::vtk_array_t;
 
   // a lambda function for validating strings
   auto validate_string = []( auto && str ) {
@@ -217,6 +265,14 @@ static auto to_vtk( M & m )
   //----------------------------------------------------------------------------
   return ug;
 
+#else
+
+    raise_implemented_error( "not built with vtk support." );
+
+    return -1;
+
+#endif
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -226,6 +282,7 @@ template< typename M >
 static auto to_mesh( vtkUnstructuredGrid* ug ) 
 {
 
+#ifdef HAVE_VTK 
 
   // alias some types
   using std::vector;
@@ -307,6 +364,14 @@ static auto to_mesh( vtkUnstructuredGrid* ug )
   }
 
   return m;
+
+#else
+
+    raise_implemented_error( "not built with vtk support." );
+
+    return -1;
+
+#endif
 
 }
 

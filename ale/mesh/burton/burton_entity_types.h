@@ -22,9 +22,9 @@
 //! user includes
 #include "flecsi/mesh/mesh_types.h"
 
-#include "../../geom/geometric_shapes.h"
-#include "../../mesh/burton/burton_mesh_traits.h"
-#include "../../utils/errors.h"
+#include "ale/geom/geometric_shapes.h"
+#include "ale/mesh/burton/burton_mesh_traits.h"
+#include "ale/utils/errors.h"
 
 
 namespace ale {
@@ -49,19 +49,41 @@ using burton_mesh_topology_t =
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The base for all entity types
 ////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N >
-class burton_entity_base_t 
+template< std::size_t NUM_DIMS, std::size_t DIM >
+class burton_entity_base_t : 
+    public flecsi::mesh_entity_t<DIM, burton_mesh_traits_t<NUM_DIMS>::num_domains>
 {
 public:
+
+  //============================================================================
+  // Typedefs
+  //============================================================================
 
   //! the flecsi mesh topology type
   using mesh_topology_base_t =  flecsi::mesh_topology_base_t;
  
   //! the flecsi mesh topology type
-  using mesh_topology_t = burton_mesh_topology_t<N>;
+  using mesh_topology_t = burton_mesh_topology_t<NUM_DIMS>;
+
+  //! the mesh traits
+  using mesh_traits_t = burton_mesh_traits_t<NUM_DIMS>;
+
+  //! Number of domains in the burton mesh.
+  static constexpr auto num_domains = mesh_traits_t::num_domains;
+
+  //! Number of domains in the burton mesh.
+  static constexpr auto num_dimensions = mesh_traits_t::dimension;
+
+  //============================================================================
+  // Constructors
+  //============================================================================
 
   //! Constructor
   burton_entity_base_t(mesh_topology_base_t & mesh) : mesh_(&mesh) {}
+
+  //============================================================================
+  // Accessors / Modifiers
+  //============================================================================
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
@@ -71,7 +93,13 @@ public:
 
   //! get the mesh
   auto mesh() const
-  { return mesh_; }
+  { 
+    return static_cast<const mesh_topology_t *>(mesh_); 
+  }
+
+  //============================================================================
+  // Private Data
+  //============================================================================
 
  private:
 
@@ -87,9 +115,8 @@ public:
 //! \tparam N The domain of the vertex.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
-class burton_vertex_t
-  : public flecsi::mesh_entity_t<0, burton_mesh_traits_t<N>::num_domains>,
-    public burton_entity_base_t<N>
+class burton_vertex_t : 
+    public burton_entity_base_t<N, 0>
 {
 public:
 
@@ -97,14 +124,14 @@ public:
   // Typedefs
   //============================================================================
 
-  //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<N>;
-
   //! the entity base type
-  using entity_base_t = burton_entity_base_t<N>;
+  using entity_base_t = burton_entity_base_t<N, 0>;
 
   //! the burton mesh topology type
-  using mesh_topology_base_t = typename entity_base_t::mesh_topology_base_t;
+  using typename entity_base_t::mesh_topology_base_t;
+
+  //! the mesh traits
+  using typename entity_base_t::mesh_traits_t;
 
   //! Type containing coordinates of the vertex.
   using point_t = typename mesh_traits_t::point_t;
@@ -116,7 +143,11 @@ public:
   using bitfield_t = typename mesh_traits_t::bitfield_t;
 
   //! Number of domains in the burton mesh.
-  static constexpr size_t num_domains = mesh_traits_t::num_domains;
+  using entity_base_t::num_domains;
+
+  //! Number of domains in the burton mesh.
+  using entity_base_t::num_dimensions;
+
 
   //============================================================================
   // Constructors
@@ -192,9 +223,8 @@ public:
 //! \tparam N The domain of the edge.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
-struct burton_edge_t
-  : public flecsi::mesh_entity_t<1, burton_mesh_traits_t<N>::num_domains>,
-    public burton_entity_base_t<N>
+struct burton_edge_t :
+    public burton_entity_base_t<N, 1>
 {
 
   //============================================================================
@@ -202,16 +232,13 @@ struct burton_edge_t
   //============================================================================
 
   //! the entity base type
-  using entity_base_t = burton_entity_base_t<N>;
+  using entity_base_t = burton_entity_base_t<N, 1>;
 
   //! the burton mesh topology type
-  using mesh_topology_base_t = typename entity_base_t::mesh_topology_base_t;
-
-  //! the burton mesh topology type
-  using mesh_topology_t = typename entity_base_t::mesh_topology_t;
+  using typename entity_base_t::mesh_topology_base_t;
 
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<N>;
+  using typename entity_base_t::mesh_traits_t;
 
   //! Type of floating point.
   using real_t = typename mesh_traits_t::real_t;
@@ -225,11 +252,15 @@ struct burton_edge_t
   //! the bitfield type
   using bitfield_t = typename mesh_traits_t::bitfield_t;
 
-  //! Number of domains in the burton mesh.
-  static constexpr size_t num_domains = mesh_traits_t::num_domains;
-
   //! Handle for accessing state at vertex.
   using data_t = typename mesh_traits_t::data_t;
+
+
+  //! Number of domains in the burton mesh.
+  using entity_base_t::num_domains;
+
+  //! Number of domains in the burton mesh.
+  using entity_base_t::num_dimensions;
 
   //============================================================================
   // Constructors
@@ -251,9 +282,23 @@ struct burton_edge_t
   //============================================================================
 
   //! get the mesh
-  auto mesh() const
-  { 
-    return static_cast<const mesh_topology_t *>(entity_base_t::mesh()); 
+  using entity_base_t::mesh;
+
+  //! the list of vertices
+  auto vertices() const
+  {
+    auto vs = mesh()->template entities<0,0>(this);
+    return vs;
+  }
+
+  //! the list of actual coordinates
+  auto coordinates() const
+  {
+    auto vs = vertices();
+    std::vector< point_t > coords;
+    coords.reserve( vs.size() );
+    for ( auto v : vs ) coords.emplace_back( v->coordinates() );
+    return coords;
   }
 
   
@@ -276,9 +321,6 @@ struct burton_edge_t
 
   //! in 2d, this doubles as a face, so the area is the same as the length
   //! \remark this is only enabled in 2d
-  template< 
-    typename = typename std::enable_if_t< N == 2 > 
-  >
   real_t area() const
   {
     return length();
@@ -307,14 +349,13 @@ struct burton_edge_t
 }; // struct burton_edge_t
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_cell_t burton_entity_types.h
-//! \brief The burton_cell_t type provides an interface for managing and
-//!   geometry and state associated with mesh cells.
+//! \class burton_element_t burton_entity_types.h
+//! \brief The burton_element_t type provides an interelement for managing and
+//!   geometry and state associated with mesh elements.
 ////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N >
-struct burton_cell_t
-  : public flecsi::mesh_entity_t<2, burton_mesh_traits_t<N>::num_domains>,
-    public burton_entity_base_t<N>
+template< std::size_t NUM_DIMS, std::size_t DIM  >
+struct burton_element_t
+  : public burton_entity_base_t<NUM_DIMS, DIM>
 {
 
   //============================================================================
@@ -322,16 +363,13 @@ struct burton_cell_t
   //============================================================================
 
   //! the entity base type
-  using entity_base_t = burton_entity_base_t<N>;
+  using entity_base_t = burton_entity_base_t<NUM_DIMS, DIM>;
 
   //! the burton mesh topology type
-  using mesh_topology_base_t = typename entity_base_t::mesh_topology_base_t;
-
-  //! the burton mesh topology type
-  using mesh_topology_t = typename entity_base_t::mesh_topology_t;
+  using typename entity_base_t::mesh_topology_base_t;
 
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<N>;
+  using typename entity_base_t::mesh_traits_t;
 
   //! Type containing coordinates of the vertex.
   using point_t = typename mesh_traits_t::point_t;
@@ -346,26 +384,29 @@ struct burton_cell_t
   using data_t = typename mesh_traits_t::data_t;
 
   //! Number of domains in the burton mesh.
-  static constexpr size_t num_domains = mesh_traits_t::num_domains;
+  using entity_base_t::num_domains;
+
+  //! Number of domains in the burton mesh.
+  using entity_base_t::num_dimensions;
 
   //============================================================================
   // Constructors
   //============================================================================
 
   //! Constructor
-  burton_cell_t(mesh_topology_base_t & mesh) : entity_base_t(mesh) 
+  burton_element_t(mesh_topology_base_t & mesh) : entity_base_t(mesh) 
   {};
 
   //! Destructor
-  virtual ~burton_cell_t() {}
+  virtual ~burton_element_t() {}
 
   //! dissallow copying
-  burton_cell_t( burton_cell_t & ) = delete;
-  burton_cell_t & operator=( burton_cell_t & ) = delete;
+  burton_element_t( burton_element_t & ) = delete;
+  burton_element_t & operator=( burton_element_t & ) = delete;
 
   //! dissallow moving
-  burton_cell_t( burton_cell_t && ) = delete;
-  burton_cell_t & operator=( burton_cell_t && ) = delete;
+  burton_element_t( burton_element_t && ) = delete;
+  burton_element_t & operator=( burton_element_t && ) = delete;
 
 
   //============================================================================
@@ -373,10 +414,7 @@ struct burton_cell_t
   //============================================================================
 
   //! get the mesh
-  auto mesh() const
-  { 
-    return static_cast<const mesh_topology_t *>(entity_base_t::mesh()); 
-  }
+  using entity_base_t::mesh;
 
   //! the list of vertices
   auto vertices() const
@@ -403,26 +441,27 @@ struct burton_cell_t
     return es;
   }
 
+  //! the list of faces
+  auto faces() const
+  {
+    auto fs = mesh()->template entities<DIM-1,0>(this);
+    return fs;
+  }
 
   //! the centroid
   virtual point_t centroid() const 
   { raise_runtime_error("you should never get here"); };
 
 
-  //! the area of the cell
+  //! the area of the element
   virtual real_t area() const
   { raise_runtime_error("you should never get here"); };
 
-  //! in 2d, t
-  //! \remark this is only enabled in 2d
-  template< 
-    typename = typename std::enable_if_t< N == 2 > 
-  >
-  real_t volume() const
-  { return area(); }
+  //! the area of the element
+  virtual real_t volume() const
+  { area(); };
 
-
-  //! the minimum length in the cell
+  //! the minimum length in the element
   virtual real_t min_length() const
   {
     // get the vertices
@@ -445,7 +484,7 @@ struct burton_cell_t
   }
 
 
-  //! the cell type
+  //! the element type
   virtual geom::geometric_shapes_t type() const
   { raise_runtime_error("you should never get here"); };
 
@@ -473,12 +512,12 @@ struct burton_cell_t
   //----------------------------------------------------------------------------
   //! \brief create_entities is a function that creates entities
   //!   of topological dimension dim, using vertices v, and puts the vertices
-  //!   in e. See, e.g., burton_quadrilateral_cell_t for an implementation of
+  //!   in e. See, e.g., burton_quadrilateral_element_t for an implementation of
   //!   this pure virtual function.
   //!
   //! \param[in] dim The topological dimension of the entity to create.
   //! \param[out] e Vector to fill with ids of the vertices making the entity.
-  //! \param[in] v Vertex ids for the cell.
+  //! \param[in] v Vertex ids for the element.
   //! \param[in] vertex_count The number of vertices making up the entity.
   //!
   //! \return A pair with a) the number of vertex collections making up the
@@ -490,7 +529,7 @@ struct burton_cell_t
 
   //----------------------------------------------------------------------------
   //! \brief create_bound_entities binds mesh entities across domains.
-  //!   See, e.g., burton_quadrilateral_cell_t for an implementation of
+  //!   See, e.g., burton_quadrilateral_element_t for an implementation of
   //!   this pure virtual function.
   //!
   //! \param[in] dim The topological dimension of the entity being bound.
@@ -505,8 +544,26 @@ struct burton_cell_t
     size_t * ent_counts, id_t * c ) 
   { raise_runtime_error("you should never get here"); };
 
-}; // class burton_cell_t
+}; // class burton_element_t
 
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The burton_face_t type provides an interface for managing and
+//!   geometry and state associated with mesh faces.
+//!
+//! \tparam N The domain of the face.
+////////////////////////////////////////////////////////////////////////////////
+template< std::size_t N >
+using burton_face_t = burton_element_t<N,N-1>;
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The burton_cell_t type provides an interface for managing and
+//!   geometry and state associated with mesh cells.
+//!
+//! \tparam N The domain of the cell.
+////////////////////////////////////////////////////////////////////////////////
+template< std::size_t N >
+using burton_cell_t = burton_element_t<N,N>;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -518,8 +575,7 @@ struct burton_cell_t
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 class burton_wedge_t
-  : public flecsi::mesh_entity_t<2, burton_mesh_traits_t<N>::num_domains>,
-    public burton_entity_base_t<N>
+  : public burton_entity_base_t<N, 2>
 {
 public:
 
@@ -528,13 +584,13 @@ public:
   //============================================================================
 
   //! the entity base type
-  using entity_base_t = burton_entity_base_t<N>;
+  using entity_base_t = burton_entity_base_t<N, 2>;
 
   //! the burton mesh topology type
-  using mesh_topology_base_t = typename entity_base_t::mesh_topology_base_t;
+  using typename entity_base_t::mesh_topology_base_t;
 
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<N>;
+  using typename entity_base_t::mesh_traits_t;
 
   //! Physics vector type.
   using vector_t = typename mesh_traits_t::vector_t;
@@ -632,8 +688,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 class burton_corner_t
-  : public flecsi::mesh_entity_t<1, burton_mesh_traits_t<N>::num_domains>,
-    public burton_entity_base_t<N>
+  : public burton_entity_base_t<N, 1>
 {
 public:
 
@@ -642,13 +697,13 @@ public:
   //============================================================================
 
   //! the entity base type
-  using entity_base_t = burton_entity_base_t<N>;
+  using entity_base_t = burton_entity_base_t<N, 1>;
 
   //! the burton mesh topology type
-  using mesh_topology_base_t = typename entity_base_t::mesh_topology_base_t;
+  using typename entity_base_t::mesh_topology_base_t;
 
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<N>;
+  using typename entity_base_t::mesh_traits_t;
 
   //! Type of floating point.
   using real_t = typename mesh_traits_t::real_t;

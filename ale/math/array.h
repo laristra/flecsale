@@ -23,10 +23,10 @@
 #include <cassert>
 
 // user includes
-#include "../std/type_traits.h"
-#include "../utils/check_types.h"
-#include "../utils/template_helpers.h"
-#include "../utils/tuple_visit.h"
+#include "ale/std/type_traits.h"
+#include "ale/utils/check_types.h"
+#include "ale/utils/template_helpers.h"
+#include "ale/utils/tuple_visit.h"
 
 namespace ale {
 namespace math {

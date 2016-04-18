@@ -18,8 +18,8 @@
 #pragma once
 
 // user includes
-#include "../std/type_traits.h"
-#include "../utils/check_types.h"
+#include "ale/std/type_traits.h"
+#include "ale/utils/check_types.h"
 #include "detail/area.h"
 
 namespace ale {

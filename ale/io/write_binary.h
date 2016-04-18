@@ -13,7 +13,7 @@
 #include <fstream>
 
 namespace ale {
-namespace utils {
+namespace io {
 
 //! data types
 using int32 = int;

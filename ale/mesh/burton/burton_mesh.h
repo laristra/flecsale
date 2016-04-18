@@ -27,11 +27,14 @@
 #include "flecsi/data/data.h"
 #include "flecsi/execution/task.h"
 
-#include "../../mesh/burton/burton_types.h"
-#include "../../mesh/burton/burton_triangle.h"
-#include "../../mesh/burton/burton_quadrilateral.h"
-#include "../../mesh/burton/burton_polygon.h"
-#include "../../utils/errors.h"
+#include "ale/mesh/burton/burton_types.h"
+#include "ale/mesh/burton/burton_triangle.h"
+#include "ale/mesh/burton/burton_quadrilateral.h"
+#include "ale/mesh/burton/burton_polygon.h"
+#include "ale/mesh/burton/burton_hexahedron.h"
+#include "ale/mesh/burton/burton_tetrahedron.h"
+#include "ale/mesh/burton/burton_polyhedron.h"
+#include "ale/utils/errors.h"
 
 namespace ale {
 namespace mesh {
@@ -89,6 +92,9 @@ public:
 
   //! Edge type.
   using edge_t = typename mesh_types_t::edge_t;
+
+  //! Cell type.
+  using face_t = typename mesh_types_t::face_t;
 
   //! Cell type.
   using cell_t = typename mesh_types_t::cell_t;
@@ -890,11 +896,21 @@ public:
     return *n;
   } // num_cells
 
-  //! \brief Return the number of regions in the burton mesh.
-  //! \return The number of regions in the burton mesh.
+  //! \brief set the number of regions in the burton mesh.
+  //! \param [in]  n  The number of regions in the burton mesh.
   void set_num_regions(size_t n)
   {
     access_global_state_<size_t, flecsi_internal>( "num_regions" ) = n;
+  } // num_cells
+
+
+  //! \brief Return the number of regions in the burton mesh.
+  //! \param [in]  n  The number of regions in the burton mesh.
+  template< typename T >
+  void set_regions(T * region_ids)
+  {
+    for ( auto c : cells() )
+      c->region() = region_ids[c.id()];
   } // num_cells
 
   //! \brief Return all cells in the regions mesh.
@@ -924,7 +940,7 @@ public:
   } // cells
 
   //============================================================================
-  // Mesh Creation
+  // Element Creation
   //============================================================================
 
   //! \brief Create a vertex in the burton mesh.
@@ -945,62 +961,49 @@ public:
 
 
   //! \brief Create a cell in the burton mesh.
-  //!
   //! \param[in] verts The vertices defining the cell.
-  //!
   //! \return Pointer to cell created with \e verts.
-  template< 
-    typename V,
-    typename = typename std::enable_if_t< dimensions == 2 >
-  >
-  auto create_cell_(V && verts)
+  template< typename E, typename V >
+  auto create_2d_element_from_verts_( V && verts  )
   {
     
-    cell_t * c;
+    E * e;
 
     switch ( verts.size() ) {
     case (1,2):
       raise_runtime_error( "can't have <3 vertices" );
     case (3):
-      c = mesh_.template make< burton_triangle_t<dimensions> >(mesh_);
+      e = mesh_.template make< burton_triangle_t<dimensions> >(mesh_);
       break;
     case (4):
-      c = mesh_.template make< burton_quadrilateral_t<dimensions> >(mesh_);
+      e = mesh_.template make< burton_quadrilateral_t<dimensions> >(mesh_);
       break;
     default:
-      c = mesh_.template make< burton_polygon_t<dimensions> >(mesh_);
+      e = mesh_.template make< burton_polygon_t<dimensions> >(mesh_);
       break;
     }
 
-    mesh_.template add_entity<num_dimensions(), 0>(c);
-
-    // FIXME: Need to make mesh interface more general
-    mesh_.template init_cell<0>( c, std::forward<V>(verts) );
-    return c;
+    mesh_.template add_entity<E::dimension, 0>( e );
+    mesh_.template init_entity<0, E::dimension, 0>( e, std::forward<V>(verts) );
+    return e;
   } // create_cell
 
-#if 0
   //! \brief Create a cell in the burton mesh.
-  //!
   //! \param[in] verts The vertices defining the cell.
-  //!
   //! \return Pointer to cell created with \e verts.
-  template< 
-    typename V,
-    typename std::enable_if_t< dimensions == 3 >* = nullptr
-  >
-  auto create_cell_(V && verts)
+  template< typename V >
+  auto create_3d_element_from_verts_( V && verts )
   {
     
     cell_t * c;
 
     switch ( verts.size() ) {
-    case (1,2):
-      raise_runtime_error( "can't have <3 vertices" );
-    case (3):
+    case (1,2,3):
+      raise_runtime_error( "can't have <4 vertices" );
+    case (4):
       c = mesh_.template make< burton_tetrahedron_t<dimensions> >(mesh_);
       break;
-    case (4):
+    case (8):
       c = mesh_.template make< burton_hexahedron_t<dimensions> >(mesh_);
       break;
     default:
@@ -1008,35 +1011,138 @@ public:
       break;
     }
 
-    mesh_.template add_entity<num_dimensions(), 0>(c);
-
-    // FIXME: Need to make mesh interface more general
+    mesh_.template add_entity<cell_t::dimension, 0>(c);
     mesh_.template init_cell<0>( c, std::forward<V>(verts) );
     return c;
   } // create_cell
-#endif
+
+  //! \brief Create a cell in the burton mesh.
+  //! \param[in] faces The faces defining the cell.
+  //! \return Pointer to cell created with \e faces.
+  template< typename F >
+  auto create_3d_element_from_faces_( F && faces )
+  {
+    
+    cell_t * c;
+
+    switch ( faces.size() ) {
+    case (1,2,3):
+      raise_runtime_error( "can't have <4 vertices" );
+    case (4):
+      c = mesh_.template make< burton_tetrahedron_t<dimensions> >(mesh_);
+      break;
+    case (6):
+      c = mesh_.template make< burton_hexahedron_t<dimensions> >(mesh_);
+      break;
+    default:
+      c = mesh_.template make< burton_polyhedron_t<dimensions> >(mesh_);
+      break;
+    }
+
+    mesh_.template add_entity<cell_t::dimension, 0>(c);
+    mesh_.template init_entity<0, cell_t::dimension, face_t::dimension>( c, std::forward<F>(faces) );
+    return c;
+  } // create_cell
 
 
   //! \brief Create a cell in the burton mesh.
-  //!
   //! \param[in] verts The vertices defining the cell.
-  //!
   //! \return Pointer to cell created with \e verts.
   template< typename V >
-  auto create_cell(V && verts)
+  auto create_cell(
+    V && verts,
+    typename std::enable_if_t< 
+      std::is_same_v< typename std::decay_t<V>::value_type, vertex_t* > &&
+      std::remove_pointer_t<typename std::decay_t<V>::value_type>::num_dimensions == 2
+    >* = nullptr ) 
   {
-    return create_cell_( verts );
+    return create_2d_element_from_verts_<cell_t>( std::forward<V>(verts) );
+  } // create_cell
+
+  //! \brief Create a cell in the burton mesh.
+  //! \param[in] verts The vertices defining the cell.
+  //! \return Pointer to cell created with \e verts.
+  template< typename V >
+  auto  create_cell( 
+    std::initializer_list<V*> verts,
+    typename std::enable_if_t< 
+      std::is_same_v<V, vertex_t> && V::num_dimensions == 2 
+    >* = nullptr ) 
+  {
+    return create_2d_element_from_verts_<cell_t>( verts );
+  }
+
+
+  //! \brief Create a cell in the burton mesh.
+  //! \param[in] verts The vertices defining the cell.
+  //! \return Pointer to cell created with \e verts.
+  template< typename V >
+  auto create_cell(
+    V && verts,
+    typename std::enable_if_t< 
+      std::is_same_v< typename std::decay_t<V>::value_type, vertex_t* > &&
+      std::remove_pointer_t<typename std::decay_t<V>::value_type>::num_dimensions == 3
+    >* = nullptr ) 
+  {
+    return create_3d_element_from_verts_( std::forward<V>(verts) );
+  } // create_cell
+
+  //! \brief Create a cell in the burton mesh.
+  //! \param[in] verts The vertices defining the cell.
+  //! \return Pointer to cell created with \e verts.
+  template< typename V >
+  auto  create_cell( 
+    std::initializer_list<V*> verts,
+    typename std::enable_if_t< 
+      std::is_same_v<V, vertex_t> && V::num_dimensions == 3
+    >* = nullptr ) 
+  {
+    return create_3d_element_from_verts_( verts );
+  }
+
+  //! \brief Create a cell in the burton mesh.
+  //! \param[in] faces The faces defining the cell.
+  //! \return Pointer to cell created with \e faces.
+  template< typename F >
+  auto create_cell(
+    F && faces,
+    typename std::enable_if_t< 
+      std::is_same_v< typename std::decay_t<F>::value_type, face_t* >  &&
+      std::remove_pointer_t<typename std::decay_t<F>::value_type>::num_dimensions == 3
+    >* = nullptr ) 
+  {
+    return create_3d_element_from_faces_( std::forward<F>(faces) );
+  } // create_cell
+  
+  //! \brief Create a cell in the burton mesh.
+  //! \param[in] faces The faces defining the cell.
+  //! \return Pointer to cell created with \e faces.
+  auto  create_cell( std::initializer_list<face_t *> faces ) {
+    return create_3d_element_from_faces_( faces );
+  }
+
+
+
+  //! \brief Create a face in the burton mesh.
+  //! \param[in] verts The vertices defining the face.
+  //! \return Pointer to cell created with \e faces.
+  template< typename V >
+  auto create_face(V && verts)
+  {
+    return create_2d_element_from_verts_<face_t>( std::forward<V>(verts) );
   } // create_cell
 
   
-  //! \brief Create a cell in the burton mesh.
-  //!
-  //! \param[in] verts The vertices defining the cell.
-  //!
-  //! \return Pointer to cell created with \e verts.
-  auto  create_cell( std::initializer_list<vertex_t *> verts ) {
-    return create_cell_( verts );
+  //! \brief Create a face in the burton mesh.
+  //! \param[in] verts The vertices defining the face.
+  //! \return Pointer to cell created with \e faces.
+  auto  create_face( std::initializer_list<vertex_t *> verts ) {
+    return create_2d_element_from_verts_<face_t>( verts );
   }
+
+  //============================================================================
+  // Mesh Creation
+  //============================================================================
 
   //! \brief Dump the burton mesh to standard out.
   void dump()
@@ -1245,6 +1351,7 @@ std::ostream& operator<< (std::ostream& stream, const burton_mesh_t<M>& mesh)
   stream << "Burton mesh:" << endl;
   stream << " + Num Points = " << mesh.num_vertices() << endl;
   stream << " + Num Edges  = " << mesh.num_edges() << endl;
+  stream << " + Num Faces  = " << mesh.num_faces() << endl;
   stream << " + Num Cells  = " << mesh.num_cells() << endl;
   return stream;
 }

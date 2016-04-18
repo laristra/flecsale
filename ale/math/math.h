@@ -74,6 +74,21 @@ average( T && t, Types&&... args )
   return T();
 }
 
+//! \brief average operator.
+//! \remark all arguments must be of the same type
+template< 
+  typename T, typename... Args, 
+  template <typename, typename...> class V 
+>
+auto average( const V<T, Args...> & vals )
+{ 
+  assert( vals.size() > 0 && "not enough values" );
+  T avg(0);
+  for ( const auto & x : vals )
+    avg += x;
+  return avg;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // return the max and min value of lists
 //////////////////////////////////////////////////////////////////////////////

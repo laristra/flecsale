@@ -17,7 +17,7 @@
  ******************************************************************************/
 
 //! user includes
-#include "burton_test.h"
+#include "burton_nd_test.h"
 
 // using statements
 using std::cout;
@@ -26,7 +26,7 @@ using std::endl;
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief dump the mesh to std out
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(Burton, dump) {
+TEST_F(burton_2d, dump) {
   std::string separator;
   separator.insert(0,80,'=');
   separator.append("\n");
@@ -41,7 +41,7 @@ TEST_F(Burton, dump) {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test the mesh connectivity
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(Burton, mesh) {
+TEST_F(burton_2d, mesh) {
   std::string separator;
   separator.insert(0,80,'=');
   separator.append("\n");
@@ -178,7 +178,7 @@ TEST_F(Burton, mesh) {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test the mesh geometry functions
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(Burton, geometry) {
+TEST_F(burton_2d, geometry) {
   std::string separator;
   separator.insert(0,80,'=');
   separator.append("\n");
@@ -254,7 +254,7 @@ TEST_F(Burton, geometry) {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test the accessors
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(Burton, accessors) {
+TEST_F(burton_2d, accessors) {
   std::string separator;
   separator.insert(0,80,'=');
   separator.append("\n");
@@ -390,7 +390,7 @@ TEST_F(Burton, accessors) {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test the state
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(Burton, state) {
+TEST_F(burton_2d, state) {
   std::string separator;
   separator.insert(0,80,'=');
   separator.append("\n");
@@ -485,11 +485,30 @@ TEST_F(Burton, state) {
 } // TEST_F
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief test copying the mesh
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(burton_2d, copy) {
+
+  for(auto v : mesh_.vertices()){
+    CINCH_CAPTURE() << "----------- vertex id: " << v.id()
+      << " with coordinates " << v->coordinates() << std::endl;
+  } // for
+
+  auto mesh_copy = mesh_;
+
+  for(auto v : mesh_copy.vertices()){
+    CINCH_CAPTURE() << "----------- vertex id: " << v.id()
+      << " with coordinates " << v->coordinates() << std::endl;
+  } // for
+
+} // TEST
+
+////////////////////////////////////////////////////////////////////////////////
 //! \brief A final test to compare the blessed file and do CINCH_DUMP().
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(Burton, cinch_dump) {
+TEST_F(burton_2d, cinch_dump) {
   cout << CINCH_DUMP() << endl;
-  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED("burton.blessed"));
+  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED("burton_2d.blessed"));
 }
 
 /*~------------------------------------------------------------------------~--*

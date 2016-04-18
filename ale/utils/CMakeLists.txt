@@ -15,15 +15,14 @@ set(utils_HEADERS
   tuple_for_each.h detail/tuple_for_each.h
   tuple_visit.h    detail/tuple_visit.h
   tuple_zip.h      detail/tuple_zip.h
-  write_binary.h
   zip.h            detail/zip.h
   PARENT_SCOPE
 )
 
-set(utils_SOURCES
-  vtk.cc
-  PARENT_SCOPE
-)
+#set(utils_SOURCES
+#  vtk.cc
+#  PARENT_SCOPE
+#)
 
 cinch_add_unit(utils
     SOURCES 

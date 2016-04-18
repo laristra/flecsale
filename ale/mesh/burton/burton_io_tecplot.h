@@ -30,9 +30,9 @@
 
 //! user includes
 #include "flecsi/io/io_base.h"
-#include "../../mesh/burton/burton_mesh.h"
-#include "../../utils/errors.h"
-#include "../../utils/string_utils.h"
+#include "ale/mesh/burton/burton_mesh.h"
+#include "ale/utils/errors.h"
+#include "ale/utils/string_utils.h"
 
 
 namespace ale {
@@ -78,7 +78,7 @@ struct tec_zone_map_t {
   template< typename T >
   void build_face_map( size_t izone, const T & elem_this_zone ) {
 
-      
+    using std::size_t;
      
     // count how many edges there are in this block
     std::set< burton_mesh_2d_t::edge_t* > edges_this_zone; 
@@ -101,7 +101,7 @@ struct tec_zone_map_t {
     face_conn_elems.clear();
     face_conn_zones.clear();
       
-    auto f = 0, i = 0;
+    size_t f = 0, i = 0;
     num_face_conn = 0;
     for (auto e : edges_this_zone) {
       // the nodes of each face
@@ -212,6 +212,7 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
     //! general type aliases
     using   mesh_t = burton_mesh_2d_t;
+    using   size_t = typename mesh_t::size_t;
     using   real_t = typename mesh_t::real_t;
     using integer_t= typename mesh_t::integer_t;
     using vector_t = typename mesh_t::vector_t;
@@ -354,7 +355,7 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     // Loop over Regions
     //--------------------------------------------------------------------------
   
-    for ( auto izn=0; izn<num_zones; izn++ ) {
+    for ( size_t izn=0; izn<num_zones; izn++ ) {
 
       // get the elements in this block
       const auto & elem_this_zone = region_cells[izn];
@@ -536,6 +537,7 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
     //! general type aliases
     using   mesh_t = burton_mesh_2d_t;
+    using   size_t = typename mesh_t::size_t;
     using   real_t = typename mesh_t::real_t;
     using integer_t= typename mesh_t::integer_t;
     using vector_t = typename mesh_t::vector_t;
@@ -704,7 +706,7 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     // Loop over Regions
     //--------------------------------------------------------------------------
   
-    for ( auto izn=0; izn<num_zones; izn++ ) {
+    for ( size_t izn=0; izn<num_zones; izn++ ) {
 
       // get the elements in this block
       const auto & elem_this_zone = region_cells[izn];
@@ -823,21 +825,21 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
       // element field buffer
       for(auto sf: rspac) {
-        auto cid = 0;
+        size_t cid = 0;
         for(auto c: elem_this_zone) xvals[cid++] = sf[c];
         status = TECDAT112( &num_elem_this_zone, xvals.data(), &VIsDouble );
         assert( status == 0 && "error with TECDAT" );
       } // for
       for(auto sf: ispac) {
         // cast int fields to real_t
-        auto cid = 0;
+        size_t cid = 0;
         for(auto c: elem_this_zone) xvals[cid++] = (tec_real_t)sf[c];
         status = TECDAT112( &num_elem_this_zone, xvals.data(), &VIsDouble );
         assert( status == 0 && "error with TECDAT" );
       } // for
       for(auto vf: rvpac) {
         for(int d=0; d < num_dims; ++d) {
-          auto cid = 0;
+          size_t cid = 0;
           for(auto c: elem_this_zone) xvals[cid++] = vf[c][d];
           status = TECDAT112( &num_elem_this_zone, xvals.data(), &VIsDouble );
           assert( status == 0 && "error with TECDAT" );

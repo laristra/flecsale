@@ -24,12 +24,18 @@ set(mesh_HEADERS
   burton/burton_mesh_traits.h
   burton/burton_types.h
   burton/burton_vtk_utils.h
-  factory.h
-  voronoi.h  detail/voronoi.h
 
   burton/burton_triangle.h
   burton/burton_quadrilateral.h
   burton/burton_polygon.h
+
+  burton/burton_tetraahedron.h
+  burton/burton_hexahedron.h
+  burton/burton_polyhedron.h
+
+  factory.h
+  voronoi.h  detail/voronoi.h
+  vtk_utils.h
 
   PARENT_SCOPE
 )
@@ -51,21 +57,31 @@ set( ALE_DATA_DIR ../../data )
 
 cinch_add_unit(mesh
     SOURCES 
-      burton/test/burton.cc
-      burton/test/burton_copy.cc
+      burton/test/burton_test_base.h
+      burton/test/burton_create_test.h
+      burton/test/burton_nd_test.h
+      burton/test/burton_io_test.h
+      burton/test/burton_voro_test.h
+
+      burton/test/burton_create.cc
+      burton/test/burton_2d.cc
+      burton/test/burton_3d.cc
       burton/test/burton_io.cc
       burton/test/burton_voro.cc
-      burton/test/gradients.cc
+      burton/test/burton_grad.cc
     INPUTS 
       burton/test/burton.blessed
-      ${ALE_DATA_DIR}/meshes/mixed/mixed.g
-      ${ALE_DATA_DIR}/meshes/mixed/mixed.exo
-      ${ALE_DATA_DIR}/meshes/mixed/mixed.vtu
-      ${ALE_DATA_DIR}/meshes/mixed/mixed.vtm
-      ${ALE_DATA_DIR}/meshes/mixed/mixed_0_0.vtu
-      ${ALE_DATA_DIR}/meshes/mixed/mixed_1_0.vtu
-      ${ALE_DATA_DIR}/meshes/mixed/mixed.vtk
-      ${ALE_DATA_DIR}/meshes/voro/voro.g
+      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed.g
+      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed.exo
+      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed.vtu
+      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed.vtm
+      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed_0_0.vtu
+      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed_1_0.vtu
+      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed.vtk
+      ${ALE_DATA_DIR}/meshes/2d/voro/voro.g
+      ${ALE_DATA_DIR}/meshes/3d/box/box-hex.g
+      ${ALE_DATA_DIR}/meshes/3d/box/box-nfaced.exo
+      ${ALE_DATA_DIR}/meshes/3d/box/box-tet.g
     LIBRARIES ${mesh_LIBS} ale
 )
 

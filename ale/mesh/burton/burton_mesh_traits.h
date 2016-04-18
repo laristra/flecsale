@@ -15,9 +15,9 @@
 #pragma once
 
 //! user includes
-#include "../../common/types.h"
-#include "../../geom/point.h"
-#include "../../math/vector.h"
+#include "ale/common/types.h"
+#include "ale/geom/point.h"
+#include "ale/math/vector.h"
 #include "flecsi/utils/bitfield.h"
 #include "flecsi/data/data.h"
 

@@ -23,8 +23,8 @@
 #include<vector>
 
 //! user includes
-#include "../math/constants.h"
-#include "../math/matrix.h"
+#include "ale/math/constants.h"
+#include "ale/math/matrix.h"
 
 namespace ale {
 namespace mesh {

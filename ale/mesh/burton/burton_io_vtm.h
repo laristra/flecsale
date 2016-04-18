@@ -43,9 +43,9 @@
 
 //! user includes
 #include "flecsi/io/io_base.h"
-#include "../../mesh/burton/burton_mesh.h"
-#include "../../mesh/burton/burton_vtk_utils.h"
-#include "../../utils/errors.h"
+#include "ale/mesh/burton/burton_mesh.h"
+#include "ale/mesh/vtk_utils.h"
+#include "ale/utils/errors.h"
 
 
 namespace ale {
@@ -91,7 +91,6 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     using vector_t = typename mesh_t::vector_t;
     using vertex_t = typename mesh_t::vertex_t;
 
-    using utils::vtk_array_t;
 
     // a lambda function for validating strings
     auto validate_string = []( auto && str ) {
@@ -110,7 +109,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     // the class documentation for more information.
     auto mb = vtkSmartPointer<vtkMultiBlockDataSet>::New();
     
-    for ( auto iblk=0; iblk<num_regions; iblk++ ) {
+    for ( size_t iblk=0; iblk<num_regions; iblk++ ) {
 
       // creat unstructured grid
       auto ug = vtkSmartPointer<vtkUnstructuredGrid>::New();
@@ -233,7 +232,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
       for(auto sf: rspac) {
         auto label = validate_string( sf.label() );      
         rvals->SetName( label.c_str() );
-        auto cid = 0;
+        size_t cid = 0;
         for(auto c: cells_this_block) rvals->SetValue( cid++, sf[c] );
         cd->AddArray( rvals );
       } // for
@@ -248,7 +247,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
       for(auto sf: ispac) {
         auto label = validate_string( sf.label() );
         ivals->SetName( label.c_str() );
-        auto cid = 0;
+        size_t cid = 0;
         for(auto c: cells_this_block) ivals->SetValue( cid++, sf[c] );
         cd->AddArray( ivals );
       } // for
@@ -264,7 +263,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
       for(auto vf: rvpac) {
         auto label = validate_string( vf.label() );
         vvals->SetName( label.c_str() );
-        auto cid = 0;
+        size_t cid = 0;
         for(auto c: cells_this_block) {
           real_t to_vals[3] = {0, 0, 0};
           auto & from_vals = vf[c];
@@ -488,7 +487,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
         elem_vs.clear();
         elem_vs.reserve( npts );
         // loop over each local point
-        for ( auto v=0;  v<npts; v++ ) {
+        for ( size_t v=0;  v<npts; v++ ) {
           //--------------------------------------------------------------------
           // find the closest point
           auto it = std::find_if( vs.begin(), vs.end(),

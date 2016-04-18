@@ -17,7 +17,7 @@
  ******************************************************************************/
 
 //! user includes
-#include "burton_test.h"
+#include "burton_nd_test.h"
 
 
 // explicitly use some stuff
@@ -29,7 +29,7 @@ using std::endl;
 //!
 //! This test creates a simple flexi mesh, then computes gradients
 //=============================================================================
-TEST_F(Burton, gradients) {
+TEST_F(burton_2d, gradients) {
 
   // get the number of cells in the mesh
   auto num_cells = mesh_.num_cells();

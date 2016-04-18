@@ -21,9 +21,9 @@
 #include <iostream>
 
 // user includes
-#include "../../common/types.h"
-#include "../../math/math.h"
-#include "../../math/vector.h"
+#include "ale/common/types.h"
+#include "ale/math/math.h"
+#include "ale/math/vector.h"
 
 
 // explicitly use some stuff

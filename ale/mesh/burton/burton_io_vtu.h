@@ -41,9 +41,9 @@
 
 //! user includes
 #include "flecsi/io/io_base.h"
-#include "../../mesh/burton/burton_mesh.h"
-#include "../../mesh/burton/burton_vtk_utils.h"
-#include "../../utils/errors.h"
+#include "ale/mesh/burton/burton_mesh.h"
+#include "ale/mesh/vtk_utils.h"
+#include "ale/utils/errors.h"
 
 
 namespace ale {

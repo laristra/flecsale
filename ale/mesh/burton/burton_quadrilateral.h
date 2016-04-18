@@ -20,10 +20,10 @@
 #pragma once
 
 //! user includes
-#include "../../geom/area.h"
-#include "../../geom/centroid.h"
-#include "../../geom/geometric_shapes.h"
-#include "../../mesh/burton/burton_entity_types.h"
+#include "ale/geom/area.h"
+#include "ale/geom/centroid.h"
+#include "ale/geom/geometric_shapes.h"
+#include "ale/mesh/burton/burton_entity_types.h"
 
 namespace ale {
 namespace mesh {
@@ -35,7 +35,7 @@ namespace mesh {
 //!   burton_cell_t for 2D quadrilateral cells.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
-class burton_quadrilateral_t : public burton_cell_t<N>
+class burton_quadrilateral_t : public burton_element_t<N,2>
 {
 public:
 
@@ -44,22 +44,22 @@ public:
   //============================================================================
 
   //! the base cell type
-  using base_t = burton_cell_t<N>;
+  using base_t = burton_element_t<N,2>;
 
   //! the flecsi mesh topology type
-  using mesh_topology_base_t = typename base_t::mesh_topology_base_t;
+  using typename base_t::mesh_topology_base_t;
 
   //! the mesh traits
-  using mesh_traits_t = typename base_t::mesh_traits_t;
+  using typename base_t::mesh_traits_t;
 
   //! Type containing coordinates of the vertex.
-  using point_t = typename mesh_traits_t::point_t;
+  using typename base_t::point_t;
 
   //! Type of floating point.
-  using real_t = typename mesh_traits_t::real_t;
+  using typename base_t::real_t;
 
   // the id type
-  using id_t = typename base_t::id_t;
+  using typename base_t::id_t;
 
   //============================================================================
   // Constructors
@@ -81,8 +81,8 @@ public:
   point_t centroid() const override
   {
     auto vs = vertices();
-    return geom::centroid( vs[0]->coordinates(), vs[1]->coordinates(), 
-                           vs[2]->coordinates(), vs[3]->coordinates() );
+    return math::average( vs[0]->coordinates(), vs[1]->coordinates(), 
+                          vs[2]->coordinates(), vs[3]->coordinates() );
   }
 
 
@@ -90,8 +90,9 @@ public:
   real_t area() const override
   {
     auto vs = vertices();
-    return geom::area( vs[0]->coordinates(), vs[1]->coordinates(), 
-                       vs[2]->coordinates(), vs[3]->coordinates() );
+    //return geom::area( vs[0]->coordinates(), vs[1]->coordinates(), 
+    //                   vs[2]->coordinates(), vs[3]->coordinates() );
+    return 0;
   }
 
   //! the minimum length in the cell
@@ -118,10 +119,13 @@ public:
   geom::geometric_shapes_t type() const override 
   { return geom::geometric_shapes_t::quadrilateral; };
 
+  //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_quadrilateral_cell_t.
+  //----------------------------------------------------------------------------
   inline std::vector<id_t> create_entities(
       size_t dim, id_t * e, id_t * v, size_t vertex_count)  override
   {
+    assert( dim == 1 );
     assert( vertex_count == 4 );
     e[0] = v[0];
     e[1] = v[1];
@@ -190,70 +194,75 @@ public:
   {
     assert( ent_counts[0] == 4 );
     switch (dim) {
+
+      //------------------------------------------------------------------------
       // Corners
       // The right edge is always first
-      case 1:
-        // corner 0
-        c[0] = ent_ids[0][0]; // vertex 0
-        c[1] = ent_ids[1][0]; // edge 0, abuts vertex 0
-        c[2] = ent_ids[1][3]; // edge 3, abuts vertex 0
+    case 1:
+      // corner 0
+      c[0] = ent_ids[0][0]; // vertex 0
+      c[1] = ent_ids[1][0]; // edge 0, abuts vertex 0
+      c[2] = ent_ids[1][3]; // edge 3, abuts vertex 0
 
-        // corner 1
-        c[3] = ent_ids[0][1]; // vertex 1
-        c[4] = ent_ids[1][1]; // edge 1, abuts vertex 1
-        c[5] = ent_ids[1][0]; // edge 0, abuts vertex 1
+      // corner 1
+      c[3] = ent_ids[0][1]; // vertex 1
+      c[4] = ent_ids[1][1]; // edge 1, abuts vertex 1
+      c[5] = ent_ids[1][0]; // edge 0, abuts vertex 1
 
-        // corner 2
-        c[6] = ent_ids[0][2]; // vertex 2
-        c[7] = ent_ids[1][2]; // edge 2, abuts vertex 2
-        c[8] = ent_ids[1][1]; // edge 1, abuts vertex 2
+      // corner 2
+      c[6] = ent_ids[0][2]; // vertex 2
+      c[7] = ent_ids[1][2]; // edge 2, abuts vertex 2
+      c[8] = ent_ids[1][1]; // edge 1, abuts vertex 2
 
-        // corner 3
-        c[9] = ent_ids[0][3]; // vertex 3
-        c[10] = ent_ids[1][3]; // edge 3, abuts vertex 3
-        c[11] = ent_ids[1][2]; // edge 2, abuts vertex 3
+      // corner 3
+      c[9] = ent_ids[0][3]; // vertex 3
+      c[10] = ent_ids[1][3]; // edge 3, abuts vertex 3
+      c[11] = ent_ids[1][2]; // edge 2, abuts vertex 3
 
-        return {3, 3, 3, 3};
+      return {3, 3, 3, 3};
 
+      //------------------------------------------------------------------------
       // Wedges
-      case 2:
+    case 2:
 
-        // wedge 0
-        c[0] = ent_ids[0][0]; // vertex 0
-        c[1] = ent_ids[1][3]; // edge 3
+      // wedge 0
+      c[0] = ent_ids[0][0]; // vertex 0
+      c[1] = ent_ids[1][3]; // edge 3
 
-        // wedge 1
-        c[2] = ent_ids[0][0]; // vertex 0
-        c[3] = ent_ids[1][0]; // edge 0
+      // wedge 1
+      c[2] = ent_ids[0][0]; // vertex 0
+      c[3] = ent_ids[1][0]; // edge 0
 
-        // wedge 2
-        c[4] = ent_ids[0][1]; // vertex 1
-        c[5] = ent_ids[1][0]; // edge 0
+      // wedge 2
+      c[4] = ent_ids[0][1]; // vertex 1
+      c[5] = ent_ids[1][0]; // edge 0
 
-        // wedge 3
-        c[6] = ent_ids[0][1]; // vertex 1
-        c[7] = ent_ids[1][1]; // edge 1
+      // wedge 3
+      c[6] = ent_ids[0][1]; // vertex 1
+      c[7] = ent_ids[1][1]; // edge 1
 
-        // wedge 4
-        c[8] = ent_ids[0][2]; // vertex 2
-        c[9] = ent_ids[1][1]; // edge 1
+      // wedge 4
+      c[8] = ent_ids[0][2]; // vertex 2
+      c[9] = ent_ids[1][1]; // edge 1
 
-        // wedge 5
-        c[10] = ent_ids[0][2]; // vertex 2
-        c[11] = ent_ids[1][2]; // edge 2
+      // wedge 5
+      c[10] = ent_ids[0][2]; // vertex 2
+      c[11] = ent_ids[1][2]; // edge 2
 
-        // wedge 6
-        c[12] = ent_ids[0][3]; // vertex 3
-        c[13] = ent_ids[1][2]; // edge 2
+      // wedge 6
+      c[12] = ent_ids[0][3]; // vertex 3
+      c[13] = ent_ids[1][2]; // edge 2
 
-        // wedge 7
-        c[14] = ent_ids[0][3]; // vertex 3
-        c[15] = ent_ids[1][3]; // edge 3
+      // wedge 7
+      c[14] = ent_ids[0][3]; // vertex 3
+      c[15] = ent_ids[1][3]; // edge 3
 
-        return {2, 2, 2, 2, 2, 2, 2, 2};
+      return {2, 2, 2, 2, 2, 2, 2, 2};
 
-      default:
-        assert(false && "Unknown bound entity type");
+      //------------------------------------------------------------------------
+      // Failure
+    default:
+      raise_runtime_error("Unknown bound entity type");
     } // switch
   } // create_bound_entities
 
