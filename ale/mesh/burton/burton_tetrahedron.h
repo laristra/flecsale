@@ -20,9 +20,7 @@
 #pragma once
 
 //! user includes
-#include "ale/geom/area.h"
-#include "ale/geom/centroid.h"
-#include "ale/geom/geometric_shapes.h"
+#include "ale/geom/shapes/tetrahedron.h"
 #include "ale/mesh/burton/burton_entity_types.h"
 
 namespace ale {
@@ -81,8 +79,9 @@ public:
   point_t centroid() const override
   {
     auto vs = vertices();
-    return math::average( vs[0]->coordinates(), vs[1]->coordinates(), 
-                          vs[2]->coordinates(), vs[3]->coordinates() );
+    return geom::tetrahedron::centroid( 
+      vs[0]->coordinates(), vs[1]->coordinates(), 
+      vs[2]->coordinates(), vs[3]->coordinates() );
   }
 
 
@@ -90,13 +89,15 @@ public:
   real_t volume() const override
   {
     auto vs = vertices();
-    return 0.0;
+    return geom::tetrahedron::volume( 
+      vs[0]->coordinates(), vs[1]->coordinates(), 
+      vs[2]->coordinates(), vs[3]->coordinates() );
   }
 
 
   //! the cell type
   geom::geometric_shapes_t type() const override 
-  { return geom::geometric_shapes_t::tetrahedron; };
+  { return geom::tetrahedron::shape; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_tetrahedron_cell_t.

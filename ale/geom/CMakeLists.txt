@@ -9,6 +9,12 @@ set(geom_HEADERS
   geometric_shapes.h
   normal.h
   point.h
+  shapes/hexahedron.h
+  shapes/quadrilateral.h
+  shapes/polyhedron.h
+  shapes/polygon.h
+  shapes/tetrahedron.h
+  shapes/triangle.h
   PARENT_SCOPE
 )
 

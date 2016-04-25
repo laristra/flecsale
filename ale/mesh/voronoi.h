@@ -109,7 +109,7 @@ T voronoi(
   ret = tess->PerformOutputDiagnostic();
   if (ret != SHAPO_NO_ERROR) {
     cerr << endl << tess->GetOutputDiagnosticString() << endl;
-    raise_runtime_error("ShaPo Error Tessellating");
+    //raise_runtime_error("ShaPo Error Tessellating");
   }
  
 

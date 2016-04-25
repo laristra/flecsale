@@ -20,9 +20,7 @@
 #pragma once
 
 //! user includes
-#include "ale/geom/area.h"
-#include "ale/geom/centroid.h"
-#include "ale/geom/geometric_shapes.h"
+#include "ale/geom/shapes/polyhedron.h"
 #include "ale/mesh/burton/burton_entity_types.h"
 
 namespace ale {
@@ -82,31 +80,29 @@ public:
   point_t centroid() const override
   {
     auto coords = coordinates();
-    return math::average( coords );
+    return geom::polyhedron::centroid( coords );
   }
 
 
   //! the area of the cell
   real_t volume() const override
   {
-    auto vs = vertices();
-    return 0.0;
+    auto coords = coordinates();
+    return geom::polyhedron::volume( coords );
   }
 
 
   //! the cell type
   geom::geometric_shapes_t type() const override 
-  { return geom::geometric_shapes_t::polyhedron; };
+  { return geom::polyhedron::shape; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_polyhedron_cell_t.
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_entities(
       size_t dim, id_t * e, id_t * v, size_t vertex_count)  override
-  {
-
+  {        
     raise_runtime_error("Can't build polyhedron from vertices directly");
-
   } // create_entities
 
   //----------------------------------------------------------------------------

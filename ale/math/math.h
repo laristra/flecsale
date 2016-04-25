@@ -84,8 +84,8 @@ auto average( const V<T, Args...> & vals )
 { 
   assert( vals.size() > 0 && "not enough values" );
   T avg(0);
-  for ( const auto & x : vals )
-    avg += x;
+  for ( const auto & x : vals ) avg += x;
+  avg /= vals.size();
   return avg;
 }
 

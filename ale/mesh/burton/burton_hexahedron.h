@@ -20,9 +20,7 @@
 #pragma once
 
 //! user includes
-#include "ale/geom/area.h"
-#include "ale/geom/centroid.h"
-#include "ale/geom/geometric_shapes.h"
+#include "ale/geom/shapes/hexahedron.h"
 #include "ale/mesh/burton/burton_entity_types.h"
 
 namespace ale {
@@ -81,10 +79,11 @@ public:
   point_t centroid() const override
   {
     auto vs = vertices();
-    return math::average( vs[0]->coordinates(), vs[1]->coordinates(), 
-                          vs[2]->coordinates(), vs[3]->coordinates(),
-                          vs[4]->coordinates(), vs[5]->coordinates(),
-                          vs[6]->coordinates(), vs[7]->coordinates() );
+    return geom::hexahedron::centroid( 
+      vs[0]->coordinates(), vs[1]->coordinates(), 
+      vs[2]->coordinates(), vs[3]->coordinates(),
+      vs[4]->coordinates(), vs[5]->coordinates(),
+      vs[6]->coordinates(), vs[7]->coordinates() );
   }
 
 
@@ -92,13 +91,17 @@ public:
   real_t volume() const override
   {
     auto vs = vertices();
-    return 0.0;
+    return geom::hexahedron::volume( 
+      vs[0]->coordinates(), vs[1]->coordinates(), 
+      vs[2]->coordinates(), vs[3]->coordinates(),
+      vs[4]->coordinates(), vs[5]->coordinates(),
+      vs[6]->coordinates(), vs[7]->coordinates() );
   }
 
 
   //! the cell type
   geom::geometric_shapes_t type() const override 
-  { return geom::geometric_shapes_t::hexahedron; };
+  { return geom::hexahedron::shape; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_hexahedron_cell_t.

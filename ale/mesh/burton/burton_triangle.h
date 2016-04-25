@@ -20,8 +20,7 @@
 #pragma once
 
 //! user includes
-#include "ale/geom/geometric_shapes.h"
-#include "ale/math/math.h"
+#include "ale/geom/shapes/triangle.h"
 #include "ale/mesh/burton/burton_entity_types.h"
 
 
@@ -81,7 +80,7 @@ public:
   point_t centroid() const override
   {
     auto vs = base_t::vertices();
-    return math::average( 
+    return geom::triangle::centroid( 
       vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
   }
 
@@ -89,11 +88,8 @@ public:
   real_t area() const override
   {
     auto vs = vertices();
-    //auto u = vs[1]->coordinates() - vs[0]->coordinates();
-    //auto v = vs[2]->coordinates() - vs[0]->coordinates();
-    //auto cross = cross_product( u, v );
-    //return std::abs( cross ) / 2;
-    return 0;
+    return geom::triangle::area( 
+      vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
   }
 
   //! the minimum length in the cell
@@ -115,7 +111,7 @@ public:
 
   //! the cell type
   geom::geometric_shapes_t type() const override 
-  { return geom::geometric_shapes_t::triangle; };
+  { return geom::triangle::shape; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_triangle_cell_t.

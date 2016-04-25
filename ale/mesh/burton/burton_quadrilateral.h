@@ -20,9 +20,7 @@
 #pragma once
 
 //! user includes
-#include "ale/geom/area.h"
-#include "ale/geom/centroid.h"
-#include "ale/geom/geometric_shapes.h"
+#include "ale/geom/shapes/quadrilateral.h"
 #include "ale/mesh/burton/burton_entity_types.h"
 
 namespace ale {
@@ -81,8 +79,9 @@ public:
   point_t centroid() const override
   {
     auto vs = vertices();
-    return math::average( vs[0]->coordinates(), vs[1]->coordinates(), 
-                          vs[2]->coordinates(), vs[3]->coordinates() );
+    return geom::quadrilateral::centroid( 
+      vs[0]->coordinates(), vs[1]->coordinates(), 
+      vs[2]->coordinates(), vs[3]->coordinates() );
   }
 
 
@@ -90,9 +89,9 @@ public:
   real_t area() const override
   {
     auto vs = vertices();
-    //return geom::area( vs[0]->coordinates(), vs[1]->coordinates(), 
-    //                   vs[2]->coordinates(), vs[3]->coordinates() );
-    return 0;
+    return geom::quadrilateral::area( 
+      vs[0]->coordinates(), vs[1]->coordinates(), 
+      vs[2]->coordinates(), vs[3]->coordinates() );
   }
 
   //! the minimum length in the cell
@@ -117,7 +116,7 @@ public:
 
   //! the cell type
   geom::geometric_shapes_t type() const override 
-  { return geom::geometric_shapes_t::quadrilateral; };
+  { return geom::quadrilateral::shape; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_quadrilateral_cell_t.

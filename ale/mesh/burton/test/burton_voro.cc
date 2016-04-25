@@ -33,7 +33,7 @@ TEST_F(burton_voro, constrained) {
   ASSERT_FALSE(read_mesh(name, m));
 
   auto merge_tol = 1.e-12;
-  auto num_steps = 10;
+  auto num_steps = 0;
   auto use_clipping = false;
   auto voro = voronoi( m, merge_tol, num_steps, use_clipping );
 
@@ -52,6 +52,24 @@ TEST_F(burton_voro, constrained) {
   // write m to a different file
   name = output_prefix()+".g";
   ASSERT_FALSE(write_mesh(name, voro));
+
+
+} // TEST_F
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief test reading an exodus file
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(burton_voro, read_write_3d) {
+  mesh_3d_t m;
+
+  // read mesh written by above test
+  string name("sedov-0_05cm.exo");
+  ASSERT_FALSE(read_mesh(name, m));
+
+  // write m to a different file
+  name = output_prefix()+".exo";
+  ASSERT_FALSE(write_mesh(name, m));
 
 
 } // TEST_F

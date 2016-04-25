@@ -20,9 +20,7 @@
 #pragma once
 
 //! user includes
-#include "ale/geom/area.h"
-#include "ale/geom/centroid.h"
-#include "ale/geom/geometric_shapes.h"
+#include "ale/geom/shapes/polygon.h"
 #include "ale/mesh/burton/burton_entity_types.h"
 
 namespace ale {
@@ -80,19 +78,19 @@ public:
   point_t centroid() const override
   {
     auto coords = coordinates();
-    return geom::centroid( coords );
+    return geom::polygon::centroid( coords );
   }
 
   //! the area of the cell
   real_t area() const override
   {
     auto coords = coordinates();
-    return geom::area( coords );
+    return geom::polygon::area( coords );
   }
 
   //! the cell type
   geom::geometric_shapes_t type() const override 
-  { return geom::geometric_shapes_t::polygon; };
+  { return geom::polygon::shape; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_polygonal_cell_t.

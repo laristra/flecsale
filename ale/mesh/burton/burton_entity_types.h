@@ -22,7 +22,7 @@
 //! user includes
 #include "flecsi/mesh/mesh_types.h"
 
-#include "ale/geom/geometric_shapes.h"
+#include "ale/geom/shapes/geometric_shapes.h"
 #include "ale/mesh/burton/burton_mesh_traits.h"
 #include "ale/utils/errors.h"
 

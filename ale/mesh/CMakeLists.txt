@@ -82,6 +82,7 @@ cinch_add_unit(mesh
       ${ALE_DATA_DIR}/meshes/3d/box/box-hex.g
       ${ALE_DATA_DIR}/meshes/3d/box/box-nfaced.exo
       ${ALE_DATA_DIR}/meshes/3d/box/box-tet.g
+      ${ALE_DATA_DIR}/meshes/3d/voro/sedov-0_05cm.exo
     LIBRARIES ${mesh_LIBS} ale
 )
 
