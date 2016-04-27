@@ -18,7 +18,7 @@
 #pragma once
 
 //! user includes
-#include "../math/array.h"
+#include "ale/math/array.h"
 
 namespace ale {
 namespace math {
@@ -55,7 +55,7 @@ C<T,D> unit( const C<T,D> & x )
   
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Compute the dot product
+//! \brief Compute the cross product
 //! \tparam T  The array base value type.
 //! \tparam D  The array dimension.
 //! \param[in] a  The first vector
@@ -69,6 +69,46 @@ template <
 T cross_product(const C<T, 2> &a, const C<T, 2> &b) 
 {
   return a[0]*b[1] - a[1]*b[0];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the cross product
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename T,
+  template<typename, std::size_t> typename C
+>
+auto cross_product(const C<T, 3> &a, const C<T, 3> &b) 
+{
+  C<T, 3> tmp;
+  tmp[0] = a[1]*b[2] - a[2]*b[1];
+  tmp[1] = a[0]*b[2] - a[2]*b[0];
+  tmp[2] = a[0]*b[1] - a[1]*b[0];
+  return tmp;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the cross product
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename T,
+  template<typename, std::size_t> typename C
+>
+T triple_product(const C<T, 3> &a, const C<T, 3> &b, const C<T, 3> &c) 
+{
+  return 
+    a[0]*b[1]*c[2] + b[0]*c[1]*a[2] + c[0]*a[1]*b[2] -
+    a[2]*b[1]*c[0] - b[2]*c[1]*a[0] - c[2]*a[1]*b[0];;
 }
 
 } // namespace

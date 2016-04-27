@@ -18,8 +18,8 @@
 #pragma once
 
 //! user includes
-#include "../math/multi_array.h"
-#include "../math/vector.h"
+#include "ale/math/multi_array.h"
+#include "ale/math/vector.h"
 
 namespace ale {
 namespace math {

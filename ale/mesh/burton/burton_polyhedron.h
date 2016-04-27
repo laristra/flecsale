@@ -80,7 +80,7 @@ public:
   point_t centroid() const override
   {
     auto coords = coordinates();
-    return geom::polyhedron::centroid( coords );
+    return math::average( coords );
   }
 
 
@@ -88,7 +88,7 @@ public:
   real_t volume() const override
   {
     auto coords = coordinates();
-    return geom::polyhedron::volume( coords );
+    return 0;
   }
 
 

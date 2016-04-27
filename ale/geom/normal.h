@@ -19,8 +19,8 @@
 
 
 // user includes
-#include "../std/type_traits.h"
-#include "../utils/check_types.h"
+#include "ale/std/type_traits.h"
+#include "ale/utils/type_traits.h.h"
 
 
 namespace ale {

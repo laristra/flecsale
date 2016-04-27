@@ -25,7 +25,9 @@ namespace ale {
 namespace geom {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! the polyhedron class
+//! \brief the polyhedron class
+//! \see Stroud, Approximate calculation of multiple integrals, 
+//!      Prentice-Hall Inc., 1971.
 ////////////////////////////////////////////////////////////////////////////////
 struct polyhedron {
 
@@ -33,21 +35,98 @@ struct polyhedron {
   static constexpr auto shape = geometric_shapes_t::polyhedron;
 
   //============================================================================
-  //! \brief the centroid function
+  //! \brief the volume function
   //============================================================================
-  template< typename... Args >
-  static auto centroid( Args&&... pts ) 
+  template< typename P >
+  static
+  auto centroid( std::initializer_list< std::initializer_list<P> > faces ) 
   {
-    return math::average( std::forward<Args>(pts)... );
+    using point_type = typename std::decay_t<P>;
+    using coord_type = typename point_type::value_type;
+
+    // initialize volume
+    point_type cx(0);
+    coord_type v = 0;
+
+    //--------------------------------------------------------------------------
+    // loop over faces
+    for ( const auto & points : faces ) {
+
+      // face midpoint
+      auto xm = math::average( points );
+
+      // for each face edge
+      auto po = std::prev( points.end() );
+      for ( auto pn=points.begin(); pn!=points.end(); pn++ ) {
+        // get normal
+        auto n = triangle<3>::normal( *po, *pn, xm );
+        // compute main contribution
+        auto a1 = *po + *pn;
+        auto a2 = *pn +  xm;
+        auto a3 =  xm + *po;
+        auto prod = a1 * a1;
+        prod += a2 * a2;
+        prod += a3 * a3;
+        // multiply by the normal
+        prod *= n;
+        // add contribution to centroid
+        cx += prod;
+        // dot with any coordinate for volume
+        v += dot_product( n, xm );
+        // store old point
+        po = pn;
+      }
+        
+    }
+
+    //--------------------------------------------------------------------------
+    // return result
+    
+    // divide by volume
+    cx /= 8 * v;
+
+    return cx;
   }
-  
+
   //============================================================================
   //! \brief the volume function
   //============================================================================
-  template< typename... Args >
-  static auto volume( Args&&... pts ) 
+  template<
+    typename P, typename... Args, 
+    template<typename,typename...> typename V
+  >
+  static
+  auto volume( const V<P,Args...> & faces ) 
   {
-    return 0.0;
+    using point_type = typename std::decay_t<P>::value_type;
+    using coord_type = typename point_type::value_type;
+
+    // initialize volume
+    coord_type v = 0;
+
+    //--------------------------------------------------------------------------
+    // loop over faces
+    for ( const auto & points : faces ) {
+
+      // face midpoint
+      auto xm = math::average( points );
+
+      // for each face edge
+      auto po = std::prev( points.end() );
+      for ( auto pn=points.begin(); pn!=points.end(); pn++ ) {
+        // get normal
+        auto n = triangle<3>::normal( *po, *pn, xm );
+        // dot with any coordinate
+        v += dot_product( n, xm );
+        // store old point
+        po = pn;
+      }
+        
+    }
+
+    //--------------------------------------------------------------------------
+    // return result
+    return std::abs(v) / 6;
   }
   
     

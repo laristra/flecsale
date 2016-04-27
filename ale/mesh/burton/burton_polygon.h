@@ -59,6 +59,9 @@ public:
   // the id type
   using typename base_t::id_t;
 
+  //! Number of domains in the burton mesh.
+  using base_t::num_dimensions;
+
   //============================================================================
   // Constructors
   //============================================================================
@@ -78,19 +81,19 @@ public:
   point_t centroid() const override
   {
     auto coords = coordinates();
-    return geom::polygon::centroid( coords );
+    return geom::polygon<num_dimensions>::centroid( coords );
   }
 
   //! the area of the cell
   real_t area() const override
   {
     auto coords = coordinates();
-    return geom::polygon::area( coords );
+    return geom::polygon<num_dimensions>::area( coords );
   }
 
   //! the cell type
   geom::geometric_shapes_t type() const override 
-  { return geom::polygon::shape; };
+  { return geom::polygon<num_dimensions>::shape; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_polygonal_cell_t.

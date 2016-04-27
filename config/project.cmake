@@ -5,6 +5,10 @@
 
 project(ale)
 
+#if(COMMAND cmake_policy)
+#  cmake_policy(SET CMP0005 NEW)  # generate escape sequences for defines
+#  cmake_policy(SET CMP0012 NEW)  # recognize number & boolean literals
+#endif(COMMAND cmake_policy)
 
 #------------------------------------------------------------------------------#
 # If a C++14 compiler is available, then set the appropriate flags

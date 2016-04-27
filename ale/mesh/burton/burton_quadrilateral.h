@@ -59,6 +59,9 @@ public:
   // the id type
   using typename base_t::id_t;
 
+  //! Number of domains in the burton mesh.
+  using base_t::num_dimensions;
+
   //============================================================================
   // Constructors
   //============================================================================
@@ -79,7 +82,7 @@ public:
   point_t centroid() const override
   {
     auto vs = vertices();
-    return geom::quadrilateral::centroid( 
+    return geom::quadrilateral<num_dimensions>::centroid( 
       vs[0]->coordinates(), vs[1]->coordinates(), 
       vs[2]->coordinates(), vs[3]->coordinates() );
   }
@@ -89,7 +92,7 @@ public:
   real_t area() const override
   {
     auto vs = vertices();
-    return geom::quadrilateral::area( 
+    return geom::quadrilateral<num_dimensions>::area( 
       vs[0]->coordinates(), vs[1]->coordinates(), 
       vs[2]->coordinates(), vs[3]->coordinates() );
   }
@@ -116,7 +119,7 @@ public:
 
   //! the cell type
   geom::geometric_shapes_t type() const override 
-  { return geom::quadrilateral::shape; };
+  { return geom::quadrilateral<num_dimensions>::shape; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_quadrilateral_cell_t.

@@ -4,7 +4,8 @@
 #~----------------------------------------------------------------------------~#
 
 set(utils_HEADERS
-  check_types.h    detail/check_types.h
+  array_ref.h
+  type_traits.h    detail/type_traits.h
   const_string.h
   exceptions.h
   errors.h

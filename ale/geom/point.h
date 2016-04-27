@@ -18,7 +18,7 @@
 #pragma once
 
 //! user includes
-#include "../math/vector.h"
+#include "ale/math/vector.h"
 
 namespace ale {
 namespace geom {

@@ -21,9 +21,9 @@
 #include <tuple>
 
 //! user includes
-#include "../utils/tuple_for_each.h"
-#include "../utils/tuple_visit.h"
-#include "../utils/tuple_zip.h"
+#include "ale/utils/tuple_for_each.h"
+#include "ale/utils/tuple_visit.h"
+#include "ale/utils/tuple_zip.h"
 
 namespace ale {
 namespace math {

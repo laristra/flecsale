@@ -57,7 +57,7 @@ using decay_t = typename decay<T>::type;
 //! \brief a is_pointer helper type
 //==============================================================================
 template< class T >
-using is_pointer_v = typename is_pointer<T>::value;
+constexpr bool is_pointer_v = is_pointer<T>::value;
 
 #endif
 

@@ -24,7 +24,7 @@
 
 // user includes
 #include "ale/std/type_traits.h"
-#include "ale/utils/check_types.h"
+#include "ale/utils/type_traits.h"
 #include "ale/utils/template_helpers.h"
 #include "ale/utils/tuple_visit.h"
 

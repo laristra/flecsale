@@ -21,8 +21,8 @@
 #include <algorithm> 
 
 // user includes
-#include "../std/type_traits.h"
-#include "../utils/check_types.h"
+#include "ale/std/type_traits.h"
+#include "ale/utils/type_traits.h"
 #include "detail/math.h"
 
 namespace ale {
@@ -86,6 +86,25 @@ auto average( const V<T, Args...> & vals )
   T avg(0);
   for ( const auto & x : vals ) avg += x;
   avg /= vals.size();
+  return avg;
+}
+
+//! \brief average operator.
+//! \remark all arguments must be of the same type
+template< 
+  typename InputIt,
+  typename = typename std::enable_if_t< utils::is_iterator_v<InputIt> >
+>
+auto average( InputIt first, InputIt last )
+{ 
+  auto num = std::distance( first, last );
+  assert( num > 0 && "not enough values" );
+    
+  using value_type = std::decay_t< decltype(*first) >;
+
+  value_type avg(0);
+  for ( auto it=first; first!=last; ++it ) avg += (*it);
+  avg /= num;
   return avg;
 }
 
