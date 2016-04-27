@@ -22,6 +22,7 @@
 
 // user includes
 #include "ale/std/type_traits.h"
+#include "ale/utils/errors.h"
 #include "ale/utils/type_traits.h"
 #include "detail/math.h"
 
@@ -103,7 +104,7 @@ auto average( InputIt first, InputIt last )
   using value_type = std::decay_t< decltype(*first) >;
 
   value_type avg(0);
-  for ( auto it=first; first!=last; ++it ) avg += (*it);
+  for ( auto it=first; it!=last; ++it ) avg += (*it);
   avg /= num;
   return avg;
 }
@@ -308,6 +309,122 @@ template <typename T>
 constexpr int sgn( const T & val ) {
   return (T(0) < val) - (val < T(0));
 }
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// compute the normalized vector
+////////////////////////////////////////////////////////////////////////////////
+
+//! \brief Compute the unit vector given a vector
+//! \tparam T  The base value type.
+//! \tparam D  The matrix/array dimension.
+//! \param[in] mat  The matrix
+//! \param[in] vec  The vector
+template < 
+  typename T, std::size_t D,
+  template<typename, std::size_t> typename C
+>
+C<T,D> unit( const C<T,D> & x )
+{
+  auto l = abs(x);
+  auto u = x / l;
+  return u;
+}
+  
+////////////////////////////////////////////////////////////////////////////////
+// compute the normal between two vectors
+////////////////////////////////////////////////////////////////////////////////
+
+//! \brief Compute the normal between two points
+//! \tparam T  The array base value type.
+//! \param[in] a  The first point
+//! \param[in] b  The other point
+//! \return The result of the operation
+template < 
+  typename T,
+  template<typename, std::size_t> typename C
+>
+C<T, 2> normal(const C<T, 2> &a, const C<T, 2> &b) 
+{
+  return { a[1] - b[1], b[0] - a[0] };
+}
+
+//! \brief Compute the normal between two points
+//! \tparam T  The array base value type.
+//! \param[in] a  The first point
+//! \param[in] b  The other point
+//! \return The result of the operation
+template < 
+  typename T,
+  template<typename, std::size_t> typename C
+>
+C<T, 3> normal(const C<T, 3> &a, const C<T, 3> &b) 
+{
+  raise_runtime_error("you should never get here");
+  return { 0, 0, 0 }; // FIXME - this is here as a hack
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// compute the cross product
+////////////////////////////////////////////////////////////////////////////////
+
+//! \brief Compute the cross product
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template < 
+  typename T,
+  template<typename, std::size_t> typename C
+>
+T cross_product(const C<T, 2> &a, const C<T, 2> &b) 
+{
+  return a[0]*b[1] - a[1]*b[0];
+}
+
+//! \brief Compute the cross product
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template < 
+  typename T,
+  template<typename, std::size_t> typename C
+>
+auto cross_product(const C<T, 3> &a, const C<T, 3> &b) 
+{
+  C<T, 3> tmp;
+  tmp[0] = a[1]*b[2] - a[2]*b[1];
+  tmp[1] = a[2]*b[0] - a[0]*b[2];
+  tmp[2] = a[0]*b[1] - a[1]*b[0];
+  return tmp;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// compute the triple product
+////////////////////////////////////////////////////////////////////////////////
+
+//! \brief Compute the cross product
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template < 
+  typename T,
+  template<typename, std::size_t> typename C
+>
+T triple_product(const C<T, 3> &a, const C<T, 3> &b, const C<T, 3> &c) 
+{
+  return 
+    a[0]*b[1]*c[2] + b[0]*c[1]*a[2] + c[0]*a[1]*b[2] -
+    a[2]*b[1]*c[0] - b[2]*c[1]*a[0] - c[2]*a[1]*b[0];;
+}
+
 
 } // namespace
 } // namespace

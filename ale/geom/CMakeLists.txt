@@ -21,6 +21,7 @@ set(geom_HEADERS
 cinch_add_unit(geom
     SOURCES 
       test/centroid.cc
+      shapes/test/shapes.cc
 )
 
 

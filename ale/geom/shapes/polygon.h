@@ -19,6 +19,7 @@
 
 //! user includes
 #include "ale/geom/shapes/geometric_shapes.h"
+#include "ale/geom/shapes/triangle.h"
 #include "ale/math/math.h"
 
 namespace ale {
@@ -152,7 +153,7 @@ public:
     coord_type a(0);
     
     auto po = std::prev( last );
-    for ( auto pn = first; first!=last; ++pn ) {
+    for ( auto pn = first; pn!=last; ++pn ) {
       auto tmp = (*po)[0]*(*pn)[1] - (*pn)[0]*(*po)[1];
       a += tmp;
       cx[0] += tmp * ( (*po)[0] + (*pn)[0] );
@@ -228,7 +229,7 @@ public:
     coord_type a(0);
 
     auto po = std::prev( last );
-    for ( auto pn = first; first!=last; ++pn ) {
+    for ( auto pn = first; pn!=last; ++pn ) {
       a += (*po)[0]*(*pn)[1] - (*pn)[0]*(*po)[1];
       po = pn;
     }
@@ -299,7 +300,7 @@ public:
     coord_type a(0);
 
     auto po = std::prev( last );
-    for ( auto pn = first; first!=last; ++pn ) {
+    for ( auto pn = first; pn!=last; ++pn ) {
       a += (*po)[0]*(*pn)[1] - (*pn)[0]*(*po)[1];
       po = pn;
     }
@@ -514,7 +515,7 @@ public:
     coord_type a(0);
 
     auto po = std::prev( last );
-    for ( auto pn = first; first!=last; ++pn ) {
+    for ( auto pn = first; pn!=last; ++pn ) {
       auto tmp_a  = triangle<3>::area( (*po), (*pn), xm );
       auto tmp_cx = triangle<3>::centroid( (*po), (*pn), xm );
       tmp_cx *= tmp_a;
@@ -597,7 +598,7 @@ public:
     coord_type a(0);
 
     auto po = std::prev( last );
-    for ( auto pn = first; first!=last; ++pn ) {
+    for ( auto pn = first; pn!=last; ++pn ) {
       a += triangle<3>::area( *po, *pn, xm );
       po = pn;
     }
@@ -673,7 +674,7 @@ public:
     point_type n(0);
 
     auto po = std::prev( last );
-    for ( auto pn = first; first!=last; ++pn ) {
+    for ( auto pn = first; pn!=last; ++pn ) {
       n += triangle<3>::normal( *po, *pn, xm );
       po = pn;
     }
