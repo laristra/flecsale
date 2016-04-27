@@ -330,9 +330,8 @@ struct burton_edge_t :
   vector_t normal() const
   {
     auto vs = mesh()->template entities<0,0>(this);
-    auto & a = vs[0]->coordinates();
-    auto & b = vs[1]->coordinates();
-    return { a[1] - b[1], b[0] - a[0] };
+    using math::normal;
+    return normal( vs[0]->coordinates(), vs[1]->coordinates() );
   }
 
 
@@ -373,6 +372,9 @@ struct burton_element_t
 
   //! Type containing coordinates of the vertex.
   using point_t = typename mesh_traits_t::point_t;
+
+  //! Type containing coordinates of the vertex.
+  using vector_t = typename mesh_traits_t::vector_t;
 
   //! Type of floating point.
   using real_t = typename mesh_traits_t::real_t;
@@ -452,6 +454,9 @@ struct burton_element_t
   virtual point_t centroid() const 
   { raise_runtime_error("you should never get here"); };
 
+  //! the normal
+  virtual vector_t normal() const 
+  { raise_runtime_error("you should never get here"); };
 
   //! the area of the element
   virtual real_t area() const

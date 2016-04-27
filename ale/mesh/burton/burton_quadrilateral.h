@@ -53,6 +53,9 @@ public:
   //! Type containing coordinates of the vertex.
   using typename base_t::point_t;
 
+  //! Type containing coordinates of the vertex.
+  using typename base_t::vector_t;
+
   //! Type of floating point.
   using typename base_t::real_t;
 
@@ -87,6 +90,15 @@ public:
       vs[2]->coordinates(), vs[3]->coordinates() );
   }
 
+
+  //! the normal
+  vector_t normal() const override
+  {
+    auto vs = vertices();
+    return geom::quadrilateral<num_dimensions>::normal( 
+      vs[0]->coordinates(), vs[1]->coordinates(), 
+      vs[2]->coordinates(), vs[3]->coordinates() );
+  }
 
   //! the area of the cell
   real_t area() const override

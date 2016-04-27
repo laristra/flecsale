@@ -94,7 +94,7 @@ public:
 
   //! the cell type
   geom::geometric_shapes_t type() const override 
-  { return geom::polyhedron::shape; };
+  { return geom::polyhedron<point_t>::shape; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_polyhedron_cell_t.

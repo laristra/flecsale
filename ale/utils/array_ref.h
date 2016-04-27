@@ -105,7 +105,7 @@ public:
     : ptr_(v.data()), length_(v.size()) { }
         
   template<typename traits, typename Allocator>
-  array_ref(const basic_string<T, traits, Allocator>& s)
+  array_ref(const std::basic_string<T, traits, Allocator>& s)
     : ptr_(s.data()), length_(s.size()) { }
         
   template<size_type N>
@@ -149,7 +149,7 @@ public:
   /// @{
   constexpr size_type size() const { return length_; }
   constexpr size_type max_size() const {
-    return numeric_limits<size_type>::max() / sizeof(T);
+    return std::numeric_limits<size_type>::max() / sizeof(T);
   }
   constexpr bool empty() const { return length_ == 0; }
   /// @}
@@ -160,7 +160,7 @@ public:
   constexpr const T& at(size_type i) const {
     // This makes at() constexpr as long as the argument is within the
     // bounds of the array_ref.
-    return i >= size() ? throw out_of_range("at() argument out of range")
+    return i >= size() ? throw std::out_of_range("at() argument out of range")
       : ptr_[i];
   }
         
@@ -198,11 +198,11 @@ public:
   /// \todo Arguably, this conversion should be a std::basic_string
   /// constructor.
   template<typename traits, typename Allocator>
-  explicit operator basic_string<T, traits, Allocator>() const {
-    return basic_string<T, traits, Allocator>(begin(), end());
+  explicit operator std::basic_string<T, traits, Allocator>() const {
+    return std::basic_string<T, traits, Allocator>(begin(), end());
   }
-  basic_string<T> str() const {
-    return basic_string<T>(*this);
+  std::basic_string<T> str() const {
+    return std::basic_string<T>(*this);
   }
         
   /// @}

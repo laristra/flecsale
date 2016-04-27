@@ -434,7 +434,7 @@ private:
 ///
 /// \tparam mesh_t Mesh to template io_base_t on.
 ////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N = 2 >
+template< std::size_t N >
 struct burton_io_exodus_t {};
 
 

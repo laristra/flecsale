@@ -261,7 +261,7 @@ public:
   std::enable_if_t< 
     (sizeof...(Types) >= 2 && utils::are_type_t<T,Types...>::value && 
      std::decay_t<T>::size() >= 2), 
-     std::decay_t< decltype( std::declval<T>()[0] ) > 
+     std::decay_t<T> 
   >
   normal( T && t, Types&&... args )
   { 
@@ -629,7 +629,7 @@ public:
   std::enable_if_t< 
     (sizeof...(Types) >= 3 && utils::are_type_t<T,Types...>::value && 
      std::decay_t<T>::size() >= 3), 
-     std::decay_t< decltype( std::declval<T>()[0] ) > 
+     std::decay_t<T> 
   >
   normal( T && t, Types&&... args )
   { 

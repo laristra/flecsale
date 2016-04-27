@@ -53,6 +53,9 @@ public:
   //! Type containing coordinates of the vertex.
   using typename base_t::point_t;
 
+  //! Type containing coordinates of the vertex.
+  using typename base_t::vector_t;
+
   //! Type of floating point.
   using typename base_t::real_t;
 
@@ -82,6 +85,14 @@ public:
   {
     auto coords = coordinates();
     return geom::polygon<num_dimensions>::centroid( coords );
+  }
+
+
+  //! the normal
+  vector_t normal() const override
+  {
+    auto coords = coordinates();
+    return geom::polygon<num_dimensions>::normal( coords );
   }
 
   //! the area of the cell

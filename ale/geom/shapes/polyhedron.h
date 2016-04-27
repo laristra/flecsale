@@ -20,6 +20,7 @@
 //! user includes
 #include "ale/geom/shapes/geometric_shapes.h"
 #include "ale/math/math.h"
+#include "ale/utils/array_ref.h"
 
 namespace ale {
 namespace geom {
@@ -29,28 +30,59 @@ namespace geom {
 //! \see Stroud, Approximate calculation of multiple integrals, 
 //!      Prentice-Hall Inc., 1971.
 ////////////////////////////////////////////////////////////////////////////////
-struct polyhedron {
+template< typename P >
+class polyhedron {
+
+public:
+
+  //============================================================================
+  // Typedefs
+  //============================================================================
 
   //! \brief the shape identifier
   static constexpr auto shape = geometric_shapes_t::polyhedron;
 
+  //! \brief the point and coordinate types
+  using point_type = P;
+  using coord_type = typename point_type::value_type;
+
+  //============================================================================
+  //! \brief insert a face into the polyhedron
+  //============================================================================
+  template< typename T >
+  void insert( utils::array_ref<T> points ) 
+  {
+    insert( points.begin(), points.end() );
+  }
+
+  template< typename T >
+  void insert( std::initializer_list<T> points ) 
+  {
+    insert( points.begin(), points.end() );
+  }
+
+  template< typename InputIt >
+  void insert( InputIt first, InputIt last ) 
+  {
+    // copy the points
+    std::vector< point_type > points( first, last );
+    // move into the vector
+    faces_.emplace_back( std::move(points) );
+  }
+
+
   //============================================================================
   //! \brief the volume function
   //============================================================================
-  template< typename P >
-  static
-  auto centroid( std::initializer_list< std::initializer_list<P> > faces ) 
+  auto centroid() 
   {
-    using point_type = typename std::decay_t<P>;
-    using coord_type = typename point_type::value_type;
-
     // initialize volume
     point_type cx(0);
     coord_type v = 0;
 
     //--------------------------------------------------------------------------
     // loop over faces
-    for ( const auto & points : faces ) {
+    for ( const auto & points : faces_ ) {
 
       // face midpoint
       auto xm = math::average( points );
@@ -91,22 +123,15 @@ struct polyhedron {
   //============================================================================
   //! \brief the volume function
   //============================================================================
-  template<
-    typename P, typename... Args, 
-    template<typename,typename...> typename V
-  >
-  static
-  auto volume( const V<P,Args...> & faces ) 
+  auto volume() 
   {
-    using point_type = typename std::decay_t<P>::value_type;
-    using coord_type = typename point_type::value_type;
 
     // initialize volume
     coord_type v = 0;
 
     //--------------------------------------------------------------------------
     // loop over faces
-    for ( const auto & points : faces ) {
+    for ( const auto & points : faces_ ) {
 
       // face midpoint
       auto xm = math::average( points );
@@ -130,7 +155,13 @@ struct polyhedron {
   }
   
     
+  //============================================================================
+  // Private Data
+  //============================================================================
+private:
 
+  //! the coordinates of each face
+  std::vector< std::vector<point_type> > faces_;
 
 };
 

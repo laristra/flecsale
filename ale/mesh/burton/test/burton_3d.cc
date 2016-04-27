@@ -83,6 +83,69 @@ TEST_F(burton_3d, mesh) {
 } // TEST_F
 
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief test the mesh geometry functions
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(burton_3d, geometry) {
+  std::string separator;
+  separator.insert(0,80,'=');
+  separator.append("\n");
+
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "geometry" << endl;
+
+  CINCH_CAPTURE() << separator;
+  for(auto c: mesh_.cells()) {
+    auto xc = c->centroid();
+    auto vol = c->volume();
+
+    CINCH_CAPTURE() << "---- cell id: " << c.id()
+      << " with centroid " << xc << " and volume " << vol << endl;
+
+    for(auto v : mesh_.vertices(c)){
+      auto xv = v->coordinates();
+      CINCH_CAPTURE() << "++++ vertex id: " << v.id()
+        << " with coordinates " << xv << endl;
+    } // for
+
+  } // for
+
+  CINCH_CAPTURE() << separator;
+  for(auto f: mesh_.faces()) {
+    auto xc = f->centroid();
+    auto a = f->area();
+    auto n = f->normal();
+
+    CINCH_CAPTURE() << "---- face id: " << f.id()
+      << " with midpoint " << xc << ", area " << a
+      << " and normal " << n << endl;
+
+    for(auto v : mesh_.vertices(f)){
+      auto xv = v->coordinates();
+      CINCH_CAPTURE() << "++++ vertex id: " << v.id()
+        << " with coordinates " << xv << endl;
+    } // for
+
+  } // for
+
+  CINCH_CAPTURE() << separator;
+  for(auto e: mesh_.edges()) {
+    auto xc = e->midpoint();
+    auto l = e->length();
+
+    CINCH_CAPTURE() << "---- edge id: " << e.id()
+      << " with midpoint " << xc << ", length " << l << endl;
+
+    for(auto v : mesh_.vertices(e)){
+      auto xv = v->coordinates();
+      CINCH_CAPTURE() << "++++ vertex id: " << v.id()
+        << " with coordinates " << xv << endl;
+    } // for
+
+  } // for
+
+} // TEST_F
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief A final test to compare the blessed file and do CINCH_DUMP().
