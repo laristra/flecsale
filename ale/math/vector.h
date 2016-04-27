@@ -120,7 +120,7 @@ auto cross_product(const C<T, 3> &a, const C<T, 3> &b)
 {
   C<T, 3> tmp;
   tmp[0] = a[1]*b[2] - a[2]*b[1];
-  tmp[1] = a[0]*b[2] - a[2]*b[0];
+  tmp[1] = a[2]*b[0] - a[0]*b[2];
   tmp[2] = a[0]*b[1] - a[1]*b[0];
   return tmp;
 }

@@ -96,9 +96,12 @@ public:
         auto a1 = *po + *pn;
         auto a2 = *pn +  xm;
         auto a3 =  xm + *po;
-        auto prod = a1 * a1;
-        prod += a2 * a2;
-        prod += a3 * a3;
+        a1 *= a1;
+        a2 *= a2;
+        a3 *= a3;
+        auto prod = a1;
+        prod += a2;
+        prod += a3;
         // multiply by the normal
         prod *= n;
         // add contribution to centroid
@@ -113,7 +116,7 @@ public:
 
     //--------------------------------------------------------------------------
     // return result
-    
+
     // divide by volume
     cx /= 8 * v;
 
@@ -151,7 +154,8 @@ public:
 
     //--------------------------------------------------------------------------
     // return result
-    return std::abs(v) / 6;
+
+    return std::abs(v) / 3;
   }
   
     
