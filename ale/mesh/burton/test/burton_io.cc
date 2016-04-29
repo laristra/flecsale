@@ -115,6 +115,21 @@ TEST_F(burton_io, write_dat_2d) {
 
 
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief test reading/writing  an tecplot file
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(burton_io, write_dat_3d) {
+  mesh_3d_t m;
+  // read mesh written by above test
+  string name("box-tet.g");
+  ASSERT_FALSE(read_mesh(name, m));
+  // create state data on b
+  create_data(m);
+  // write m to a different file
+  name = output_prefix()+".dat";
+  ASSERT_FALSE(write_mesh(name, m));
+} // TEST_F
+
 #ifdef HAVE_TECIO
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -131,6 +146,22 @@ TEST_F(burton_io, write_plt_2d) {
   name = output_prefix()+".plt";
   ASSERT_FALSE(write_mesh(name, m));
 } // TEST_F
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief test reading/writing  an tecplot file
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(burton_io, write_plt_3d) {
+  mesh_3d_t m;
+  // read mesh written by above test
+  string name("box-tet.g");
+  ASSERT_FALSE(read_mesh(name, m));
+  // create state data on b
+  create_data(m);
+  // write m to a different file
+  name = output_prefix()+".plt";
+  ASSERT_FALSE(write_mesh(name, m));
+} // TEST_F
+
 
 #endif // HAVE_TECIO
 
@@ -151,7 +182,7 @@ TEST_F(burton_io, write_vtk_2d) {
   name = output_prefix()+"-ascii.vtk";
   ASSERT_FALSE(write_mesh(name, m, false));
   // write it again in binary
-  name = output_prefix()+"binary.vtk";
+  name = output_prefix()+"-binary.vtk";
   ASSERT_FALSE(write_mesh(name, m, true));
 } // TEST_F
 

@@ -102,7 +102,7 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix = "sodx";
-  std::string postfix = "exo";
+  std::string postfix = "dat";
 
   // output frequency
   constexpr size_t output_freq = 1;

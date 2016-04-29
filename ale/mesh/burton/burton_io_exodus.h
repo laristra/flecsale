@@ -37,6 +37,9 @@ namespace mesh {
 
 #ifdef HAVE_EXODUS
 
+////////////////////////////////////////////////////////////////////////////////
+/// \brief provides base functionality for exodus writer
+////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 struct burton_io_exodus_base {
 
@@ -464,7 +467,7 @@ struct burton_io_exodus_t<2> :
   //!
   //! \return Exodus error code. 0 on success.
   //============================================================================
-  int32_t read( const std::string &name, mesh_t &m) 
+  int32_t read( const std::string &name, mesh_t &m) override
   {
 
 #ifdef HAVE_EXODUS
@@ -643,7 +646,7 @@ struct burton_io_exodus_t<2> :
   //FIXME: should allow for const mesh_t &
   //int32_t io_exodus_t::write(
   //    const std::string &name, const mesh_t &m) {
-  int32_t write( const std::string &name, mesh_t &m ) 
+  int32_t write( const std::string &name, mesh_t &m ) override
   {
 
 #ifdef HAVE_EXODUS
@@ -807,7 +810,7 @@ struct burton_io_exodus_t<3> :
   //!
   //! \return Exodus error code. 0 on success.
   //============================================================================
-  int32_t read( const std::string &name, mesh_t &m) 
+  int32_t read( const std::string &name, mesh_t &m) override
   {
 
 #ifdef HAVE_EXODUS
@@ -1066,7 +1069,7 @@ struct burton_io_exodus_t<3> :
   //FIXME: should allow for const mesh_t &
   //int32_t io_exodus_t::write(
   //    const std::string &name, const mesah_t &m) {
-  int32_t write( const std::string &name, mesh_t &m ) 
+  int32_t write( const std::string &name, mesh_t &m ) override
   {
 
 #ifdef HAVE_EXODUS

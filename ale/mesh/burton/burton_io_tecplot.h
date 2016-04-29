@@ -38,150 +38,199 @@
 namespace ale {
 namespace mesh {
 
-//! class for variable locations
-enum class tec_var_location_t 
-{
-  cell = 0,
-  node = 1
-};
-
-//! some tecplot typedefs
-using tec_real_t = burton_mesh_2d_t::real_t;
-using tec_int_t = INTEGER4;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! A mapping object utility for tecplot zones
+/// \brief provides base functionality for tecplot writer
 ////////////////////////////////////////////////////////////////////////////////
-struct tec_zone_map_t {
+template< std::size_t N >
+struct burton_io_tecplot_base {
+
+public:
 
   //============================================================================
-  //! \brief constructor
+  //! Typedefs
   //============================================================================
-  tec_zone_map_t( burton_mesh_2d_t & m ) : 
-    mesh(m),
-    num_zones( m.num_regions() ), 
-    elem_zone_map( num_zones ),
-    local_elem_id( num_zones, 0 )
+
+  //! the mesh type
+  using mesh_t = burton_mesh_t<N>;
+
+  //! other useful types
+  using    size_t = typename mesh_t::size_t;
+  using integer_t = typename mesh_t::integer_t;
+  using    real_t = typename mesh_t::real_t;
+  using   point_t = typename mesh_t::point_t;
+  using  vector_t = typename mesh_t::vector_t;
+  using  vertex_t = typename mesh_t::vertex_t;
+  using    face_t = typename mesh_t::face_t;
+  using    cell_t = typename mesh_t::cell_t;
+
+  //! some tecplot typedefs
+  using tec_real_t = real_t;
+  using tec_int_t = INTEGER4;
+
+
+  //! class for variable locations
+  enum class tec_var_location_t 
   {
-    // determine a local cell zone ordering
-    for ( auto c : m.cells() ) {
-      auto reg_id = c->region();
-      elem_zone_map[reg_id][c] = local_elem_id[reg_id]++;
+    cell = 0,
+    node = 1
+  };
+
+  //============================================================================
+  //! A mapping object utility for tecplot zones
+  //============================================================================
+  struct tec_zone_map_t {
+
+    //--------------------------------------------------------------------------
+    //! \brief constructor
+    //--------------------------------------------------------------------------
+    tec_zone_map_t( mesh_t & m ) : 
+      mesh(m),
+      num_zones( m.num_regions() ), 
+      elem_zone_map( num_zones )
+    {
+      std::vector< size_t > local_elem_id( num_zones, 0 );
+
+      // determine a local cell zone ordering
+      for ( auto c : m.cells() ) {
+        auto reg_id = c->region();
+        elem_zone_map[reg_id][c] = local_elem_id[reg_id]++;
+      }
     }
-  }
       
 
-  //============================================================================
-  //! \brief create a region map
-  //============================================================================
-  template< typename T >
-  void build_face_map( size_t izone, const T & elem_this_zone ) {
+    //--------------------------------------------------------------------------
+    //! \brief create a region map
+    //--------------------------------------------------------------------------
+    template< typename T >
+    void build_face_map( size_t zone_id, const T & elem_this_zone ) {
 
-    using std::size_t;
-     
-    // count how many edges there are in this block
-    std::set< burton_mesh_2d_t::edge_t* > edges_this_zone; 
-    for ( auto c : elem_this_zone ) 
-      for ( auto e : mesh.edges( c ) )
-        edges_this_zone.insert( e );
-    auto num_edges_this_zone = edges_this_zone.size();
-
-
-    // faces are edges
-    num_faces_this_zone = num_edges_this_zone;
-
-    // face definitions
-    face_nodes.resize( 2 * num_faces_this_zone );
-    face_cell_right.resize( num_faces_this_zone );
-    face_cell_left .resize( num_faces_this_zone );
-
-    // for zone-connectivity
-    face_conn_counts.clear();
-    face_conn_elems.clear();
-    face_conn_zones.clear();
+      // count how many faces there are in this block
+      num_faces_this_zone = 0;
+      for ( auto c : elem_this_zone ) 
+        num_faces_this_zone += mesh.faces(c).size();
       
-    size_t f = 0, i = 0;
-    num_face_conn = 0;
-    for (auto e : edges_this_zone) {
-      // the nodes of each face
-      for (auto v : mesh.vertices(e))
-        face_nodes[i++] = v.id() + 1; // 1-based ids      
-      // the cells of each face (1-based ids)
-      auto cells = mesh.cells( e );
-      assert( cells.size() > 0 && "cell has no edges");
-      // initialize cells to no connections
-      face_cell_left [f] = 0;
-      face_cell_right[f] = 0;
-      // this region id
-      auto this_region = izone;
-      // always has left cell
-      auto left_cell = cells[0];
-      auto left_region = left_cell->region();
-      // left cell is local
-      if ( left_region == izone )
-        face_cell_left[f] = elem_zone_map[ this_region ].at( left_cell ) + 1;
-      // left cell is on another zone
-      else {
-        face_cell_left[f] = - (++num_face_conn);
-        face_conn_counts.emplace_back( 1 );
-        face_conn_elems.emplace_back( 
-          elem_zone_map[ left_region ].at( left_cell ) + 1 );
-        face_conn_zones.emplace_back( left_region + 1 );
-      }         
-      // boundary faces don't have right cell
-      if ( cells.size() > 1 ) {
-        auto right_cell = cells[1];
-        auto right_region = right_cell->region();
-        // right cell is local
-        if ( right_region == izone ) 
-          face_cell_right[f] = elem_zone_map[ this_region ].at( right_cell ) + 1;
-        // right cell is on another zone
+      // create a face map
+      std::vector< face_t* > faces_this_zone; 
+      faces_this_zone.reserve( num_faces_this_zone );
+      
+      for ( auto c : elem_this_zone ) 
+        for ( auto f : mesh.faces( c ) )
+          faces_this_zone.emplace_back( f );
+      
+      // sort, then delete duplicate entries
+      std::sort( faces_this_zone.begin(), faces_this_zone.end() );
+      auto last = std::unique( faces_this_zone.begin(), faces_this_zone.end() );
+      faces_this_zone.erase( last, faces_this_zone.end() ); 
+      
+      // readjust the number of faces
+      num_faces_this_zone = faces_this_zone.size();
+
+      // count total face nodes
+      size_t num_nodes_this_zone = 0;
+      for ( auto f : faces_this_zone ) 
+          num_nodes_this_zone += mesh.vertices(f).size();
+      
+      // face definitions
+      face_nodes.resize( num_nodes_this_zone );
+      face_cell_right.resize( num_faces_this_zone );
+      face_cell_left .resize( num_faces_this_zone );
+      
+      // for zone-connectivity
+      face_conn_counts.clear();
+      face_conn_elems.clear();
+      face_conn_zones.clear();
+
+      std::cout << "building for " << zone_id << std::endl; 
+      
+      size_t f = 0, i = 0;
+      num_face_conn = 0;
+      for (auto face : faces_this_zone) {
+        // the nodes of each face
+        for (auto vert : mesh.vertices(face))
+          face_nodes[i++] = vert.id() + 1; // 1-based ids      
+        // the cells of each face (1-based ids)
+        auto cells = mesh.cells( face );
+        assert( cells.size() > 0 && "cell has no edges");
+        // initialize cells to no connections
+        face_cell_left [f] = 0;
+        face_cell_right[f] = 0;
+        // this region id
+        auto this_region = zone_id;
+        // always has left cell
+        auto left_cell = cells[0];
+        auto left_region = left_cell->region();
+        // left cell is local
+        if ( left_region == zone_id )
+          face_cell_left[f] = elem_zone_map[ this_region ].at( left_cell ) + 1;
+        // left cell is on another zone
         else {
-          face_cell_right[f] = - (++num_face_conn);
+          face_cell_left[f] = - (++num_face_conn);
           face_conn_counts.emplace_back( 1 );
           face_conn_elems.emplace_back( 
-            elem_zone_map[ right_region ].at( right_cell ) + 1 );
-          face_conn_zones.emplace_back( right_region );
+            elem_zone_map[ left_region ].at( left_cell ) + 1 );
+          face_conn_zones.emplace_back( left_region + 1 );
+        }         
+        // boundary faces don't have right cell
+        if ( cells.size() > 1 ) {
+          auto right_cell = cells[1];
+          auto right_region = right_cell->region();
+          // right cell is local
+          if ( right_region == zone_id ) 
+            face_cell_right[f] = elem_zone_map[ this_region ].at( right_cell ) + 1;
+          // right cell is on another zone
+          else {
+            face_cell_right[f] = - (++num_face_conn);
+            face_conn_counts.emplace_back( 1 );
+            face_conn_elems.emplace_back( 
+              elem_zone_map[ right_region ].at( right_cell ) + 1 );
+            face_conn_zones.emplace_back( right_region );
+          }
         }
+        // incrememnt 
+        f++;
       }
-      // incrememnt 
-      f++;
+      
     }
 
-  }
+    //--------------------------------------------------------------------------
+    // Data
+    //--------------------------------------------------------------------------
+
+    //! \brief a referemce for the mesh
+    mesh_t & mesh;
+
+    //! \brief number of zones
+    tec_int_t num_zones;
+
+    //! \brief for face-zone connectivity
+    tec_int_t num_faces_this_zone = 0;
+    std::vector<tec_int_t> face_nodes;
+    std::vector<tec_int_t> face_cell_right;
+    std::vector<tec_int_t> face_cell_left;
+    
+    //! \brief  for elememnt-zone connectivity
+    tec_int_t num_face_conn = 0;
+    std::vector<tec_int_t> face_conn_counts;
+    std::vector<tec_int_t> face_conn_elems;
+    std::vector<tec_int_t> face_conn_zones;
+    
+    //! \brief  storage for the zone-element mapping
+    std::vector< 
+      std::map< cell_t*, size_t > 
+    > elem_zone_map;
+        
+  };
+
+
 
   //============================================================================
-  // Data
+  //! \brief extract the variable information from the 
   //============================================================================
-
-  //! \brief a referemce for the mesh
-  burton_mesh_2d_t & mesh;
-
-  //! \brief number of zones
-  tec_int_t num_zones;
-
-  //! \brief for face-zone connectivity
-  tec_int_t num_faces_this_zone;
-  std::vector<tec_int_t> face_nodes;
-  std::vector<tec_int_t> face_cell_right;
-  std::vector<tec_int_t> face_cell_left;
-
-  //! \brief  for elememnt-zone connectivity
-  tec_int_t num_face_conn;
-  std::vector<tec_int_t> face_conn_counts;
-  std::vector<tec_int_t> face_conn_elems;
-  std::vector<tec_int_t> face_conn_zones;
-    
-  //! \brief  storage for the zone-element mapping
-  std::vector< 
-    std::map< burton_mesh_2d_t::cell_t*, size_t > 
-  > elem_zone_map;
-    
-  //!  \brief  a local element counter
-  std::vector< size_t > local_elem_id;
-    
+  // auto 
 };
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \class io_tecplot_ascii_t io_tecplot.h
@@ -190,11 +239,32 @@ struct tec_zone_map_t {
 ///
 /// \tparam mesh_t Mesh to template io_base_t on.
 ////////////////////////////////////////////////////////////////////////////////
-struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_2d_t> {
+template< std::size_t N >
+struct burton_io_tecplot_ascii_t : 
+    public flecsi::io_base_t< burton_mesh_t<N> >, burton_io_tecplot_base<N>
+{
 
+  //============================================================================
+  //! typedefs
+  //============================================================================
+  using base_t = burton_io_tecplot_base<N>;
+
+  using typename base_t::tec_var_location_t;
+  using typename base_t::tec_zone_map_t;
+
+  using typename base_t::tec_real_t;
+  using typename base_t::tec_int_t;
+
+  using typename base_t::real_t;
+  using typename base_t::integer_t;
+  using typename base_t::vector_t;
+
+  using typename base_t::mesh_t;
   
+  //============================================================================
   //! Default constructor
-  burton_io_tecplot_ascii_t() {}
+  //============================================================================
+  burton_io_tecplot_ascii_t() = default;
 
 
   //============================================================================
@@ -207,16 +277,8 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_2d_t> {
   //!
   //! FIXME: should allow for const mesh_t &
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_2d_t &m) override
+  int32_t write( const std::string &name, mesh_t &m) override
   {
-
-    //! general type aliases
-    using   mesh_t = burton_mesh_2d_t;
-    using   size_t = typename mesh_t::size_t;
-    using   real_t = typename mesh_t::real_t;
-    using integer_t= typename mesh_t::integer_t;
-    using vector_t = typename mesh_t::vector_t;
-
 
     // some aliazes
     using std::endl;
@@ -256,8 +318,12 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     vector< pair<string,tec_var_location_t> > variables;
 
     // write the coordinate names
-    variables.emplace_back( make_pair( "x", tec_var_location_t::node ) );
-    variables.emplace_back( make_pair( "y", tec_var_location_t::node ) );
+    if ( num_dims > 0 )
+      variables.emplace_back( make_pair( "x", tec_var_location_t::node ) );
+    if ( num_dims > 1 )
+      variables.emplace_back( make_pair( "y", tec_var_location_t::node ) );
+    if ( num_dims > 2 )
+      variables.emplace_back( make_pair( "z", tec_var_location_t::node ) );
 
     //----------------------------------------------------------------------------
     // nodal field data
@@ -499,12 +565,13 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_2d_t> {
   //! \return tecplot error code. 0 on success.
   //!
   //============================================================================
-  int32_t read( const std::string &name, burton_mesh_2d_t &m)  override
+  int32_t read( const std::string &name, mesh_t &m)  override
   {
     raise_implemented_error( "No tecplot read functionality has been implemented" );
   };
 
 }; // io_tecplot_ascii_t
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \class io_tecplot_binary_t io_tecplot.h
@@ -513,10 +580,32 @@ struct burton_io_tecplot_ascii_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 ///
 /// \tparam mesh_t Mesh to template io_base_t on.
 ////////////////////////////////////////////////////////////////////////////////
-struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_2d_t> {
+template<std::size_t N>
+struct burton_io_tecplot_binary_t : 
+    public flecsi::io_base_t< burton_mesh_t<N> >, burton_io_tecplot_base<N>
+{
 
+  //============================================================================
+  //! typedefs
+  //============================================================================
+  using base_t = burton_io_tecplot_base<N>;
+
+  using typename base_t::tec_var_location_t;
+  using typename base_t::tec_zone_map_t;
+
+  using typename base_t::tec_real_t;
+  using typename base_t::tec_int_t;
+
+  using typename base_t::real_t;
+  using typename base_t::integer_t;
+  using typename base_t::vector_t;
+
+  using typename base_t::mesh_t;
+  
+  //============================================================================
   //! Default constructor
-  burton_io_tecplot_binary_t() {}
+  //============================================================================
+  burton_io_tecplot_binary_t() = default;
 
   //============================================================================
   //! Implementation of tecplot mesh write for burton specialization.
@@ -528,19 +617,12 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_2d_t> {
   //!
   //! FIXME: should allow for const mesh_t &
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_2d_t &m)  override
+  int32_t write( const std::string &name, mesh_t &m)  override
   {
 
 #ifdef HAVE_TECIO
 
     std::cout << "Writing mesh to: " << name << std::endl;
-
-    //! general type aliases
-    using   mesh_t = burton_mesh_2d_t;
-    using   size_t = typename mesh_t::size_t;
-    using   real_t = typename mesh_t::real_t;
-    using integer_t= typename mesh_t::integer_t;
-    using vector_t = typename mesh_t::vector_t;
 
     // some aliazes
     using std::endl;
@@ -574,7 +656,6 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     // get the general statistics
     tec_int_t num_dims  = m.num_dimensions();
     tec_int_t num_nodes = m.num_vertices();
-    tec_int_t num_edges = m.num_edges();
     tec_int_t num_elem  = m.num_cells();
     tec_int_t num_zones = m.num_regions();
 
@@ -595,8 +676,12 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     vector< pair<string,tec_var_location_t> > variables;
 
     // write the coordinate names
-    variables.emplace_back( make_pair( "x", tec_var_location_t::node ) );
-    variables.emplace_back( make_pair( "y", tec_var_location_t::node ) );
+    if ( num_dims > 0 )
+      variables.emplace_back( make_pair( "x", tec_var_location_t::node ) );
+    if ( num_dims > 1 )
+      variables.emplace_back( make_pair( "y", tec_var_location_t::node ) );
+    if ( num_dims > 2 )
+      variables.emplace_back( make_pair( "z", tec_var_location_t::node ) );
 
 
     //----------------------------------------------------------------------------
@@ -896,7 +981,7 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     //! \return tecplot error code. 0 on success.
     //!
     //============================================================================
-  int32_t read( const std::string &name, burton_mesh_2d_t &m)  override
+  int32_t read( const std::string &name, mesh_t &m)  override
   {
     raise_implemented_error( "No tecplot read functionality has been implemented" );
   };
@@ -912,10 +997,11 @@ struct burton_io_tecplot_binary_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 //!
 //! \return Pointer to io_base_t base class of io_tecplot_ascii_t.
 ////////////////////////////////////////////////////////////////////////////////
-inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_tecplot_ascii()
+template< std::size_t N >
+inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_tecplot_ascii()
 {
-  return new burton_io_tecplot_ascii_t;
-} // create_io_tecplot_ascii
+  return new burton_io_tecplot_ascii_t<N>;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Create an io_tecplot_binary_t and return a pointer to the base class.
@@ -924,25 +1010,34 @@ inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_tecplot_ascii()
 //!
 //! \return Pointer to io_base_t base class of io_tecplot_binary_t.
 ////////////////////////////////////////////////////////////////////////////////
-inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_tecplot_binary()
+template< std::size_t N >
+inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_tecplot_binary()
 {
-  return new burton_io_tecplot_binary_t;
-} // create_io_tecplot_binary
+  return new burton_io_tecplot_binary_t<N>;
+}
 
-
-////////////////////////////////////////////////////////////////////////////////
-//! Register file extension "plt" with factory.
-////////////////////////////////////////////////////////////////////////////////
-static bool burton_tecplot_dat_registered =
-  flecsi::io_factory_t<burton_mesh_2d_t>::instance().registerType(
-    "plt", create_io_tecplot_binary );
 
 ////////////////////////////////////////////////////////////////////////////////
 //! Register file extension "dat" with factory.
 ////////////////////////////////////////////////////////////////////////////////
-static bool burton_tecplot_plt_registered =
-  flecsi::io_factory_t<burton_mesh_2d_t>::instance().registerType(
-    "dat", create_io_tecplot_ascii );
+static bool burton_2d_tecplot_dat_registered =
+  flecsi::io_factory_t< burton_mesh_t<2> >::instance().registerType(
+    "dat", create_io_tecplot_ascii<2> );
+
+static bool burton_3d_tecplot_dat_registered =
+  flecsi::io_factory_t< burton_mesh_t<3> >::instance().registerType(
+    "dat", create_io_tecplot_ascii<3> );
+
+////////////////////////////////////////////////////////////////////////////////
+//! Register file extension "plt" with factory.
+////////////////////////////////////////////////////////////////////////////////
+static bool burton_2d_tecplot_plt_registered =
+  flecsi::io_factory_t< burton_mesh_t<2> >::instance().registerType(
+    "plt", create_io_tecplot_binary<2> );
+
+static bool burton_3d_tecplot_plt_registered =
+  flecsi::io_factory_t< burton_mesh_t<3> >::instance().registerType(
+    "plt", create_io_tecplot_binary<3> );
 
 
 } // namespace mesh
