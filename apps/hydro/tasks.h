@@ -34,6 +34,10 @@ namespace hydro {
 template< typename T, typename F >
 int32_t initial_conditions( T & mesh, F && ics ) {
 
+  // type aliases
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
+
   // get the collection accesor
   auto d = access_state( mesh, "density",    real_t );
   auto p = access_state( mesh, "pressure",   real_t );
@@ -59,6 +63,8 @@ int32_t initial_conditions( T & mesh, F && ics ) {
 template< typename T >
 int32_t update_state_from_pressure( T & mesh ) {
 
+  // type aliases
+  using eqns_t = eqns_t<T::num_dimensions()>;
 
   // get the collection accesor
   auto eos = access_global_state( mesh, "eos", eos_t );
@@ -82,6 +88,8 @@ int32_t update_state_from_pressure( T & mesh ) {
 template< typename T >
 int32_t update_state_from_energy( T & mesh ) {
 
+  // type aliases
+  using eqns_t = eqns_t<T::num_dimensions()>;
 
   // get the collection accesor
   auto eos = access_global_state( mesh, "eos", eos_t );
@@ -104,6 +112,9 @@ int32_t update_state_from_energy( T & mesh ) {
 ////////////////////////////////////////////////////////////////////////////////
 template< typename E, typename T >
 int32_t evaluate_time_step( T & mesh ) {
+
+  // type aliases
+  using real_t = typename T::real_t;
 
   // access what we need
   state_accessor<T> state( mesh );
@@ -155,6 +166,10 @@ int32_t evaluate_time_step( T & mesh ) {
 template< typename T >
 int32_t evaluate_fluxes( T & mesh ) {
 
+  // type aliases
+  using eqns_t = eqns_t<T::num_dimensions()>;
+  using flux_data_t = flux_data_t<T::num_dimensions()>;
+
   // access what we need
   auto flux = access_state( mesh, "flux", flux_data_t );
   state_accessor<T> state( mesh );
@@ -183,11 +198,11 @@ int32_t evaluate_fluxes( T & mesh ) {
     // interior cell
     if ( num_cells == 2 ) {
       auto w_right = state( cells[1] );
-      flux[f] = flux_function( w_left, w_right, nunit );
+      flux[f] = flux_function<eqns_t>( w_left, w_right, nunit );
     } 
     // boundary cell
     else {
-      flux[f] = boundary_flux( w_left, nunit );
+      flux[f] = boundary_flux<eqns_t>( w_left, nunit );
     }
     
     // scale the flux by the face area
@@ -207,6 +222,11 @@ int32_t evaluate_fluxes( T & mesh ) {
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
 int32_t apply_update( T & mesh ) {
+
+  // type aliases
+  using real_t = typename T::real_t;
+  using flux_data_t = flux_data_t<T::num_dimensions()>;
+  using eqns_t = eqns_t<T::num_dimensions()>;
 
   // access what we need
   auto flux = access_state( mesh, "flux", flux_data_t );

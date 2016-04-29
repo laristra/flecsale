@@ -33,10 +33,11 @@
 using namespace apps::hydro;
 
 // right now cases are hard coded
-//#define SODX
-//#define SODY
-//#define SODXY
-#define SEDOV
+//#define SODX_2D
+#define SODX_3D
+//#define SODY_2D
+//#define SODXY_2D
+//#define SEDOV_2D
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
@@ -48,7 +49,11 @@ int main(int argc, char** argv)
   // SOD-X Inputs
   //===========================================================================
 
-#ifdef SODX
+#ifdef SODX_2D
+
+  using mesh_t = mesh_2d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
 
   // the case prefix
   std::string prefix = "sodx";
@@ -96,7 +101,11 @@ int main(int argc, char** argv)
   // SOD-Y Inputs
   //===========================================================================
 
-#elif defined(SODY)
+#elif defined(SODY_2D)
+
+  using mesh_t = mesh_2d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
 
   // the case prefix
   std::string prefix = "sody";
@@ -144,7 +153,11 @@ int main(int argc, char** argv)
   // SOD-XY Inputs
   //===========================================================================
 
-#elif defined(SODXY)
+#elif defined(SODXY_2D)
+
+  using mesh_t = mesh_2d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
 
   // the case prefix
   std::string prefix = "sodxy";
@@ -181,7 +194,7 @@ int main(int argc, char** argv)
       vector_t xrot;
       xrot[0] = x[0]*cos - x[1]*sin;
       xrot[1] = x[0]*sin + x[1]*cos;
-
+      
       // compute solution
       real_t d, p;
       vector_t v(0);
@@ -205,10 +218,71 @@ int main(int argc, char** argv)
 
 
   //===========================================================================
+  // SOD-X Inputs
+  //===========================================================================
+
+#elif defined(SODX_3D)
+
+  using mesh_t = mesh_3d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
+
+  // the case prefix
+  std::string prefix = "sodx";
+  std::string postfix = "exo";
+
+  // output frequency
+  constexpr size_t output_freq = 1;
+
+  // the grid dimensions
+  constexpr size_t num_cells_x = 100;
+  constexpr size_t num_cells_y = 10;
+  constexpr size_t num_cells_z = 10;
+
+  constexpr real_t length_x = 1.0;
+  constexpr real_t length_y = 0.1;
+  constexpr real_t length_z = 0.1;
+  
+  // the CFL and final solution time
+  constexpr time_constants_t 
+    CFL = { .accoustic = 1.0, .volume = 1.0, .growth = 1.e3 };
+  constexpr real_t final_time = 0.2;
+  constexpr real_t initial_time_step = 1.0;
+
+  // this is a lambda function to set the initial conditions
+  auto ics = [] ( const auto & x )
+    {
+      real_t d, p;
+      vector_t v(0);
+      if ( x[0] < 0.0 ) {
+        d = 1.0;
+        p = 1.0;
+      }
+      else {
+        d = 0.125;
+        p = 0.1;
+      }    
+      return std::make_tuple( d, v, p );
+    };
+
+  // setup an equation of state
+  eos_t eos( /* gamma */ 1.4, /* cv */ 1.0 ); 
+
+  // this is the mesh object
+  auto mesh = mesh::box<mesh_t>( 
+    num_cells_x, num_cells_y, num_cells_z,
+    length_x, length_y, length_z );
+
+
+  //===========================================================================
   // SEDOV Inputs
   //===========================================================================
 
-#elif defined(SEDOV)
+#elif defined(SEDOV_2D)
+
+  using mesh_t = mesh_2d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
 
   // the case prefix
   std::string prefix  = "sedov";
@@ -276,6 +350,10 @@ int main(int argc, char** argv)
   // Field Creation
   //===========================================================================
 
+  // type aliases
+  using matrix_t = matrix_t< mesh_t::num_dimensions() >;
+  using flux_data_t = flux_data_t< mesh_t::num_dimensions() >;
+
   // create some field data.  Fields are registered as struct of arrays.
   // this allows us to access the data in different patterns.
   register_state(mesh, "cell_mass",     cells,   real_t, persistent);
@@ -283,7 +361,7 @@ int main(int argc, char** argv)
   register_state(mesh, "cell_pressure", cells,   real_t, persistent);
   register_state(mesh, "cell_velocity", cells, vector_t, persistent);
 
-  register_state(mesh, "cell_density",         cells,   real_t, persistent);
+  register_state(mesh, "cell_density",         cells, real_t, persistent);
   register_state(mesh, "cell_internal_energy", cells, real_t, persistent);
   register_state(mesh, "cell_temperature",     cells, real_t, persistent);
   register_state(mesh, "cell_sound_speed",     cells, real_t, persistent);
@@ -292,7 +370,7 @@ int main(int argc, char** argv)
   register_state(mesh, "cell_velocity_0", cells, vector_t, temporary);
   register_state(mesh, "cell_internal_energy_0", cells, real_t, temporary);
 
-  register_state(mesh, "node_velocity", vertices, vector_t, persistent);
+  register_state(mesh, "node_velocity",    vertices, vector_t, persistent);
   register_state(mesh, "node_coordinates", vertices, vector_t, temporary);
 
   register_state(mesh, "corner_matrix", corners, matrix_t, temporary);
@@ -367,7 +445,7 @@ int main(int argc, char** argv)
     //--------------------------------------------------------------------------
 
     // compute the time step
-    apps::hydro::evaluate_time_step<eqns_t>( mesh );
+    apps::hydro::evaluate_time_step( mesh );
     
     // access the computed time step and make sure its not too large
     auto time_step = access_global_state( mesh, "time_step", real_t );   

@@ -33,8 +33,10 @@
 using namespace apps::hydro;
 
 // right now cases are hard coded
-#define SOD
-//#define SHOCK_BOX
+//#define SODX_2D
+#define SODX_3D
+//#define SHOCK_BOX_2D
+//#define SHOCK_BOX_3D
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
@@ -43,13 +45,17 @@ int main(int argc, char** argv)
 {
 
   //===========================================================================
-  // Inputs
+  // X-direction SOD Inputs
   //===========================================================================
 
-#ifdef SOD
+#ifdef SODX_2D
+
+  using mesh_t = mesh_2d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
 
   // the case prefix
-  std::string prefix = "sod";
+  std::string prefix = "sodx";
   std::string postfix = "dat";
 
   // output frequency
@@ -82,7 +88,66 @@ int main(int argc, char** argv)
       return std::make_tuple( d, v, p );
     };
 
-#elif defined(SHOCK_BOX)
+  // this is the mesh object
+  auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, length_x, length_y );
+
+  //===========================================================================
+  // X-direction SOD Inputs
+  //===========================================================================
+#elif defined(SODX_3D)
+
+  using mesh_t = mesh_3d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
+
+  // the case prefix
+  std::string prefix = "sodx";
+  std::string postfix = "exo";
+
+  // output frequency
+  constexpr size_t output_freq = 1;
+
+  // the grid dimensions
+  constexpr size_t num_cells_x = 100;
+  constexpr size_t num_cells_y = 1;
+  constexpr size_t num_cells_z = 1;
+
+  constexpr real_t length_x = 1.0;
+  constexpr real_t length_y = 0.1;
+  constexpr real_t length_z = 0.1;
+  
+  // the CFL and final solution time
+  constexpr real_t CFL = 1.0;
+  constexpr real_t final_time = 0.2;
+
+  // this is a lambda function to set the initial conditions
+  auto ics = [] ( const auto & x )
+    {
+      real_t d, p;
+      vector_t v(0);
+      if ( x[0] < 0.0 ) {
+        d = 1.0;
+        p = 1.0;
+      }
+      else {
+        d = 0.125;
+        p = 0.1;
+      }    
+      return std::make_tuple( d, v, p );
+    };
+
+  // this is the mesh object
+  auto mesh = mesh::box<mesh_t>( 
+    num_cells_x, num_cells_y, num_cells_z, length_x, length_y, length_z );
+
+  //===========================================================================
+  // Shock Box Inputs
+  //===========================================================================
+#elif defined(SHOCK_BOX_2D)
+
+  using mesh_t = mesh_2d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
 
   // the case prefix
   std::string prefix = "shock_box";
@@ -118,6 +183,56 @@ int main(int argc, char** argv)
       return std::make_tuple( d, v, p );
     };
   
+  // this is the mesh object
+  auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, length_x, length_y );
+
+  //===========================================================================
+  // Shock Box Inputs
+  //===========================================================================
+#elif defined(SHOCK_BOX_3D)
+
+  using mesh_t = mesh_3d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
+
+  // the case prefix
+  std::string prefix = "shock_box";
+  std::string postfix = "exo";
+
+  // output frequency
+  constexpr size_t output_freq = 1;
+
+  // the grid dimensions
+  constexpr size_t num_cells_x = 100;
+  constexpr size_t num_cells_y = 100;
+  constexpr size_t num_cells_z = 100;
+
+  constexpr real_t length_x = 1.0;
+  constexpr real_t length_y = 1.0;
+  constexpr real_t length_z = 1.0;
+  
+  // the CFL and final solution time
+  constexpr real_t CFL = 0.5;
+  constexpr real_t final_time = 0.2;
+
+  // this is a lambda function to set the initial conditions
+  auto ics = [] ( const auto & x )
+    {
+      real_t d, p;
+      vector_t v(0);
+      if ( x[0] < 0.0 && x[1] < 0.0 ) {
+        d = 0.125;
+        p = 0.1;
+      }
+      else {
+        d = 1.0;
+        p = 1.0;
+      }    
+      return std::make_tuple( d, v, p );
+    };
+  
+  // this is the mesh object
+  auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, num_cells_z, length_x, length_y, length_z );
 
 #else
 
@@ -133,12 +248,15 @@ int main(int argc, char** argv)
   //===========================================================================
 
   // this is the mesh object
-  auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, length_x, length_y );
   cout << mesh;
   
   //===========================================================================
   // Field Creation
   //===========================================================================
+
+  // type aliases
+  using eqns_t = eqns_t<mesh_t::num_dimensions()>;
+  using flux_data_t = flux_data_t<mesh_t::num_dimensions()>;
 
   // create some field data.  Fields are registered as struct of arrays.
   // this allows us to access the data in different patterns.
@@ -149,6 +267,11 @@ int main(int argc, char** argv)
   register_state(mesh, "internal_energy", cells, real_t, persistent);
   register_state(mesh, "temperature",     cells, real_t, persistent);
   register_state(mesh, "sound_speed",     cells, real_t, persistent);
+
+
+  // compute the fluxes.  here I am regestering a struct as the stored data
+  // type since I will only ever be accesissing all the data at once.
+  register_state(mesh, "flux", faces, flux_data_t, temporary);
 
   // register the time step and set a cfl
   register_global_state( mesh, "time_step", real_t );
@@ -181,10 +304,6 @@ int main(int argc, char** argv)
   //===========================================================================
   // Residual Evaluation
   //===========================================================================
-
-  // compute the fluxes.  here I am regestering a struct as the stored data
-  // type since I will only ever be accesissing all the data at once.
-  register_state(mesh, "flux", faces, flux_data_t, temporary);
 
   // get the current time
   auto soln_time = mesh.time();

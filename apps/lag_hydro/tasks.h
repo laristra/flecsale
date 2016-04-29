@@ -34,6 +34,10 @@ namespace hydro {
 template< typename T, typename F >
 int32_t initial_conditions( T & mesh, F && ics ) {
 
+  // type aliases
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
+
   // get the collection accesor
   auto M = access_state( mesh, "cell_mass",       real_t );
   auto V = access_state( mesh, "cell_volume",     real_t );
@@ -65,6 +69,8 @@ int32_t initial_conditions( T & mesh, F && ics ) {
 template< typename T >
 int32_t update_state_from_pressure( T & mesh ) {
 
+  // type aliases
+  using eqns_t = eqns_t<T::num_dimensions()>;
 
   // get the collection accesor
   auto eos = access_global_state( mesh, "eos", eos_t );
@@ -88,6 +94,9 @@ int32_t update_state_from_pressure( T & mesh ) {
 template< typename T >
 int32_t update_state_from_energy( T & mesh ) {
 
+  // type aliases
+  using eqns_t = eqns_t<T::num_dimensions()>;
+  using flux_data_t = flux_data_t<T::num_dimensions()>;
 
   // get the collection accesor
   auto eos = access_global_state( mesh, "eos", eos_t );
@@ -110,8 +119,14 @@ int32_t update_state_from_energy( T & mesh ) {
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename E, typename T >
+template< typename T >
 int32_t evaluate_time_step( T & mesh ) {
+
+  // type aliases
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
+  using eqns_t = eqns_t<T::num_dimensions()>;
+  using flux_data_t = flux_data_t<T::num_dimensions()>;
 
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
@@ -153,7 +168,7 @@ int32_t evaluate_time_step( T & mesh ) {
     dt_acc_inv = std::max( dti, dt_acc_inv );
 
     // now check the volume change
-    auto dVdt = E::volumetric_rate_of_change( dudt[c] );
+    auto dVdt = eqns_t::volumetric_rate_of_change( dudt[c] );
     dti = std::abs(dVdt) / c->volume() / cfl->volume;
     // check for the maximum value
     dt_vol_inv = std::max( dti, dt_vol_inv );
@@ -207,6 +222,12 @@ int32_t evaluate_time_step( T & mesh ) {
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
 int32_t evaluate_corner_coef( T & mesh ) {
+
+  // type aliases
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
+  using matrix_t = matrix_t< T::num_dimensions() >; 
+  using eqns_t = eqns_t<T::num_dimensions()>;
 
   // get the number of dimensions and create a matrix
   constexpr size_t dims = T::num_dimensions();
@@ -279,6 +300,9 @@ int32_t evaluate_corner_coef( T & mesh ) {
 template< typename T >
 int32_t estimate_nodal_state( T & mesh ) {
 
+  // type aliases
+  using vector_t = typename T::vector_t;
+
   // access what we need
   auto cell_vel = access_state( mesh, "cell_velocity", vector_t );
   auto vertex_vel = access_state( mesh, "node_velocity", vector_t );
@@ -305,6 +329,12 @@ int32_t estimate_nodal_state( T & mesh ) {
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
 int32_t evaluate_nodal_state( T & mesh ) {
+
+  // type aliases
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
+  using matrix_t = matrix_t< T::num_dimensions() >; 
+  using eqns_t = eqns_t<T::num_dimensions()>;
 
   // get epsilon
   constexpr auto eps = std::numeric_limits<real_t>::epsilon();
@@ -404,6 +434,13 @@ int32_t evaluate_nodal_state( T & mesh ) {
 template< typename T >
 int32_t evaluate_forces( T & mesh ) {
 
+  // type aliases
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
+  using matrix_t = matrix_t< T::num_dimensions() >; 
+  using flux_data_t = flux_data_t<T::num_dimensions()>;
+  using eqns_t = eqns_t<T::num_dimensions()>;
+
   // access what we need
   auto dudt = access_state( mesh, "cell_residual", flux_data_t );
 
@@ -467,6 +504,12 @@ int32_t evaluate_forces( T & mesh ) {
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
 int32_t apply_update( T & mesh, real_t coef ) {
+
+  // type aliases
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
+  using flux_data_t = flux_data_t<T::num_dimensions()>;
+  using eqns_t = eqns_t<T::num_dimensions()>;
 
   // access what we need
   auto dudt = access_state( mesh, "cell_residual", flux_data_t );
@@ -532,6 +575,10 @@ int32_t apply_update( T & mesh, real_t coef ) {
 template< typename T >
 int32_t move_mesh( T & mesh, real_t coef ) {
 
+  // type aliases
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
+
   // access what we need
   auto vel = access_state( mesh, "node_velocity", vector_t );
 
@@ -559,6 +606,9 @@ int32_t move_mesh( T & mesh, real_t coef ) {
 template< typename T >
 int32_t save_coordinates( T & mesh ) {
 
+  // type aliases
+  using vector_t = typename T::vector_t;
+
   // access what we need
   auto coord0 = access_state( mesh, "node_coordinates", vector_t );
 
@@ -580,6 +630,9 @@ int32_t save_coordinates( T & mesh ) {
 template< typename T >
 int32_t restore_coordinates( T & mesh ) {
 
+  // type aliases
+  using vector_t = typename T::vector_t;
+
   // access what we need
   auto coord0 = access_state( mesh, "node_coordinates", vector_t );
 
@@ -600,6 +653,10 @@ int32_t restore_coordinates( T & mesh ) {
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
 int32_t save_solution( T & mesh ) {
+
+  // type aliases
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
 
   // access what we need
   auto vel  = access_state( mesh, "cell_velocity",   vector_t );
@@ -627,6 +684,10 @@ int32_t save_solution( T & mesh ) {
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
 int32_t restore_solution( T & mesh ) {
+
+  // type aliases
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
 
   // access what we need
   auto vel  = access_state( mesh, "cell_velocity",   vector_t );

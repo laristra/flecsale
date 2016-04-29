@@ -19,6 +19,7 @@
 #pragma once
 
 // user includes
+#include <ale/common/types.h>
 #include <ale/eqns/euler_eqns.h>
 #include <ale/eqns/flux.h>
 #include <ale/eos/ideal_gas.h>
@@ -31,6 +32,7 @@ namespace apps {
 namespace hydro {
 
 // some namespace aliases
+namespace common= ale::common;
 namespace mesh  = ale::mesh;
 namespace math  = ale::math;
 namespace utils = ale::utils;
@@ -39,16 +41,19 @@ namespace eos   = ale::eos;
 namespace eqns  = ale::eqns;
 
 // mesh and some underlying data types
-using mesh_t = mesh::burton_mesh_2d_t;
+using mesh_2d_t = mesh::burton_mesh_2d_t;
+using mesh_3d_t = mesh::burton_mesh_3d_t;
 
-using size_t = mesh_t::size_t;
-using real_t = mesh_t::real_t;
-using vector_t = mesh_t::vector_t;
+using size_t = common::size_t;
+using real_t = common::real_t;
 
 using eos_t = eos::ideal_gas_t<real_t>;
 
-using eqns_t = eqns::euler_eqns_t<real_t, mesh_t::num_dimensions()>;
-using flux_data_t = eqns_t::flux_data_t;
+template< std::size_t N >
+using eqns_t = typename eqns::euler_eqns_t<real_t, N>;
+
+template< std::size_t N >
+using flux_data_t = typename eqns_t<N>::flux_data_t;
 
 // explicitly use some other stuff
 using std::cout;
@@ -59,24 +64,24 @@ using std::endl;
 //! \brief alias the flux function
 //! Change the called function to alter the flux evaluation
 ////////////////////////////////////////////////////////////////////////////////
-template< typename UL, typename UR, typename V >
+template< typename E, typename UL, typename UR, typename V >
 auto flux_function( UL && left_state, UR && right_state, V && norm )
 { 
   return 
-    eqns::hlle_flux<eqns_t>( std::forward<UL>(left_state), 
-                             std::forward<UR>(right_state), 
-                             std::forward<V>(norm) ); 
+    eqns::hlle_flux<E>( std::forward<UL>(left_state), 
+                        std::forward<UR>(right_state), 
+                        std::forward<V>(norm) ); 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief alias the flux function
 //! Change the called function to alter the flux evaluation
 ////////////////////////////////////////////////////////////////////////////////
-template< typename U, typename V >
+template< typename E, typename U, typename V >
 auto boundary_flux( U && state, V && norm )
 { 
   return 
-    eqns_t::wall_flux( std::forward<U>(state), std::forward<V>(norm) ); 
+    E::wall_flux( std::forward<U>(state), std::forward<V>(norm) ); 
 }
 
 
@@ -88,6 +93,10 @@ template < typename M >
 class state_accessor 
 {
 public:
+
+  //! typedefs
+  using real_t = typename M::real_t;
+  using vector_t = typename M::vector_t;
 
   //! \brief determine the type of accessor
   //! \tparam T the data type we are accessing

@@ -64,6 +64,68 @@ auto outer_product(const C<T, D> &a, const C<T, D> &b)
   return tmp;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the determinant of a square matrix
+//! \tparam T  The base value type.
+//! \tparam N  The matrix dimension.
+//! \param[in] mat  The matrix to invert
+//! \return The result of the operation
+////////////////////////////////////////////////////////////////////////////////
+template < typename T, std::size_t N >
+auto cofactor( const matrix<T, N, N> & mat, std::size_t row, std::size_t col )
+{
+  matrix<T,N-1,N-1> tmp;
+
+  // indicate which col and row is being copied to dest
+  size_t col_cnt=0, row_cnt=0;
+ 
+  for (size_t i = 0; i < N; i++ ) {
+    if ( i != row ) {
+      col_cnt = 0;
+      for(int j = 0; j < N; j++ ) {
+        // when j is not the element
+        if ( j != col ) {
+          tmp(row_cnt,col_cnt) = mat(i,j);
+          col_cnt++;
+        }
+      }
+      row_cnt++;
+    }
+  }
+ 
+  return tmp;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the determinant of a square matrix
+//! \tparam T  The base value type.
+//! \tparam N  The matrix dimension.
+//! \param[in] mat  The matrix to invert
+//! \return The result of the operation
+////////////////////////////////////////////////////////////////////////////////
+template < typename T, std::size_t N >
+auto determinant( const matrix<T, N, N> & mat )
+{
+
+  // the determinant value
+  T det = 0;
+ 
+  for(int i = 0; i < N; i++ )
+  {
+    // get minor of element (0,i)
+    auto minor = cofactor( mat, 0, i);
+    // the recusion is here!
+    det += (i%2==1 ? -1:1) * mat(0,i) * determinant(minor);
+  }
+ 
+  return det;
+}
+
+template < typename T >
+auto determinant( const matrix<T, 1, 1> & mat )
+{
+  return mat(0,0);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Compute the inverse of a square matrix
@@ -126,6 +188,32 @@ auto inverse( const matrix<T, 3, 3> & mat )
   assert( denom != T() );
   
   tmp /= denom;
+  
+  return tmp;
+}
+
+
+template < typename T, std::size_t N >
+auto inverse( const matrix<T, N, N> & mat )
+{
+  matrix<T,N,N> tmp;
+
+  // get the determinant of a
+  auto det = determinant(mat);
+  assert( std::abs(det) > 0 );
+  auto inv_det = 1 / det;
+
+  
+  for(size_t j=0;j<N; j++) {
+    for(size_t i=0; i<N; i++) {
+      // get the co-factor (matrix) of A(j,i)
+      auto minor = cofactor(mat,j,i);
+      // compute the result
+      auto val = inv_det * determinant(minor);
+      if ( (i+j)%2 == 1 ) val = val;
+      tmp(i,j) = val;
+    }
+  }
   
   return tmp;
 }

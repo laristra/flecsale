@@ -207,6 +207,9 @@ struct burton_mesh_types_t<3> {
       std::tuple<flecsi::domain_<0>, edge_t, vertex_t>,
       std::tuple<flecsi::domain_<0>, edge_t, face_t>,
       std::tuple<flecsi::domain_<0>, edge_t, cell_t>,
+      std::tuple<flecsi::domain_<0>, face_t, vertex_t>,
+      std::tuple<flecsi::domain_<0>, face_t, edge_t>,
+      std::tuple<flecsi::domain_<0>, face_t, cell_t>,
       std::tuple<flecsi::domain_<0>, cell_t, vertex_t>,
       std::tuple<flecsi::domain_<0>, cell_t, face_t>,
       std::tuple<flecsi::domain_<0>, cell_t, edge_t>

@@ -19,6 +19,7 @@
 #pragma once
 
 // user includes
+#include <ale/common/types.h>
 #include <ale/eqns/lagrange_eqns.h>
 #include <ale/eqns/flux.h>
 #include <ale/eos/ideal_gas.h>
@@ -32,6 +33,7 @@ namespace apps {
 namespace hydro {
 
 // some namespace aliases
+namespace common= ale::common;
 namespace mesh  = ale::mesh;
 namespace math  = ale::math;
 namespace utils = ale::utils;
@@ -40,17 +42,22 @@ namespace eos   = ale::eos;
 namespace eqns  = ale::eqns;
 
 // mesh and some underlying data types
-using mesh_t = mesh::burton_mesh_2d_t;
+using mesh_2d_t = mesh::burton_mesh_2d_t;
+using mesh_3d_t = mesh::burton_mesh_3d_t;
 
-using size_t = mesh_t::size_t;
-using real_t = mesh_t::real_t;
-using vector_t = mesh_t::vector_t;
-using matrix_t = math::matrix< real_t, mesh_t::num_dimensions(), mesh_t::num_dimensions() >;
+using size_t = common::size_t;
+using real_t = common::real_t;
+
+template< std::size_t N >
+using matrix_t = math::matrix< real_t, N, N >; 
 
 using eos_t = eos::ideal_gas_t<real_t>;
 
-using eqns_t = eqns::lagrange_eqns_t<real_t, mesh_t::num_dimensions()>;
-using flux_data_t = eqns_t::flux_data_t;
+template<std::size_t N>
+using eqns_t = eqns::lagrange_eqns_t<real_t, N>;
+
+template<std::size_t N>
+using flux_data_t = typename eqns_t<N>::flux_data_t;
 
 // explicitly use some other stuff
 using std::cout;
@@ -67,6 +74,10 @@ template < typename M >
 class cell_state_accessor 
 {
 public:
+  
+  //! some type aliases
+  using real_t = typename M::real_t;
+  using vector_t = typename M::vector_t;
 
   //! \brief determine the type of accessor
   //! \tparam T the data type we are accessing

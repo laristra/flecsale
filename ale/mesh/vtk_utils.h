@@ -158,52 +158,44 @@ static auto to_vtk( M & m )
   auto pd = ug->GetPointData();
 
   // real scalars persistent at vertices
-  auto rvals = vtk_array_t<real_t>::type::New();
-  rvals->SetNumberOfValues( num_vertices );
-
   auto rspav = access_type_if(m, real_t, is_persistent_at(m,vertices));
   for(auto sf: rspav) {
     auto label = validate_string( sf.label() );      
-    rvals->SetName( label.c_str() );
-    for(auto v: m.vertices()) rvals->SetValue( v.id(), sf[v] );
-    pd->AddArray( rvals );
+    auto vals = vtkSmartPointer< typename vtk_array_t<real_t>::type >::New();
+    vals->SetNumberOfValues( num_vertices );
+    vals->SetName( label.c_str() );
+    for(auto v: m.vertices()) vals->SetValue( v.id(), sf[v] );
+    pd->AddArray( vals );
   } // for
 
-  rvals->Delete();
-
   // int scalars persistent at vertices
-  auto ivals = vtk_array_t<integer_t>::type::New();
-  ivals->SetNumberOfValues( num_vertices );
-
   auto ispav = access_type_if(m, integer_t, is_persistent_at(m,vertices));
   for(auto sf: ispav) {
     auto label = validate_string( sf.label() );
-    ivals->SetName( label.c_str() );
-    for(auto v: m.vertices()) ivals->SetValue( v.id(), sf[v] );
-    pd->AddArray( ivals );
+    auto vals = vtkSmartPointer< typename vtk_array_t<integer_t>::type >::New();
+    vals->SetNumberOfValues( num_vertices );
+    vals->SetName( label.c_str() );
+    for(auto v: m.vertices()) vals->SetValue( v.id(), sf[v] );
+    pd->AddArray( vals );
   } // for
-    
-  ivals->Delete();
 
   // real vectors persistent at vertices
-  auto vvals = vtk_array_t<real_t>::type::New();
-  vvals->SetNumberOfComponents( 3 ); // always 3d
-  vvals->SetNumberOfTuples( num_vertices );
 
   auto rvpav = access_type_if(m, vector_t, is_persistent_at(m,vertices));
   for(auto vf: rvpav) {
     auto label = validate_string( vf.label() );
-    vvals->SetName( label.c_str() );
+    auto vals = vtkSmartPointer< typename vtk_array_t<real_t>::type >::New();
+    vals->SetNumberOfComponents( 3 ); // always 3d
+    vals->SetNumberOfTuples( num_vertices );
+    vals->SetName( label.c_str() );
     for(auto v: m.vertices()) {
       real_t to_vals[3] = {0, 0, 0};
       auto & from_vals = vf[v];
       std::copy( from_vals.begin(), from_vals.end(), to_vals );
-      vvals->SetTuple( v.id(), to_vals );
+      vals->SetTuple( v.id(), to_vals );
     } // for
-    pd->AddArray( vvals );
+    pd->AddArray( vals );
   } // for
-
-  vvals->Delete();
 
   //----------------------------------------------------------------------------
   // cell field data header
@@ -213,52 +205,43 @@ static auto to_vtk( M & m )
 
 
   // real scalars persistent at cells
-  rvals = vtk_array_t<real_t>::type::New();
-  rvals->SetNumberOfValues( num_cells );
-
   auto rspac = access_type_if(m, real_t, is_persistent_at(m,cells));
   for(auto sf: rspac) {
     auto label = validate_string( sf.label() );      
-    rvals->SetName( label.c_str() );
-    for(auto c: m.cells()) rvals->SetValue( c.id(), sf[c] );
-    cd->AddArray( rvals );
+    auto vals = vtkSmartPointer< typename vtk_array_t<real_t>::type >::New();
+    vals->SetNumberOfValues( num_cells );
+    vals->SetName( label.c_str() );
+    for(auto c: m.cells()) vals->SetValue( c.id(), sf[c] );
+    cd->AddArray( vals );
   } // for
 
-  rvals->Delete();
-
   // int scalars persistent at cells
-  ivals = vtk_array_t<integer_t>::type::New();
-  ivals->SetNumberOfValues( num_cells );
-
   auto ispac = access_type_if(m, integer_t, is_persistent_at(m,cells));
   for(auto sf: ispac) {
     auto label = validate_string( sf.label() );
-    ivals->SetName( label.c_str() );
-    for(auto c: m.cells()) ivals->SetValue( c.id(), sf[c] );
-    cd->AddArray( ivals );
+    auto vals = vtkSmartPointer< typename vtk_array_t<integer_t>::type >::New();
+    vals->SetNumberOfValues( num_cells );
+    vals->SetName( label.c_str() );
+    for(auto c: m.cells()) vals->SetValue( c.id(), sf[c] );
+    cd->AddArray( vals );
   } // for
     
-  ivals->Delete();
-
   // real vectors persistent at cells
-  vvals = vtk_array_t<real_t>::type::New();
-  vvals->SetNumberOfComponents( 3 ); // always 3d
-  vvals->SetNumberOfTuples( num_cells );
-
   auto rvpac = access_type_if(m, vector_t, is_persistent_at(m,cells));
   for(auto vf: rvpac) {
     auto label = validate_string( vf.label() );
-    vvals->SetName( label.c_str() );
+    auto vals = vtkSmartPointer< typename vtk_array_t<real_t>::type >::New();
+    vals->SetNumberOfComponents( 3 ); // always 3d
+    vals->SetNumberOfTuples( num_cells );
+    vals->SetName( label.c_str() );
     for(auto c: m.cells()) {
       real_t to_vals[3] = {0, 0, 0};
       auto & from_vals = vf[c];
       std::copy( from_vals.begin(), from_vals.end(), to_vals );
-      vvals->SetTuple( c.id(), to_vals );
+      vals->SetTuple( c.id(), to_vals );
     } // for
-    cd->AddArray( vvals );
+    cd->AddArray( vals );
   } // for
-
-  vvals->Delete();
 
   //----------------------------------------------------------------------------
   // return mesh
