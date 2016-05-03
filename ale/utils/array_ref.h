@@ -194,7 +194,7 @@ public:
   std::vector<T> vec() const {
     return std::vector<T>(*this);
   }
-        
+     
   /// \todo Arguably, this conversion should be a std::basic_string
   /// constructor.
   template<typename traits, typename Allocator>
@@ -274,8 +274,8 @@ array_ref<T> make_array_ref(const std::vector<T>& v) {
 }
 
 template<typename T, std::size_t N>
-array_ref<T> make_array_ref(const std::vector<T>& v) {
-  return array_ref<T>(v);
+array_ref<T> make_array_ref(const std::array<T,N>& a) {
+  return array_ref<T>(a);
 }
     
 /// @}

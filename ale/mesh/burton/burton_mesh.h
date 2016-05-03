@@ -27,6 +27,7 @@
 #include "flecsi/data/data.h"
 #include "flecsi/execution/task.h"
 
+#include "ale/mesh/burton/burton_mesh_topology.h"
 #include "ale/mesh/burton/burton_types.h"
 #include "ale/mesh/burton/burton_triangle.h"
 #include "ale/mesh/burton/burton_quadrilateral.h"
@@ -38,7 +39,6 @@
 
 namespace ale {
 namespace mesh {
-
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \class burton_mesh_t burton_mesh.h
@@ -1001,13 +1001,13 @@ public:
     case (1,2,3):
       raise_runtime_error( "can't have <4 vertices" );
     case (4):
-      c = mesh_.template make< burton_tetrahedron_t<dimensions> >(mesh_);
+      c = mesh_.template make< burton_tetrahedron_t >(mesh_);
       break;
     case (8):
-      c = mesh_.template make< burton_hexahedron_t<dimensions> >(mesh_);
+      c = mesh_.template make< burton_hexahedron_t >(mesh_);
       break;
     default:
-      c = mesh_.template make< burton_polyhedron_t<dimensions> >(mesh_);
+      c = mesh_.template make< burton_polyhedron_t >(mesh_);
       break;
     }
 
@@ -1029,13 +1029,13 @@ public:
     case (1,2,3):
       raise_runtime_error( "can't have <4 vertices" );
     case (4):
-      c = mesh_.template make< burton_tetrahedron_t<dimensions> >(mesh_);
+      c = mesh_.template make< burton_tetrahedron_t >(mesh_);
       break;
     case (6):
-      c = mesh_.template make< burton_hexahedron_t<dimensions> >(mesh_);
+      c = mesh_.template make< burton_hexahedron_t >(mesh_);
       break;
     default:
-      c = mesh_.template make< burton_polyhedron_t<dimensions> >(mesh_);
+      c = mesh_.template make< burton_polyhedron_t >(mesh_);
       break;
     }
 
@@ -1182,8 +1182,6 @@ public:
       auto vt = vertices(cn).front();
 
       cn->set_cell(cl);
-      cn->add_edge(es.front());
-      cn->add_edge(es.back());
       cn->set_vertex(vt);
       
       auto w1 = new wedge_t( mesh_ );

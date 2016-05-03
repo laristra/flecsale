@@ -17,6 +17,9 @@
  ******************************************************************************/
 #pragma once
 
+//! system includes
+#include <cstdint> // for types
+
 namespace ale {
 namespace common {
 

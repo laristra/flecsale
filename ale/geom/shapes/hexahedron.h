@@ -40,13 +40,14 @@ struct hexahedron {
     const T & pt0, const T & pt1, const T & pt2, const T & pt3,
     const T & pt4, const T & pt5, const T & pt6, const T & pt7 ) 
   {
-    polyhedron<T> poly;
-    poly.insert( {pt0, pt1, pt2, pt3} );
-    poly.insert( {pt4, pt7, pt6, pt5} );
-    poly.insert( {pt0, pt4, pt5, pt1} );
-    poly.insert( {pt1, pt5, pt6, pt2} );
-    poly.insert( {pt2, pt6, pt7, pt3} );
-    poly.insert( {pt3, pt7, pt4, pt0} );
+    using point_t = std::array<T, 4>;
+    polyhedron<T> poly;    
+    poly.insert( point_t{pt0, pt1, pt2, pt3} );
+    poly.insert( point_t{pt4, pt7, pt6, pt5} );
+    poly.insert( point_t{pt0, pt4, pt5, pt1} );
+    poly.insert( point_t{pt1, pt5, pt6, pt2} );
+    poly.insert( point_t{pt2, pt6, pt7, pt3} );
+    poly.insert( point_t{pt3, pt7, pt4, pt0} );
     return poly.centroid();
   }
   
@@ -75,17 +76,6 @@ struct hexahedron {
   }
      
 };
-
-
-#if 0
-constexpr std::array< std::array<uint8_t, 4>, 6> 
-hexahedron::face_list = { {0, 1, 2, 3}, 
-                          {4, 7, 6, 5}, 
-                          {0, 4, 5, 1},
-                          {1, 5, 6, 2},
-                          {2, 6, 7, 3},
-                          {3, 7, 4, 0} };
-#endif
 
 } // namespace geom
 } // namespace ale

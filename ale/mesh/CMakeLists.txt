@@ -13,17 +13,25 @@
 #~----------------------------------------------------------------------------~#
 
 set(mesh_HEADERS
-  burton/burton_entity_types.h
   burton/burton.h
+
   burton/burton_io_exodus.h
   burton/burton_io_tecplot.h
   burton/burton_io_vtk.h
   burton/burton_io_vtm.h
   burton/burton_io_vtu.h
+
+  burton/burton_vtk_utils.h
+
   burton/burton_mesh.h
+  burton/burton_mesh_topology.h
   burton/burton_mesh_traits.h
   burton/burton_types.h
-  burton/burton_vtk_utils.h
+
+  burton/burton_corner.h
+  burton/burton_element.h
+  burton/burton_vertex.h
+  burton/burton_wedge.h
 
   burton/burton_triangle.h
   burton/burton_quadrilateral.h
@@ -41,10 +49,17 @@ set(mesh_HEADERS
 )
 
 
-# set(mesh_SOURCES
-#   burton/burton_entity_types.cc
-#   PARENT_SCOPE
-# )
+set(mesh_SOURCES
+  burton/burton_element.cc
+  burton/burton_hexahedron.cc
+  burton/burton_polygon.cc
+  burton/burton_polyhedron.cc
+  burton/burton_quadrilateral.cc
+  burton/burton_tetrahedron.cc
+  burton/burton_triangle.cc
+  burton/burton_vertex.cc
+  PARENT_SCOPE
+)
 
 set( mesh_LIBS 
   ${IO_LIBRARIES} 

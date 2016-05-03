@@ -50,8 +50,7 @@ public:
   //============================================================================
   //! \brief insert a face into the polyhedron
   //============================================================================
-  template< typename T >
-  void insert( utils::array_ref<T> points ) 
+  void insert( utils::array_ref<P> points ) 
   {
     insert( points.begin(), points.end() );
   }
@@ -75,7 +74,7 @@ public:
   //============================================================================
   //! \brief the volume function
   //============================================================================
-  auto centroid() 
+  auto centroid() const
   {
     // initialize volume
     point_type cx(0);
@@ -127,7 +126,7 @@ public:
   //============================================================================
   //! \brief the volume function
   //============================================================================
-  auto volume() 
+  auto volume() const
   {
 
     // initialize volume

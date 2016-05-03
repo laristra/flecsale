@@ -21,7 +21,8 @@
 
 //! user includes
 #include "ale/geom/shapes/tetrahedron.h"
-#include "ale/mesh/burton/burton_entity_types.h"
+#include "ale/mesh/burton/burton_element.h"
+
 
 namespace ale {
 namespace mesh {
@@ -32,8 +33,7 @@ namespace mesh {
 //! \brief The burton_tetrahedron_t type provides a derived instance of
 //!   burton_cell_t for 2D tetrahedron cells.
 ////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N >
-class burton_tetrahedron_t : public burton_element_t<N,3>
+class burton_tetrahedron_t : public burton_element_t<3,3>
 {
 public:
 
@@ -42,22 +42,7 @@ public:
   //============================================================================
 
   //! the base cell type
-  using base_t = burton_element_t<N,3>;
-
-  //! the flecsi mesh topology type
-  using typename base_t::mesh_topology_base_t;
-
-  //! the mesh traits
-  using typename base_t::mesh_traits_t;
-
-  //! Type containing coordinates of the vertex.
-  using typename base_t::point_t;
-
-  //! Type of floating point.
-  using typename base_t::real_t;
-
-  // the id type
-  using typename base_t::id_t;
+  using base_t = burton_element_t<3,3>;
 
   //============================================================================
   // Constructors
@@ -71,29 +56,11 @@ public:
   // Accessors / Modifiers
   //============================================================================
 
-  // use some base accessors
-  using base_t::edges;
-  using base_t::vertices;
-
   //! the centroid
-  point_t centroid() const override
-  {
-    auto vs = vertices();
-    return geom::tetrahedron::centroid( 
-      vs[0]->coordinates(), vs[1]->coordinates(), 
-      vs[2]->coordinates(), vs[3]->coordinates() );
-  }
-
+  point_t centroid() const override;
 
   //! the area of the cell
-  real_t volume() const override
-  {
-    auto vs = vertices();
-    return geom::tetrahedron::volume( 
-      vs[0]->coordinates(), vs[1]->coordinates(), 
-      vs[2]->coordinates(), vs[3]->coordinates() );
-  }
-
+  real_t volume() const override;
 
   //! the cell type
   geom::geometric_shapes_t type() const override 

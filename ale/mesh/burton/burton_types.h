@@ -20,31 +20,17 @@
 #pragma once
 
 //! user incldues
+#include "ale/mesh/burton/burton_vertex.h"
+#include "ale/mesh/burton/burton_corner.h"
+#include "ale/mesh/burton/burton_element.h"
+#include "ale/mesh/burton/burton_wedge.h"
+
 #include "flecsi/mesh/mesh_topology.h"
 #include "ale/mesh/burton/burton_mesh_traits.h"
-//#include "ale/mesh/burton/burton_entity_types.h"
 
 namespace ale {
 namespace mesh {
 
-////////////////////////////////////////////////////////////////////////////////
-// forward declaration
-////////////////////////////////////////////////////////////////////////////////
-
-template< std::size_t N >
-class burton_vertex_t;
-
-template< std::size_t N >
-class burton_edge_t;
-
-template< std::size_t NUM_DIMS, std::size_t DIM >
-class burton_element_t;
-
-template< std::size_t N >
-class burton_corner_t;
-
-template< std::size_t N >
-class burton_wedge_t;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -87,10 +73,10 @@ struct burton_mesh_types_t<2> {
   using edge_t = burton_edge_t<dimension>;
 
   //! Type for burton mesh faces.
-  using face_t = burton_edge_t<dimension>;
+  using face_t = burton_face_t<dimension>;
 
   //! Type for burton mesh cells.
-  using cell_t = burton_element_t<dimension, dimension>;
+  using cell_t = burton_cell_t<dimension>;
 
   //! Type for burton mesh corners.
   using corner_t = burton_corner_t<dimension>;
@@ -171,10 +157,10 @@ struct burton_mesh_types_t<3> {
   using edge_t = burton_edge_t<dimension>;
 
   //! Type for burton mesh cells.
-  using face_t = burton_element_t<dimension, dimension-1>;
+  using face_t = burton_face_t<dimension>;
 
   //! Type for burton mesh cells.
-  using cell_t = burton_element_t<dimension, dimension>;
+  using cell_t = burton_cell_t<dimension>;
 
   //! Type for burton mesh corners.
   using corner_t = burton_corner_t<dimension>;

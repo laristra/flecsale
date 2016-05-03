@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <iostream>
 
 // user includes
 #include "ale/std/type_traits.h"
