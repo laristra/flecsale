@@ -180,9 +180,8 @@ int32_t evaluate_fluxes( T & mesh ) {
   for ( auto f : mesh.faces() ) {
 
     // get the normal and unit normal
-    // The normal always points towards the first cell in the list.
-    // So we flip it.  This makes it point from the first cell outward.
-    auto norm = - f->normal();
+    // The normal always points away from the first cell in the list.
+    auto norm = f->normal();
     auto nunit = unit( norm );
 
     // get the cell neighbors

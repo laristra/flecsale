@@ -34,9 +34,9 @@ using namespace apps::hydro;
 
 // right now cases are hard coded
 //#define SODX_2D
-#define SODX_3D
+//#define SODX_3D
 //#define SHOCK_BOX_2D
-//#define SHOCK_BOX_3D
+#define SHOCK_BOX_3D
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
@@ -197,15 +197,15 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix = "shock_box";
-  std::string postfix = "exo";
+  std::string postfix = "plt";
 
   // output frequency
   constexpr size_t output_freq = 1;
 
   // the grid dimensions
-  constexpr size_t num_cells_x = 100;
-  constexpr size_t num_cells_y = 100;
-  constexpr size_t num_cells_z = 100;
+  constexpr size_t num_cells_x = 40;
+  constexpr size_t num_cells_y = 40;
+  constexpr size_t num_cells_z = 40;
 
   constexpr real_t length_x = 1.0;
   constexpr real_t length_y = 1.0;
@@ -220,7 +220,7 @@ int main(int argc, char** argv)
     {
       real_t d, p;
       vector_t v(0);
-      if ( x[0] < 0.0 && x[1] < 0.0 ) {
+      if ( x[0] < 0 && x[1] < 0 && x[2] < 0 ) {
         d = 0.125;
         p = 0.1;
       }

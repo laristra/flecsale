@@ -252,6 +252,50 @@ TEST_F(burton_2d, geometry) {
 } // TEST_F
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief test the face normals
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(burton_2d, normals) {
+
+  for(auto f : mesh_.faces()) {
+    auto n = f->normal();
+    auto fx = f->centroid();
+    auto c = mesh_.cells(f).front();
+    auto cx = c->centroid();
+    auto delta = fx - cx;
+    auto dot = dot_product( n, delta );
+    ASSERT_GT( dot, 0 );
+  } // for
+
+  for(auto cn : mesh_.corners()) {
+    auto cl = cn->cell();
+    auto vt = cn->vertex();
+    auto ws = cn->wedges();
+    // first edge
+    {
+      auto e = ws[0]->edge();
+      auto n = ws[0]->facet_normal_right();
+      auto ex = e->midpoint();
+      auto cx = cl->centroid();
+      auto delta = ex - cx;
+      auto dot = dot_product( n, delta );
+      ASSERT_GT( dot, 0 );
+    }
+    // second edge
+    {
+      auto e = ws[1]->edge();
+      auto n = ws[1]->facet_normal_left();
+      auto ex = e->midpoint();
+      auto cx = cl->centroid();
+      auto delta = ex - cx;
+      auto dot = dot_product( n, delta );
+      ASSERT_GT( dot, 0 );
+    }
+  } // for
+
+} // TEST_F
+
+
+////////////////////////////////////////////////////////////////////////////////
 //! \brief test the accessors
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(burton_2d, accessors) {

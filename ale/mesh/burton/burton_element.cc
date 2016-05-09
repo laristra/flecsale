@@ -55,6 +55,12 @@ burton_2d_edge_t::point_t burton_2d_edge_t::midpoint() const
   return {0.5*(vs[0]->coordinates() + vs[1]->coordinates())};
 }
 
+// the edge centroid
+burton_2d_edge_t::point_t burton_2d_edge_t::centroid() const
+{
+  return midpoint();
+}
+
 // the edge length
 burton_2d_edge_t::real_t  burton_2d_edge_t::length() const
 {
@@ -78,7 +84,7 @@ burton_2d_edge_t::vector_t burton_2d_edge_t::normal() const
   auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
   auto vs = mesh->template entities<0,0>(this);
   using math::normal;
-  return normal( vs[0]->coordinates(), vs[1]->coordinates() );
+  return normal( vs[1]->coordinates(), vs[0]->coordinates() );
 }
 
 

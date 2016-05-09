@@ -108,6 +108,11 @@ struct burton_element_t<2,1> :
   //! the edge midpoint
   point_t midpoint() const;
 
+  //! \brief in 2d, this doubles as a face, so the centroid is the same as
+  //!    the midpoint
+  //! \remark this is only enabled in 2d
+  point_t centroid() const;
+
   //! the edge length
   real_t  length() const;
 

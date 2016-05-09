@@ -240,7 +240,7 @@ protected:
         return i*stride_x +  j*stride_y +  k*stride_z;
       };
 
-
+#if 0
     for( size_t k = 0; k < num_vert_z; ++k ) 
       for( size_t j = 0; j < num_vert_y; ++j ) 
         for( size_t i = 0; i < num_vert_x; ++i ) {
@@ -277,6 +277,7 @@ protected:
                } );
 
         }
+#endif
     
     for( size_t k = 0; k < num_cells_z; ++k )
       for( size_t j = 0; j < num_cells_y; ++j )

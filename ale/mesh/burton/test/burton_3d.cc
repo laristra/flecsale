@@ -78,6 +78,21 @@ TEST_F(burton_3d, mesh) {
     CINCH_CAPTURE() << "----------- cell id: " << c.id()
                     << " with centroid " << c->centroid() << endl;
 
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "Corners in mesh:" << endl;
+
+  for(auto c : mesh_.corners()) {
+    CINCH_CAPTURE() << "----------- corner id: " << c.id() << endl;
+  } // for
+
+
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "Wedges in mesh:" << endl;
+
+  for(auto w : mesh_.wedges()) {
+    CINCH_CAPTURE() << "----------- wedge id: " << w.id() << endl;
+  } // for
+
   cout << CINCH_DUMP() << endl;
 
 } // TEST_F
@@ -146,6 +161,86 @@ TEST_F(burton_3d, geometry) {
 
 } // TEST_F
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief test the face normals
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(burton_3d, normals) {
+
+  for(auto f : mesh_.faces()) {
+    auto n = f->normal();
+    auto fx = f->centroid();
+    auto c = mesh_.cells(f).front();
+    auto cx = c->centroid();
+    auto delta = fx - cx;
+    auto dot = dot_product( n, delta );
+    ASSERT_GT( dot, 0 );
+  } // for
+
+
+  for(auto cn : mesh_.corners()) {
+    auto cl = cn->cell();
+    auto vt = cn->vertex();
+    auto ws = cn->wedges();
+
+    std::cout << std::endl; 
+
+    ASSERT_EQ( 1, mesh_.cells( cn ).size() );
+    ASSERT_EQ( 3, mesh_.faces( cn ).size() );
+    ASSERT_EQ( 3, mesh_.edges( cn ).size() );
+    ASSERT_EQ( 1, mesh_.vertices( cn ).size() );
+
+    for ( auto v : mesh_.vertices(cl) ) 
+      std::cout << v.id() << " ";
+    std::cout << std::endl; 
+
+    for ( auto v : mesh_.vertices(cl) ) 
+      std::cout << v->coordinates() << std::endl; 
+    std::cout << std::endl;
+    std::cout << cl->centroid() << std::endl;
+
+    for ( auto wg = ws.begin(); wg != ws.end(); ++wg ) {
+      // first edge
+      {
+        auto fc = wg->face();        
+        auto eg = wg->edge();
+        //auto face_edges = mesh_.edges( fc );
+        //auto it = std::find_if( face_edges.begin(), face_edges.end(), 
+        //                        [&eg]( auto fin ) { return fin.id() == eg->id<0>(); } );
+        auto n = wg->facet_normal_right();
+        auto fx = fc->centroid();
+        auto cx = cl->centroid();
+        auto delta = fx - cx;
+        auto dot = dot_product( n, delta );
+        //ASSERT_GT( dot, 0 );
+        std::cout << std::endl;
+        std::cout << " first " << dot << std::endl;
+        //std::cout << vt->coordinates() << std::endl;
+        //std::cout << wg->vertex()->coordinates() << std::endl;
+        //std::cout << wg->edge()->midpoint() << std::endl;
+        //std::cout << fx << std::endl;
+        std::cout << " " << unit(delta) << std::endl;
+        std::cout << " " << unit(n) << std::endl;
+      }
+      // second edge
+      ++wg;
+      {
+        auto fc = wg->face();
+        auto n = wg->facet_normal_left();
+        auto fx = fc->centroid();
+        auto cx = cl->centroid();
+        auto delta = fx - cx;
+        auto dot = dot_product( n, delta );
+        //ASSERT_GT( dot, 0 );
+        std::cout << std::endl;
+        std::cout << " second " << dot << std::endl;
+        std::cout << " " << unit(delta) << std::endl;
+        std::cout << " " << unit(n) << std::endl;
+      }
+    } // wedges
+
+  } // for
+
+} // TEST_F
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief A final test to compare the blessed file and do CINCH_DUMP().

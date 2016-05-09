@@ -74,6 +74,7 @@ public:
   {
 
     assert( vertex_count == 8 );
+    std::cout << "hex: create with dim = " << dim << std::endl;
     
     switch (dim) {
 
@@ -125,35 +126,35 @@ public:
       // Faces
     case (2): 
       // bottom
-      e[0]  = v[0];
-      e[1]  = v[1];
-      e[2]  = v[2];
-      e[3]  = v[3];
+      e[0]  = v[3];
+      e[1]  = v[2];
+      e[2]  = v[1];
+      e[3]  = v[0];
       // top
-      e[4]  = v[4];
-      e[5]  = v[7];
-      e[6]  = v[6];
-      e[7]  = v[5];
+      e[4]  = v[5];
+      e[5]  = v[6];
+      e[6]  = v[7];
+      e[7]  = v[4];
       // front
-      e[8]  = v[0];
-      e[9]  = v[4];
-      e[10] = v[5];
-      e[11] = v[1];
+      e[8]  = v[1];
+      e[9]  = v[5];
+      e[10] = v[4];
+      e[11] = v[0];
       // right
-      e[12] = v[1];
-      e[13] = v[5];
-      e[14] = v[6];
-      e[15] = v[2];
+      e[12] = v[2];
+      e[13] = v[6];
+      e[14] = v[5];
+      e[15] = v[1];
       // back
-      e[16] = v[2];
-      e[17] = v[6];
-      e[18] = v[7];
-      e[19] = v[3];
+      e[16] = v[3];
+      e[17] = v[7];
+      e[18] = v[6];
+      e[19] = v[2];
       // left
-      e[20] = v[3];
-      e[21] = v[7];
-      e[22] = v[4];
-      e[23] = v[0];
+      e[20] = v[0];
+      e[21] = v[4];
+      e[22] = v[7];
+      e[23] = v[3];
 
       return {4, 4, 4, 4, 4, 4};
       
@@ -168,122 +169,105 @@ public:
   } // create_entities
 
   //----------------------------------------------------------------------------
-  /*!
-    \brief create_bound_entities function for burton_hexahedron_cell_t.
-
-    \verbatim
-
-    The following shows the labeling of the primitives making up a cell. Given
-    vertices v*, edges e*, and center vertex cv.
-
-    v3------e2-------v2
-    |                 |
-    |                 |
-    |                 |
-    |                 |
-    e3      cv       e1
-    |                 |
-    |                 |
-    |                 |
-    |                 |
-    v0------e0-------v1
-
-    A wedge is defined by a vertex, an edge, and the cell itself. The wedge
-    indexing is shown below.
-
-    v3------e2-------v2
-    | \      |      / |
-    |   \  w6|w5  /   |
-    |  w7 \  |  / w4  |
-    |       \|/       |
-    e3------cv-------e1
-    |       /|\       |
-    |  w0 /  |  \ w3  |
-    |   /  w1|w2  \   |
-    | /      |      \ |
-    v0------e0-------v1
-
-    A corner is defined by a vertex and two edges.
-
-    c0 = {v0, e0, e3}
-    c1 = {v1, e0, e1}
-    c2 = {v2, e1, e2}
-    c3 = {v3, e2, e3}
-
-    \endverbatim
-   */
+  //! \brief create_bound_entities function for burton_hexahedron_cell_t.
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, id_t ** ent_ids, 
     size_t * ent_counts, id_t * c ) override
   {
     assert( ent_counts[0] == 8 );
+    std::cout << "hex: create bound with dim = " << dim << std::endl;
+
+    size_t i = 0;
 
     switch (dim) {
+      //------------------------------------------------------------------------
       // Corners
-      // The right edge is always first
-      case 1:
-        // corner 0
-        c[0] = ent_ids[0][0]; // vertex 0
-        c[1] = ent_ids[1][0]; // edge 0, abuts vertex 0
-        c[2] = ent_ids[1][3]; // edge 3, abuts vertex 0
+      //
+      // Take your right hand, its origin is the vertex of the corner.  Curl 
+      // your hand from the first edge to the second edge, with the third edge
+      // aligned with your thumb.  You hand also curls from the first to the 
+      // first to second face, with the third face on the bottom.
+      //
+    case 1:
+      // corner 0
+      c[i++] = ent_ids[0][0]; // vertex 0
+      c[i++] = ent_ids[1][0]; // edge 0, abuts vertex 0
+      c[i++] = ent_ids[1][3]; // edge 3, abuts vertex 0
+      c[i++] = ent_ids[1][8]; // edge 8, abuts vertex 0
+      c[i++] = ent_ids[2][2]; // face 2, abuts vertex 0
+      c[i++] = ent_ids[2][5]; // face 5, abuts vertex 0
+      c[i++] = ent_ids[2][0]; // face 0, abuts vertex 0
 
-        // corner 1
-        c[3] = ent_ids[0][1]; // vertex 1
-        c[4] = ent_ids[1][1]; // edge 1, abuts vertex 1
-        c[5] = ent_ids[1][0]; // edge 0, abuts vertex 1
+      // corner 1
+      c[i++] = ent_ids[0][1]; // vertex 1
+      c[i++] = ent_ids[1][1]; // edge 1, abuts vertex 1
+      c[i++] = ent_ids[1][0]; // edge 0, abuts vertex 1
+      c[i++] = ent_ids[1][9]; // edge 9, abuts vertex 1
+      c[i++] = ent_ids[2][3]; // face 3, abuts vertex 1
+      c[i++] = ent_ids[2][2]; // face 2, abuts vertex 1
+      c[i++] = ent_ids[2][0]; // face 0, abuts vertex 1
 
-        // corner 2
-        c[6] = ent_ids[0][2]; // vertex 2
-        c[7] = ent_ids[1][2]; // edge 2, abuts vertex 2
-        c[8] = ent_ids[1][1]; // edge 1, abuts vertex 2
+      // corner 2
+      c[i++] = ent_ids[0][2]; // vertex 2
+      c[i++] = ent_ids[1][2]; // edge 2, abuts vertex 2
+      c[i++] = ent_ids[1][1]; // edge 1, abuts vertex 2
+      c[i++] = ent_ids[1][10]; // edge 10, abuts vertex 2
+      c[i++] = ent_ids[2][4]; // face 4, abuts vertex 2
+      c[i++] = ent_ids[2][3]; // face 3, abuts vertex 2
+      c[i++] = ent_ids[2][0]; // face 0, abuts vertex 2
 
-        // corner 3
-        c[9] = ent_ids[0][3]; // vertex 3
-        c[10] = ent_ids[1][3]; // edge 3, abuts vertex 3
-        c[11] = ent_ids[1][2]; // edge 2, abuts vertex 3
+      // corner 3
+      c[i++] = ent_ids[0][3]; // vertex 3
+      c[i++] = ent_ids[1][3]; // edge 3, abuts vertex 3
+      c[i++] = ent_ids[1][2]; // edge 2, abuts vertex 3
+      c[i++] = ent_ids[1][11]; // edge 11, abuts vertex 3
+      c[i++] = ent_ids[2][5]; // face 5, abuts vertex 3
+      c[i++] = ent_ids[2][4]; // face 4, abuts vertex 3
+      c[i++] = ent_ids[2][0]; // face 0, abuts vertex 3
 
-        return {3, 3, 3, 3};
+      // corner 4
+      c[i++] = ent_ids[0][3]; // vertex 4
+      c[i++] = ent_ids[1][7]; // edge 7, abuts vertex 4
+      c[i++] = ent_ids[1][4]; // edge 4, abuts vertex 4
+      c[i++] = ent_ids[1][8]; // edge 8, abuts vertex 4
+      c[i++] = ent_ids[2][5]; // face 5, abuts vertex 4
+      c[i++] = ent_ids[2][2]; // face 2, abuts vertex 4
+      c[i++] = ent_ids[2][1]; // face 1, abuts vertex 4
 
-      // Wedges
-      case 2:
+      // corner 5
+      c[i++] = ent_ids[0][3]; // vertex 5
+      c[i++] = ent_ids[1][4]; // edge 4, abuts vertex 5
+      c[i++] = ent_ids[1][5]; // edge 5, abuts vertex 5
+      c[i++] = ent_ids[1][9]; // edge 9, abuts vertex 5
+      c[i++] = ent_ids[2][2]; // face 2, abuts vertex 5
+      c[i++] = ent_ids[2][3]; // face 3, abuts vertex 5
+      c[i++] = ent_ids[2][1]; // face 1, abuts vertex 5
 
-        // wedge 0
-        c[0] = ent_ids[0][0]; // vertex 0
-        c[1] = ent_ids[1][3]; // edge 3
+      // corner 6
+      c[i++] = ent_ids[0][3]; // vertex 6
+      c[i++] = ent_ids[1][5]; // edge 5, abuts vertex 6
+      c[i++] = ent_ids[1][6]; // edge 6, abuts vertex 6
+      c[i++] = ent_ids[1][10]; // edge 10, abuts vertex 6
+      c[i++] = ent_ids[2][3]; // face 3, abuts vertex 6
+      c[i++] = ent_ids[2][4]; // face 4, abuts vertex 6
+      c[i++] = ent_ids[2][1]; // face 1, abuts vertex 6
 
-        // wedge 1
-        c[2] = ent_ids[0][0]; // vertex 0
-        c[3] = ent_ids[1][0]; // edge 0
+      // corner 7
+      c[i++] = ent_ids[0][3]; // vertex 7
+      c[i++] = ent_ids[1][6]; // edge 6, abuts vertex 7
+      c[i++] = ent_ids[1][7]; // edge 7, abuts vertex 7
+      c[i++] = ent_ids[1][11]; // edge 11, abuts vertex 7
+      c[i++] = ent_ids[2][4]; // face 4, abuts vertex 7
+      c[i++] = ent_ids[2][5]; // face 5, abuts vertex 7
+      c[i++] = ent_ids[2][1]; // face 1, abuts vertex 7
 
-        // wedge 2
-        c[4] = ent_ids[0][1]; // vertex 1
-        c[5] = ent_ids[1][0]; // edge 0
+      return {7, 7, 7, 7, 7, 7, 7, 7};
 
-        // wedge 3
-        c[6] = ent_ids[0][1]; // vertex 1
-        c[7] = ent_ids[1][1]; // edge 1
-
-        // wedge 4
-        c[8] = ent_ids[0][2]; // vertex 2
-        c[9] = ent_ids[1][1]; // edge 1
-
-        // wedge 5
-        c[10] = ent_ids[0][2]; // vertex 2
-        c[11] = ent_ids[1][2]; // edge 2
-
-        // wedge 6
-        c[12] = ent_ids[0][3]; // vertex 3
-        c[13] = ent_ids[1][2]; // edge 2
-
-        // wedge 7
-        c[14] = ent_ids[0][3]; // vertex 3
-        c[15] = ent_ids[1][3]; // edge 3
-
-        return {2, 2, 2, 2, 2, 2, 2, 2};
-
-      default:
-        raise_runtime_error("Unknown bound entity type");
+      //------------------------------------------------------------------------
+      // failure
+    default:
+      raise_runtime_error("Unknown bound entity type");
     } // switch
   } // create_bound_entities
 

@@ -25,6 +25,13 @@
 #include "ale/mesh/burton/burton_element.h"
 #include "ale/mesh/burton/burton_wedge.h"
 
+#include "ale/mesh/burton/burton_triangle.h"
+#include "ale/mesh/burton/burton_quadrilateral.h"
+#include "ale/mesh/burton/burton_polygon.h"
+#include "ale/mesh/burton/burton_hexahedron.h"
+#include "ale/mesh/burton/burton_tetrahedron.h"
+#include "ale/mesh/burton/burton_polyhedron.h"
+
 #include "flecsi/mesh/mesh_topology.h"
 #include "ale/mesh/burton/burton_mesh_traits.h"
 
@@ -61,6 +68,12 @@ struct burton_mesh_types_t<2> {
 
   //! The number of domains in burton mesh picked up from burton_mesh_traits_t.
   static constexpr size_t num_domains = mesh_traits_t::num_domains;
+
+  //! the base type for the mesh topology
+  using mesh_topology_base_t = flecsi::mesh_topology_base_t;
+
+  // the base type for the entities
+  using mesh_entity_base_t = flecsi::mesh_entity_base_t<num_domains>;
 
   //============================================================================
   // Define basic types.
@@ -122,6 +135,41 @@ struct burton_mesh_types_t<2> {
       >;
   // clang-format on
 
+
+  //============================================================================
+  //! depending upon the dimension/number of verices, create different types 
+  //! of entities
+  //============================================================================
+  template<size_t M, size_t D>
+  static constexpr 
+  mesh_entity_base_t *
+  create_entity(mesh_topology_base_t* mesh, size_t num_vertices) 
+  {
+    switch(M){
+      //---------- Primal Mesh ----------//
+    case 0:
+      switch(D) {
+      case 1:
+        return mesh->template make<edge_t>(*mesh);
+      default:
+        raise_logic_error("invalid topological dimension");
+      }
+      //---------- Dual Mesh ----------//
+    case 1:
+      switch(D) {
+      case 1:
+        return mesh->template make<corner_t>(*mesh);
+      case 2:
+        return mesh->template make<wedge_t>(*mesh);
+      default:
+        raise_logic_error("invalid topological dimension");
+      }
+      //---------- Error ----------//
+    default:
+      raise_logic_error("invalid domain");
+    }
+  }
+  
 }; // struct burton_mesh_types_t
 
 
@@ -146,6 +194,12 @@ struct burton_mesh_types_t<3> {
   //! The number of domains in burton mesh picked up from burton_mesh_traits_t.
   static constexpr size_t num_domains = mesh_traits_t::num_domains;
 
+  //! the base type for the mesh topology
+  using mesh_topology_base_t = flecsi::mesh_topology_base_t;
+  
+  // the base type for the entities
+  using mesh_entity_base_t = flecsi::mesh_entity_base_t<num_domains>;
+  
   //============================================================================
   // Define basic types.
   //============================================================================
@@ -214,6 +268,60 @@ struct burton_mesh_types_t<3> {
         std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, corner_t, vertex_t>
       >;
   // clang-format on
+
+  //============================================================================
+  //! depending upon the dimension/number of verices, create different types 
+  //! of entities
+  //============================================================================
+  
+  static
+  mesh_entity_base_t *
+  create_face(mesh_topology_base_t* mesh, size_t num_vertices) {
+    switch(num_vertices) {
+    case (1,2):
+      raise_runtime_error( "can't have <3 vertices" );
+    case (3):
+      return mesh->template make< burton_triangle_t<dimension> >(*mesh);
+    case (4):
+      return mesh->template make< burton_quadrilateral_t<dimension> >(*mesh);
+      break;
+    default:
+      return mesh->template make< burton_polygon_t<dimension> >(*mesh);
+      break;
+    }
+  }
+
+  template<size_t M, size_t D>
+  static constexpr
+  mesh_entity_base_t *
+  create_entity(mesh_topology_base_t* mesh, size_t num_vertices)
+  {   
+    switch(M){
+      //---------- Primal Mesh ----------//
+    case 0:
+      switch(D) {
+      case 1:
+        return mesh->template make<edge_t>(*mesh);
+      case 2:
+        return create_face(mesh, num_vertices);
+      default:
+        raise_logic_error("invalid topological dimension");
+      }
+      //---------- Dual Mesh ----------//
+    case 1:
+      switch(D) {
+      case 1:
+        return mesh->template make<corner_t>(*mesh);
+      case 2:
+        return mesh->template make<wedge_t>(*mesh);
+      default:
+        raise_logic_error("invalid topological dimension");
+      }
+      //---------- Error ----------//
+    default:
+      raise_logic_error("invalid domain");
+    }
+  }
 
 }; // struct burton_mesh_types_t
 

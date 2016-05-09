@@ -29,12 +29,6 @@
 
 #include "ale/mesh/burton/burton_mesh_topology.h"
 #include "ale/mesh/burton/burton_types.h"
-#include "ale/mesh/burton/burton_triangle.h"
-#include "ale/mesh/burton/burton_quadrilateral.h"
-#include "ale/mesh/burton/burton_polygon.h"
-#include "ale/mesh/burton/burton_hexahedron.h"
-#include "ale/mesh/burton/burton_tetrahedron.h"
-#include "ale/mesh/burton/burton_polyhedron.h"
 #include "ale/utils/errors.h"
 
 namespace ale {
@@ -757,7 +751,7 @@ public:
   //! \return The number of wedges in the burton mesh.
   size_t num_wedges() const
   {
-    return mesh_.template num_entities<num_dimensions(), 1>();
+    return mesh_.template num_entities<2, 1>();
   } // num_wedges
 
   //! \brief Return all wedges in the burton mesh.
@@ -765,7 +759,7 @@ public:
   //!   in range based for loops.
   auto wedges() // FIXME const
   {
-    return mesh_.template entities<num_dimensions(), 1>();
+    return mesh_.template entities<2, 1>();
   } // wedges
 
   //! \brief Return wedges associated with entity instance of type \e E.
@@ -778,7 +772,7 @@ public:
   template <class E>
   auto wedges(E * e) const
   {
-    return mesh_.template entities<num_dimensions(), 1>(e);
+    return mesh_.template entities<2, 1>(e);
   } // wedges
 
   //! \brief Return wedges for entity \e e in domain \e M.
@@ -792,14 +786,14 @@ public:
   template<size_t M, class E>
   auto wedges(flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.template entities<num_dimensions(), M, 1>(e.entity());
+    return mesh_.template entities<2, M, 1>(e.entity());
   }
 
   //! \brief Return ids for all wedges in the burton mesh.
   //! \return Ids for all wedges in the burton mesh.
   auto wedge_ids() const
   {
-    return mesh_.template entity_ids<num_dimensions(), 1>();
+    return mesh_.template entity_ids<2, 1>();
   } // wedge_ids
 
   //! \brief Return wedge ids associated with entity instance of type \e E.
@@ -813,7 +807,7 @@ public:
   template <class E>
   auto wedge_ids(E * e) const
   {
-    return mesh_.template entity_ids<num_dimensions(), 1>(e);
+    return mesh_.template entity_ids<2, 1>(e);
   } // wedge_ids
 
   //============================================================================
@@ -943,107 +937,6 @@ public:
   // Element Creation
   //============================================================================
 
-  //! \brief Create a vertex in the burton mesh.
-  //!
-  //! \param[in] pos The position (coordinates) for the vertex.
-  //!
-  //! \return Pointer to a vertex created at \e pos.
-  vertex_t * create_vertex(const point_t & pos)
-  {
-    auto p = access_state_<point_t, flecsi_internal>("coordinates");
-    p[num_vertices()] = pos;
-
-    auto v = mesh_.template make<vertex_t>( mesh_ );
-    mesh_.template add_entity<0, 0>(v);
-
-    return v;
-  }
-
-
-  //! \brief Create a cell in the burton mesh.
-  //! \param[in] verts The vertices defining the cell.
-  //! \return Pointer to cell created with \e verts.
-  template< typename E, typename V >
-  auto create_2d_element_from_verts_( V && verts  )
-  {
-    
-    E * e;
-
-    switch ( verts.size() ) {
-    case (1,2):
-      raise_runtime_error( "can't have <3 vertices" );
-    case (3):
-      e = mesh_.template make< burton_triangle_t<dimensions> >(mesh_);
-      break;
-    case (4):
-      e = mesh_.template make< burton_quadrilateral_t<dimensions> >(mesh_);
-      break;
-    default:
-      e = mesh_.template make< burton_polygon_t<dimensions> >(mesh_);
-      break;
-    }
-
-    mesh_.template add_entity<E::dimension, 0>( e );
-    mesh_.template init_entity<0, E::dimension, 0>( e, std::forward<V>(verts) );
-    return e;
-  } // create_cell
-
-  //! \brief Create a cell in the burton mesh.
-  //! \param[in] verts The vertices defining the cell.
-  //! \return Pointer to cell created with \e verts.
-  template< typename V >
-  auto create_3d_element_from_verts_( V && verts )
-  {
-    
-    cell_t * c;
-
-    switch ( verts.size() ) {
-    case (1,2,3):
-      raise_runtime_error( "can't have <4 vertices" );
-    case (4):
-      c = mesh_.template make< burton_tetrahedron_t >(mesh_);
-      break;
-    case (8):
-      c = mesh_.template make< burton_hexahedron_t >(mesh_);
-      break;
-    default:
-      c = mesh_.template make< burton_polyhedron_t >(mesh_);
-      break;
-    }
-
-    mesh_.template add_entity<cell_t::dimension, 0>(c);
-    mesh_.template init_cell<0>( c, std::forward<V>(verts) );
-    return c;
-  } // create_cell
-
-  //! \brief Create a cell in the burton mesh.
-  //! \param[in] faces The faces defining the cell.
-  //! \return Pointer to cell created with \e faces.
-  template< typename F >
-  auto create_3d_element_from_faces_( F && faces )
-  {
-    
-    cell_t * c;
-
-    switch ( faces.size() ) {
-    case (1,2,3):
-      raise_runtime_error( "can't have <4 vertices" );
-    case (4):
-      c = mesh_.template make< burton_tetrahedron_t >(mesh_);
-      break;
-    case (6):
-      c = mesh_.template make< burton_hexahedron_t >(mesh_);
-      break;
-    default:
-      c = mesh_.template make< burton_polyhedron_t >(mesh_);
-      break;
-    }
-
-    mesh_.template add_entity<cell_t::dimension, 0>(c);
-    mesh_.template init_entity<0, cell_t::dimension, face_t::dimension>( c, std::forward<F>(faces) );
-    return c;
-  } // create_cell
-
 
   //! \brief Create a cell in the burton mesh.
   //! \param[in] verts The vertices defining the cell.
@@ -1140,6 +1033,24 @@ public:
     return create_2d_element_from_verts_<face_t>( verts );
   }
 
+
+  //! \brief Create a vertex in the burton mesh.
+  //!
+  //! \param[in] pos The position (coordinates) for the vertex.
+  //!
+  //! \return Pointer to a vertex created at \e pos.
+  vertex_t * create_vertex(const point_t & pos)
+  {
+    auto p = access_state_<point_t, flecsi_internal>("coordinates");
+    p[num_vertices()] = pos;
+
+    auto v = mesh_.template make<vertex_t>( mesh_ );
+    mesh_.template add_entity<0, 0>(v);
+
+    return v;
+  }
+
+
   //============================================================================
   // Mesh Creation
   //============================================================================
@@ -1149,8 +1060,6 @@ public:
   {
     mesh_.dump();
   }
-    
-
 
   //! \brief Initialize burton mesh state for the number of \e vertices.
   //!
@@ -1165,7 +1074,9 @@ public:
     );
   } // init_parameters
 
+  //!
   //! \brief Initialize the burton mesh.
+  //!
   void init()
   {
 
@@ -1173,31 +1084,22 @@ public:
     mesh_.template init_bindings<1>();
 
     //mesh_.dump();
-    
+
     // Initialize corners
-    for (auto cn : corners()) {
+    build_corners_<dimensions>();
 
-      auto cl = cells(cn).front();
-      auto es = edges(cn);
-      auto vt = vertices(cn).front();
-
-      cn->set_cell(cl);
-      cn->set_vertex(vt);
-      
-      auto w1 = new wedge_t( mesh_ );
-      w1->set_cell(cl);
-      w1->set_edge(es.front());
-      w1->set_vertex(vt);
-      mesh_.template add_entity<num_dimensions(), 1>( w1 );
-
-      auto w2 = new wedge_t( mesh_ );
-      w2->set_cell(cl);
-      w2->set_edge(es.back());
-      w2->set_vertex(vt);
-      mesh_.template add_entity<num_dimensions(), 1>( w2 );
-
-      cn->add_wedge(w1);
-      cn->add_wedge(w2);
+    // make sure faces point from first to second cell
+    for(auto f : faces()) {
+      auto n = f->normal();
+      auto fx = f->centroid();
+      auto c = cells(f).front();
+      auto cx = c->centroid();
+      auto delta = fx - cx;
+      auto dot = dot_product( n, delta );
+      if ( dot < 0 ) {
+        std::cout << "reversing" << std::endl;
+        mesh_.template reverse_entities<0, 0>(f);
+      }
     } // for
 
     // get the data instance
@@ -1265,11 +1167,218 @@ public:
   template< std::size_t M >
   friend std::ostream& operator<< (std::ostream& stream, const burton_mesh_t<M>& mesh);
 
+
+
   //============================================================================
-  // Private Data 
+  // Private Members
   //============================================================================
 
  private:
+
+
+  //! \brief Create a cell in the burton mesh.
+  //! \param[in] verts The vertices defining the cell.
+  //! \return Pointer to cell created with \e verts.
+  template< typename E, typename V >
+  auto create_2d_element_from_verts_( V && verts  )
+  {
+    
+    E * e;
+
+    switch ( verts.size() ) {
+    case (1,2):
+      raise_runtime_error( "can't have <3 vertices" );
+    case (3):
+      e = mesh_.template make< burton_triangle_t<dimensions> >(mesh_);
+      break;
+    case (4):
+      e = mesh_.template make< burton_quadrilateral_t<dimensions> >(mesh_);
+      break;
+    default:
+      e = mesh_.template make< burton_polygon_t<dimensions> >(mesh_);
+      break;
+    }
+
+    mesh_.template add_entity<E::dimension, 0>( e );
+    mesh_.template init_entity<0, E::dimension, 0>( e, std::forward<V>(verts) );
+    return e;
+  } // create_cell
+
+  //! \brief Create a cell in the burton mesh.
+  //! \param[in] verts The vertices defining the cell.
+  //! \return Pointer to cell created with \e verts.
+  template< typename V >
+  auto create_3d_element_from_verts_( V && verts )
+  {
+    
+    cell_t * c;
+
+    switch ( verts.size() ) {
+    case (1,2,3):
+      raise_runtime_error( "can't have <4 vertices" );
+    case (4):
+      c = mesh_.template make< burton_tetrahedron_t >(mesh_);
+      break;
+    case (8):
+      c = mesh_.template make< burton_hexahedron_t >(mesh_);
+      break;
+    default:
+      c = mesh_.template make< burton_polyhedron_t >(mesh_);
+      break;
+    }
+
+    mesh_.template add_entity<cell_t::dimension, 0>(c);
+    mesh_.template init_cell<0>( c, std::forward<V>(verts) );
+    return c;
+  } // create_cell
+
+  //! \brief Create a cell in the burton mesh.
+  //! \param[in] faces The faces defining the cell.
+  //! \return Pointer to cell created with \e faces.
+  template< typename F >
+  auto create_3d_element_from_faces_( F && faces )
+  {
+    
+    cell_t * c;
+
+    switch ( faces.size() ) {
+    case (1,2,3):
+      raise_runtime_error( "can't have <4 vertices" );
+    case (4):
+      c = mesh_.template make< burton_tetrahedron_t >(mesh_);
+      break;
+    case (6):
+      c = mesh_.template make< burton_hexahedron_t >(mesh_);
+      break;
+    default:
+      c = mesh_.template make< burton_polyhedron_t >(mesh_);
+      break;
+    }
+
+    mesh_.template add_entity<cell_t::dimension, 0>(c);
+    mesh_.template init_entity<0, cell_t::dimension, face_t::dimension>( c, std::forward<F>(faces) );
+    return c;
+  } // create_cell
+
+  
+  //! \brief  Initialize corners in two dimensions
+  template< 
+    std::size_t D,
+    typename = typename std::enable_if_t< D == 2 >
+  > 
+  void build_corners_() 
+  {
+    for (auto cn : corners()) {
+
+      auto cl = cells(cn).front();
+      auto es = edges(cn);
+      auto vt = vertices(cn).front();
+
+      cn->set_cell(cl);
+      cn->set_vertex(vt);
+
+
+      
+      auto w1 = new wedge_t( mesh_ );
+      w1->set_cell(cl);
+      w1->set_edge(es.front());
+      w1->set_vertex(vt);
+      mesh_.template add_entity<2, 1>( w1 );
+
+      auto w2 = new wedge_t( mesh_ );
+      w2->set_cell(cl);
+      w2->set_edge(es.back());
+      w2->set_vertex(vt);
+      mesh_.template add_entity<2, 1>( w2 );
+
+      cn->add_wedge(w1);
+      cn->add_wedge(w2);
+    } // for
+  }
+
+  //! \brief  Initialize corners in three dimensions
+  template< 
+    std::size_t D,
+    typename std::enable_if_t< D == 3 >* = nullptr
+  > 
+  void build_corners_() 
+  {
+    for (auto cn : corners()) {
+
+      auto cl = cells(cn).front();
+      auto fs = faces(cn);
+      auto es = edges(cn);
+      auto vt = vertices(cn).front();
+
+      cn->set_cell(cl);
+      cn->set_vertex(vt);
+
+      std::cout << std::endl;
+      std::cout << " corner " << cn.id() << std::endl;
+      
+      // face 0
+      auto wg = new wedge_t( mesh_ );
+      wg->set_cell(cl);
+      wg->set_face(fs[0]);
+      wg->set_edge(es[2]);
+      wg->set_vertex(vt);
+      mesh_.template add_entity<2, 1>( wg );
+      cn->add_wedge(wg);
+      std::cout << " wedge ( face " << fs[0]->centroid() << ", edge " << es[2]->midpoint() << " )" << std::endl;
+
+      wg = new wedge_t( mesh_ );
+      wg->set_cell(cl);
+      wg->set_face(fs[0]);
+      wg->set_edge(es[0]);
+      wg->set_vertex(vt);
+      mesh_.template add_entity<2, 1>( wg );
+      cn->add_wedge(wg);
+      std::cout << " wedge ( face " << fs[0]->centroid() << ", edge " << es[0]->midpoint() << " )" << std::endl;
+
+      // face 1
+      wg = new wedge_t( mesh_ );
+      wg->set_cell(cl);
+      wg->set_face(fs[1]);
+      wg->set_edge(es[1]);
+      wg->set_vertex(vt);
+      mesh_.template add_entity<2, 1>( wg );
+      cn->add_wedge(wg);
+      std::cout << " wedge ( face " << fs[1]->centroid() << ", edge " << es[1]->midpoint() << " )" << std::endl;
+
+      wg = new wedge_t( mesh_ );
+      wg->set_cell(cl);
+      wg->set_face(fs[1]);
+      wg->set_edge(es[2]);
+      wg->set_vertex(vt);
+      mesh_.template add_entity<2, 1>( wg );
+      cn->add_wedge(wg);
+      std::cout << " wedge ( face " << fs[1]->centroid() << ", edge " << es[2]->midpoint() << " )" << std::endl;
+
+      // face 2
+      wg = new wedge_t( mesh_ );
+      wg->set_cell(cl);
+      wg->set_face(fs[2]);
+      wg->set_edge(es[0]);
+      wg->set_vertex(vt);
+      mesh_.template add_entity<2, 1>( wg );
+      cn->add_wedge(wg);
+      std::cout << " wedge ( face " << fs[2]->centroid() << ", edge " << es[0]->midpoint() << " )" << std::endl;
+
+      wg = new wedge_t( mesh_ );
+      wg->set_cell(cl);
+      wg->set_face(fs[2]);
+      wg->set_edge(es[1]);
+      wg->set_vertex(vt);
+      mesh_.template add_entity<2, 1>( wg );
+      cn->add_wedge(wg);
+      std::cout << " wedge ( face " << fs[2]->centroid() << ", edge " << es[1]->midpoint() << " )" << std::endl;
+
+    } // for
+  }
+
+  //============================================================================
+  // Private Data 
+  //============================================================================
 
   mesh_topology_t mesh_;
 

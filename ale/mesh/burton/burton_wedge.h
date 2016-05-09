@@ -280,14 +280,14 @@ public:
     auto e = edge()->midpoint();
     auto v = vertex()->coordinates();
     auto f = face()->centroid();
-    return geom::triangle<num_dimensions>::normal( v, f, e );
+    return geom::triangle<num_dimensions>::normal( v, e, f );
   }
   vector_t facet_normal_right() const
   {
     auto e = edge()->midpoint();
     auto v = vertex()->coordinates();
     auto f = face()->centroid();
-    return geom::triangle<num_dimensions>::normal( v, e, f );
+    return geom::triangle<num_dimensions>::normal( v, f, e );
   }
 
   //! \brief reset the mesh pointer
