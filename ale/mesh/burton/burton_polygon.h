@@ -83,13 +83,15 @@ public:
       size_t dim, id_t * e, id_t * v, size_t vertex_count) override
   {
     assert( dim == 1 );
-    auto vp = v[vertex_count - 1];
-    for ( auto i=0, ind=0; i<vertex_count; i++ ) {
-      auto vn = v[i];
+    size_t ind=0;
+    for ( auto i=0; i<vertex_count-1; i++ ) {
+      auto vp = v[i];
+      auto vn = v[i+1];
       e[ ind++ ] = vp;
       e[ ind++ ] = vn;
-      vp = vn;
     }
+    e[ ind++ ] = v[ vertex_count-1 ];
+    e[ ind++ ] = v[ 0 ];
     return std::vector<id_t>(vertex_count, 2);
   }
 
@@ -97,26 +99,48 @@ public:
   //!  \brief create_bound_entities function for burton_polygonal_cell_t.
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_bound_entities(
-    size_t from_domain, size_t to_domain, size_t dim, id_t ** ent_ids, 
-    size_t * ent_counts, id_t * c ) override
+    size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id,
+    connectivity_t ** from_domain_conn, connectivity_t ** to_domain_conn, 
+    id_t * c )  override
   {
-    auto vertex_count = ent_counts[0];
+    size_t num_vertices = 0, num_edges = 0, num_corners = 0;
+    auto verts = from_domain_conn[0]->get_entities( cell_id.entity(), num_vertices );
+    auto edges = from_domain_conn[1]->get_entities( cell_id.entity(), num_edges );
+    auto corners = to_domain_conn[0]->get_entities( cell_id.entity(), num_corners );
 
     switch (dim) {
       //------------------------------------------------------------------------
       // Corners
       // The right edge is always first
-    case 1: {
+    case 0: {
 
-      auto vp = vertex_count - 1;
-      for ( auto i=0, ind=0; i<vertex_count; i++ ) {
-        auto vn = i;
-        c[ ind++ ] = ent_ids[0][vn]; // vertex 0
-        c[ ind++ ] = ent_ids[1][vn]; // edge 0, abuts vertex 0
-        c[ ind++ ] = ent_ids[1][vp]; // edge 3, abuts vertex 0
+      auto vp = num_vertices - 1;
+      for ( auto vn=0, ind=0; vn<num_vertices; vn++ ) {
+        c[ ind++ ] = verts[vn]; // vertex 0
+        c[ ind++ ] = edges[vn]; // edge 0, abuts vertex 0
+        c[ ind++ ] = edges[vp]; // edge 3, abuts vertex 0
         vp = vn;
       }
-      return std::vector<id_t>(vertex_count, 3);
+      return std::vector<id_t>(num_vertices, 3);
+    }
+      //------------------------------------------------------------------------
+      // wedges
+      // The right wedge is always first
+    case 1: {
+
+      auto vp = num_vertices - 1;
+      for ( auto vn=0, ind=0; vn<num_vertices; vn++ ) {
+        // wedge 0
+        c[ ind++ ] =   verts[vn]; // vertex 0
+        c[ ind++ ] =   edges[vn]; // edge 0, abuts vertex 0
+        c[ ind++ ] = corners[vn]; // corner 0
+        // wedge 1
+        c[ ind++ ] =   verts[vn]; // vertex 0
+        c[ ind++ ] =   edges[vp]; // edge 3, abuts vertex 0
+        c[ ind++ ] = corners[vn]; // corner 0
+        vp = vn;
+      }
+      return std::vector<id_t>(2*num_vertices, 3);
     }
       //------------------------------------------------------------------------
       // Failure
@@ -163,6 +187,8 @@ public:
   //! the centroid
   point_t centroid() const override;
 
+  //! the midpoint
+  point_t midpoint() const override;
 
   //! the normal
   vector_t normal() const override;
@@ -181,13 +207,15 @@ public:
       size_t dim, id_t * e, id_t * v, size_t vertex_count) override
   {
     assert( dim == 1 );
-    auto vp = v[vertex_count - 1];
-    for ( auto i=0, ind=0; i<vertex_count; i++ ) {
-      auto vn = v[i];
+    size_t ind=0;
+    for ( auto i=0; i<vertex_count-1; i++ ) {
+      auto vp = v[i];
+      auto vn = v[i+1];
       e[ ind++ ] = vp;
       e[ ind++ ] = vn;
-      vp = vn;
     }
+    e[ ind++ ] = v[ vertex_count-1 ];
+    e[ ind++ ] = v[ 0 ];
     return std::vector<id_t>(vertex_count, 2);
   }
 

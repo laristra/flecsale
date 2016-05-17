@@ -10,6 +10,12 @@ project(ale)
 #  cmake_policy(SET CMP0012 NEW)  # recognize number & boolean literals
 #endif(COMMAND cmake_policy)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+
+# set some global variables
+set( ALE_LIBRARIES )
+set( ALE_DATA_DIR "${CMAKE_SOURCE_DIR}/data" )  
+
 #------------------------------------------------------------------------------#
 # If a C++14 compiler is available, then set the appropriate flags
 #------------------------------------------------------------------------------#
@@ -59,18 +65,20 @@ endif()
 #------------------------------------------------------------------------------#
 
 cinch_add_subproject("flecsi")
-
-#------------------------------------------------------------------------------#
-# Set application directory
-#------------------------------------------------------------------------------#
-
-cinch_add_application_directory(apps)
+list( APPEND ALE_LIBRARIES flecsi )
 
 #------------------------------------------------------------------------------#
 # Add library targets
 #------------------------------------------------------------------------------#
 
 cinch_add_library_target(ale ale)
+list( APPEND ALE_LIBRARIES ale )
+
+#------------------------------------------------------------------------------#
+# Set application directory
+#------------------------------------------------------------------------------#
+
+cinch_add_application_directory(apps)
 
 #------------------------------------------------------------------------------#
 # Set header suffix regular expression

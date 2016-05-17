@@ -28,8 +28,18 @@ namespace mesh {
 burton_tetrahedron_t::point_t burton_tetrahedron_t::centroid() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<0,0>(this);
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   return geom::tetrahedron::centroid( 
+    vs[0]->coordinates(), vs[1]->coordinates(), 
+    vs[2]->coordinates(), vs[3]->coordinates() );
+}
+
+//! the centroid
+burton_tetrahedron_t::point_t burton_tetrahedron_t::midpoint() const
+{
+  auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
+  return geom::tetrahedron::midpoint( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
 }
@@ -39,7 +49,7 @@ burton_tetrahedron_t::point_t burton_tetrahedron_t::centroid() const
 burton_tetrahedron_t::real_t burton_tetrahedron_t::volume() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<0,0>(this);
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   return geom::tetrahedron::volume( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );

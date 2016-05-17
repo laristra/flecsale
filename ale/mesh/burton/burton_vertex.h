@@ -68,6 +68,9 @@ public:
   //! Number of domains in the burton mesh.
   static constexpr auto num_dimensions = mesh_traits_t::dimension;
 
+  //! The domain of the entity
+  static constexpr auto domain = 0;
+
   //! Handle for accessing state at vertex.
   using data_t = typename mesh_traits_t::data_t;
 
@@ -156,6 +159,9 @@ public:
 
   //! Number of domains in the burton mesh.
   static constexpr auto num_dimensions = mesh_traits_t::dimension;
+
+  //! The domain of the entity
+  static constexpr auto domain = 0;
 
   //! Handle for accessing state at vertex.
   using data_t = typename mesh_traits_t::data_t;

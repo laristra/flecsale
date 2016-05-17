@@ -64,6 +64,9 @@ struct burton_element_t<2,1> :
   //! Number of domains in the burton mesh.
   static constexpr auto num_dimensions = mesh_traits_t::dimension;
 
+  //! The domain of the entity
+  static constexpr auto domain = 0;
+
   //! Handle for accessing state at vertex.
   using data_t = typename mesh_traits_t::data_t;
 
@@ -79,6 +82,9 @@ struct burton_element_t<2,1> :
 
   //! The bitfield.
   using bitfield_t = typename mesh_traits_t::bitfield_t;
+
+  //! the base vertex type
+  using vertex_t = burton_vertex_t<num_dimensions>;
 
   //============================================================================
   // Constructors
@@ -174,6 +180,9 @@ struct burton_element_t<3,1> :
   //! Number of domains in the burton mesh.
   static constexpr auto num_dimensions = mesh_traits_t::dimension;
 
+  //! The domain of the entity
+  static constexpr auto domain = 0;
+
   //! Handle for accessing state at vertex.
   using data_t = typename mesh_traits_t::data_t;
 
@@ -189,6 +198,9 @@ struct burton_element_t<3,1> :
 
   //! a bitfield type
   using bitfield_t = typename mesh_traits_t::bitfield_t;
+
+  //! the base vertex type
+  using vertex_t = burton_vertex_t<num_dimensions>;
 
   //============================================================================
   // Constructors
@@ -239,9 +251,19 @@ private:
 }; // struct burton_edge_t
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief The burton_face_t type provides an interface for managing and
+//!   geometry and state associated with mesh faces.
+//!
+//! \tparam N The domain of the face.
+////////////////////////////////////////////////////////////////////////////////
+template< std::size_t N >
+using burton_edge_t = burton_element_t<N,1>;
+
+////////////////////////////////////////////////////////////////////////////////
 //! \class burton_element_t burton_entity_types.h
 //! \brief The burton_element_t type provides an interelement for managing and
 //!   geometry and state associated with mesh elements.
+//!
 //! \remark this is a 2d cell
 ////////////////////////////////////////////////////////////////////////////////
 template<>
@@ -264,6 +286,9 @@ struct burton_element_t<2,2>
   //! Number of domains in the burton mesh.
   static constexpr auto num_dimensions = mesh_traits_t::dimension;
 
+  //! The domain of the entity
+  static constexpr auto domain = 0;
+
   //! Handle for accessing state at vertex.
   using data_t = typename mesh_traits_t::data_t;
 
@@ -282,6 +307,13 @@ struct burton_element_t<2,2>
 
   // the flecsi id type
   using id_t = flecsi::id_t;
+  using connectivity_t = flecsi::connectivity_t;
+
+  //! the base vertex type
+  using vertex_t = burton_vertex_t<num_dimensions>;
+
+  //! the base edge type
+  using edge_t = burton_edge_t<num_dimensions>;
 
   //============================================================================
   // Constructors
@@ -368,8 +400,9 @@ struct burton_element_t<2,2>
   //!   binding and b) the number of entities per collection.
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_bound_entities(
-    size_t from_domain, size_t to_domain, size_t dim, id_t ** ent_ids, 
-    size_t * ent_counts, id_t * c ) 
+    size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id,
+    connectivity_t ** from_domain_conn, connectivity_t ** to_domain_conn, 
+    id_t * c ) 
   { raise_runtime_error("you should never get here"); };
 
 
@@ -401,6 +434,7 @@ private:
 //! \class burton_element_t burton_entity_types.h
 //! \brief The burton_element_t type provides an interelement for managing and
 //!   geometry and state associated with mesh elements.
+//!
 //! \remark this is a 3d face
 ////////////////////////////////////////////////////////////////////////////////
 template<>
@@ -423,6 +457,9 @@ struct burton_element_t<3,2>
   //! Number of domains in the burton mesh.
   static constexpr auto num_dimensions = mesh_traits_t::dimension;
 
+  //! The domain of the entity
+  static constexpr auto domain = 0;
+
   //! Handle for accessing state at vertex.
   using data_t = typename mesh_traits_t::data_t;
 
@@ -441,6 +478,13 @@ struct burton_element_t<3,2>
 
   // the flecsi id type
   using id_t = flecsi::id_t;
+  using connectivity_t = flecsi::connectivity_t;
+
+  //! the base vertex type
+  using vertex_t = burton_vertex_t<num_dimensions>;
+
+  //! the base edge type
+  using edge_t = burton_edge_t<num_dimensions>;
 
   //============================================================================
   // Constructors
@@ -471,6 +515,10 @@ struct burton_element_t<3,2>
 
   //! the centroid
   virtual point_t centroid() const 
+  { raise_runtime_error("you should never get here"); };
+
+  //! the midpoint used in tesselating the element
+  virtual point_t midpoint() const 
   { raise_runtime_error("you should never get here"); };
 
   //! the normal
@@ -520,8 +568,9 @@ struct burton_element_t<3,2>
   //!   binding and b) the number of entities per collection.
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_bound_entities(
-    size_t from_domain, size_t to_domain, size_t dim, id_t ** ent_ids, 
-    size_t * ent_counts, id_t * c ) 
+    size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id, 
+    connectivity_t ** from_domain_conn, connectivity_t ** to_domain_conn, 
+    id_t * c ) 
   { raise_runtime_error("you should never get here"); };
 
 
@@ -550,9 +599,19 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief The burton_face_t type provides an interface for managing and
+//!   geometry and state associated with mesh faces.
+//!
+//! \tparam N The domain of the face.
+////////////////////////////////////////////////////////////////////////////////
+template< std::size_t N >
+using burton_face_t = burton_element_t<N,N-1>;
+
+////////////////////////////////////////////////////////////////////////////////
 //! \class burton_element_t burton_entity_types.h
 //! \brief The burton_element_t type provides an interelement for managing and
 //!   geometry and state associated with mesh elements.
+//!
 //! \remark this is a 3d cell
 ////////////////////////////////////////////////////////////////////////////////
 template<>
@@ -575,6 +634,9 @@ struct burton_element_t<3,3>
   //! Number of domains in the burton mesh.
   static constexpr auto num_dimensions = mesh_traits_t::dimension;
 
+  //! The domain of the entity
+  static constexpr auto domain = 0;
+
   //! Handle for accessing state at vertex.
   using data_t = typename mesh_traits_t::data_t;
 
@@ -593,6 +655,16 @@ struct burton_element_t<3,3>
 
   // the flecsi id type
   using id_t = flecsi::id_t;
+  using connectivity_t = flecsi::connectivity_t;
+
+  //! the base vertex type
+  using vertex_t = burton_vertex_t<num_dimensions>;
+
+  //! the base edge type
+  using edge_t = burton_edge_t<num_dimensions>;
+
+  //! the base edge type
+  using face_t = burton_face_t<num_dimensions>;
 
   //============================================================================
   // Constructors
@@ -623,6 +695,10 @@ struct burton_element_t<3,3>
 
   //! the centroid
   virtual point_t centroid() const 
+  { raise_runtime_error("you should never get here"); };
+
+  //! the midpoint used in tesselating the element
+  virtual point_t midpoint() const 
   { raise_runtime_error("you should never get here"); };
 
   //! the area of the element
@@ -675,8 +751,9 @@ struct burton_element_t<3,3>
   //!   binding and b) the number of entities per collection.
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_bound_entities(
-    size_t from_domain, size_t to_domain, size_t dim, id_t ** ent_ids, 
-    size_t * ent_counts, id_t * c ) 
+    size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id, 
+    connectivity_t ** from_domain_conn, connectivity_t ** to_domain_conn, 
+    id_t * c ) 
   { raise_runtime_error("you should never get here"); };
 
 
@@ -704,25 +781,6 @@ private:
 }; // class burton_element_t
 
 
-
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief The burton_face_t type provides an interface for managing and
-//!   geometry and state associated with mesh faces.
-//!
-//! \tparam N The domain of the face.
-////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N >
-using burton_edge_t = burton_element_t<N,1>;
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief The burton_face_t type provides an interface for managing and
-//!   geometry and state associated with mesh faces.
-//!
-//! \tparam N The domain of the face.
-////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N >
-using burton_face_t = burton_element_t<N,N-1>;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The burton_cell_t type provides an interface for managing and

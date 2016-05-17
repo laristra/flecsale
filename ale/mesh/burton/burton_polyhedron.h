@@ -59,6 +59,9 @@ public:
   //! the centroid
   point_t centroid() const override;
 
+  //! the midpoint
+  point_t midpoint() const override;
+
   //! the area of the cell
   real_t volume() const override;
 
@@ -79,8 +82,10 @@ public:
   // \brief create_bound_entities function for burton_polyhedron_cell_t.
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_bound_entities(
-    size_t from_domain, size_t to_domain, size_t dim, id_t ** ent_ids, 
-    size_t * ent_counts, id_t * c ) override
+    size_t from_domain, size_t to_domain, size_t dim, 
+    id_t ** from_domain_ent_ids, size_t * from_domain_ent_counts, 
+    id_t ** to_domain_ent_ids, size_t * to_domain_ent_counts, 
+    id_t * c ) override
   {
 
   } // create_bound_entities

@@ -59,6 +59,9 @@ public:
   //! the centroid
   point_t centroid() const override;
 
+  //! the midpoint
+  point_t midpoint() const override;
+
   //! the area of the cell
   real_t volume() const override;
 
@@ -106,21 +109,21 @@ public:
       // Faces
     case (2): 
 
-      e[0]  = v[1];
-      e[1]  = v[3];
-      e[2]  = v[2];
+      e[0]  = v[0];
+      e[1]  = v[1];
+      e[2]  = v[3];
 
-      e[3]  = v[2];
-      e[4]  = v[3];
-      e[5]  = v[0];
+      e[3]  = v[1];
+      e[4]  = v[2];
+      e[5]  = v[3];
 
-      e[6]  = v[0];
-      e[7]  = v[3];
-      e[8]  = v[1];
+      e[6]  = v[2];
+      e[7]  = v[0];
+      e[8]  = v[3];
 
       e[9]  = v[0];
-      e[10] = v[1];
-      e[11] = v[2];
+      e[10] = v[2];
+      e[11] = v[1];
 
       return {3, 3, 3, 3};
       
@@ -138,36 +141,187 @@ public:
   //! \brief create_bound_entities function for burton_tetrahedron_cell_t.
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_bound_entities(
-    size_t from_domain, size_t to_domain, size_t dim, id_t ** ent_ids, 
-    size_t * ent_counts, id_t * c ) override
+    size_t from_domain, size_t to_domain, size_t dim, 
+    id_t ** from_domain_ent_ids, size_t * from_domain_ent_counts, 
+    id_t ** to_domain_ent_ids, size_t * to_domain_ent_counts, 
+    id_t * c ) override
   {
-    assert( ent_counts[0] == 4 );
-
+    assert( from_domain_ent_counts[0] == 4 );
+    size_t i = 0;
     switch (dim) {
       //------------------------------------------------------------------------
       // Corners
-    case 1:
+    case 0:
+
       // corner 0
-      c[0] = ent_ids[0][0]; // vertex 0
-      c[1] = ent_ids[1][0]; // edge 0, abuts vertex 0
-      c[2] = ent_ids[1][3]; // edge 3, abuts vertex 0
+      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
+      c[i++] = from_domain_ent_ids[1][0]; // edge 0, abuts vertex 0
+      c[i++] = from_domain_ent_ids[1][2]; // edge 2, abuts vertex 0
+      c[i++] = from_domain_ent_ids[1][3]; // edge 3, abuts vertex 0
+      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 0
+      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 0
+      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 0
+      // corner 1
+      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
+      c[i++] = from_domain_ent_ids[1][1]; // edge 1, abuts vertex 1
+      c[i++] = from_domain_ent_ids[1][0]; // edge 0, abuts vertex 1
+      c[i++] = from_domain_ent_ids[1][4]; // edge 4, abuts vertex 1
+      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 1
+      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 1
+      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 1
+      // corner 2
+      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
+      c[i++] = from_domain_ent_ids[1][2]; // edge 2, abuts vertex 2
+      c[i++] = from_domain_ent_ids[1][1]; // edge 1, abuts vertex 2
+      c[i++] = from_domain_ent_ids[1][5]; // edge 5, abuts vertex 2
+      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 2
+      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 2
+      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 2
+      // corner 3
+      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
+      c[i++] = from_domain_ent_ids[1][3]; // edge 3, abuts vertex 3
+      c[i++] = from_domain_ent_ids[1][5]; // edge 5, abuts vertex 3
+      c[i++] = from_domain_ent_ids[1][4]; // edge 4, abuts vertex 3
+      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 3
+      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 3
+      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 3
+
+      return std::vector<id_t>(4, 7);
+
+      //------------------------------------------------------------------------
+      // Wedges
+    case 1:
+
+      // corner 0
+      // wedge 0
+      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
+      c[i++] = from_domain_ent_ids[1][3]; // edge 3, abuts vertex 0
+      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 0
+      c[i++] =   to_domain_ent_ids[0][0]; // corner 0
+      // wedge 1
+      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
+      c[i++] = from_domain_ent_ids[1][0]; // edge 0, abuts vertex 0
+      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 0
+      c[i++] =   to_domain_ent_ids[0][0]; // corner 0
+      // wedge 2
+      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
+      c[i++] = from_domain_ent_ids[1][2]; // edge 2, abuts vertex 0
+      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 0
+      c[i++] =   to_domain_ent_ids[0][0]; // corner 0
+      // wedge 3
+      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
+      c[i++] = from_domain_ent_ids[1][3]; // edge 3, abuts vertex 0
+      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 0
+      c[i++] =   to_domain_ent_ids[0][0]; // corner 0
+      // wedge 4
+      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
+      c[i++] = from_domain_ent_ids[1][0]; // edge 0, abuts vertex 0
+      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 0
+      c[i++] =   to_domain_ent_ids[0][0]; // corner 0
+      // wedge 5
+      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
+      c[i++] = from_domain_ent_ids[1][2]; // edge 2, abuts vertex 0
+      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 0
+      c[i++] =   to_domain_ent_ids[0][0]; // corner 0
 
       // corner 1
-      c[3] = ent_ids[0][1]; // vertex 1
-      c[4] = ent_ids[1][1]; // edge 1, abuts vertex 1
-      c[5] = ent_ids[1][0]; // edge 0, abuts vertex 1
+      // wedge 0
+      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
+      c[i++] = from_domain_ent_ids[1][4]; // edge 4, abuts vertex 1
+      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 1
+      c[i++] =   to_domain_ent_ids[0][1]; // corner 1
+      // wedge 1
+      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
+      c[i++] = from_domain_ent_ids[1][1]; // edge 1, abuts vertex 1
+      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 1
+      c[i++] =   to_domain_ent_ids[0][1]; // corner 1
+      // wedge 2
+      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
+      c[i++] = from_domain_ent_ids[1][0]; // edge 0, abuts vertex 1
+      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 1
+      c[i++] =   to_domain_ent_ids[0][1]; // corner 1
+      // wedge 3
+      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
+      c[i++] = from_domain_ent_ids[1][4]; // edge 4, abuts vertex 1
+      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 1
+      c[i++] =   to_domain_ent_ids[0][1]; // corner 1
+      // wedge 4
+      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
+      c[i++] = from_domain_ent_ids[1][1]; // edge 1, abuts vertex 1
+      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 1
+      c[i++] =   to_domain_ent_ids[0][1]; // corner 1
+      // wedge 5
+      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
+      c[i++] = from_domain_ent_ids[1][0]; // edge 0, abuts vertex 1
+      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 1
+      c[i++] =   to_domain_ent_ids[0][1]; // corner 1
 
       // corner 2
-      c[6] = ent_ids[0][2]; // vertex 2
-      c[7] = ent_ids[1][2]; // edge 2, abuts vertex 2
-      c[8] = ent_ids[1][1]; // edge 1, abuts vertex 2
+      // wedge 0
+      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
+      c[i++] = from_domain_ent_ids[1][5]; // edge 5, abuts vertex 2
+      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 2
+      c[i++] =   to_domain_ent_ids[0][2]; // corner 2
+      // wedge 1
+      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
+      c[i++] = from_domain_ent_ids[1][2]; // edge 2, abuts vertex 2
+      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 2
+      c[i++] =   to_domain_ent_ids[0][2]; // corner 2
+      // wedge 2
+      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
+      c[i++] = from_domain_ent_ids[1][1]; // edge 1, abuts vertex 2
+      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 2
+      c[i++] =   to_domain_ent_ids[0][2]; // corner 2
+      // wedge 3
+      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
+      c[i++] = from_domain_ent_ids[1][5]; // edge 5, abuts vertex 2
+      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 2
+      c[i++] =   to_domain_ent_ids[0][2]; // corner 2
+      // wedge 4
+      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
+      c[i++] = from_domain_ent_ids[1][2]; // edge 2, abuts vertex 2
+      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 2
+      c[i++] =   to_domain_ent_ids[0][2]; // corner 2
+      // wedge 5
+      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
+      c[i++] = from_domain_ent_ids[1][1]; // edge 1, abuts vertex 2
+      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 2
+      c[i++] =   to_domain_ent_ids[0][2]; // corner 2
+
 
       // corner 3
-      c[9] = ent_ids[0][3]; // vertex 3
-      c[10] = ent_ids[1][3]; // edge 3, abuts vertex 3
-      c[11] = ent_ids[1][2]; // edge 2, abuts vertex 3
+      // wedge 0
+      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
+      c[i++] = from_domain_ent_ids[1][4]; // edge 4, abuts vertex 3
+      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 3
+      c[i++] =   to_domain_ent_ids[0][3]; // corner 3
+      // wedge 1
+      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
+      c[i++] = from_domain_ent_ids[1][3]; // edge 3, abuts vertex 3
+      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 3
+      c[i++] =   to_domain_ent_ids[0][3]; // corner 3
+      // wedge 2
+      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
+      c[i++] = from_domain_ent_ids[1][5]; // edge 5, abuts vertex 3
+      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 3
+      c[i++] =   to_domain_ent_ids[0][3]; // corner 3
+      // wedge 3
+      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
+      c[i++] = from_domain_ent_ids[1][4]; // edge 4, abuts vertex 3
+      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 3
+      c[i++] =   to_domain_ent_ids[0][3]; // corner 3
+      // wedge 4
+      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
+      c[i++] = from_domain_ent_ids[1][3]; // edge 3, abuts vertex 3
+      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 3
+      c[i++] =   to_domain_ent_ids[0][3]; // corner 3
+      // wedge 5
+      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
+      c[i++] = from_domain_ent_ids[1][5]; // edge 5, abuts vertex 3
+      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 3
+      c[i++] =   to_domain_ent_ids[0][3]; // corner 3
 
-      return {3, 3, 3, 3};
+      return std::vector<id_t>(24, 4);
 
       //------------------------------------------------------------------------
       // failure

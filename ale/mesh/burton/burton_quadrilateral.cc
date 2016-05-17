@@ -32,7 +32,7 @@ using burton_3d_quad_t = burton_quadrilateral_t<3>;
 burton_2d_quad_t::point_t burton_2d_quad_t::centroid() const
 {
   auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<0,0>(this);
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   return geom::quadrilateral<num_dimensions>::centroid( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
@@ -42,7 +42,7 @@ burton_2d_quad_t::point_t burton_2d_quad_t::centroid() const
 burton_2d_quad_t::real_t burton_2d_quad_t::area() const
 {
   auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<0,0>(this);
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   return geom::quadrilateral<num_dimensions>::area( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
@@ -52,8 +52,8 @@ burton_2d_quad_t::real_t burton_2d_quad_t::area() const
 burton_2d_quad_t::real_t burton_2d_quad_t::min_length() const
 {
   auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<0,0>(this);
-  auto es = msh->template entities<1,0>(this);
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
+  auto es = msh->template entities<edge_t::dimension, edge_t::domain>(this);
   // check the edges first
   auto eit = es.begin();
   auto min_length = eit->length();
@@ -77,8 +77,18 @@ burton_2d_quad_t::real_t burton_2d_quad_t::min_length() const
 burton_3d_quad_t::point_t burton_3d_quad_t::centroid() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<0,0>(this);
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   return geom::quadrilateral<num_dimensions>::centroid( 
+    vs[0]->coordinates(), vs[1]->coordinates(), 
+    vs[2]->coordinates(), vs[3]->coordinates() );
+}
+
+//! the midpoint
+burton_3d_quad_t::point_t burton_3d_quad_t::midpoint() const
+{
+  auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
+  return geom::quadrilateral<num_dimensions>::midpoint( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
 }
@@ -88,7 +98,7 @@ burton_3d_quad_t::point_t burton_3d_quad_t::centroid() const
 burton_3d_quad_t::vector_t burton_3d_quad_t::normal() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<0,0>(this);
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   return geom::quadrilateral<num_dimensions>::normal( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
@@ -98,7 +108,7 @@ burton_3d_quad_t::vector_t burton_3d_quad_t::normal() const
 burton_3d_quad_t::real_t burton_3d_quad_t::area() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<0,0>(this);
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   return geom::quadrilateral<num_dimensions>::area( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
@@ -108,8 +118,8 @@ burton_3d_quad_t::real_t burton_3d_quad_t::area() const
 burton_3d_quad_t::real_t burton_3d_quad_t::min_length() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<0,0>(this);
-  auto es = msh->template entities<1,0>(this);
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
+  auto es = msh->template entities<edge_t::dimension, edge_t::domain>(this);
   // check the edges first
   auto eit = es.begin();
   auto min_length = eit->length();

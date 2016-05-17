@@ -42,7 +42,7 @@ class burton_wedge_t;
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 class burton_corner_t
-  : public flecsi::mesh_entity_t<1, burton_mesh_traits_t<N>::num_domains>
+  : public flecsi::mesh_entity_t<0, burton_mesh_traits_t<N>::num_domains>
 {
 public:
 
@@ -54,13 +54,16 @@ public:
   using mesh_topology_base_t =  flecsi::mesh_topology_base_t;
  
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<2>;
+  using mesh_traits_t = burton_mesh_traits_t<N>;
 
   //! Number of domains in the burton mesh.
   static constexpr auto num_domains = mesh_traits_t::num_domains;
 
   //! Number of domains in the burton mesh.
   static constexpr auto num_dimensions = mesh_traits_t::dimension;
+
+  //! The domain of the entity
+  static constexpr auto domain = 1;
 
   //! Handle for accessing state at vertex.
   using data_t = typename mesh_traits_t::data_t;
@@ -75,13 +78,16 @@ public:
   using vector_t = typename mesh_traits_t::vector_t;
 
   //! the base vertex type
-  using vertex_t = burton_vertex_t<N>;
+  using vertex_t = burton_vertex_t<num_dimensions>;
+
+  //! the base edge type
+  using edge_t = burton_edge_t<num_dimensions>;
+
+  //! the base edge type
+  using face_t = burton_face_t<num_dimensions>;
 
   //! the base cell type
-  using cell_t = burton_cell_t<N>;
-
-  //! the base wedge type
-  using wedge_t = burton_wedge_t<N>;
+  using cell_t = burton_cell_t<num_dimensions>;
 
   //============================================================================
   // Constructors
@@ -102,44 +108,9 @@ public:
   // Accessors / Modifiers
   //============================================================================
 
-  //! \brief Add a wedge to the mesh.
-  //!
-  //! \param[in] w The wedge to add to the mesh.
-  void add_wedge(wedge_t * w)
-  {
-    wedges_.add(w);
-    w->set_corner(this);
-  }
-
-  //! Set the cell that a corner is in.
-  void set_cell(cell_t * cell) { cell_ = cell; }
-
-  //! Set the vertex that a corner has.
-  void set_vertex(vertex_t * vertex) { vertex_ = vertex; }
-
-  //! Get the cell that a corner is in.
-  const cell_t * cell() const { return cell_; }
-
-  //! Get the vertex that a corner has.
-  const vertex_t * vertex() const { return vertex_; }
-
-  //! \brief Get the wedges for the mesh.
-  //! \return The wedges in the mesh.
-  auto & wedges() { return wedges_; } // wedges
-
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) { }
 
-  //============================================================================
-  // Private Data
-  //============================================================================
-
-private:
-
-
-  flecsi::entity_group<wedge_t> wedges_;
-  cell_t * cell_;
-  vertex_t * vertex_;
 
 }; // class burton_corner_t
 

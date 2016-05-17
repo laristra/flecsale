@@ -14,7 +14,7 @@
 
 # these are all the headers within this sub-package/sub-folder
 set(dummy_HEADERS
-  dummy/dummy.h
+  dummy.h
   PARENT_SCOPE
 )
 
@@ -35,7 +35,7 @@ set(dummy_SOURCES
 cinch_add_unit(dummy
     SOURCES 
       test/dummy.cc
-    LIBRARIES ${dummy_LIBS} ale
+    LIBRARIES ${ALE_LIBRARIES}
 )
 
 

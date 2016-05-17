@@ -108,6 +108,16 @@ struct quadrilateral<3> {
     return polygon<3>::centroid( std::forward<Args>(pts)... );
   }
 
+
+  //============================================================================
+  //! \brief the midpoint function
+  //============================================================================
+  template< typename... Args >
+  static auto midpoint( Args&&... pts ) 
+  {
+    return polygon<3>::midpoint( std::forward<Args>(pts)... );
+  }
+
   //============================================================================
   //! \brief the centroid function
   //============================================================================

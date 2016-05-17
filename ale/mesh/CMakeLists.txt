@@ -21,8 +21,6 @@ set(mesh_HEADERS
   burton/burton_io_vtm.h
   burton/burton_io_vtu.h
 
-  burton/burton_vtk_utils.h
-
   burton/burton_mesh.h
   burton/burton_mesh_topology.h
   burton/burton_mesh_traits.h
@@ -37,7 +35,7 @@ set(mesh_HEADERS
   burton/burton_quadrilateral.h
   burton/burton_polygon.h
 
-  burton/burton_tetraahedron.h
+  burton/burton_tetrahedron.h
   burton/burton_hexahedron.h
   burton/burton_polyhedron.h
 
@@ -52,23 +50,20 @@ set(mesh_HEADERS
 set(mesh_SOURCES
   burton/burton_element.cc
   burton/burton_hexahedron.cc
+  burton/burton_io_exodus.cc
   burton/burton_polygon.cc
   burton/burton_polyhedron.cc
   burton/burton_quadrilateral.cc
   burton/burton_tetrahedron.cc
   burton/burton_triangle.cc
+  burton/burton_wedge.cc
   burton/burton_vertex.cc
   PARENT_SCOPE
 )
 
-set( mesh_LIBS 
-  ${IO_LIBRARIES} 
-  ${SHAPO_LIBRARIES}
-  flecsi 
-)
 
-# set some global paths
-set( ALE_DATA_DIR ../../data )
+# get a relative path
+file(RELATIVE_PATH DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ${ALE_DATA_DIR})
 
 cinch_add_unit(mesh
     SOURCES 
@@ -85,20 +80,21 @@ cinch_add_unit(mesh
       burton/test/burton_voro.cc
       burton/test/burton_grad.cc
     INPUTS 
-      burton/test/burton.blessed
-      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed.g
-      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed.exo
-      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed.vtu
-      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed.vtm
-      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed_0_0.vtu
-      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed_1_0.vtu
-      ${ALE_DATA_DIR}/meshes/2d/mixed/mixed.vtk
-      ${ALE_DATA_DIR}/meshes/2d/voro/voro.g
-      ${ALE_DATA_DIR}/meshes/3d/box/box-hex.g
-      ${ALE_DATA_DIR}/meshes/3d/box/box-nfaced.exo
-      ${ALE_DATA_DIR}/meshes/3d/box/box-tet.g
-      ${ALE_DATA_DIR}/meshes/3d/voro/sedov-0_05cm.exo
-    LIBRARIES ${mesh_LIBS} ale
+      burton/test/burton_2d.blessed
+      burton/test/burton_3d.blessed
+      ${DATA_DIR}/meshes/2d/mixed/mixed.g
+      ${DATA_DIR}/meshes/2d/mixed/mixed.exo
+      ${DATA_DIR}/meshes/2d/mixed/mixed.vtu
+      ${DATA_DIR}/meshes/2d/mixed/mixed.vtm
+      ${DATA_DIR}/meshes/2d/mixed/mixed_0_0.vtu
+      ${DATA_DIR}/meshes/2d/mixed/mixed_1_0.vtu
+      ${DATA_DIR}/meshes/2d/mixed/mixed.vtk
+      ${DATA_DIR}/meshes/2d/voro/voro.g
+      ${DATA_DIR}/meshes/3d/box/box-hex.g
+      ${DATA_DIR}/meshes/3d/box/box-nfaced.exo
+      ${DATA_DIR}/meshes/3d/box/box-tet.g
+      ${DATA_DIR}/meshes/3d/voro/sedov-0_05cm.exo
+    LIBRARIES ${ALE_LIBRARIES}
 )
 
 #~---------------------------------------------------------------------------~-#

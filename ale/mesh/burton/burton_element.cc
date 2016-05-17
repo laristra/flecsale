@@ -39,7 +39,7 @@ using burton_3d_cell_t = burton_element_t<3,3>;
 burton_2d_edge_t::point_list_t burton_2d_edge_t::coordinates() const
 {
   auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
-  auto vs = mesh->template entities<0,0>(this);
+  auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   point_list_t coords;
   coords.front() = vs.front()->coordinates();
   coords.back () = vs.back ()->coordinates();
@@ -51,7 +51,7 @@ burton_2d_edge_t::point_list_t burton_2d_edge_t::coordinates() const
 burton_2d_edge_t::point_t burton_2d_edge_t::midpoint() const
 {
   auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
-  auto vs = mesh->template entities<0,0>(this);    
+  auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   return {0.5*(vs[0]->coordinates() + vs[1]->coordinates())};
 }
 
@@ -66,7 +66,7 @@ burton_2d_edge_t::real_t  burton_2d_edge_t::length() const
 {
   using math::sqr;
   auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
-  auto vs = mesh->template entities<0,0>(this);
+  auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   auto & a = vs[0]->coordinates();
   auto & b = vs[1]->coordinates();
   return std::sqrt( sqr(a[0]-b[0]) + sqr(a[1]-b[1]) );
@@ -82,7 +82,7 @@ burton_2d_edge_t::real_t burton_2d_edge_t::area() const
 burton_2d_edge_t::vector_t burton_2d_edge_t::normal() const
 {
   auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
-  auto vs = mesh->template entities<0,0>(this);
+  auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   using math::normal;
   return normal( vs[1]->coordinates(), vs[0]->coordinates() );
 }
@@ -107,7 +107,7 @@ bool burton_2d_edge_t::is_boundary() const
 burton_3d_edge_t::point_list_t burton_3d_edge_t::coordinates() const
 {
   auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto vs = mesh->template entities<0,0>(this);
+  auto vs = mesh->template entities<0,0>(this); 
   point_list_t coords;
   coords.front() = vs.front()->coordinates();
   coords.back () = vs.back ()->coordinates();
@@ -119,7 +119,7 @@ burton_3d_edge_t::point_list_t burton_3d_edge_t::coordinates() const
 burton_3d_edge_t::point_t burton_3d_edge_t::midpoint() const
 {
   auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto vs = mesh->template entities<0,0>(this);    
+  auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   return {0.5*(vs[0]->coordinates() + vs[1]->coordinates())};
 }
 
@@ -128,7 +128,7 @@ burton_3d_edge_t::real_t  burton_3d_edge_t::length() const
 {
   using math::sqr;
   auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto vs = mesh->template entities<0,0>(this);
+  auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   auto & a = vs[0]->coordinates();
   auto & b = vs[1]->coordinates();
   return std::sqrt( sqr(a[0]-b[0]) + sqr(a[1]-b[1]) );
@@ -154,7 +154,7 @@ bool burton_3d_edge_t::is_boundary() const
 burton_2d_cell_t::point_list_t burton_2d_cell_t::coordinates() const
 {
   auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
-  auto vs = mesh->template entities<0,0>(this);
+  auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   point_list_t coords;
   coords.reserve( vs.size() );
   for ( auto v : vs ) coords.emplace_back( v->coordinates() );
@@ -167,9 +167,9 @@ burton_2d_cell_t::real_t burton_2d_cell_t::min_length() const
   using math::abs;
   // get the vertices
   auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
-  auto vs = mesh->template entities<0,0>(this);
+  auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   // get one of the edges as a reference
-  auto es = mesh->template entities<1,0>(this);
+  auto es = mesh->template entities<edge_t::dimension, edge_t::domain>(this);
   auto min_length = es.front()->length();
   // check each vertex combination
   for ( auto vi : vs ) {
@@ -217,7 +217,7 @@ burton_2d_cell_t::size_t burton_2d_cell_t::region() const
 burton_3d_face_t::point_list_t burton_3d_face_t::coordinates() const
 {
   auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto vs = mesh->template entities<0,0>(this);
+  auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   point_list_t coords;
   coords.reserve( vs.size() );
   for ( auto v : vs ) coords.emplace_back( v->coordinates() );
@@ -230,9 +230,9 @@ burton_3d_face_t::real_t burton_3d_face_t::min_length() const
   using math::abs;
   // get the vertices
   auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto vs = mesh->template entities<0,0>(this);
+  auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   // get one of the edges as a reference
-  auto es = mesh->template entities<1,0>(this);
+  auto es = mesh->template entities<edge_t::dimension, edge_t::domain>(this);
   auto min_length = es.front()->length();
   // check each vertex combination
   for ( auto vi : vs ) {
@@ -256,7 +256,7 @@ burton_3d_face_t::real_t burton_3d_face_t::min_length() const
 burton_3d_cell_t::point_list_t burton_3d_cell_t::coordinates() const
 {
   auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto vs = mesh->template entities<0,0>(this);
+  auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   point_list_t coords;
   coords.reserve( vs.size() );
   for ( auto v : vs ) coords.emplace_back( v->coordinates() );
@@ -269,9 +269,9 @@ burton_3d_cell_t::real_t burton_3d_cell_t::min_length() const
   using math::abs;
   // get the vertices
   auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto vs = mesh->template entities<0,0>(this);
+  auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   // get one of the edges as a reference
-  auto es = mesh->template entities<1,0>(this);
+  auto es = mesh->template entities<edge_t::dimension, edge_t::domain>(this);
   auto min_length = es.front()->length();
   // check each vertex combination
   for ( auto vi : vs ) {

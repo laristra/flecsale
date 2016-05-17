@@ -124,6 +124,32 @@ public:
   }
 
   //============================================================================
+  //! \brief the midpoint function
+  //============================================================================
+  auto midpoint() const
+  {
+    // initialize volume
+    point_type cx(0);
+
+    //--------------------------------------------------------------------------
+    // loop over faces
+    for ( const auto & points : faces_ ) {
+      // face midpoint
+      auto xm = math::average( points );
+      // add face contibution
+      cx += xm;
+    }
+
+    //--------------------------------------------------------------------------
+    // return result
+
+    // divide by number of faces
+    cx /= faces_.size();
+
+    return cx;
+  }
+
+  //============================================================================
   //! \brief the volume function
   //============================================================================
   auto volume() const

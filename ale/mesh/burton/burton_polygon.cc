@@ -56,6 +56,12 @@ burton_3d_polygon_t::point_t burton_3d_polygon_t::centroid() const
   return geom::polygon<num_dimensions>::centroid( coords );
 }
 
+//! the centroid
+burton_3d_polygon_t::point_t burton_3d_polygon_t::midpoint() const
+{
+  auto coords = coordinates();
+  return geom::polygon<num_dimensions>::midpoint( coords );
+}
 
 //! the normal
 burton_3d_polygon_t::vector_t burton_3d_polygon_t::normal() const

@@ -50,7 +50,7 @@ struct triangle<2> {
   {
     return math::average( std::forward<Args>(pts)... );
   }
-  
+
   //============================================================================
   //! \brief the volume function
   //============================================================================
@@ -95,6 +95,16 @@ struct triangle<3> {
   //============================================================================
   template< typename... Args >
   static auto centroid( Args&&... pts ) 
+  {
+    return math::average( std::forward<Args>(pts)... );
+  }
+
+
+  //============================================================================
+  //! \brief the midpoint is the same as the centroid
+  //============================================================================
+  template< typename... Args >
+  static auto midpoint( Args&&... pts ) 
   {
     return math::average( std::forward<Args>(pts)... );
   }

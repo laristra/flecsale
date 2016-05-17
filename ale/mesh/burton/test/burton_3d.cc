@@ -178,63 +178,45 @@ TEST_F(burton_3d, normals) {
 
 
   for(auto cn : mesh_.corners()) {
-    auto cl = cn->cell();
-    auto vt = cn->vertex();
-    auto ws = cn->wedges();
-
-    std::cout << std::endl; 
+    auto cl = mesh_.cells(cn).front();
+    auto vt = mesh_.vertices(cn).front();
+    auto ws = mesh_.wedges(cn);
 
     ASSERT_EQ( 1, mesh_.cells( cn ).size() );
     ASSERT_EQ( 3, mesh_.faces( cn ).size() );
     ASSERT_EQ( 3, mesh_.edges( cn ).size() );
     ASSERT_EQ( 1, mesh_.vertices( cn ).size() );
-
-    for ( auto v : mesh_.vertices(cl) ) 
-      std::cout << v.id() << " ";
-    std::cout << std::endl; 
-
-    for ( auto v : mesh_.vertices(cl) ) 
-      std::cout << v->coordinates() << std::endl; 
-    std::cout << std::endl;
-    std::cout << cl->centroid() << std::endl;
+    ASSERT_EQ( 6, ws.size() );
 
     for ( auto wg = ws.begin(); wg != ws.end(); ++wg ) {
       // first edge
       {
-        auto fc = wg->face();        
-        auto eg = wg->edge();
-        //auto face_edges = mesh_.edges( fc );
-        //auto it = std::find_if( face_edges.begin(), face_edges.end(), 
-        //                        [&eg]( auto fin ) { return fin.id() == eg->id<0>(); } );
+        ASSERT_EQ( 1, mesh_.edges( *wg ).size() );
+        ASSERT_EQ( 1, mesh_.faces( *wg ).size() );
+        ASSERT_EQ( 1, mesh_.vertices( *wg ).size() );
+        ASSERT_EQ( 1, mesh_.corners( *wg ).size() );
+        auto fc = mesh_.faces(*wg).front();
         auto n = wg->facet_normal_right();
         auto fx = fc->centroid();
         auto cx = cl->centroid();
         auto delta = fx - cx;
         auto dot = dot_product( n, delta );
-        //ASSERT_GT( dot, 0 );
-        std::cout << std::endl;
-        std::cout << " first " << dot << std::endl;
-        //std::cout << vt->coordinates() << std::endl;
-        //std::cout << wg->vertex()->coordinates() << std::endl;
-        //std::cout << wg->edge()->midpoint() << std::endl;
-        //std::cout << fx << std::endl;
-        std::cout << " " << unit(delta) << std::endl;
-        std::cout << " " << unit(n) << std::endl;
+        ASSERT_GT( dot, 0 );
       }
       // second edge
       ++wg;
       {
-        auto fc = wg->face();
+        ASSERT_EQ( 1, mesh_.edges( *wg ).size() );
+        ASSERT_EQ( 1, mesh_.faces( *wg ).size() );
+        ASSERT_EQ( 1, mesh_.vertices( *wg ).size() );
+        ASSERT_EQ( 1, mesh_.corners( *wg ).size() );
+        auto fc = mesh_.faces(*wg).front();
         auto n = wg->facet_normal_left();
         auto fx = fc->centroid();
         auto cx = cl->centroid();
         auto delta = fx - cx;
         auto dot = dot_product( n, delta );
-        //ASSERT_GT( dot, 0 );
-        std::cout << std::endl;
-        std::cout << " second " << dot << std::endl;
-        std::cout << " " << unit(delta) << std::endl;
-        std::cout << " " << unit(n) << std::endl;
+        ASSERT_GT( dot, 0 );
       }
     } // wedges
 

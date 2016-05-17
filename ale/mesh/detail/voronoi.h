@@ -379,8 +379,8 @@ mesh_t transfer_mesh( const Tessellator & tess )
   auto points  = shapo_mesh->GetPoints();
     
   // store the max and min
-  std::array<real_t, 3> min_point;
-  std::array<real_t, 3> max_point;
+  std::array<shapo_real_t, 3> min_point;
+  std::array<shapo_real_t, 3> max_point;
   points->GetPoint(0, min_point.data() );
   points->GetPoint(0, max_point.data() );
 

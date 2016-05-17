@@ -31,6 +31,13 @@ burton_polyhedron_t::point_t burton_polyhedron_t::centroid() const
   return math::average( coords );
 }
 
+//! the centroid
+burton_polyhedron_t::point_t burton_polyhedron_t::midpoint() const
+{
+  auto coords = coordinates();
+  return math::average( coords );
+}
+
 
 //! the area of the cell
 burton_polyhedron_t::real_t burton_polyhedron_t::volume() const

@@ -36,7 +36,8 @@ cmake \
   -DENABLE_JENKINS_OUTPUT=ON \
   -DENABLE_IO=ON \
   -DENABLE_VORO=ON \
-  -DTPL_INSTALL_PREFIX=${TPL_INSTALL_PREFIX} \
+  -DCMAKE_PREFIX_PATH=${TPL_INSTALL_PREFIX} \
+  -DBUILD_SHARED_LIBS=OFF
   $SRC_DIR
 
 #------------------------------------------------------------------------------#

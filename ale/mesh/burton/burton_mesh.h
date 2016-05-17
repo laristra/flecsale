@@ -22,6 +22,7 @@
 //! system includes
 #include <set>
 #include <string>
+#include <sstream>
 
 //! user includes
 #include "flecsi/data/data.h"
@@ -354,8 +355,10 @@ public:
     // move the data
     data_t::instance().move( runtime_id, mesh_.runtime_id() );
     // reset each entity mesh pointer
+    std::cout << "move assignement" << std::endl;  
     for ( auto v : vertices() ) v->reset( mesh_ );
     for ( auto e : edges() ) e->reset( mesh_ );
+    for ( auto f : faces() ) f->reset( mesh_ );
     for ( auto c : cells() ) c->reset( mesh_ );
     for ( auto c : corners() ) c->reset( mesh_ );
     for ( auto w : wedges() ) w->reset( mesh_ );
@@ -430,7 +433,7 @@ public:
   //! \return The number of vertices in the burton mesh.
   size_t num_vertices() const
   {
-    return mesh_.template num_entities<0, 0>();
+    return mesh_.template num_entities<vertex_t::dimension, vertex_t::domain>();
   } // num_vertices
 
   //! \brief Return all vertices in the burton mesh.
@@ -438,7 +441,7 @@ public:
   //!   in range based for loops.
   auto vertices() const 
   { 
-    return mesh_.template entities<0, 0>(); 
+    return mesh_.template entities<vertex_t::dimension, vertex_t::domain>(); 
   } // vertices
 
   //! \brief Return vertices associated with entity instance of type \e E.
@@ -452,7 +455,7 @@ public:
   template <class E>
   auto vertices(E * e) const
   {
-    return mesh_.template entities<0, 0>(e);
+    return mesh_.template entities<vertex_t::dimension, vertex_t::domain>(e);
   } // vertices
 
   //! \brief Return vertices for entity \e e in domain \e M.
@@ -466,7 +469,7 @@ public:
   template <size_t M, class E>
   auto vertices(const flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.template entities<0, M, 0>(e.entity());
+    return mesh_.template entities<vertex_t::dimension, M, vertex_t::domain>(e.entity());
   }
 
   //! \brief Return ids for all vertices in the burton mesh.
@@ -474,7 +477,7 @@ public:
   //! \return Ids for all vertices in the burton mesh.
   auto vertex_ids() const
   {
-    return mesh_.template entity_ids<0, 0>();
+    return mesh_.template entity_ids<vertex_t::dimension, vertex_t::domain>();
   } // vertex_ids
 
   //! \brief Return vertex ids associated with entity instance of type \e E.
@@ -488,7 +491,7 @@ public:
   template <class E>
   auto vertex_ids(E * e) const
   {
-    return mesh_.template entity_ids<0, 0>(e);
+    return mesh_.template entity_ids<vertex_t::dimension, vertex_t::domain>(e);
   } // vertex_ids
 
   //! \brief Return vertices for entity \e e in domain \e M.
@@ -502,7 +505,7 @@ public:
   template <size_t M, class E>
   auto vertex_ids(const flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.template entity_ids<0, M, 0>(e.entity());
+    return mesh_.template entity_ids<vertex_t::dimension, M, vertex_t::domain>(e.entity());
   }
 
   //! \brief Return boundary  vertices in the burton mesh.
@@ -526,13 +529,15 @@ public:
   //! \return The number of burton mesh edges.
   size_t num_edges() const
   {
-    return mesh_.template num_entities<1, 0>();
+    return mesh_.template num_entities<edge_t::dimension, edge_t::domain>();
   } // num_edges
 
   //! \brief Return all edges in the burton mesh.
   //! \return Return all edges in the burton mesh as a sequence for use, e.g., in
   //!   range based for loops.
-  auto edges() const { return mesh_.template entities<1, 0>(); } // edges
+  auto edges() const { 
+    return mesh_.template entities<edge_t::dimension, 0>(); 
+  } // edges
 
   //! \brief Return edges for entity \e e in domain \e M.
   //!
@@ -545,7 +550,7 @@ public:
   template <size_t M, class E>
   auto edges(const flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.template entities<1, M, 0>(e.entity());
+    return mesh_.template entities<edge_t::dimension, M, edge_t::domain>(e.entity());
   } // edges
 
   //! \brief Return ids for all edges in the burton mesh.
@@ -553,7 +558,7 @@ public:
   //! \return Ids for all edges in the burton mesh.
   auto edge_ids() const
   {
-    return mesh_.template entity_ids<1, 0>();
+    return mesh_.template entity_ids<edge_t::dimension, edge_t::domain>();
   } // edge_ids
 
   //! \brief Return edge ids associated with entity instance of type \e E.
@@ -566,7 +571,7 @@ public:
   template <class E>
   auto edge_ids(E * e) const
   {
-    return mesh_.template entity_ids<1, 0>(e);
+    return mesh_.template entity_ids<edge_t::dimension, edge_t::domain>(e);
   } // edge_ids
 
   //! \brief Return boundary edges in the burton mesh.
@@ -589,7 +594,7 @@ public:
   //! \return The number of faces in the burton mesh.
   size_t num_faces() const
   {
-    return mesh_.template num_entities<num_dimensions()-1, 0>();
+    return mesh_.template num_entities<face_t::dimension, face_t::domain>();
   } // num_faces
 
   //! \brief Return all faces in the burton mesh.
@@ -598,7 +603,7 @@ public:
   //!   in range based for loops.
   auto faces() const
   {
-    return mesh_.template entities<num_dimensions()-1, 0>();
+    return mesh_.template entities<face_t::dimension, face_t::domain>();
   } // faces
 
   //! \brief Return all faces in the burton mesh.
@@ -606,7 +611,7 @@ public:
   //!   in range based for loops.
   auto faces() // FIXME const
   {
-    return mesh_.template entities<num_dimensions()-1, 0>();
+    return mesh_.template entities<face_t::dimension, face_t::domain>();
   } // faces
 
   //! \brief Return faces associated with entity instance of type \e E.
@@ -619,7 +624,7 @@ public:
   template <class E>
   auto faces(E * e) const
   {
-    return mesh_.template entities<num_dimensions()-1, 0>(e);
+    return mesh_.template entities<face_t::dimension, face_t::domain>(e);
   } // faces
 
   //! \brief Return faces for entity \e e in domain \e M.
@@ -633,14 +638,14 @@ public:
   template <size_t M, class E>
   auto faces(const flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.template entities<num_dimensions()-1, M, 0>(e.entity());
+    return mesh_.template entities<face_t::dimension, M, face_t::domain>(e.entity());
   } // faces
 
   //! \brief Return ids for all faces in the burton mesh.
   //! \return Ids for all faces in the burton mesh.
   auto face_ids() const
   {
-    return mesh_.template entity_ids<num_dimensions()-1, 0>();
+    return mesh_.template entity_ids<face_t::dimension, face_t::domain>();
   } // face_ids
 
   //! \brief Return face ids associated with entity instance of type \e E.
@@ -653,7 +658,7 @@ public:
   template <class E>
   auto face_ids(E * e) const
   {
-    return mesh_.template entity_ids<num_dimensions()-1, 0>(e);
+    return mesh_.template entity_ids<face_t::dimension, face_t::domain>(e);
   } // face_ids
 
   //============================================================================
@@ -664,7 +669,7 @@ public:
   //! \return The number of cells in the burton mesh.
   size_t num_cells() const
   {
-    return mesh_.template num_entities<num_dimensions(), 0>();
+    return mesh_.template num_entities<cell_t::dimension, cell_t::domain>();
   } // num_cells
 
   //! \brief Return all cells in the burton mesh.
@@ -673,7 +678,7 @@ public:
   //!   in range based for loops.
   auto cells() const
   {
-    return mesh_.template entities<num_dimensions(), 0>();
+    return mesh_.template entities<cell_t::dimension, cell_t::domain>();
   } // cells
 
   //! \brief Return all cells in the burton mesh.
@@ -681,7 +686,7 @@ public:
   //!   in range based for loops.
   auto cells() // FIXME const
   {
-    return mesh_.template entities<num_dimensions(), 0>();
+    return mesh_.template entities<cell_t::dimension, cell_t::domain>();
   } // cells
 
   //! \brief Return cells associated with entity instance of type \e E.
@@ -694,7 +699,7 @@ public:
   template <class E>
   auto cells(E * e) const
   {
-    return mesh_.template entities<num_dimensions(), 0>(e);
+    return mesh_.template entities<cell_t::dimension, cell_t::domain>(e);
   } // cells
 
   //! \brief Return cells for entity \e e in domain \e M.
@@ -708,14 +713,14 @@ public:
   template <size_t M, class E>
   auto cells(const flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.template entities<num_dimensions(), M, 0>(e.entity());
+    return mesh_.template entities<cell_t::dimension, M, cell_t::domain>(e.entity());
   } // cells
 
   //! \brief Return ids for all cells in the burton mesh.
   //! \return Ids for all cells in the burton mesh.
   auto cell_ids() const
   {
-    return mesh_.template entity_ids<num_dimensions(), 0>();
+    return mesh_.template entity_ids<cell_t::dimension, cell_t::domain>();
   } // cell_ids
 
   //! \brief Return cell ids associated with entity instance of type \e E.
@@ -728,7 +733,7 @@ public:
   template <class E>
   auto cell_ids(E * e) const
   {
-    return mesh_.template entity_ids<num_dimensions(), 0>(e);
+    return mesh_.template entity_ids<cell_t::dimension, cell_t::domain>(e);
   } // cell_ids
 
   //! \brief Return the number of cells in the burton mesh.
@@ -751,15 +756,24 @@ public:
   //! \return The number of wedges in the burton mesh.
   size_t num_wedges() const
   {
-    return mesh_.template num_entities<2, 1>();
+    return mesh_.template num_entities<wedge_t::dimension, wedge_t::domain>();
   } // num_wedges
+
+  //! \brief Return all wedges in the burton mesh.
+  //!
+  //! \return Return all wedges in the burton mesh as a sequence for use, e.g.,
+  //!   in range based for loops.
+  auto wedges() const
+  {
+    return mesh_.template entities<wedge_t::dimension, wedge_t::domain>();
+  } // wedges
 
   //! \brief Return all wedges in the burton mesh.
   //! \return Return all wedges in the burton mesh as a sequence for use, e.g.,
   //!   in range based for loops.
   auto wedges() // FIXME const
   {
-    return mesh_.template entities<2, 1>();
+    return mesh_.template entities<wedge_t::dimension, wedge_t::domain>();
   } // wedges
 
   //! \brief Return wedges associated with entity instance of type \e E.
@@ -772,7 +786,7 @@ public:
   template <class E>
   auto wedges(E * e) const
   {
-    return mesh_.template entities<2, 1>(e);
+    return mesh_.template entities<wedge_t::dimension, wedge_t::domain>(e);
   } // wedges
 
   //! \brief Return wedges for entity \e e in domain \e M.
@@ -784,16 +798,16 @@ public:
   //!
   //! \return Wedges for entity \e e in domain \e M.
   template<size_t M, class E>
-  auto wedges(flecsi::domain_entity<M, E> & e) const
+  auto wedges(const flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.template entities<2, M, 1>(e.entity());
+    return mesh_.template entities<wedge_t::dimension, M, wedge_t::domain>(e.entity());
   }
 
   //! \brief Return ids for all wedges in the burton mesh.
   //! \return Ids for all wedges in the burton mesh.
   auto wedge_ids() const
   {
-    return mesh_.template entity_ids<2, 1>();
+    return mesh_.template entity_ids<wedge_t::dimension, wedge_t::domain>();
   } // wedge_ids
 
   //! \brief Return wedge ids associated with entity instance of type \e E.
@@ -807,7 +821,7 @@ public:
   template <class E>
   auto wedge_ids(E * e) const
   {
-    return mesh_.template entity_ids<2, 1>(e);
+    return mesh_.template entity_ids<wedge_t::dimension, wedge_t::domain>(e);
   } // wedge_ids
 
   //============================================================================
@@ -818,16 +832,26 @@ public:
   //! \return The number of corners in the burton mesh.
   size_t num_corners() const
   {
-    return mesh_.template num_entities<1, 1>();
+    return mesh_.template num_entities<corner_t::dimension, corner_t::domain>();
   } // num_corners
+
+  //! \brief Return all corners in the burton mesh.
+  //!
+  //! \return Return all corners in the burton mesh as a sequence for use, e.g.,
+  //!   in range based for loops.
+  auto corners() const
+  {
+    return mesh_.template entities<corner_t::dimension, corner_t::domain>();
+  } // corners
 
   //! \brief Return all corners in the burton mesh.
   //! \return Return all corners in the burton mesh as a sequence for use, e.g.,
   //!   in range based for loops.
-  auto corners()  // FIXME const
+  auto corners() // FIXME const
   {
-    return mesh_.template entities<1, 1>();
+    return mesh_.template entities<corner_t::dimension, corner_t::domain>();
   } // corners
+
 
   //! \brief Return corners associated with entity instance of type \e E.
   //!
@@ -839,7 +863,7 @@ public:
   template <class E>
   auto corners(E * e) const
   {
-    return mesh_.template entities<1, 1>(e);
+    return mesh_.template entities<corner_t::dimension, corner_t::domain>(e);
   } // corners
 
   //! \brief Return corners for entity \e e in domain \e M.
@@ -851,16 +875,16 @@ public:
   //!
   //! \return Corners for entity \e e in domain \e M.
   template<size_t M, class E>
-  auto corners(flecsi::domain_entity<M, E> & e) const
+  auto corners(const flecsi::domain_entity<M, E> & e) const
   {
-    return mesh_.template entities<1, M, 1>(e.entity());
+    return mesh_.template entities<corner_t::dimension, M, corner_t::domain>(e.entity());
   }
 
   //! \brief Return ids for all corners in the burton mesh.
   //! \return Ids for all corners in the burton mesh.
   auto corner_ids() const
   {
-    return mesh_.template entity_ids<1, 1>();
+    return mesh_.template entity_ids<corner_t::dimension, corner_t::domain>();
   } // corner_ids
 
   //! \brief Return corner ids associated with entity instance of type \e E.
@@ -874,7 +898,7 @@ public:
   template <class E>
   auto corner_ids(E * e) const
   {
-    return mesh_.template entity_ids<1, 1>(e);
+    return mesh_.template entity_ids<corner_t::dimension, corner_t::domain>(e);
   } // corner_ids
 
 
@@ -919,7 +943,7 @@ public:
     auto cs = cells();
     // create storage for regions
     using set_type_t = decltype( 
-      mesh_.template entities<num_dimensions(), 0>() 
+      mesh_.template entities<cell_t::dimension, cell_t::domain>() 
     );
 
     // create a function to scatter the cells
@@ -1045,7 +1069,7 @@ public:
     p[num_vertices()] = pos;
 
     auto v = mesh_.template make<vertex_t>( mesh_ );
-    mesh_.template add_entity<0, 0>(v);
+    mesh_.template add_entity<vertex_t::dimension, vertex_t::domain>(v);
 
     return v;
   }
@@ -1074,9 +1098,9 @@ public:
     );
   } // init_parameters
 
-  //!
+  //!---------------------------------------------------------------------------
   //! \brief Initialize the burton mesh.
-  //!
+  //!---------------------------------------------------------------------------
   void init()
   {
 
@@ -1084,9 +1108,6 @@ public:
     mesh_.template init_bindings<1>();
 
     //mesh_.dump();
-
-    // Initialize corners
-    build_corners_<dimensions>();
 
     // make sure faces point from first to second cell
     for(auto f : faces()) {
@@ -1098,7 +1119,7 @@ public:
       auto dot = dot_product( n, delta );
       if ( dot < 0 ) {
         std::cout << "reversing" << std::endl;
-        mesh_.template reverse_entities<0, 0>(f);
+        mesh_.template reverse_entities<vertex_t::dimension, vertex_t::domain>(f);
       }
     } // for
 
@@ -1159,6 +1180,141 @@ public:
 
   } // init
 
+
+
+
+  //!---------------------------------------------------------------------------
+  //! \brief Check the burton mesh.
+  //!---------------------------------------------------------------------------
+  bool is_valid( bool raise_on_error = true )
+  {
+    // some includes
+    using math::dot_product;
+
+    // a lambda function for raising errors or returning 
+    // false
+    auto raise_or_return = [=]( std::ostream & msg )
+      {
+        if ( raise_on_error )
+          raise_runtime_error( msg.rdbuf() );
+        else 
+          std::cerr << msg.rdbuf() << std::endl;
+        return false;
+      };
+    
+    // we use a stringstream to construct messages and pass them 
+    // simultanesously
+    std::stringstream ss;
+
+    // make sure face normal points out from first cell
+    for(auto f : faces()) {
+      auto n = f->normal();
+      auto fx = f->centroid();
+      auto c = cells(f).front();
+      auto cx = c->centroid();
+      auto delta = fx - cx;
+      auto dot = dot_product( n, delta );
+      if ( dot < 0 ) 
+        return raise_or_return( ss << "Face " << f.id() << " has opposite normal" );
+    } 
+
+    // check all the corners and wedges
+    for(auto cn : corners()) {
+
+      auto cs = cells(cn);
+      auto fs = faces(cn);
+      auto es = edges(cn);
+      auto vs = vertices(cn);
+      auto ws = wedges(cn);
+
+      if ( cs.size() != 1 ) 
+        return raise_or_return( 
+          ss << "Corner " << cn.id() << " has " << cs.size() << "/=1 cells" );
+
+      if ( fs.size() != num_dimensions() ) 
+        return raise_or_return( 
+          ss << "Corner " << cn.id() << " has " << fs.size() << "/=" 
+          << num_dimensions() << " faces" );
+
+      if ( es.size() != num_dimensions() ) 
+        return raise_or_return( 
+          ss << "Corner " << cn.id() << " has " << es.size() << "/=" 
+          << num_dimensions() << " edges" );
+
+      if ( vs.size() != 1 )
+        return raise_or_return( 
+          ss << "Corner " << cn.id() << " has " << vs.size() << "/=1 vertices" );
+
+      auto cl = cs.front();
+      auto vt = vs.front();
+      
+      if ( ws.size() % 2 != 0 )
+        return raise_or_return( 
+          ss << "Corner " << cn.id() << " has " << ws.size() << "%2/=0 wedges" );
+
+      for ( auto wg = ws.begin(); wg != ws.end();  ) 
+        for ( auto i=0; i<2 && wg != ws.end(); i++, ++wg)
+        {
+          auto cls = cells( *wg );
+          auto fs = faces( *wg );
+          auto es = edges( *wg );
+          auto vs = vertices( *wg );
+          auto cns = corners( *wg );
+          if ( cls.size() != 1 )
+            return raise_or_return( 
+              ss << "Wedge " << (*wg).id() << " has " << cls.size() << "/=1 cells" );
+          if ( fs.size() != 1 )
+            return raise_or_return( 
+              ss << "Wedge " << (*wg).id() << " has " << fs.size() << "/=1 faces" );
+          if ( es.size() != 1 )
+            return raise_or_return( 
+              ss << "Wedge " << (*wg).id() << " has " << es.size() << "/=1 edges" );
+          if ( vs.size() != 1 )
+            return raise_or_return( 
+              ss << "Wedge " << (*wg).id() << " has " << vs.size() << "/=1 vertices" );
+          if ( cns.size() != 1 )
+            return raise_or_return( 
+              ss << "Wedge " << (*wg).id() << " has " << cns.size() << "/=1 corners" );          
+          auto vert = vs.front();
+          auto cell = cls.front();
+          auto corn = cns.front();
+          if ( vert != vt )
+            return raise_or_return( 
+              ss << "Wedge " << (*wg).id() << " has incorrect vertex " 
+              << vert.id() << "!=" << vt.id() );
+          if ( cell != cl )
+            return raise_or_return( 
+              ss << "Wedge " << (*wg).id() << " has incorrect cell " 
+              << cell.id() << "!=" << cl.id() );
+          if ( corn != cn )
+            return raise_or_return( 
+              ss << "Wedge " << (*wg).id() << " has incorrect corner " 
+              << corn.id() << "!=" << cn.id() );
+          auto fc = fs.front();            
+          auto fx = fc->centroid();
+          auto cx = cl->centroid();
+          auto delta = fx - cx;
+          real_t dot;
+          if ( i == 0 ) {
+            auto n = wg->facet_normal_right();
+            dot = dot_product( n, delta );
+          }
+          else {
+            auto n = wg->facet_normal_left();
+            dot = dot_product( n, delta );
+          }
+          if ( dot < 0 ) 
+            return raise_or_return( 
+              ss << "Wedge " << (*wg).id() << " has opposite normal" );
+        } // wedges
+      
+    } // corners
+
+    return true;
+
+  }
+
+
   //============================================================================
   // Operators
   //============================================================================
@@ -1199,8 +1355,8 @@ public:
       break;
     }
 
-    mesh_.template add_entity<E::dimension, 0>( e );
-    mesh_.template init_entity<0, E::dimension, 0>( e, std::forward<V>(verts) );
+    mesh_.template add_entity<E::dimension, E::domain>( e );
+    mesh_.template init_entity<E::domain, E::dimension, vertex_t::dimension>( e, std::forward<V>(verts) );
     return e;
   } // create_cell
 
@@ -1227,8 +1383,8 @@ public:
       break;
     }
 
-    mesh_.template add_entity<cell_t::dimension, 0>(c);
-    mesh_.template init_cell<0>( c, std::forward<V>(verts) );
+    mesh_.template add_entity<cell_t::dimension, cell_t::domain>(c);
+    mesh_.template init_cell<cell_t::domain>( c, std::forward<V>(verts) );
     return c;
   } // create_cell
 
@@ -1255,126 +1411,11 @@ public:
       break;
     }
 
-    mesh_.template add_entity<cell_t::dimension, 0>(c);
-    mesh_.template init_entity<0, cell_t::dimension, face_t::dimension>( c, std::forward<F>(faces) );
+    mesh_.template add_entity<cell_t::dimension, cell_t::domain>(c);
+    mesh_.template init_entity<cell_t::domain, cell_t::dimension, face_t::dimension>( c, std::forward<F>(faces) );
     return c;
   } // create_cell
 
-  
-  //! \brief  Initialize corners in two dimensions
-  template< 
-    std::size_t D,
-    typename = typename std::enable_if_t< D == 2 >
-  > 
-  void build_corners_() 
-  {
-    for (auto cn : corners()) {
-
-      auto cl = cells(cn).front();
-      auto es = edges(cn);
-      auto vt = vertices(cn).front();
-
-      cn->set_cell(cl);
-      cn->set_vertex(vt);
-
-
-      
-      auto w1 = new wedge_t( mesh_ );
-      w1->set_cell(cl);
-      w1->set_edge(es.front());
-      w1->set_vertex(vt);
-      mesh_.template add_entity<2, 1>( w1 );
-
-      auto w2 = new wedge_t( mesh_ );
-      w2->set_cell(cl);
-      w2->set_edge(es.back());
-      w2->set_vertex(vt);
-      mesh_.template add_entity<2, 1>( w2 );
-
-      cn->add_wedge(w1);
-      cn->add_wedge(w2);
-    } // for
-  }
-
-  //! \brief  Initialize corners in three dimensions
-  template< 
-    std::size_t D,
-    typename std::enable_if_t< D == 3 >* = nullptr
-  > 
-  void build_corners_() 
-  {
-    for (auto cn : corners()) {
-
-      auto cl = cells(cn).front();
-      auto fs = faces(cn);
-      auto es = edges(cn);
-      auto vt = vertices(cn).front();
-
-      cn->set_cell(cl);
-      cn->set_vertex(vt);
-
-      std::cout << std::endl;
-      std::cout << " corner " << cn.id() << std::endl;
-      
-      // face 0
-      auto wg = new wedge_t( mesh_ );
-      wg->set_cell(cl);
-      wg->set_face(fs[0]);
-      wg->set_edge(es[2]);
-      wg->set_vertex(vt);
-      mesh_.template add_entity<2, 1>( wg );
-      cn->add_wedge(wg);
-      std::cout << " wedge ( face " << fs[0]->centroid() << ", edge " << es[2]->midpoint() << " )" << std::endl;
-
-      wg = new wedge_t( mesh_ );
-      wg->set_cell(cl);
-      wg->set_face(fs[0]);
-      wg->set_edge(es[0]);
-      wg->set_vertex(vt);
-      mesh_.template add_entity<2, 1>( wg );
-      cn->add_wedge(wg);
-      std::cout << " wedge ( face " << fs[0]->centroid() << ", edge " << es[0]->midpoint() << " )" << std::endl;
-
-      // face 1
-      wg = new wedge_t( mesh_ );
-      wg->set_cell(cl);
-      wg->set_face(fs[1]);
-      wg->set_edge(es[1]);
-      wg->set_vertex(vt);
-      mesh_.template add_entity<2, 1>( wg );
-      cn->add_wedge(wg);
-      std::cout << " wedge ( face " << fs[1]->centroid() << ", edge " << es[1]->midpoint() << " )" << std::endl;
-
-      wg = new wedge_t( mesh_ );
-      wg->set_cell(cl);
-      wg->set_face(fs[1]);
-      wg->set_edge(es[2]);
-      wg->set_vertex(vt);
-      mesh_.template add_entity<2, 1>( wg );
-      cn->add_wedge(wg);
-      std::cout << " wedge ( face " << fs[1]->centroid() << ", edge " << es[2]->midpoint() << " )" << std::endl;
-
-      // face 2
-      wg = new wedge_t( mesh_ );
-      wg->set_cell(cl);
-      wg->set_face(fs[2]);
-      wg->set_edge(es[0]);
-      wg->set_vertex(vt);
-      mesh_.template add_entity<2, 1>( wg );
-      cn->add_wedge(wg);
-      std::cout << " wedge ( face " << fs[2]->centroid() << ", edge " << es[0]->midpoint() << " )" << std::endl;
-
-      wg = new wedge_t( mesh_ );
-      wg->set_cell(cl);
-      wg->set_face(fs[2]);
-      wg->set_edge(es[1]);
-      wg->set_vertex(vt);
-      mesh_.template add_entity<2, 1>( wg );
-      cn->add_wedge(wg);
-      std::cout << " wedge ( face " << fs[2]->centroid() << ", edge " << es[1]->midpoint() << " )" << std::endl;
-
-    } // for
-  }
 
   //============================================================================
   // Private Data 

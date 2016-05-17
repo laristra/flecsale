@@ -31,6 +31,8 @@ TEST_F(burton_io, read_write_exo_2d) {
   // read mesh written by above test
   string name("mixed.exo");
   ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  ASSERT_TRUE( m.is_valid(false) );
   // create state data on b
   create_data(m);
   // write m to a different file
@@ -46,6 +48,8 @@ TEST_F(burton_io, read_write_exo_3d) {
   // read mesh written by above test
   string name("box-nfaced.exo");
   ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  ASSERT_TRUE( m.is_valid(false) );
   // create state data on b
   create_data(m);
   // write m to a different file
@@ -61,6 +65,8 @@ TEST_F(burton_io, read_write_g_2d) {
   // read mesh written by above test
   string name("mixed.g");
   ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  ASSERT_TRUE( m.is_valid(false) );
   // create state data on b
   create_data(m);
   // write m to a different file
@@ -74,8 +80,10 @@ TEST_F(burton_io, read_write_g_2d) {
 TEST_F(burton_io, read_write_g_3d) {
   mesh_3d_t m;
   // read mesh written by above test
-  string name("box-tet.g");
+  string name("box-hex.g");
   ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  ASSERT_TRUE( m.is_valid(false) );
   // create state data on b
   create_data(m);
   // write m to a different file
@@ -92,6 +100,8 @@ TEST_F(burton_io, read_write_voro_2d) {
   // read mesh written by above test
   string name("voro.g");
   ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  ASSERT_TRUE( m.is_valid(false) );
   // write mesh written by above test
   name = output_prefix()+".g";
   ASSERT_FALSE(write_mesh(name, m));
@@ -106,6 +116,8 @@ TEST_F(burton_io, write_dat_2d) {
   // read mesh written by above test
   string name("mixed.g");
   ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  ASSERT_TRUE( m.is_valid(false) );
   // create state data on b
   create_data(m);
   // write the mesh
@@ -123,6 +135,8 @@ TEST_F(burton_io, write_dat_3d) {
   // read mesh written by above test
   string name("box-tet.g");
   ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  ASSERT_TRUE( m.is_valid(false) );
   // create state data on b
   create_data(m);
   // write m to a different file
@@ -140,6 +154,8 @@ TEST_F(burton_io, write_plt_2d) {
   // read mesh written by above test
   string name("mixed.g");
   ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  ASSERT_TRUE( m.is_valid(false) );
   // create state data on b
   create_data(m);
   // write the mesh
@@ -155,6 +171,8 @@ TEST_F(burton_io, write_plt_3d) {
   // read mesh written by above test
   string name("box-tet.g");
   ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  ASSERT_TRUE( m.is_valid(false) );
   // create state data on b
   create_data(m);
   // write m to a different file
@@ -173,6 +191,8 @@ TEST_F(burton_io, write_vtk_2d) {
   // read mesh written by above test
   string name("mixed.g");
   ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  ASSERT_TRUE( m.is_valid(false) );
   // create state data on b
   create_data(m);
   // write the mesh in default format
@@ -202,6 +222,8 @@ TEST_F(burton_io, read_write_vtk_2d) {
   // read mesh written by above test
   string name("mixed.vtk");
   ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  ASSERT_TRUE( m.is_valid(false) );
   // create state data on b
   create_data(m);
   // write the mesh in default format
@@ -217,6 +239,8 @@ TEST_F(burton_io, read_write_vtu_2d) {
   // read mesh written by above test
   string name("mixed.vtu");
   ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  ASSERT_TRUE( m.is_valid(false) );
   // create state data on b
   create_data(m);
   // write the mesh in default format
@@ -233,6 +257,8 @@ TEST_F(burton_io, read_write_vtm_2d) {
   // read mesh written by above test
   string name("mixed.vtm");
   ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  ASSERT_TRUE( m.is_valid(false) );
   // create state data on b
   create_data(m);
   // write the mesh in default format

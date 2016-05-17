@@ -83,6 +83,10 @@ struct vtk_array_t<long long>
 #endif
 
 
+////////////////////////////////////////////////////////////////////////////////
+//! The vtk types
+////////////////////////////////////////////////////////////////////////////////
+using vtkRealType = double;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief convert a burton mesh to a vtk unstructured grid
@@ -302,7 +306,7 @@ static auto to_mesh( vtkUnstructuredGrid* ug )
   vs.reserve( num_vertices );
 
   for (size_t i = 0; i < num_vertices; ++i) {
-    real_t x[3] = {0, 0, 0};
+    vtkRealType x[3] = {0, 0, 0};
     points->GetPoint( i, x );
     point_t p = { static_cast<real_t>(x[0]), 
                   static_cast<real_t>(x[1]) };
@@ -340,11 +344,6 @@ static auto to_mesh( vtkUnstructuredGrid* ug )
   //----------------------------------------------------------------------------
 
   m.init();
-
-
-  for ( auto v : m.vertices() ) {
-    auto & coord = v->coordinates();
-  }
 
   return m;
 

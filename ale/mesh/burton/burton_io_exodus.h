@@ -845,7 +845,6 @@ struct burton_io_exodus_t<3> :
     status = read_point_coords( m, num_nodes, vs );
     assert( status == 0 );
 
-
     //--------------------------------------------------------------------------
     // read face blocks
 
@@ -982,10 +981,15 @@ struct burton_io_exodus_t<3> :
           elem_fs.clear();
           // get the number of faces
           num_faces_per_elem = elem_face_counts[e];
+          // get the face mapping
+          //auto exodus_face_map = get_face_mapper( num_faces_per_elem );
           // copy local vertices into vector ( exodus uses 1 indexed arrays )
           for ( auto v=0;  v<num_faces_per_elem; v++ ) {
-            elem_fs.emplace_back( fs[ elem_faces[base+v] - 1 ] );
+            auto local = v;
+            std::cout << local << " " << fs[ elem_faces[base+local] - 1 ] -> centroid() << std::endl;
+            elem_fs.emplace_back( fs[ elem_faces[base+local] - 1 ] );
           }
+          std::cout << std::endl;
           // create acual cell
           auto c = m.create_cell( elem_fs );
           // base offset into elt_conn
@@ -1012,7 +1016,7 @@ struct burton_io_exodus_t<3> :
           // base offset into elt_conn
           auto b = e*num_nodes_per_elem;
           // copy local vertices into vector ( exodus uses 1 indexed arrays )
-          for ( auto v=0;  v<num_nodes_per_elem; v++ )
+          for ( auto v=0;  v<num_nodes_per_elem; v++ ) 
             elem_vs.emplace_back( vs[ elt_conn[b+v]-1 ] );
           // create acual cell
           auto c = m.create_cell( elem_vs );          
@@ -1287,6 +1291,29 @@ struct burton_io_exodus_t<3> :
 #endif
 
   } // io_exodus_t::write
+
+
+
+private:
+
+  //! \brief select an appropriate mapping function
+  static 
+  std::function<unsigned int (unsigned int)> get_face_mapper( size_t num_faces ) 
+  {
+    //! \brief the exodus-to-internal face mapping for hexes
+    constexpr unsigned int hex_face_map_[] = { 2, 3, 4, 5, 0, 1 };
+    //! \brief the exodus-to-internal face mapping for tets
+    constexpr unsigned int tet_face_map_[] = { 2, 0, 1, 3 };
+    
+    switch( num_faces ) {
+    case 4:
+      return [&]( unsigned int i ) { return tet_face_map_[i]; };
+    case 6:
+      return [&]( unsigned int i ) { return hex_face_map_[i]; };
+    default:
+      return []( unsigned int i ) { return i; };
+    }
+  }
 
 
 }; // struct io_exodus_t

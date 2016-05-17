@@ -395,7 +395,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
       // create points
       for (size_t i = 0; i < num_points_this_block; ++i) {
-        real_t x[3] = {0, 0, 0};
+        vtkRealType x[3] = {0, 0, 0};
         points_this_block->GetPoint( i, x );
         point_t p = { static_cast<real_t>(x[0]), 
                       static_cast<real_t>(x[1]) };
@@ -494,7 +494,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
             [&](auto & a) 
             {
               auto test_coord = a->coordinates();
-              real_t coord[3] = {0, 0, 0}; // always 3d
+              vtkRealType coord[3] = {0, 0, 0}; // always 3d
               points_this_block->GetPoint( pts[v], coord );
               return is_same_point(test_coord.begin(), test_coord.end(), coord);
             }

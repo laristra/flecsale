@@ -126,12 +126,23 @@ struct burton_mesh_types_t<2> {
   //! Bindings are adjacencies of entities across two domains.
   using bindings =
       std::tuple<
-        std::tuple<flecsi::domain_<0>, flecsi::domain_<1>, cell_t, corner_t>,
-        std::tuple<flecsi::domain_<0>, flecsi::domain_<1>, edge_t, corner_t>,
+        // corners
+        std::tuple<flecsi::domain_<0>, flecsi::domain_<1>, cell_t,   corner_t>,
+        std::tuple<flecsi::domain_<0>, flecsi::domain_<1>, edge_t,   corner_t>,
         std::tuple<flecsi::domain_<0>, flecsi::domain_<1>, vertex_t, corner_t>,
-        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, corner_t, cell_t>,
-        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, corner_t, edge_t>,
-        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, corner_t, vertex_t>
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, corner_t,   cell_t>,
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, corner_t,   edge_t>,
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, corner_t, vertex_t>,
+        // wedges
+        std::tuple<flecsi::domain_<0>, flecsi::domain_<1>, cell_t,    wedge_t>,
+        std::tuple<flecsi::domain_<0>, flecsi::domain_<1>, edge_t,    wedge_t>,
+        std::tuple<flecsi::domain_<0>, flecsi::domain_<1>, vertex_t,  wedge_t>,
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, wedge_t,    cell_t>,
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, wedge_t,    edge_t>,
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, wedge_t,  vertex_t>,
+        // corner <-> wedges
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<1>,  wedge_t,  corner_t>,
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<1>,  corner_t, wedge_t>
       >;
   // clang-format on
 
@@ -157,9 +168,9 @@ struct burton_mesh_types_t<2> {
       //---------- Dual Mesh ----------//
     case 1:
       switch(D) {
-      case 1:
+      case 0:
         return mesh->template make<corner_t>(*mesh);
-      case 2:
+      case 1:
         return mesh->template make<wedge_t>(*mesh);
       default:
         raise_logic_error("invalid topological dimension");
@@ -258,6 +269,7 @@ struct burton_mesh_types_t<3> {
   //! Bindings are adjacencies of entities across two domains.
   using bindings =
       std::tuple<
+        // corners
         std::tuple<flecsi::domain_<0>, flecsi::domain_<1>,   cell_t, corner_t>,
         std::tuple<flecsi::domain_<0>, flecsi::domain_<1>,   face_t, corner_t>,
         std::tuple<flecsi::domain_<0>, flecsi::domain_<1>,   edge_t, corner_t>,
@@ -265,7 +277,19 @@ struct burton_mesh_types_t<3> {
         std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, corner_t,   cell_t>,
         std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, corner_t,   face_t>,
         std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, corner_t,   edge_t>,
-        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, corner_t, vertex_t>
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>, corner_t, vertex_t>,
+        // wedges
+        std::tuple<flecsi::domain_<0>, flecsi::domain_<1>,   cell_t,  wedge_t>,
+        std::tuple<flecsi::domain_<0>, flecsi::domain_<1>,   face_t,  wedge_t>,
+        std::tuple<flecsi::domain_<0>, flecsi::domain_<1>,   edge_t,  wedge_t>,
+        std::tuple<flecsi::domain_<0>, flecsi::domain_<1>, vertex_t,  wedge_t>,
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>,  wedge_t,   cell_t>,
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>,  wedge_t,   face_t>,
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>,  wedge_t,   edge_t>,
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<0>,  wedge_t, vertex_t>,
+        // corner <-> wedges
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<1>,  wedge_t,  corner_t>,
+        std::tuple<flecsi::domain_<1>, flecsi::domain_<1>,  corner_t, wedge_t>
       >;
   // clang-format on
 
@@ -310,9 +334,9 @@ struct burton_mesh_types_t<3> {
       //---------- Dual Mesh ----------//
     case 1:
       switch(D) {
-      case 1:
+      case 0:
         return mesh->template make<corner_t>(*mesh);
-      case 2:
+      case 1:
         return mesh->template make<wedge_t>(*mesh);
       default:
         raise_logic_error("invalid topological dimension");

@@ -233,7 +233,7 @@ TEST_F(burton_2d, geometry) {
       
      CINCH_CAPTURE() << "    ++++ corner id: " << cn.id() << endl;
 
-      for ( auto w: cn->wedges() ) {
+      for ( auto w: mesh_.wedges(cn) ) {
         auto left  = w->facet_normal_left();
         auto right = w->facet_normal_right();
         CINCH_CAPTURE() << "    .... wedge" << endl;
@@ -267,12 +267,19 @@ TEST_F(burton_2d, normals) {
   } // for
 
   for(auto cn : mesh_.corners()) {
-    auto cl = cn->cell();
-    auto vt = cn->vertex();
-    auto ws = cn->wedges();
+    auto cl = mesh_.cells(cn).front();
+    auto vt = mesh_.vertices(cn).front();
+    auto ws = mesh_.wedges(cn);
+    ASSERT_EQ( 1, mesh_.cells( cn ).size() );
+    ASSERT_EQ( 2, mesh_.edges( cn ).size() );
+    ASSERT_EQ( 1, mesh_.vertices( cn ).size() );
+    ASSERT_EQ( 2, ws.size() );
     // first edge
     {
-      auto e = ws[0]->edge();
+      ASSERT_EQ( 1, mesh_.edges( ws[0] ).size() );
+      ASSERT_EQ( 1, mesh_.vertices( ws[0] ).size() );
+      ASSERT_EQ( 1, mesh_.corners( ws[0] ).size() );
+      auto e = mesh_.edges(ws[0]).front();
       auto n = ws[0]->facet_normal_right();
       auto ex = e->midpoint();
       auto cx = cl->centroid();
@@ -282,7 +289,10 @@ TEST_F(burton_2d, normals) {
     }
     // second edge
     {
-      auto e = ws[1]->edge();
+      ASSERT_EQ( 1, mesh_.edges( ws[1] ).size() );
+      ASSERT_EQ( 1, mesh_.vertices( ws[1] ).size() );
+      ASSERT_EQ( 1, mesh_.corners( ws[1] ).size() );
+      auto e = mesh_.edges(ws[1]).front();
       auto n = ws[1]->facet_normal_left();
       auto ex = e->midpoint();
       auto cx = cl->centroid();
