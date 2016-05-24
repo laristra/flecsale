@@ -37,6 +37,15 @@ burton_2d_triangle_t::point_t burton_2d_triangle_t::centroid() const
     vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
 }
 
+//! the midpoint
+burton_2d_triangle_t::point_t burton_2d_triangle_t::midpoint() const
+{
+  auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh()); 
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
+  return geom::triangle<num_dimensions>::midpoint( 
+    vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
+}
+
 //! the area of the cell
 burton_2d_triangle_t::real_t burton_2d_triangle_t::area() const
 {
@@ -91,7 +100,8 @@ burton_3d_triangle_t::vector_t burton_3d_triangle_t::normal() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::triangle<num_dimensions>::normal( 
+  auto dir = direction();
+  return dir * geom::triangle<num_dimensions>::normal( 
     vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
 }
 

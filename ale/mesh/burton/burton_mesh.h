@@ -1109,6 +1109,7 @@ public:
 
     //mesh_.dump();
 
+#if 0
     // make sure faces point from first to second cell
     for(auto f : faces()) {
       auto n = f->normal();
@@ -1122,6 +1123,7 @@ public:
         mesh_.template reverse_entities<vertex_t::dimension, vertex_t::domain>(f);
       }
     } // for
+#endif
 
     // get the data instance
     data_t & data_ = data_t::instance();
@@ -1178,6 +1180,13 @@ public:
       );
     *num_regions = 1;
 
+    // register some flags for identifying face direcions
+    auto face_dirs = data_.template register_state<char, flecsi_internal>(
+      "face_direction", num_faces(), mesh_.runtime_id(), 
+      attachment_site_t::faces, persistent
+    );
+    for ( auto f : faces() ) face_dirs[f] = 1;
+
   } // init
 
 
@@ -1206,16 +1215,18 @@ public:
     // simultanesously
     std::stringstream ss;
 
+
     // make sure face normal points out from first cell
     for(auto f : faces()) {
       auto n = f->normal();
-      auto fx = f->centroid();
+      auto fx = f->midpoint();
       auto c = cells(f).front();
-      auto cx = c->centroid();
+      auto cx = c->midpoint();
       auto delta = fx - cx;
-      auto dot = dot_product( n, delta );
-      if ( dot < 0 ) 
+      auto dot = dot_product( n, delta );      
+      if ( dot < 0 ) {
         return raise_or_return( ss << "Face " << f.id() << " has opposite normal" );
+      }
     } 
 
     // check all the corners and wedges
@@ -1291,8 +1302,8 @@ public:
               ss << "Wedge " << (*wg).id() << " has incorrect corner " 
               << corn.id() << "!=" << cn.id() );
           auto fc = fs.front();            
-          auto fx = fc->centroid();
-          auto cx = cl->centroid();
+          auto fx = fc->midpoint();
+          auto cx = cl->midpoint();
           auto delta = fx - cx;
           real_t dot;
           if ( i == 0 ) {
@@ -1379,7 +1390,7 @@ public:
       c = mesh_.template make< burton_hexahedron_t >(mesh_);
       break;
     default:
-      c = mesh_.template make< burton_polyhedron_t >(mesh_);
+      raise_runtime_error( "can't build polyhedron from vertices alone" );      
       break;
     }
 
@@ -1400,14 +1411,8 @@ public:
     switch ( faces.size() ) {
     case (1,2,3):
       raise_runtime_error( "can't have <4 vertices" );
-    case (4):
-      c = mesh_.template make< burton_tetrahedron_t >(mesh_);
-      break;
-    case (6):
-      c = mesh_.template make< burton_hexahedron_t >(mesh_);
-      break;
     default:
-      c = mesh_.template make< burton_polyhedron_t >(mesh_);
+      c = mesh_.template make< burton_polyhedron_t >( mesh_, std::forward<F>(faces) );
       break;
     }
 

@@ -418,6 +418,65 @@ TEST(shapes, polyhedron_3d)
 } // TEST
 
 
+///////////////////////////////////////////////////////////////////////////////
+//! \brief Test polyhedron operations
+//! \remark 3d version
+///////////////////////////////////////////////////////////////////////////////
+TEST(shapes, compare_3d) 
+{
+  // original points
+  auto pt0 = point_3d_t{ -0.5,  -0.5,  0.25 };
+  auto pt1 = point_3d_t{ -0.5,  -0.5,  0 };
+  auto pt2 = point_3d_t{ -0.5,  -0.25, 0 };
+  auto pt3 = point_3d_t{ -0.5,  -0.25, 0.25 };
+  auto pt4 = point_3d_t{ -0.25, -0.5,  0.25 };
+  auto pt5 = point_3d_t{ -0.25, -0.5,  0 };
+  auto pt6 = point_3d_t{ -0.25, -0.25, 0 };
+  auto pt7 = point_3d_t{ -0.25, -0.25, 0.25 };
+
+  // the centroid answer
+  auto xc_ans = point_3d_t{ -0.375, -0.375, 0.125 };
+  auto vol_ans = 0.015625;
+  
+  // compute some angles
+  auto vol = hexahedron::volume( pt0, pt1, pt2, pt3, pt4, pt5, pt6, pt7 );
+  auto xc = hexahedron::centroid( pt0, pt1, pt2, pt3, pt4, pt5, pt6, pt7 );
+
+  ASSERT_NEAR(   vol_ans,   vol, test_tolerance ) << " Volume calculation wrong ";
+  ASSERT_NEAR( xc_ans[0], xc[0], test_tolerance ) << " Centroid calculation wrong ";
+  ASSERT_NEAR( xc_ans[1], xc[1], test_tolerance ) << " Centroid calculation wrong ";
+  ASSERT_NEAR( xc_ans[2], xc[2], test_tolerance ) << " Centroid calculation wrong ";
+
+  // now build the polyhedron
+  pt0 = point_3d_t{ -0.5,  -0.25, 0.25 };
+  pt1 = point_3d_t{ -0.5,  -0.25, 0 };
+  pt2 = point_3d_t{ -0.5,  -0.5,  0 };
+  pt3 = point_3d_t{ -0.5,  -0.5,  0.25 };
+  pt4 = point_3d_t{ -0.25, -0.5,  0 };
+  pt5 = point_3d_t{ -0.25, -0.25, 0 };
+  pt6 = point_3d_t{ -0.25, -0.25, 0.25 };
+  pt7 = point_3d_t{ -0.25, -0.5,  0.25 };
+
+  using polyhedron = polyhedron< point_3d_t >;
+  polyhedron poly;
+  poly.insert( {pt0, pt1, pt2, pt3} );
+  poly.insert( {pt4, pt5, pt6, pt7} );
+  poly.insert( {pt2, pt4, pt7, pt3} );
+  poly.insert( {pt1, pt5, pt4, pt2} );
+  poly.insert( {pt0, pt6, pt5, pt1} );
+  poly.insert( {pt3, pt7, pt6, pt0} );
+  
+  // compute some angles
+  vol = poly.volume();
+  xc = poly.centroid();
+
+  ASSERT_NEAR(   vol_ans,   vol, test_tolerance ) << " Volume calculation wrong ";
+  ASSERT_NEAR( xc_ans[0], xc[0], test_tolerance ) << " Centroid calculation wrong ";
+  ASSERT_NEAR( xc_ans[1], xc[1], test_tolerance ) << " Centroid calculation wrong ";
+  ASSERT_NEAR( xc_ans[2], xc[2], test_tolerance ) << " Centroid calculation wrong ";
+
+}
+
 
 /*~-------------------------------------------------------------------------~-*
  * Formatting options

@@ -52,6 +52,15 @@ struct triangle<2> {
   }
 
   //============================================================================
+  //! \brief the midpoint is the same as the centroid
+  //============================================================================
+  template< typename... Args >
+  static auto midpoint( Args&&... pts ) 
+  {
+    return math::average( std::forward<Args>(pts)... );
+  }
+
+  //============================================================================
   //! \brief the volume function
   //============================================================================
   template< typename T >

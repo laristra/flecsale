@@ -40,34 +40,26 @@ struct hexahedron {
     const T & pt0, const T & pt1, const T & pt2, const T & pt3,
     const T & pt4, const T & pt5, const T & pt6, const T & pt7 ) 
   {
-    using point_t = std::array<T, 4>;
+    using face_t = std::array<T, 4>;
     polyhedron<T> poly;    
-    poly.insert( point_t{pt0, pt1, pt2, pt3} );
-    poly.insert( point_t{pt4, pt7, pt6, pt5} );
-    poly.insert( point_t{pt0, pt4, pt5, pt1} );
-    poly.insert( point_t{pt1, pt5, pt6, pt2} );
-    poly.insert( point_t{pt2, pt6, pt7, pt3} );
-    poly.insert( point_t{pt3, pt7, pt4, pt0} );
+    poly.insert( face_t{pt0, pt1, pt2, pt3} );
+    poly.insert( face_t{pt4, pt7, pt6, pt5} );
+    poly.insert( face_t{pt0, pt4, pt5, pt1} );
+    poly.insert( face_t{pt1, pt5, pt6, pt2} );
+    poly.insert( face_t{pt2, pt6, pt7, pt3} );
+    poly.insert( face_t{pt3, pt7, pt4, pt0} );
     return poly.centroid();
   }
 
   //============================================================================
   //! \brief the midpoint function
   //============================================================================
-  template< typename T >
-  static auto midpoint( 
-    const T & pt0, const T & pt1, const T & pt2, const T & pt3,
-    const T & pt4, const T & pt5, const T & pt6, const T & pt7 ) 
+  template< typename T, typename... Args >
+  static auto midpoint( T&& pt0, Args&&... pts ) 
   {
-    using point_t = std::array<T, 4>;
-    polyhedron<T> poly;    
-    poly.insert( point_t{pt0, pt1, pt2, pt3} );
-    poly.insert( point_t{pt4, pt7, pt6, pt5} );
-    poly.insert( point_t{pt0, pt4, pt5, pt1} );
-    poly.insert( point_t{pt1, pt5, pt6, pt2} );
-    poly.insert( point_t{pt2, pt6, pt7, pt3} );
-    poly.insert( point_t{pt3, pt7, pt4, pt0} );
-    return poly.midpoint();
+    using point_type = std::decay_t< T >;
+    return polyhedron<point_type>::midpoint( 
+      std::forward<T>(pt0), std::forward<Args>(pts)... );
   }
   
   //============================================================================

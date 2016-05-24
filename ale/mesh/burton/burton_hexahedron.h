@@ -73,10 +73,16 @@ public:
   //! \brief create_entities function for burton_hexahedron_cell_t.
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_entities(
-      size_t dim, id_t * e, id_t * v, size_t vertex_count)  override
+    size_t dim, const id_t & cell,
+    connectivity_t*  (&conn)[num_dimensions+1][num_dimensions], 
+    id_t * entities ) override
   {
 
-    assert( vertex_count == 8 );
+    auto cell_id = cell.entity();
+    size_t num_cell_verts = 0;
+    auto v = conn[3][0]->get_entities( cell_id, num_cell_verts );
+
+    assert( num_cell_verts == 8 );
     
     switch (dim) {
 
@@ -84,43 +90,43 @@ public:
       // Edges
     case (1): 
       // bottom
-      e[0] = v[0];
-      e[1] = v[1];
+      entities[0] = v[0];
+      entities[1] = v[1];
 
-      e[2] = v[1];
-      e[3] = v[2];
+      entities[2] = v[1];
+      entities[3] = v[2];
 
-      e[4] = v[2];
-      e[5] = v[3];
+      entities[4] = v[2];
+      entities[5] = v[3];
 
-      e[6] = v[3];
-      e[7] = v[0];
+      entities[6] = v[3];
+      entities[7] = v[0];
 
       // top
-      e[8] = v[4];
-      e[9] = v[5];
+      entities[8] = v[4];
+      entities[9] = v[5];
 
-      e[10] = v[5];
-      e[11] = v[6];
+      entities[10] = v[5];
+      entities[11] = v[6];
 
-      e[12] = v[6];
-      e[13] = v[7];
+      entities[12] = v[6];
+      entities[13] = v[7];
 
-      e[14] = v[7];
-      e[15] = v[4];
+      entities[14] = v[7];
+      entities[15] = v[4];
 
       // vertical ones
-      e[16] = v[0];
-      e[17] = v[4];
+      entities[16] = v[0];
+      entities[17] = v[4];
 
-      e[18] = v[1];
-      e[19] = v[5];
+      entities[18] = v[1];
+      entities[19] = v[5];
 
-      e[20] = v[2];
-      e[21] = v[6];
+      entities[20] = v[2];
+      entities[21] = v[6];
 
-      e[22] = v[3];
-      e[23] = v[7];
+      entities[22] = v[3];
+      entities[23] = v[7];
 
       return {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
 
@@ -128,35 +134,35 @@ public:
       // Faces
     case (2): 
       // bottom
-      e[0]  = v[3];
-      e[1]  = v[2];
-      e[2]  = v[1];
-      e[3]  = v[0];
+      entities[0]  = v[3];
+      entities[1]  = v[2];
+      entities[2]  = v[1];
+      entities[3]  = v[0];
       // top
-      e[4]  = v[5];
-      e[5]  = v[6];
-      e[6]  = v[7];
-      e[7]  = v[4];
+      entities[4]  = v[5];
+      entities[5]  = v[6];
+      entities[6]  = v[7];
+      entities[7]  = v[4];
       // front
-      e[8]  = v[1];
-      e[9]  = v[5];
-      e[10] = v[4];
-      e[11] = v[0];
+      entities[8]  = v[1];
+      entities[9]  = v[5];
+      entities[10] = v[4];
+      entities[11] = v[0];
       // right
-      e[12] = v[2];
-      e[13] = v[6];
-      e[14] = v[5];
-      e[15] = v[1];
+      entities[12] = v[2];
+      entities[13] = v[6];
+      entities[14] = v[5];
+      entities[15] = v[1];
       // back
-      e[16] = v[3];
-      e[17] = v[7];
-      e[18] = v[6];
-      e[19] = v[2];
+      entities[16] = v[3];
+      entities[17] = v[7];
+      entities[18] = v[6];
+      entities[19] = v[2];
       // left
-      e[20] = v[0];
-      e[21] = v[4];
-      e[22] = v[7];
-      e[23] = v[3];
+      entities[20] = v[0];
+      entities[21] = v[4];
+      entities[22] = v[7];
+      entities[23] = v[3];
 
       return {4, 4, 4, 4, 4, 4};
       
@@ -175,15 +181,15 @@ public:
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id,
-    connectivity_t ** from_domain_conn, connectivity_t ** to_domain_conn, 
-    id_t * c )  override
+    connectivity_t*  (&from_domain_conn)[num_dimensions+1][num_dimensions+1], 
+    connectivity_t*  (&  to_domain_conn)[num_dimensions+1][num_dimensions+1], 
+    id_t * c ) override
   {
-    size_t num_vertices = 0, num_edges = 0, num_faces = 0, num_corners = 0;
-    auto verts = from_domain_conn[0]->get_entities( cell_id.entity(), num_vertices );
-    auto edges = from_domain_conn[1]->get_entities( cell_id.entity(), num_edges );
-    auto faces = from_domain_conn[2]->get_entities( cell_id.entity(), num_faces );
-    auto corners = to_domain_conn[0]->get_entities( cell_id.entity(), num_corners );
-
+    size_t num_vertices = 0, num_edges = 0, num_faces = 0;
+    auto verts = from_domain_conn[3][0]->get_entities( cell_id.entity(), num_vertices );
+    auto edges = from_domain_conn[3][1]->get_entities( cell_id.entity(), num_edges );
+    auto faces = from_domain_conn[3][2]->get_entities( cell_id.entity(), num_faces );
+    
     assert( num_vertices == 8 );
 
     size_t i = 0;
@@ -199,76 +205,76 @@ public:
       //
     case 0:
       // corner 0
-      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
-      c[i++] = from_domain_ent_ids[1][0]; // edge 0, abuts vertex 0
-      c[i++] = from_domain_ent_ids[1][3]; // edge 3, abuts vertex 0
-      c[i++] = from_domain_ent_ids[1][8]; // edge 8, abuts vertex 0
-      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 0
-      c[i++] = from_domain_ent_ids[2][5]; // face 5, abuts vertex 0
-      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 0
+      c[i++] =   verts[0]; // vertex 0
+      c[i++] =   edges[0]; // edge 0, abuts vertex 0
+      c[i++] =   edges[3]; // edge 3, abuts vertex 0
+      c[i++] =   edges[8]; // edge 8, abuts vertex 0
+      c[i++] =   faces[2]; // face 2, abuts vertex 0
+      c[i++] =   faces[5]; // face 5, abuts vertex 0
+      c[i++] =   faces[0]; // face 0, abuts vertex 0
 
       // corner 1
-      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
-      c[i++] = from_domain_ent_ids[1][1]; // edge 1, abuts vertex 1
-      c[i++] = from_domain_ent_ids[1][0]; // edge 0, abuts vertex 1
-      c[i++] = from_domain_ent_ids[1][9]; // edge 9, abuts vertex 1
-      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 1
-      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 1
-      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 1
+      c[i++] =   verts[1]; // vertex 1
+      c[i++] =   edges[1]; // edge 1, abuts vertex 1
+      c[i++] =   edges[0]; // edge 0, abuts vertex 1
+      c[i++] =   edges[9]; // edge 9, abuts vertex 1
+      c[i++] =   faces[3]; // face 3, abuts vertex 1
+      c[i++] =   faces[2]; // face 2, abuts vertex 1
+      c[i++] =   faces[0]; // face 0, abuts vertex 1
 
       // corner 2
-      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
-      c[i++] = from_domain_ent_ids[1][2]; // edge 2, abuts vertex 2
-      c[i++] = from_domain_ent_ids[1][1]; // edge 1, abuts vertex 2
-      c[i++] = from_domain_ent_ids[1][10]; // edge 10, abuts vertex 2
-      c[i++] = from_domain_ent_ids[2][4]; // face 4, abuts vertex 2
-      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 2
-      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 2
+      c[i++] =   verts[2]; // vertex 2
+      c[i++] =   edges[2]; // edge 2, abuts vertex 2
+      c[i++] =   edges[1]; // edge 1, abuts vertex 2
+      c[i++] =   edges[10]; // edge 10, abuts vertex 2
+      c[i++] =   faces[4]; // face 4, abuts vertex 2
+      c[i++] =   faces[3]; // face 3, abuts vertex 2
+      c[i++] =   faces[0]; // face 0, abuts vertex 2
 
       // corner 3
-      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
-      c[i++] = from_domain_ent_ids[1][3]; // edge 3, abuts vertex 3
-      c[i++] = from_domain_ent_ids[1][2]; // edge 2, abuts vertex 3
-      c[i++] = from_domain_ent_ids[1][11]; // edge 11, abuts vertex 3
-      c[i++] = from_domain_ent_ids[2][5]; // face 5, abuts vertex 3
-      c[i++] = from_domain_ent_ids[2][4]; // face 4, abuts vertex 3
-      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 3
+      c[i++] =   verts[3]; // vertex 3
+      c[i++] =   edges[3]; // edge 3, abuts vertex 3
+      c[i++] =   edges[2]; // edge 2, abuts vertex 3
+      c[i++] =   edges[11]; // edge 11, abuts vertex 3
+      c[i++] =   faces[5]; // face 5, abuts vertex 3
+      c[i++] =   faces[4]; // face 4, abuts vertex 3
+      c[i++] =   faces[0]; // face 0, abuts vertex 3
 
       // corner 4
-      c[i++] = from_domain_ent_ids[0][4]; // vertex 4
-      c[i++] = from_domain_ent_ids[1][7]; // edge 7, abuts vertex 4
-      c[i++] = from_domain_ent_ids[1][4]; // edge 4, abuts vertex 4
-      c[i++] = from_domain_ent_ids[1][8]; // edge 8, abuts vertex 4
-      c[i++] = from_domain_ent_ids[2][5]; // face 5, abuts vertex 4
-      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 4
-      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 4
+      c[i++] =   verts[4]; // vertex 4
+      c[i++] =   edges[7]; // edge 7, abuts vertex 4
+      c[i++] =   edges[4]; // edge 4, abuts vertex 4
+      c[i++] =   edges[8]; // edge 8, abuts vertex 4
+      c[i++] =   faces[5]; // face 5, abuts vertex 4
+      c[i++] =   faces[2]; // face 2, abuts vertex 4
+      c[i++] =   faces[1]; // face 1, abuts vertex 4
 
       // corner 5
-      c[i++] = from_domain_ent_ids[0][5]; // vertex 5
-      c[i++] = from_domain_ent_ids[1][4]; // edge 4, abuts vertex 5
-      c[i++] = from_domain_ent_ids[1][5]; // edge 5, abuts vertex 5
-      c[i++] = from_domain_ent_ids[1][9]; // edge 9, abuts vertex 5
-      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 5
-      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 5
-      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 5
+      c[i++] =   verts[5]; // vertex 5
+      c[i++] =   edges[4]; // edge 4, abuts vertex 5
+      c[i++] =   edges[5]; // edge 5, abuts vertex 5
+      c[i++] =   edges[9]; // edge 9, abuts vertex 5
+      c[i++] =   faces[2]; // face 2, abuts vertex 5
+      c[i++] =   faces[3]; // face 3, abuts vertex 5
+      c[i++] =   faces[1]; // face 1, abuts vertex 5
 
       // corner 6
-      c[i++] = from_domain_ent_ids[0][6]; // vertex 6
-      c[i++] = from_domain_ent_ids[1][5]; // edge 5, abuts vertex 6
-      c[i++] = from_domain_ent_ids[1][6]; // edge 6, abuts vertex 6
-      c[i++] = from_domain_ent_ids[1][10]; // edge 10, abuts vertex 6
-      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 6
-      c[i++] = from_domain_ent_ids[2][4]; // face 4, abuts vertex 6
-      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 6
+      c[i++] =   verts[6]; // vertex 6
+      c[i++] =   edges[5]; // edge 5, abuts vertex 6
+      c[i++] =   edges[6]; // edge 6, abuts vertex 6
+      c[i++] =   edges[10]; // edge 10, abuts vertex 6
+      c[i++] =   faces[3]; // face 3, abuts vertex 6
+      c[i++] =   faces[4]; // face 4, abuts vertex 6
+      c[i++] =   faces[1]; // face 1, abuts vertex 6
 
       // corner 7
-      c[i++] = from_domain_ent_ids[0][7]; // vertex 7
-      c[i++] = from_domain_ent_ids[1][6]; // edge 6, abuts vertex 7
-      c[i++] = from_domain_ent_ids[1][7]; // edge 7, abuts vertex 7
-      c[i++] = from_domain_ent_ids[1][11]; // edge 11, abuts vertex 7
-      c[i++] = from_domain_ent_ids[2][4]; // face 4, abuts vertex 7
-      c[i++] = from_domain_ent_ids[2][5]; // face 5, abuts vertex 7
-      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 7
+      c[i++] =   verts[7]; // vertex 7
+      c[i++] =   edges[6]; // edge 6, abuts vertex 7
+      c[i++] =   edges[7]; // edge 7, abuts vertex 7
+      c[i++] =   edges[11]; // edge 11, abuts vertex 7
+      c[i++] =   faces[4]; // face 4, abuts vertex 7
+      c[i++] =   faces[5]; // face 5, abuts vertex 7
+      c[i++] =   faces[1]; // face 1, abuts vertex 7
 
       return std::vector<id_t>(8, 7);
 
@@ -278,272 +284,275 @@ public:
       // Each corner has 6 vertices.  There is an even/odd ordering so we 
       // no which way to compute normals.  So edges are defined in pairs
       //
-    case 1:
+    case 1: {
+  
+      size_t num_corners = 0;
+      auto corners = to_domain_conn[3][0]->get_entities( cell_id.entity(), num_corners );
+
       // corner 0
       // wedge 0
-      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
-      c[i++] = from_domain_ent_ids[1][8]; // edge 8, abuts vertex 0
-      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 0
-      c[i++] =   to_domain_ent_ids[0][0]; // corner 0
+      c[i++] =   verts[0]; // vertex 0
+      c[i++] =   edges[8]; // edge 8, abuts vertex 0
+      c[i++] =   faces[2]; // face 2, abuts vertex 0
+      c[i++] = corners[0]; // corner 0
       // wedge 1
-      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
-      c[i++] = from_domain_ent_ids[1][0]; // edge 0, abuts vertex 0
-      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 0
-      c[i++] =   to_domain_ent_ids[0][0]; // corner 0
+      c[i++] =   verts[0]; // vertex 0
+      c[i++] =   edges[0]; // edge 0, abuts vertex 0
+      c[i++] =   faces[2]; // face 2, abuts vertex 0
+      c[i++] = corners[0]; // corner 0
       // wedge 2
-      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
-      c[i++] = from_domain_ent_ids[1][3]; // edge 3, abuts vertex 0
-      c[i++] = from_domain_ent_ids[2][5]; // face 5, abuts vertex 0
-      c[i++] =   to_domain_ent_ids[0][0]; // corner 0
+      c[i++] =   verts[0]; // vertex 0
+      c[i++] =   edges[3]; // edge 3, abuts vertex 0
+      c[i++] =   faces[5]; // face 5, abuts vertex 0
+      c[i++] = corners[0]; // corner 0
       // wedge 3
-      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
-      c[i++] = from_domain_ent_ids[1][8]; // edge 8, abuts vertex 0
-      c[i++] = from_domain_ent_ids[2][5]; // face 5, abuts vertex 0
-      c[i++] =   to_domain_ent_ids[0][0]; // corner 0
+      c[i++] =   verts[0]; // vertex 0
+      c[i++] =   edges[8]; // edge 8, abuts vertex 0
+      c[i++] =   faces[5]; // face 5, abuts vertex 0
+      c[i++] = corners[0]; // corner 0
       // wedge 4
-      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
-      c[i++] = from_domain_ent_ids[1][0]; // edge 0, abuts vertex 0
-      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 0
-      c[i++] =   to_domain_ent_ids[0][0]; // corner 0
+      c[i++] =   verts[0]; // vertex 0
+      c[i++] =   edges[0]; // edge 0, abuts vertex 0
+      c[i++] =   faces[0]; // face 0, abuts vertex 0
+      c[i++] = corners[0]; // corner 0
       // wedge 5
-      c[i++] = from_domain_ent_ids[0][0]; // vertex 0
-      c[i++] = from_domain_ent_ids[1][3]; // edge 3, abuts vertex 0
-      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 0
-      c[i++] =   to_domain_ent_ids[0][0]; // corner 0
+      c[i++] =   verts[0]; // vertex 0
+      c[i++] =   edges[3]; // edge 3, abuts vertex 0
+      c[i++] =   faces[0]; // face 0, abuts vertex 0
+      c[i++] = corners[0]; // corner 0
 
       // corner 1
       // wedge 0
-      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
-      c[i++] = from_domain_ent_ids[1][9]; // edge 9, abuts vertex 1
-      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 1
-      c[i++] =   to_domain_ent_ids[0][1]; // corner 1
+      c[i++] =   verts[1]; // vertex 1
+      c[i++] =   edges[9]; // edge 9, abuts vertex 1
+      c[i++] =   faces[3]; // face 3, abuts vertex 1
+      c[i++] = corners[1]; // corner 1
       // wedge 1
-      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
-      c[i++] = from_domain_ent_ids[1][1]; // edge 1, abuts vertex 1
-      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 1
-      c[i++] =   to_domain_ent_ids[0][1]; // corner 1
+      c[i++] =   verts[1]; // vertex 1
+      c[i++] =   edges[1]; // edge 1, abuts vertex 1
+      c[i++] =   faces[3]; // face 3, abuts vertex 1
+      c[i++] = corners[1]; // corner 1
       // wedge 2
-      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
-      c[i++] = from_domain_ent_ids[1][0]; // edge 0, abuts vertex 1
-      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 1
-      c[i++] =   to_domain_ent_ids[0][1]; // corner 1
+      c[i++] =   verts[1]; // vertex 1
+      c[i++] =   edges[0]; // edge 0, abuts vertex 1
+      c[i++] =   faces[2]; // face 2, abuts vertex 1
+      c[i++] = corners[1]; // corner 1
       // wedge 3
-      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
-      c[i++] = from_domain_ent_ids[1][9]; // edge 9, abuts vertex 1
-      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 1
-      c[i++] =   to_domain_ent_ids[0][1]; // corner 1
+      c[i++] =   verts[1]; // vertex 1
+      c[i++] =   edges[9]; // edge 9, abuts vertex 1
+      c[i++] =   faces[2]; // face 2, abuts vertex 1
+      c[i++] = corners[1]; // corner 1
       // wedge 4
-      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
-      c[i++] = from_domain_ent_ids[1][1]; // edge 1, abuts vertex 1
-      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 1
-      c[i++] =   to_domain_ent_ids[0][1]; // corner 1
+      c[i++] =   verts[1]; // vertex 1
+      c[i++] =   edges[1]; // edge 1, abuts vertex 1
+      c[i++] =   faces[0]; // face 0, abuts vertex 1
+      c[i++] = corners[1]; // corner 1
       // wedge 5
-      c[i++] = from_domain_ent_ids[0][1]; // vertex 1
-      c[i++] = from_domain_ent_ids[1][0]; // edge 0, abuts vertex 1
-      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 1
-      c[i++] =   to_domain_ent_ids[0][1]; // corner 1
+      c[i++] =   verts[1]; // vertex 1
+      c[i++] =   edges[0]; // edge 0, abuts vertex 1
+      c[i++] =   faces[0]; // face 0, abuts vertex 1
+      c[i++] = corners[1]; // corner 1
 
       // corner 2
       // wedge 0
-      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
-      c[i++] = from_domain_ent_ids[1][10]; // edge 10, abuts vertex 2
-      c[i++] = from_domain_ent_ids[2][4]; // face 4, abuts vertex 2
-      c[i++] =   to_domain_ent_ids[0][2]; // corner 2
+      c[i++] =   verts[2]; // vertex 2
+      c[i++] =   edges[10]; // edge 10, abuts vertex 2
+      c[i++] =   faces[4]; // face 4, abuts vertex 2
+      c[i++] = corners[2]; // corner 2
       // wedge 1
-      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
-      c[i++] = from_domain_ent_ids[1][2]; // edge 2, abuts vertex 2
-      c[i++] = from_domain_ent_ids[2][4]; // face 4, abuts vertex 2
-      c[i++] =   to_domain_ent_ids[0][2]; // corner 2
+      c[i++] =   verts[2]; // vertex 2
+      c[i++] =   edges[2]; // edge 2, abuts vertex 2
+      c[i++] =   faces[4]; // face 4, abuts vertex 2
+      c[i++] = corners[2]; // corner 2
       // wedge 2
-      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
-      c[i++] = from_domain_ent_ids[1][1]; // edge 1, abuts vertex 2
-      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 2
-      c[i++] =   to_domain_ent_ids[0][2]; // corner 2
+      c[i++] =   verts[2]; // vertex 2
+      c[i++] =   edges[1]; // edge 1, abuts vertex 2
+      c[i++] =   faces[3]; // face 3, abuts vertex 2
+      c[i++] = corners[2]; // corner 2
       // wedge 3
-      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
-      c[i++] = from_domain_ent_ids[1][10]; // edge 10, abuts vertex 2
-      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 2
-      c[i++] =   to_domain_ent_ids[0][2]; // corner 2
+      c[i++] =   verts[2]; // vertex 2
+      c[i++] =   edges[10]; // edge 10, abuts vertex 2
+      c[i++] =   faces[3]; // face 3, abuts vertex 2
+      c[i++] = corners[2]; // corner 2
       // wedge 4
-      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
-      c[i++] = from_domain_ent_ids[1][2]; // edge 2, abuts vertex 2
-      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 2
-      c[i++] =   to_domain_ent_ids[0][2]; // corner 2
+      c[i++] =   verts[2]; // vertex 2
+      c[i++] =   edges[2]; // edge 2, abuts vertex 2
+      c[i++] =   faces[0]; // face 0, abuts vertex 2
+      c[i++] = corners[2]; // corner 2
       // wedge 5
-      c[i++] = from_domain_ent_ids[0][2]; // vertex 2
-      c[i++] = from_domain_ent_ids[1][1]; // edge 1, abuts vertex 2
-      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 2
-      c[i++] =   to_domain_ent_ids[0][2]; // corner 2
+      c[i++] =   verts[2]; // vertex 2
+      c[i++] =   edges[1]; // edge 1, abuts vertex 2
+      c[i++] =   faces[0]; // face 0, abuts vertex 2
+      c[i++] = corners[2]; // corner 2
 
       // corner 3
       // wedge 0
-      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
-      c[i++] = from_domain_ent_ids[1][11]; // edge 11, abuts vertex 3
-      c[i++] = from_domain_ent_ids[2][5]; // face 5, abuts vertex 3
-      c[i++] =   to_domain_ent_ids[0][3]; // corner 3
+      c[i++] =   verts[3]; // vertex 3
+      c[i++] =   edges[11]; // edge 11, abuts vertex 3
+      c[i++] =   faces[5]; // face 5, abuts vertex 3
+      c[i++] = corners[3]; // corner 3
       // wedge 1
-      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
-      c[i++] = from_domain_ent_ids[1][3]; // edge 3, abuts vertex 3
-      c[i++] = from_domain_ent_ids[2][5]; // face 5, abuts vertex 3
-      c[i++] =   to_domain_ent_ids[0][3]; // corner 3
+      c[i++] =   verts[3]; // vertex 3
+      c[i++] =   edges[3]; // edge 3, abuts vertex 3
+      c[i++] =   faces[5]; // face 5, abuts vertex 3
+      c[i++] = corners[3]; // corner 3
       // wedge 2
-      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
-      c[i++] = from_domain_ent_ids[1][2]; // edge 2, abuts vertex 3
-      c[i++] = from_domain_ent_ids[2][4]; // face 4, abuts vertex 3
-      c[i++] =   to_domain_ent_ids[0][3]; // corner 3
+      c[i++] =   verts[3]; // vertex 3
+      c[i++] =   edges[2]; // edge 2, abuts vertex 3
+      c[i++] =   faces[4]; // face 4, abuts vertex 3
+      c[i++] = corners[3]; // corner 3
       // wedge 3
-      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
-      c[i++] = from_domain_ent_ids[1][11]; // edge 11, abuts vertex 3
-      c[i++] = from_domain_ent_ids[2][4]; // face 4, abuts vertex 3
-      c[i++] =   to_domain_ent_ids[0][3]; // corner 3
+      c[i++] =   verts[3]; // vertex 3
+      c[i++] =   edges[11]; // edge 11, abuts vertex 3
+      c[i++] =   faces[4]; // face 4, abuts vertex 3
+      c[i++] = corners[3]; // corner 3
       // wedge 4
-      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
-      c[i++] = from_domain_ent_ids[1][3]; // edge 3, abuts vertex 3
-      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 3
-      c[i++] =   to_domain_ent_ids[0][3]; // corner 3
+      c[i++] =   verts[3]; // vertex 3
+      c[i++] =   edges[3]; // edge 3, abuts vertex 3
+      c[i++] =   faces[0]; // face 0, abuts vertex 3
+      c[i++] = corners[3]; // corner 3
       // wedge 5
-      c[i++] = from_domain_ent_ids[0][3]; // vertex 3
-      c[i++] = from_domain_ent_ids[1][2]; // edge 2, abuts vertex 3
-      c[i++] = from_domain_ent_ids[2][0]; // face 0, abuts vertex 3
-      c[i++] =   to_domain_ent_ids[0][3]; // corner 3
+      c[i++] =   verts[3]; // vertex 3
+      c[i++] =   edges[2]; // edge 2, abuts vertex 3
+      c[i++] =   faces[0]; // face 0, abuts vertex 3
+      c[i++] = corners[3]; // corner 3
 
       // corner 4
       // wedge 0
-      c[i++] = from_domain_ent_ids[0][4]; // vertex 4
-      c[i++] = from_domain_ent_ids[1][8]; // edge 8, abuts vertex 4
-      c[i++] = from_domain_ent_ids[2][5]; // face 5, abuts vertex 4
-      c[i++] =   to_domain_ent_ids[0][4]; // corner 4
+      c[i++] =   verts[4]; // vertex 4
+      c[i++] =   edges[8]; // edge 8, abuts vertex 4
+      c[i++] =   faces[5]; // face 5, abuts vertex 4
+      c[i++] = corners[4]; // corner 4
       // wedge 1
-      c[i++] = from_domain_ent_ids[0][4]; // vertex 4
-      c[i++] = from_domain_ent_ids[1][7]; // edge 7, abuts vertex 4
-      c[i++] = from_domain_ent_ids[2][5]; // face 5, abuts vertex 4
-      c[i++] =   to_domain_ent_ids[0][4]; // corner 4
+      c[i++] =   verts[4]; // vertex 4
+      c[i++] =   edges[7]; // edge 7, abuts vertex 4
+      c[i++] =   faces[5]; // face 5, abuts vertex 4
+      c[i++] = corners[4]; // corner 4
       // wedge 2
-      c[i++] = from_domain_ent_ids[0][4]; // vertex 4
-      c[i++] = from_domain_ent_ids[1][4]; // edge 4, abuts vertex 4
-      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 4
-      c[i++] =   to_domain_ent_ids[0][4]; // corner 4
+      c[i++] =   verts[4]; // vertex 4
+      c[i++] =   edges[4]; // edge 4, abuts vertex 4
+      c[i++] =   faces[2]; // face 2, abuts vertex 4
+      c[i++] = corners[4]; // corner 4
       // wedge 3
-      c[i++] = from_domain_ent_ids[0][4]; // vertex 4
-      c[i++] = from_domain_ent_ids[1][8]; // edge 8, abuts vertex 4
-      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 4
-      c[i++] =   to_domain_ent_ids[0][4]; // corner 4
+      c[i++] =   verts[4]; // vertex 4
+      c[i++] =   edges[8]; // edge 8, abuts vertex 4
+      c[i++] =   faces[2]; // face 2, abuts vertex 4
+      c[i++] = corners[4]; // corner 4
       // wedge 4
-      c[i++] = from_domain_ent_ids[0][4]; // vertex 4
-      c[i++] = from_domain_ent_ids[1][7]; // edge 7, abuts vertex 4
-      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 4
-      c[i++] =   to_domain_ent_ids[0][4]; // corner 4
+      c[i++] =   verts[4]; // vertex 4
+      c[i++] =   edges[7]; // edge 7, abuts vertex 4
+      c[i++] =   faces[1]; // face 1, abuts vertex 4
+      c[i++] = corners[4]; // corner 4
       // wedge 5
-      c[i++] = from_domain_ent_ids[0][4]; // vertex 4
-      c[i++] = from_domain_ent_ids[1][4]; // edge 4, abuts vertex 4
-      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 4
-      c[i++] =   to_domain_ent_ids[0][4]; // corner 4
+      c[i++] =   verts[4]; // vertex 4
+      c[i++] =   edges[4]; // edge 4, abuts vertex 4
+      c[i++] =   faces[1]; // face 1, abuts vertex 4
+      c[i++] = corners[4]; // corner 4
 
       // corner 5
       // wedge 0
-      c[i++] = from_domain_ent_ids[0][5]; // vertex 5
-      c[i++] = from_domain_ent_ids[1][9]; // edge 9, abuts vertex 5
-      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 5
-      c[i++] =   to_domain_ent_ids[0][5]; // corner 5
+      c[i++] =   verts[5]; // vertex 5
+      c[i++] =   edges[9]; // edge 9, abuts vertex 5
+      c[i++] =   faces[2]; // face 2, abuts vertex 5
+      c[i++] = corners[5]; // corner 5
       // wedge 1
-      c[i++] = from_domain_ent_ids[0][5]; // vertex 5
-      c[i++] = from_domain_ent_ids[1][4]; // edge 4, abuts vertex 5
-      c[i++] = from_domain_ent_ids[2][2]; // face 2, abuts vertex 5
-      c[i++] =   to_domain_ent_ids[0][5]; // corner 5
+      c[i++] =   verts[5]; // vertex 5
+      c[i++] =   edges[4]; // edge 4, abuts vertex 5
+      c[i++] =   faces[2]; // face 2, abuts vertex 5
+      c[i++] = corners[5]; // corner 5
       // wedge 2
-      c[i++] = from_domain_ent_ids[0][5]; // vertex 5
-      c[i++] = from_domain_ent_ids[1][5]; // edge 5, abuts vertex 5
-      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 5
-      c[i++] =   to_domain_ent_ids[0][5]; // corner 5
+      c[i++] =   verts[5]; // vertex 5
+      c[i++] =   edges[5]; // edge 5, abuts vertex 5
+      c[i++] =   faces[3]; // face 3, abuts vertex 5
+      c[i++] = corners[5]; // corner 5
       // wedge 3
-      c[i++] = from_domain_ent_ids[0][5]; // vertex 5
-      c[i++] = from_domain_ent_ids[1][9]; // edge 9, abuts vertex 5
-      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 5
-      c[i++] =   to_domain_ent_ids[0][5]; // corner 5
+      c[i++] =   verts[5]; // vertex 5
+      c[i++] =   edges[9]; // edge 9, abuts vertex 5
+      c[i++] =   faces[3]; // face 3, abuts vertex 5
+      c[i++] = corners[5]; // corner 5
       // wedge 4
-      c[i++] = from_domain_ent_ids[0][5]; // vertex 5
-      c[i++] = from_domain_ent_ids[1][4]; // edge 4, abuts vertex 5
-      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 5
-      c[i++] =   to_domain_ent_ids[0][5]; // corner 5
+      c[i++] =   verts[5]; // vertex 5
+      c[i++] =   edges[4]; // edge 4, abuts vertex 5
+      c[i++] =   faces[1]; // face 1, abuts vertex 5
+      c[i++] = corners[5]; // corner 5
       // wedge 5
-      c[i++] = from_domain_ent_ids[0][5]; // vertex 5
-      c[i++] = from_domain_ent_ids[1][5]; // edge 5, abuts vertex 5
-      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 5
-      c[i++] =   to_domain_ent_ids[0][5]; // corner 5
+      c[i++] =   verts[5]; // vertex 5
+      c[i++] =   edges[5]; // edge 5, abuts vertex 5
+      c[i++] =   faces[1]; // face 1, abuts vertex 5
+      c[i++] = corners[5]; // corner 5
 
       // corner 6
       // wedge 0
-      c[i++] = from_domain_ent_ids[0][6]; // vertex 6
-      c[i++] = from_domain_ent_ids[1][10]; // edge 10, abuts vertex 6
-      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 6
-      c[i++] =   to_domain_ent_ids[0][6]; // corner 6
+      c[i++] =   verts[6]; // vertex 6
+      c[i++] =   edges[10]; // edge 10, abuts vertex 6
+      c[i++] =   faces[3]; // face 3, abuts vertex 6
+      c[i++] = corners[6]; // corner 6
       // wedge 1
-      c[i++] = from_domain_ent_ids[0][6]; // vertex 6
-      c[i++] = from_domain_ent_ids[1][5]; // edge 5, abuts vertex 6
-      c[i++] = from_domain_ent_ids[2][3]; // face 3, abuts vertex 6
-      c[i++] =   to_domain_ent_ids[0][6]; // corner 6
+      c[i++] =   verts[6]; // vertex 6
+      c[i++] =   edges[5]; // edge 5, abuts vertex 6
+      c[i++] =   faces[3]; // face 3, abuts vertex 6
+      c[i++] = corners[6]; // corner 6
       // wedge 2
-      c[i++] = from_domain_ent_ids[0][6]; // vertex 6 
-      c[i++] = from_domain_ent_ids[1][6]; // edge 6, abuts vertex 6
-      c[i++] = from_domain_ent_ids[2][4]; // face 4, abuts vertex 6
-      c[i++] =   to_domain_ent_ids[0][6]; // corner 6
+      c[i++] =   verts[6]; // vertex 6 
+      c[i++] =   edges[6]; // edge 6, abuts vertex 6
+      c[i++] =   faces[4]; // face 4, abuts vertex 6
+      c[i++] = corners[6]; // corner 6
       // wedge 3
-      c[i++] = from_domain_ent_ids[0][6]; // vertex 6
-      c[i++] = from_domain_ent_ids[1][10]; // edge 10, abuts vertex 6
-      c[i++] = from_domain_ent_ids[2][4]; // face 4, abuts vertex 6
-      c[i++] =   to_domain_ent_ids[0][6]; // corner 6
+      c[i++] =   verts[6]; // vertex 6
+      c[i++] =   edges[10]; // edge 10, abuts vertex 6
+      c[i++] =   faces[4]; // face 4, abuts vertex 6
+      c[i++] = corners[6]; // corner 6
       // wedge 4
-      c[i++] = from_domain_ent_ids[0][6]; // vertex 6
-      c[i++] = from_domain_ent_ids[1][5]; // edge 5, abuts vertex 6
-      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 6
-      c[i++] =   to_domain_ent_ids[0][6]; // corner 6
+      c[i++] =   verts[6]; // vertex 6
+      c[i++] =   edges[5]; // edge 5, abuts vertex 6
+      c[i++] =   faces[1]; // face 1, abuts vertex 6
+      c[i++] = corners[6]; // corner 6
       // wedge 5
-      c[i++] = from_domain_ent_ids[0][6]; // vertex 6
-      c[i++] = from_domain_ent_ids[1][6]; // edge 6, abuts vertex 6
-      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 6
-      c[i++] =   to_domain_ent_ids[0][6]; // corner 6
+      c[i++] =   verts[6]; // vertex 6
+      c[i++] =   edges[6]; // edge 6, abuts vertex 6
+      c[i++] =   faces[1]; // face 1, abuts vertex 6
+      c[i++] = corners[6]; // corner 6
 
       // corner 7
       // wedge 0
-      c[i++] = from_domain_ent_ids[0][7]; // vertex 7
-      c[i++] = from_domain_ent_ids[1][11]; // edge 11, abuts vertex 7
-      c[i++] = from_domain_ent_ids[2][4]; // face 4, abuts vertex 7
-      c[i++] =   to_domain_ent_ids[0][7]; // corner 7
+      c[i++] =   verts[7]; // vertex 7
+      c[i++] =   edges[11]; // edge 11, abuts vertex 7
+      c[i++] =   faces[4]; // face 4, abuts vertex 7
+      c[i++] = corners[7]; // corner 7
       // wedge 1
-      c[i++] = from_domain_ent_ids[0][7]; // vertex 7
-      c[i++] = from_domain_ent_ids[1][6]; // edge 6, abuts vertex 7
-      c[i++] = from_domain_ent_ids[2][4]; // face 4, abuts vertex 7
-      c[i++] =   to_domain_ent_ids[0][7]; // corner 7
+      c[i++] =   verts[7]; // vertex 7
+      c[i++] =   edges[6]; // edge 6, abuts vertex 7
+      c[i++] =   faces[4]; // face 4, abuts vertex 7
+      c[i++] = corners[7]; // corner 7
       // wedge 2
-      c[i++] = from_domain_ent_ids[0][7]; // vertex 7
-      c[i++] = from_domain_ent_ids[1][7]; // edge 7, abuts vertex 7
-      c[i++] = from_domain_ent_ids[2][5]; // face 5, abuts vertex 7
-      c[i++] =   to_domain_ent_ids[0][7]; // corner 7
+      c[i++] =   verts[7]; // vertex 7
+      c[i++] =   edges[7]; // edge 7, abuts vertex 7
+      c[i++] =   faces[5]; // face 5, abuts vertex 7
+      c[i++] = corners[7]; // corner 7
       // wedge 3
-      c[i++] = from_domain_ent_ids[0][7]; // vertex 7
-      c[i++] = from_domain_ent_ids[1][11]; // edge 11, abuts vertex 7
-      c[i++] = from_domain_ent_ids[2][5]; // face 5, abuts vertex 7
-      c[i++] =   to_domain_ent_ids[0][7]; // corner 7
+      c[i++] =   verts[7]; // vertex 7
+      c[i++] =   edges[11]; // edge 11, abuts vertex 7
+      c[i++] =   faces[5]; // face 5, abuts vertex 7
+      c[i++] = corners[7]; // corner 7
       // wedge 4
-      c[i++] = from_domain_ent_ids[0][7]; // vertex 7
-      c[i++] = from_domain_ent_ids[1][6]; // edge 6, abuts vertex 7
-      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 7
-      c[i++] =   to_domain_ent_ids[0][7]; // corner 7
+      c[i++] =   verts[7]; // vertex 7
+      c[i++] =   edges[6]; // edge 6, abuts vertex 7
+      c[i++] =   faces[1]; // face 1, abuts vertex 7
+      c[i++] = corners[7]; // corner 7
       // wedge 5
-      c[i++] = from_domain_ent_ids[0][7]; // vertex 7
-      c[i++] = from_domain_ent_ids[1][7]; // edge 7, abuts vertex 7
-      c[i++] = from_domain_ent_ids[2][1]; // face 1, abuts vertex 7
-      c[i++] =   to_domain_ent_ids[0][7]; // corner 7
+      c[i++] =   verts[7]; // vertex 7
+      c[i++] =   edges[7]; // edge 7, abuts vertex 7
+      c[i++] =   faces[1]; // face 1, abuts vertex 7
+      c[i++] = corners[7]; // corner 7
 
       return std::vector<id_t>(48, 4);
-
+    }
       //------------------------------------------------------------------------
       // failure
     default:
       raise_runtime_error("Unknown bound entity type");
     } // switch
   } // create_bound_entities
-
 
 };
 

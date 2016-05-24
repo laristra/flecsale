@@ -38,6 +38,17 @@ burton_2d_quad_t::point_t burton_2d_quad_t::centroid() const
     vs[2]->coordinates(), vs[3]->coordinates() );
 }
 
+
+//! the midpoint
+burton_2d_quad_t::point_t burton_2d_quad_t::midpoint() const
+{
+  auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh()); 
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
+  return geom::quadrilateral<num_dimensions>::midpoint( 
+    vs[0]->coordinates(), vs[1]->coordinates(), 
+    vs[2]->coordinates(), vs[3]->coordinates() );
+}
+
 //! the area of the cell
 burton_2d_quad_t::real_t burton_2d_quad_t::area() const
 {
@@ -99,7 +110,8 @@ burton_3d_quad_t::vector_t burton_3d_quad_t::normal() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::quadrilateral<num_dimensions>::normal( 
+  auto dir = direction();
+  return dir * geom::quadrilateral<num_dimensions>::normal( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
 }

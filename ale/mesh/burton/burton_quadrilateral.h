@@ -69,6 +69,9 @@ public:
   //! the centroid
   point_t centroid() const override;
 
+  //! the midpoint
+  point_t midpoint() const override;
+
   //! the area of the cell
   real_t area() const override;
 
@@ -83,21 +86,29 @@ public:
   //! \brief create_entities function for burton_quadrilateral_cell_t.
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_entities(
-      size_t dim, id_t * e, id_t * v, size_t vertex_count)  override
+    size_t dim, const id_t & cell,
+    connectivity_t*  (&conn)[num_dimensions+1][num_dimensions], 
+    id_t * entities ) override
   {
     assert( dim == 1 );
-    assert( vertex_count == 4 );
-    e[0] = v[0];
-    e[1] = v[1];
 
-    e[2] = v[1];
-    e[3] = v[2];
+    auto cell_id = cell.entity();
+    size_t num_cell_verts = 0;
+    auto v = conn[2][0]->get_entities( cell_id, num_cell_verts );
 
-    e[4] = v[2];
-    e[5] = v[3];
+    assert( num_cell_verts == 4 );
 
-    e[6] = v[3];
-    e[7] = v[0];
+    entities[0] = v[0];
+    entities[1] = v[1];
+
+    entities[2] = v[1];
+    entities[3] = v[2];
+
+    entities[4] = v[2];
+    entities[5] = v[3];
+
+    entities[6] = v[3];
+    entities[7] = v[0];
 
     return {2, 2, 2, 2};
   } // create_entities
@@ -150,13 +161,13 @@ public:
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id,
-    connectivity_t ** from_domain_conn, connectivity_t ** to_domain_conn, 
+    connectivity_t*  (&from_domain_conn)[num_dimensions+1][num_dimensions+1], 
+    connectivity_t*  (&  to_domain_conn)[num_dimensions+1][num_dimensions+1], 
     id_t * c )  override
   {
     size_t num_vertices = 0, num_edges = 0, num_corners = 0;
-    auto verts = from_domain_conn[0]->get_entities( cell_id.entity(), num_vertices );
-    auto edges = from_domain_conn[1]->get_entities( cell_id.entity(), num_edges );
-    auto corners = to_domain_conn[0]->get_entities( cell_id.entity(), num_corners );
+    auto verts = from_domain_conn[2][0]->get_entities( cell_id.entity(), num_vertices );
+    auto edges = from_domain_conn[2][1]->get_entities( cell_id.entity(), num_edges );
 
     assert( num_vertices == 4 );
 
@@ -190,7 +201,10 @@ public:
       //------------------------------------------------------------------------
       // Wedges
       // The right wedge is always first
-    case 1:
+    case 1: {
+
+      size_t num_corners = 0;
+      auto corners = to_domain_conn[2][0]->get_entities( cell_id.entity(), num_corners );
 
       // wedge 0
       c[i++] =   verts[0]; // vertex 0
@@ -226,7 +240,7 @@ public:
       c[i++] = corners[3]; // corner 3
 
       return {3, 3, 3, 3, 3, 3, 3, 3};
-
+    }
       //------------------------------------------------------------------------
       // Failure
     default:
@@ -287,29 +301,6 @@ public:
   //! the cell type
   geom::geometric_shapes_t type() const override 
   { return geom::quadrilateral<num_dimensions>::shape; };
-
-  //----------------------------------------------------------------------------
-  //! \brief create_entities function for burton_quadrilateral_cell_t.
-  //----------------------------------------------------------------------------
-  inline std::vector<id_t> create_entities(
-      size_t dim, id_t * e, id_t * v, size_t vertex_count)  override
-  {
-    assert( dim == 1 );
-    assert( vertex_count == 4 );
-    e[0] = v[0];
-    e[1] = v[1];
-
-    e[2] = v[1];
-    e[3] = v[2];
-
-    e[4] = v[2];
-    e[5] = v[3];
-
-    e[6] = v[3];
-    e[7] = v[0];
-
-    return {2, 2, 2, 2};
-  } // create_entities
 
 
 };

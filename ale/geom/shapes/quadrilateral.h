@@ -50,6 +50,15 @@ struct quadrilateral<2> {
   {
     return polygon<2>::centroid( std::forward<Args>(pts)... );
   }
+
+  //============================================================================
+  //! \brief the midpoint function
+  //============================================================================
+  template< typename... Args >
+  static auto midpoint( Args&&... pts ) 
+  {
+    return polygon<2>::midpoint( std::forward<Args>(pts)... );
+  }
   
   //============================================================================
   //! \brief the volume function

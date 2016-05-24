@@ -77,7 +77,7 @@ public:
   auto centroid() const
   {
     // initialize volume
-    point_type cx(0);
+    point_type cx(0), nsum(0);
     coord_type v = 0;
 
     //--------------------------------------------------------------------------
@@ -92,6 +92,7 @@ public:
       for ( auto pn=points.begin(); pn!=points.end(); pn++ ) {
         // get normal
         auto n = triangle<3>::normal( *po, *pn, xm );
+        nsum += n;
         // compute main contribution
         auto a1 = *po + *pn;
         auto a2 = *pn +  xm;
@@ -120,6 +121,11 @@ public:
     // divide by volume
     cx /= 8 * v;
 
+#if 0
+    for ( auto & nx : nsum )
+      assert( nx == 0 );
+#endif 
+
     return cx;
   }
 
@@ -133,6 +139,7 @@ public:
 
     //--------------------------------------------------------------------------
     // loop over faces
+    
     for ( const auto & points : faces_ ) {
       // face midpoint
       auto xm = math::average( points );
@@ -147,6 +154,15 @@ public:
     cx /= faces_.size();
 
     return cx;
+  }
+
+  //============================================================================
+  //! \brief the midpoint 
+  //============================================================================
+  template< typename... Args >
+  static auto midpoint( Args&&... pts ) 
+  {
+    return math::average( std::forward<Args>(pts)... );
   }
 
   //============================================================================

@@ -60,6 +60,7 @@ public:
   using  vector_t = typename mesh_t::vector_t;
   using  vertex_t = typename mesh_t::vertex_t;
   using    face_t = typename mesh_t::face_t;
+  using    cell_t = typename mesh_t::cell_t;
   using  ex_real_t  = real_t;
   using  ex_index_t = int;
 
@@ -841,8 +842,8 @@ struct burton_io_exodus_t<3> :
     //--------------------------------------------------------------------------
     // read coordinates
 
-    std::vector<vertex_t *> vs;
-    status = read_point_coords( m, num_nodes, vs );
+    std::vector<vertex_t *> vertices;
+    status = read_point_coords( m, num_nodes, vertices );
     assert( status == 0 );
 
     //--------------------------------------------------------------------------
@@ -856,7 +857,7 @@ struct burton_io_exodus_t<3> :
     }
 
     // storage for faces
-    std::vector<face_t *> fs;
+    std::vector<face_t *> faces;
 
     // read each block
     for ( auto iblk=0; iblk<num_face_blk; iblk++ ) {
@@ -879,7 +880,7 @@ struct burton_io_exodus_t<3> :
       
 
       // resize face storage for new faces
-      fs.reserve( fs.size() + num_face_this_blk );
+      faces.reserve( faces.size() + num_face_this_blk );
 
       // the number of nodes per face is really the number of
       // nodes in the whole block ( includes duplicate / overlapping
@@ -909,16 +910,46 @@ struct burton_io_exodus_t<3> :
         num_nodes_per_face = face_node_counts[e];
         // copy local vertices into vector ( exodus uses 1 indexed arrays )
         for ( auto v=0;  v<num_nodes_per_face; v++ ) 
-          face_vs.emplace_back( vs[ face_nodes[base+v] - 1 ] );
+          face_vs.emplace_back( vertices[ face_nodes[base+v] - 1 ] );
         // create acual face
         auto f = m.create_face( face_vs );
         // now add it to the 
-        fs.emplace_back( std::move(f) );
+        faces.emplace_back( std::move(f) );
         // base offset into face conn
         base += num_nodes_per_face;
       }
 
     }
+
+    //--------------------------------------------------------------------------
+    // lambda function to get unique vertices
+    auto _cell_midpoint = [&]( const auto & faces )
+      {
+        // count the maximum number of vertices
+        size_t max_faces = 0;
+        for ( auto f : faces ) 
+          max_faces += m.vertices(f).size();
+        // add the vertices to the list
+        vector<vertex_t *> verts;
+        verts.reserve(max_faces);
+        for ( auto f : faces ) 
+          for ( auto v : m.vertices(f) )
+            verts.emplace_back( v );
+        // sort them and remove non-unique
+        std::sort( verts.begin(), verts.end() );
+        auto end = std::unique( verts.begin(), verts.end() );
+        auto num_verts = std::distance( verts.begin(), end );
+        // copy the coordinates
+        using point_t = 
+          std::decay_t< decltype( std::declval<vertex_t>().coordinates() ) >;
+        vector< point_t > coords( num_verts );
+        std::transform( 
+          verts.begin(), end, coords.begin(),
+          []( const auto a ) { return a->coordinates(); } 
+        );
+        // compute the average
+        return math::average( coords.begin(), coords.end() );
+      };
 
     //--------------------------------------------------------------------------
     // read element blocks
@@ -929,6 +960,11 @@ struct burton_io_exodus_t<3> :
     // storage for regions
     vector<ex_index_t> region_ids;
     region_ids.reserve( num_elem );
+
+    // need to keep track of who owns each face
+    // this is needed to ascertain a face direction
+    vector< std::pair< face_t*, cell_t* > > 
+      face_owner( faces.size(), std::make_pair(nullptr, nullptr)  );
 
     // read each block
     for ( auto iblk=0; iblk<num_elem_blk; iblk++ ) {
@@ -972,26 +1008,44 @@ struct burton_io_exodus_t<3> :
           exoid, EX_ELEM_BLOCK, elem_blk_id, nullptr, nullptr, elem_faces.data() );
         assert(status == 0);
         
-        // storage for element verts
-        vector<face_t *> elem_fs;
+        // storage for element faces
+        vector<face_t *>   elem_fs;
+        vector<ex_index_t> elem_fs_ids;
         elem_fs.reserve( elem_face_counts[0] );
+        elem_fs_ids.reserve( elem_face_counts[0] );
         
         // create cells in mesh
         for (size_t e=0, base=0; e < num_elem_this_blk; ++e) {
+          // reset storage
           elem_fs.clear();
           // get the number of faces
           num_faces_per_elem = elem_face_counts[e];
-          // get the face mapping
-          //auto exodus_face_map = get_face_mapper( num_faces_per_elem );
           // copy local vertices into vector ( exodus uses 1 indexed arrays )
           for ( auto v=0;  v<num_faces_per_elem; v++ ) {
-            auto local = v;
-            std::cout << local << " " << fs[ elem_faces[base+local] - 1 ] -> centroid() << std::endl;
-            elem_fs.emplace_back( fs[ elem_faces[base+local] - 1 ] );
+            auto id = elem_faces[base+v] - 1;            
+            elem_fs.emplace_back( faces[ id ] );
+            elem_fs_ids.emplace_back( id );
           }
-          std::cout << std::endl;
           // create acual cell
           auto c = m.create_cell( elem_fs );
+          // get the cell midpoint
+          auto cx = _cell_midpoint( elem_fs );
+          // Since exodus does not provide the face directions, we need to figure 
+          // these out with geometric checks
+          for ( auto face_id : elem_fs_ids ) {
+            if ( ! face_owner[face_id].first ) {
+              auto f = faces[face_id];
+              // auto fx = f->midpoint();
+              // auto fn = f->normal();
+              // auto delta = fx - cx;
+              // auto dot = dot_product( delta, fn );              
+              // if ( dot < 0 ) 
+              //   std::cout << "please flip" << std::endl;
+              face_owner[face_id].first  = f;
+              face_owner[face_id].second = c;
+            }
+          }
+          //c->fix_face_directions();          
           // base offset into elt_conn
           base += num_faces_per_elem;
         }
@@ -1017,7 +1071,7 @@ struct burton_io_exodus_t<3> :
           auto b = e*num_nodes_per_elem;
           // copy local vertices into vector ( exodus uses 1 indexed arrays )
           for ( auto v=0;  v<num_nodes_per_elem; v++ ) 
-            elem_vs.emplace_back( vs[ elt_conn[b+v]-1 ] );
+            elem_vs.emplace_back( vertices[ elt_conn[b+v]-1 ] );
           // create acual cell
           auto c = m.create_cell( elem_vs );          
         }
@@ -1032,13 +1086,27 @@ struct burton_io_exodus_t<3> :
       
     }
     // end blocks
-    //--------------------------------------------------------------------------
 
+
+    //--------------------------------------------------------------------------
+    // final mesh setup
     m.init();
 
     // override the region ids
     m.set_regions( region_ids.data() );
     m.set_num_regions( num_elem_blk );
+
+
+    // loop over faces that got created in the face blocks and and
+    // make sure the owner is the first cell
+    for ( auto face_pair : face_owner ) {
+      auto face = face_pair.first;
+      auto cell = face_pair.second;
+      auto cells = m.cells( face );
+      assert( cells.front().id() == cell->template id<0>() );
+    }
+    
+
 
     // creating fields from an exodus file will be problematic since the type
     // information on the file has been thrown away. For example, an int field

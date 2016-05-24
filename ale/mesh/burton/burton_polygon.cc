@@ -36,6 +36,14 @@ burton_2d_polygon_t::point_t burton_2d_polygon_t::centroid() const
   return geom::polygon<num_dimensions>::centroid( coords );
 }
 
+//! the midpoint
+burton_2d_polygon_t::point_t burton_2d_polygon_t::midpoint() const
+{
+  auto coords = coordinates();
+  return geom::polygon<num_dimensions>::midpoint( coords );
+}
+
+
 //! the area of the cell
 burton_2d_polygon_t::real_t burton_2d_polygon_t::area() const
 {
@@ -67,7 +75,8 @@ burton_3d_polygon_t::point_t burton_3d_polygon_t::midpoint() const
 burton_3d_polygon_t::vector_t burton_3d_polygon_t::normal() const
 {
   auto coords = coordinates();
-  return geom::polygon<num_dimensions>::normal( coords );
+  auto dir = direction();
+  return dir * geom::polygon<num_dimensions>::normal( coords );
 }
 
 //! the area of the cell

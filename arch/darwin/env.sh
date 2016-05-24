@@ -14,9 +14,6 @@ usage(){
 }
 
 
-# set some variables
-compiler=$1
-
 TPL_DEFAULT_PATH=/usr/projects/ngc/public/ale-thirdparty
 TPL_DEFAULT_DOWNLOAD_PATH=${TPL_DEFAULT_PATH}/src
 TPL_DEFAULT_INSTALL_PREFIX=${TPL_DEFAULT_PATH}/builds/gcc/install
@@ -25,6 +22,10 @@ TPL_DEFAULT_INSTALL_PREFIX=${TPL_DEFAULT_PATH}/builds/gcc/install
 if [ "$#" -eq 0 ]; then
   usage
 fi
+
+# set some variables
+compiler=$1
+shift
 
 # use your own build environment
 if [ "$compiler" == "own" ]; then

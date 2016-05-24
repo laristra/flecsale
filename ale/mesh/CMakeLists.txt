@@ -90,8 +90,10 @@ cinch_add_unit(mesh
       ${DATA_DIR}/meshes/2d/mixed/mixed_1_0.vtu
       ${DATA_DIR}/meshes/2d/mixed/mixed.vtk
       ${DATA_DIR}/meshes/2d/voro/voro.g
+      ${DATA_DIR}/meshes/3d/box/box-hex.exo
       ${DATA_DIR}/meshes/3d/box/box-hex.g
       ${DATA_DIR}/meshes/3d/box/box-nfaced.exo
+      ${DATA_DIR}/meshes/3d/box/box-tet.exo
       ${DATA_DIR}/meshes/3d/box/box-tet.g
       ${DATA_DIR}/meshes/3d/voro/sedov-0_05cm.exo
     LIBRARIES ${ALE_LIBRARIES}

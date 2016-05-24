@@ -67,6 +67,9 @@ TEST_F(burton_voro, read_write_3d) {
   string name("sedov-0_05cm.exo");
   ASSERT_FALSE(read_mesh(name, m));
 
+  // check the mesh
+  EXPECT_TRUE( m.is_valid(false) );
+
   // write m to a different file
   name = output_prefix()+".exo";
   ASSERT_FALSE(write_mesh(name, m));

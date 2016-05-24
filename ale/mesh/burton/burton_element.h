@@ -346,6 +346,10 @@ struct burton_element_t<2,2>
   virtual point_t centroid() const 
   { raise_runtime_error("you should never get here"); };
 
+  //! the edge midpoint
+  virtual point_t midpoint() const
+  { raise_runtime_error("you should never get here"); };
+
   //! the area of the element
   virtual real_t area() const
   { raise_runtime_error("you should never get here"); };
@@ -384,7 +388,9 @@ struct burton_element_t<2,2>
   //!   entity and b) the number of vertices per collection.
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_entities(
-    size_t dim, id_t * e, id_t * v, size_t vertex_count) 
+    size_t dim, const id_t & cell,
+    connectivity_t*  (&conn)[num_dimensions+1][num_dimensions], 
+    id_t * entities ) 
   { raise_runtime_error("you should never get here"); };
 
   //----------------------------------------------------------------------------
@@ -401,7 +407,8 @@ struct burton_element_t<2,2>
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id,
-    connectivity_t ** from_domain_conn, connectivity_t ** to_domain_conn, 
+    connectivity_t*  (&from_domain_conn)[num_dimensions+1][num_dimensions+1], 
+    connectivity_t*  (&  to_domain_conn)[num_dimensions+1][num_dimensions+1], 
     id_t * c ) 
   { raise_runtime_error("you should never get here"); };
 
@@ -511,7 +518,7 @@ struct burton_element_t<3,2>
   //============================================================================
 
   //! the list of actual coordinates
-  point_list_t coordinates() const;
+  point_list_t coordinates( bool reverse = false ) const;
 
   //! the centroid
   virtual point_t centroid() const 
@@ -520,6 +527,18 @@ struct burton_element_t<3,2>
   //! the midpoint used in tesselating the element
   virtual point_t midpoint() const 
   { raise_runtime_error("you should never get here"); };
+
+  //! the direction the face is oriented in
+  char direction() const
+  { return direction_; }
+
+  //! flip the direction the face is oriented in
+  void flip() 
+  { direction_ = - direction_; }
+
+  //! flip the direction the face is oriented in
+  bool flipped() const
+  { return direction_ < 0; }
 
   //! the normal
   virtual vector_t normal() const 
@@ -536,7 +555,6 @@ struct burton_element_t<3,2>
   virtual geom::geometric_shapes_t type() const
   { raise_runtime_error("you should never get here"); };
 
-
   //----------------------------------------------------------------------------
   //! \brief create_entities is a function that creates entities
   //!   of topological dimension dim, using vertices v, and puts the vertices
@@ -552,7 +570,9 @@ struct burton_element_t<3,2>
   //!   entity and b) the number of vertices per collection.
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_entities(
-    size_t dim, id_t * e, id_t * v, size_t vertex_count) 
+    size_t dim, const id_t & cell,
+    connectivity_t*  (&conn)[num_dimensions+1][num_dimensions], 
+    id_t * entities ) 
   { raise_runtime_error("you should never get here"); };
 
   //----------------------------------------------------------------------------
@@ -568,11 +588,11 @@ struct burton_element_t<3,2>
   //!   binding and b) the number of entities per collection.
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_bound_entities(
-    size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id, 
-    connectivity_t ** from_domain_conn, connectivity_t ** to_domain_conn, 
-    id_t * c ) 
+    size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id,
+    connectivity_t*  (&from_domain_conn)[num_dimensions+1][num_dimensions+1], 
+    connectivity_t*  (&  to_domain_conn)[num_dimensions+1][num_dimensions+1], 
+    id_t * c )
   { raise_runtime_error("you should never get here"); };
-
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
@@ -594,6 +614,9 @@ private:
   
   //! a reference to the mesh topology
   const mesh_topology_base_t * mesh_ = nullptr;
+
+  //! a flag to indicate the direction of the face
+  char direction_ = 1;
 
 }; // class burton_element_t
 
@@ -666,13 +689,16 @@ struct burton_element_t<3,3>
   //! the base edge type
   using face_t = burton_face_t<num_dimensions>;
 
+  //! the base cell type
+  using cell_t = burton_element_t<3,3>;
+
   //============================================================================
   // Constructors
   //============================================================================
 
   //! Constructor
-  burton_element_t(mesh_topology_base_t & mesh) : mesh_(&mesh) 
-  {};
+  burton_element_t(mesh_topology_base_t & mesh) : mesh_(&mesh)
+  {}
 
   //! Destructor
   virtual ~burton_element_t() {}
@@ -735,7 +761,9 @@ struct burton_element_t<3,3>
   //!   entity and b) the number of vertices per collection.
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_entities(
-    size_t dim, id_t * e, id_t * v, size_t vertex_count) 
+    size_t dim, const id_t & cell,
+    connectivity_t*  (&conn)[num_dimensions+1][num_dimensions], 
+    id_t * entities ) 
   { raise_runtime_error("you should never get here"); };
 
   //----------------------------------------------------------------------------
@@ -751,11 +779,12 @@ struct burton_element_t<3,3>
   //!   binding and b) the number of entities per collection.
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_bound_entities(
-    size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id, 
-    connectivity_t ** from_domain_conn, connectivity_t ** to_domain_conn, 
-    id_t * c ) 
+    size_t from_domain, size_t to_domain, size_t dim, const id_t & cell,
+    connectivity_t*  (&from_domain_conn)[num_dimensions+1][num_dimensions+1], 
+    connectivity_t*  (&  to_domain_conn)[num_dimensions+1][num_dimensions+1], 
+    id_t * entities )
   { raise_runtime_error("you should never get here"); };
-
+ 
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 

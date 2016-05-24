@@ -102,6 +102,47 @@ public:
   //============================================================================
   static constexpr auto shape = geometric_shapes_t::polygon;
 
+
+  //============================================================================
+  //! \brief compute midpoint for 2d polygons
+  //! \remark all arguments must be of the same type
+  //! \remark this one is used for three or more arguments
+  //============================================================================
+  template< typename... Args >
+  static 
+  constexpr
+  auto midpoint( Args&&... args ) 
+  {
+    return math::average( std::forward<Args>(args)... );
+  }
+
+
+  //============================================================================
+  //! \brief compute midpoint for 2d polygons
+  //! \remark this one is used for iterators
+  //============================================================================
+  template< typename InputIt >
+  static 
+  auto midpoint( InputIt && first, InputIt && last )
+  { 
+    return math::average( std::forward<InputIt>(first), 
+                          std::forward<InputIt>(last) );
+  }
+
+  //============================================================================
+  //! \brief compute midpoint for 2d or 3d
+  //! \remark this is a runtime computation
+  //============================================================================
+  template< 
+    typename T, typename... Args, 
+    template <typename, typename...> class V 
+  >
+  static 
+  auto midpoint( const V<T, Args...> & points )
+  { 
+    return midpoint( points.begin(), points.end() );
+  }
+
   //============================================================================
   //! \brief compute centroid for 2d polygons
   //! \remark all arguments must be of the same type

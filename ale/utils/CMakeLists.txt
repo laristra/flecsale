@@ -4,6 +4,7 @@
 #~----------------------------------------------------------------------------~#
 
 set(utils_HEADERS
+  algorithm.h
   array_ref.h
   type_traits.h    detail/type_traits.h
   const_string.h

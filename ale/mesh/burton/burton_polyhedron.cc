@@ -27,23 +27,36 @@ namespace mesh {
 //! the centroid
 burton_polyhedron_t::point_t burton_polyhedron_t::centroid() const
 {
-  auto coords = coordinates();
-  return math::average( coords );
+  auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
+  auto fs = msh->template entities<  face_t::dimension,   face_t::domain>(this);
+  geom::polyhedron<point_t> poly;     
+  for ( auto f : fs ) {
+    auto cs = msh->template entities<cell_t::dimension, cell_t::domain>(f);
+    auto reverse = (cs[0] != this);
+    poly.insert( f->coordinates(reverse) );
+  }
+  return poly.centroid();
 }
 
 //! the centroid
 burton_polyhedron_t::point_t burton_polyhedron_t::midpoint() const
 {
   auto coords = coordinates();
-  return math::average( coords );
+  return geom::polyhedron<point_t>::midpoint( coords );
 }
 
 
 //! the area of the cell
 burton_polyhedron_t::real_t burton_polyhedron_t::volume() const
 {
-  auto coords = coordinates();
-  return 0;
+  auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
+  auto fs = msh->template entities<  face_t::dimension,   face_t::domain>(this);
+  geom::polyhedron<point_t> poly;     
+  for ( auto f : fs ) 
+    poly.insert( f->coordinates() );
+  return poly.volume();
 }
 
 

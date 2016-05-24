@@ -150,6 +150,7 @@ bool burton_3d_edge_t::is_boundary() const
 // 2d - Planar Cell
 ////////////////////////////////////////////////////////////////////////////////
 
+
 // the list of actual coordinates
 burton_2d_cell_t::point_list_t burton_2d_cell_t::coordinates() const
 {
@@ -214,13 +215,23 @@ burton_2d_cell_t::size_t burton_2d_cell_t::region() const
 ////////////////////////////////////////////////////////////////////////////////
 
 // the list of actual coordinates
-burton_3d_face_t::point_list_t burton_3d_face_t::coordinates() const
+burton_3d_face_t::point_list_t burton_3d_face_t::coordinates( bool reverse ) const
 {
   auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
   auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   point_list_t coords;
-  coords.reserve( vs.size() );
-  for ( auto v : vs ) coords.emplace_back( v->coordinates() );
+  auto swap = flipped() ? !reverse : reverse;
+  if ( swap ) {
+    coords.resize( vs.size() );
+    size_t cnt = vs.size()-1;
+    for ( auto v : vs ) 
+      coords[cnt--] = v->coordinates();
+  }
+  else {
+    coords.reserve( vs.size() );
+    for ( auto v : vs ) 
+      coords.emplace_back( v->coordinates() );     
+  }
   return coords;
 }
 
@@ -247,6 +258,29 @@ burton_3d_face_t::real_t burton_3d_face_t::min_length() const
   // return the result
   return min_length;
 }
+
+#if 0
+//! the direction the face is oriented in
+char burton_3d_face_t::direction() const
+{
+  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
+  auto dirs =
+    data_t::instance().template dense_accessor<char, flecsi_internal>(
+      "face_direction", mesh->runtime_id() );
+  return dirs[mesh_entity_base_t<num_domains>::template id<0>()];
+}
+
+//! flip the direction the face is oriented in
+void burton_3d_face_t::flip()
+{
+  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
+  auto dirs =
+    data_t::instance().template dense_accessor<char, flecsi_internal>(
+      "face_direction", mesh->runtime_id() );
+  auto & dir = dirs[mesh_entity_base_t<num_domains>::template id<0>()];
+  dir = - dir;
+}
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // 3d - Cell
