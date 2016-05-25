@@ -245,8 +245,8 @@ int32_t evaluate_corner_coef( T & mesh ) {
   for ( auto cn : mesh.corners() ) {
 
     // a corner connects to a cell and a vertex
-    auto cl = cn->cell();
-    auto vt = cn->vertex();
+    auto cl = mesh.cells(cn).front();
+    auto vt = mesh.vertices(cn).front();
 
     // get the cell state (there is only one)
     auto state = cell_state(cl);
@@ -260,7 +260,7 @@ int32_t evaluate_corner_coef( T & mesh ) {
     auto uv = vertex_vel[vt];
 
     // get the two wedge normals of the corner
-    auto wedges = cn->wedges();
+    auto wedges = mesh.wedges(cn);
     auto n_plus  = wedges.front()->facet_normal_right();
     auto n_minus = wedges.back() ->facet_normal_left();
     auto l_plus  = abs(n_plus);
@@ -361,7 +361,7 @@ int32_t evaluate_nodal_state( T & mesh ) {
     // build point matrix
     for ( auto cn : mesh.corners(vt) ) {
       // corner attaches to one cell and one point
-      auto cl = cn->cell();
+    auto cl = mesh.cells(cn).front();
       // get the cell state (there is only one)
       auto state = cell_state(cl);
       // the cell quantities
@@ -469,7 +469,7 @@ int32_t evaluate_forces( T & mesh ) {
     for ( auto cn : mesh.corners(cl) ) {
 
       // corner attaches to one point and zone
-      auto pt = cn->vertex();
+      auto pt = mesh.vertices(cn).front();
       // get the vertex velocity
       auto uv = vertex_vel[pt];
 
