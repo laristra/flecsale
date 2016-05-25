@@ -83,15 +83,14 @@ public:
   //! \brief create_entities function for burton_polygonal_cell_t.
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_entities(
-    size_t dim, const id_t & cell,
-    connectivity_t*  (&conn)[num_dimensions+1][num_dimensions], 
+    const id_t & cell, size_t dim,
+    const connectivity_t& conn,
     id_t * entities ) override
   {
     assert( dim == 1 );
 
-    auto cell_id = cell.entity();
-    size_t num_cell_verts = 0;
-    auto v = conn[2][0]->get_entities( cell_id, num_cell_verts );
+    auto v = conn.get_entity_vec( cell, vertex_t::dimension );
+    auto num_cell_verts = v.size();
 
     size_t ind=0;
     for ( auto i=0; i<num_cell_verts-1; i++ ) {
@@ -110,14 +109,15 @@ public:
   //!  \brief create_bound_entities function for burton_polygonal_cell_t.
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_bound_entities(
-    size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id,
-    connectivity_t*  (&from_domain_conn)[num_dimensions+1][num_dimensions+1], 
-    connectivity_t*  (&  to_domain_conn)[num_dimensions+1][num_dimensions+1], 
+    size_t from_domain, size_t to_domain, size_t dim, const id_t & cell,
+    const connectivity_t& primal_conn,
+    const connectivity_t& domain_conn,
     id_t * c )  override
   {
-    size_t num_vertices = 0, num_edges = 0, num_corners = 0;
-    auto verts = from_domain_conn[2][0]->get_entities( cell_id.entity(), num_vertices );
-    auto edges = from_domain_conn[2][1]->get_entities( cell_id.entity(), num_edges );
+
+    auto verts = primal_conn.get_entity_vec( cell, vertex_t::dimension );
+    auto edges = primal_conn.get_entity_vec( cell,   edge_t::dimension );
+    auto num_vertices = verts.size();
 
     switch (dim) {
       //------------------------------------------------------------------------
@@ -139,8 +139,7 @@ public:
       // The right wedge is always first
     case 1: {
 
-      size_t num_corners = 0;
-      auto corners = to_domain_conn[2][0]->get_entities( cell_id.entity(), num_corners );
+      auto corners = domain_conn.get_entity_vec( cell, corner_t::dimension );
 
       auto vp = num_vertices - 1;
       for ( auto vn=0, ind=0; vn<num_vertices; vn++ ) {

@@ -922,36 +922,6 @@ struct burton_io_exodus_t<3> :
     }
 
     //--------------------------------------------------------------------------
-    // lambda function to get unique vertices
-    auto _cell_midpoint = [&]( const auto & faces )
-      {
-        // count the maximum number of vertices
-        size_t max_faces = 0;
-        for ( auto f : faces ) 
-          max_faces += m.vertices(f).size();
-        // add the vertices to the list
-        vector<vertex_t *> verts;
-        verts.reserve(max_faces);
-        for ( auto f : faces ) 
-          for ( auto v : m.vertices(f) )
-            verts.emplace_back( v );
-        // sort them and remove non-unique
-        std::sort( verts.begin(), verts.end() );
-        auto end = std::unique( verts.begin(), verts.end() );
-        auto num_verts = std::distance( verts.begin(), end );
-        // copy the coordinates
-        using point_t = 
-          std::decay_t< decltype( std::declval<vertex_t>().coordinates() ) >;
-        vector< point_t > coords( num_verts );
-        std::transform( 
-          verts.begin(), end, coords.begin(),
-          []( const auto a ) { return a->coordinates(); } 
-        );
-        // compute the average
-        return math::average( coords.begin(), coords.end() );
-      };
-
-    //--------------------------------------------------------------------------
     // read element blocks
     vector<ex_index_t> elem_block_ids( num_elem_blk );
     status = ex_get_elem_blk_ids(exoid, elem_block_ids.data() );
@@ -1028,24 +998,15 @@ struct burton_io_exodus_t<3> :
           }
           // create acual cell
           auto c = m.create_cell( elem_fs );
-          // get the cell midpoint
-          auto cx = _cell_midpoint( elem_fs );
           // Since exodus does not provide the face directions, we need to figure 
           // these out with geometric checks
           for ( auto face_id : elem_fs_ids ) {
             if ( ! face_owner[face_id].first ) {
               auto f = faces[face_id];
-              // auto fx = f->midpoint();
-              // auto fn = f->normal();
-              // auto delta = fx - cx;
-              // auto dot = dot_product( delta, fn );              
-              // if ( dot < 0 ) 
-              //   std::cout << "please flip" << std::endl;
               face_owner[face_id].first  = f;
               face_owner[face_id].second = c;
             }
           }
-          //c->fix_face_directions();          
           // base offset into elt_conn
           base += num_faces_per_elem;
         }

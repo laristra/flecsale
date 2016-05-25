@@ -77,41 +77,33 @@ public:
   //! \brief create_entities function for burton_polyhedron_cell_t.
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_entities(
-    size_t dim, const id_t & cell,
-    connectivity_t*  (&conn)[num_dimensions+1][num_dimensions], 
+    const id_t & cell, size_t dim,
+    const connectivity_t& conn,
     id_t * entities )  override
   {        
 
     // you should only be coming in here to build edges
     assert( dim == 1 ); 
 
-    // get the cell id
-    auto cell_id = cell.entity();
     // get the cell entities
-    size_t num_cell_faces = 0;
-    auto cell_faces_begin = conn[3][2]->get_entities( cell_id, num_cell_faces );
-    auto cell_faces_end   = std::next( cell_faces_begin, num_cell_faces );
+    auto cell_faces = conn.get_entity_vec( cell, face_t::dimension );
     // make sure the faces exist
-    assert( num_cell_faces > 0 && "no cell faces yet" );
+    assert( cell_faces.size() > 0 && "no cell faces yet" );
     
     // the list of edge pairs
     std::vector< std::pair< id_t, id_t > > cell_edges;
 
     // get the edges of each face
-    for ( auto face = cell_faces_begin;  face != cell_faces_end; face++ ) { 
-      // get the face id
-      auto face_id = face->entity();
+    for ( const auto & face : cell_faces ) { 
       // get all vertices in this face
-      size_t num_face_verts = 0;
-      auto face_verts_begin = conn[2][0]->get_entities( face_id, num_face_verts ); 
-      auto face_verts_end   = std::next( face_verts_begin, num_face_verts );      
-      assert( num_face_verts > 2 && "not enough vertices for a valid face" );
+      auto face_verts = conn.get_entity_vec( face, vertex_t::dimension );
+      assert( face_verts.size() > 2 && "not enough vertices for a valid face" );
       // reserve space 
-      cell_edges.reserve( cell_edges.size() + num_face_verts );
+      cell_edges.reserve( cell_edges.size() + face_verts.size() );
       // add each edge pair to the list
-      auto vp = std::prev( face_verts_end );
-      assert( vp != face_verts_begin && "no vertices in this face" ); 
-      for ( auto vn = face_verts_begin; vn != face_verts_end; vn++ ) {
+      auto vp = std::prev( face_verts.end() );
+      assert( vp != face_verts.begin() && "no vertices in this face" ); 
+      for ( auto vn = face_verts.begin(); vn != face_verts.end(); vn++ ) {
         assert( *vn != *vp && "edge has two equal vertices" );
         if ( *vn < *vp ) 
           cell_edges.emplace_back( std::make_pair( *vn, *vp ) );
@@ -160,12 +152,10 @@ public:
   //----------------------------------------------------------------------------
   inline std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell,
-    connectivity_t*  (&from_domain_conn)[num_dimensions+1][num_dimensions+1], 
-    connectivity_t*  (&  to_domain_conn)[num_dimensions+1][num_dimensions+1], 
+    const connectivity_t& primal_conn,
+    const connectivity_t& domain_conn,
     id_t * entities )  override
   {
-    // get the cell id
-    auto cell_id = cell.entity();
 
     size_t i = 0;
 
@@ -183,35 +173,24 @@ public:
       std::vector<id_t> entity_count;
 
       // get the cell entities
-      size_t num_cell_verts = 0, num_cell_edges = 0, num_cell_faces = 0;
-      auto cell_verts_begin = from_domain_conn[3][0]->get_entities( cell_id, num_cell_verts );
-      auto cell_edges_begin = from_domain_conn[3][1]->get_entities( cell_id, num_cell_edges );
-      auto cell_faces_begin = from_domain_conn[3][2]->get_entities( cell_id, num_cell_faces );
-      auto cell_verts_end   = std::next( cell_verts_begin, num_cell_verts );
-      auto cell_edges_end   = std::next( cell_edges_begin, num_cell_edges );
-      auto cell_faces_end   = std::next( cell_faces_begin, num_cell_faces );
+      auto cell_verts = primal_conn.get_entity_vec( cell, vertex_t::dimension );
+      auto cell_edges = primal_conn.get_entity_vec( cell, edge_t::dimension ).vec();
+      auto cell_faces = primal_conn.get_entity_vec( cell, face_t::dimension ).vec();
 
       // sort the edges and faces for intersections later      
-      auto cell_edges = std::vector<id_t>( cell_edges_begin, cell_edges_end );
-      auto cell_faces = std::vector<id_t>( cell_faces_begin, cell_faces_end );
       std::sort( cell_edges.begin(), cell_edges.end() );
       std::sort( cell_faces.begin(), cell_faces.end() );
 
       // temparary lists
       std::vector<id_t> edges, faces;
 
-      for ( auto vert = cell_verts_begin;  vert != cell_verts_end; vert++ ) { 
-        // get the vertex id
-        auto vert_id = vert->entity();
+      for ( const auto & vert : cell_verts ) { 
         // clear temporary lits
         edges.clear();
         faces.clear();
         // get all entities attached to this vertex
-        size_t num_vert_edges = 0, num_vert_faces = 0;
-        auto vert_edges_begin = from_domain_conn[0][1]->get_entities( vert_id, num_vert_edges ); 
-        auto vert_faces_begin = from_domain_conn[0][2]->get_entities( vert_id, num_vert_faces ); 
-        auto vert_edges = std::vector<id_t>( vert_edges_begin, std::next( vert_edges_begin, num_vert_edges ) );
-        auto vert_faces = std::vector<id_t>( vert_faces_begin, std::next( vert_faces_begin, num_vert_faces ) );
+        auto vert_edges = primal_conn.get_entity_vec( vert, edge_t::dimension ).vec(); 
+        auto vert_faces = primal_conn.get_entity_vec( vert, face_t::dimension ).vec(); 
         // sort the lists for intersectinos
         std::sort( vert_edges.begin(), vert_edges.end() );
         std::sort( vert_faces.begin(), vert_faces.end() );
@@ -223,7 +202,7 @@ public:
                                cell_faces.begin(), cell_faces.end(),
                                std::back_inserter(faces));
         // add the entities to the list
-        entities[i++] = *vert;
+        entities[i++] = vert;
         for ( auto e : edges ) entities[i++] = e;
         for ( auto f : faces ) entities[i++] = f;
         // add the final number of entities to the list
@@ -242,77 +221,62 @@ public:
     case 1: {
   
       // get the higher dimensional entities
-      size_t num_cell_faces = 0, num_cell_corners = 0;
-      auto cell_faces_begin = from_domain_conn[3][2]->get_entities( cell_id, num_cell_faces );
-      auto cell_corners_begin = to_domain_conn[3][0]->get_entities( cell_id, num_cell_corners );
-      auto cell_faces_end   = std::next( cell_faces_begin, num_cell_faces );
-      auto cell_corners_end = std::next( cell_corners_begin, num_cell_corners );
+      auto cell_faces   = primal_conn.get_entity_vec( cell,   face_t::dimension );
+      auto cell_corners = domain_conn.get_entity_vec( cell, corner_t::dimension );
       
       // a counter for the number of wedges
       size_t num_wedges = 0;
 
       // loop over faces
-      for ( auto face = cell_faces_begin;  face != cell_faces_end; face++ ) { 
-
-        // get the face id
-        auto face_id = face->entity();
+      for ( const auto & face : cell_faces ) { 
 
         // get the vertices of the face
-        size_t num_face_verts = 0;
-        auto face_verts_begin = from_domain_conn[2][0]->get_entities( face_id, num_face_verts );
-        auto face_verts_end = std::next( face_verts_begin, num_face_verts );
-        auto face_verts = std::vector<id_t>( face_verts_begin, std::next( face_verts_begin, num_face_verts ) );
+        auto face_verts = primal_conn.get_entity_vec( face, vertex_t::dimension );
+        auto ccw_face_verts = std::vector<id_t>( face_verts.begin(), face_verts.end() );
         
         // get the edges of the face
-        size_t num_face_edges = 0;
-        auto face_edges_begin = from_domain_conn[2][1]->get_entities( face_id, num_face_edges );
-        auto face_edges_end = std::next( face_edges_begin, num_face_edges );
+        auto face_edges = primal_conn.get_entity_vec( face, edge_t::dimension );
 
         // get the cells of this face
-        auto face_cells = from_domain_conn[2][3]->get_entities( face_id );
+        auto face_cells = primal_conn.get_entity_vec( face, cell_t::dimension );
         // reverse the list of vertices if this is backwards
         if ( face_cells[0] != cell ) 
-          std::reverse( face_verts.begin(), face_verts.end() );
+          std::reverse( ccw_face_verts.begin(), ccw_face_verts.end() );
 
         // a lambda function to locate an edge connected to two points
         auto _find_edge = [&]( const auto & pa, const auto & pb  ) 
         {
           // locate the edge with the two vertices
           auto edge = std::find_if( 
-            face_edges_begin, face_edges_end, 
+            face_edges.begin(), face_edges.end(), 
             [&]( const auto & e ) 
             { 
-              size_t num_verts = 0;
-              auto verts = from_domain_conn[1][0]->get_entities( e.entity(), num_verts );
-              assert( num_verts == 2 && "should be two vertices per edge" );
+              auto verts = primal_conn.get_entity_vec( e, vertex_t::dimension );
+              assert( verts.size() == 2 && "should be two vertices per edge" );
               return ( (verts[0] == pa && verts[1] == pb) || 
                        (verts[0] == pb && verts[1] == pa) );
             } 
           );
           // make sure we found an edge
-          assert( edge != face_edges_end );
+          assert( edge != face_edges.end() );
           // return the edge
           return edge;
         };
           
         // loop over each edge (pair of vertices of the face)
         // there is a wedge for each vertex -> edge -> face combination
-        auto p1 = std::prev( face_verts.end() );
+        auto p1 = std::prev( ccw_face_verts.end() );
         auto p0 = std::prev( p1 );
         auto edge0 = _find_edge( *p0, *p1 );
-        for ( auto p2=face_verts.begin(); p2!=face_verts.end(); p2++ ) {
+        for ( auto p2=ccw_face_verts.begin(); p2!=ccw_face_verts.end(); p2++ ) {
           // get the next edge
           auto edge1 = _find_edge( *p1, *p2 );
           // get the corner of this point, but also associated with this cell
-          size_t num_point_corners = 0, num_cell_corners = 0;
-          auto point_corners_begin = to_domain_conn[0][0]->get_entities( *p1, num_point_corners );
-          auto cell_corners_begin  = to_domain_conn[3][0]->get_entities( cell_id, num_cell_corners );
-          // copy the result for set intersection
-          auto point_corners = std::vector<id_t>( point_corners_begin, std::next( point_corners_begin, num_point_corners ) );
-          auto  cell_corners = std::vector<id_t>(  cell_corners_begin, std::next(  cell_corners_begin, num_cell_corners ) );
+          auto point_corners = domain_conn.get_entity_vec(  *p1, corner_t::dimension ).vec();
+          auto cell_corners  = domain_conn.get_entity_vec( cell, corner_t::dimension ).vec();
           // sort the lists for intersectinos
           std::sort( point_corners.begin(), point_corners.end() );
-          std::sort(  cell_corners.begin(),  cell_corners.end() );
+          std::sort( cell_corners.begin(),  cell_corners.end() );
           // get the intersections of the sets
           std::vector<id_t> corners;
           corners.reserve(1);
@@ -324,12 +288,12 @@ public:
           // the first point, this is the right (even) one
           entities[i++] = *p1;
           entities[i++] = *edge0;
-          entities[i++] = *face;
+          entities[i++] = face;
           entities[i++] = c1;
           // for the next point, this one is the left (odd) one
           entities[i++] = *p1;
           entities[i++] = *edge1;
-          entities[i++] = *face;
+          entities[i++] = face;
           entities[i++] = c1;
           // update the iterators
           p0 = p1;

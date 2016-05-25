@@ -24,6 +24,10 @@
 namespace ale {
 namespace mesh {
 
+//! forward decares
+template< std::size_t N >
+class burton_corner_t;
+
 ////////////////////////////////////////////////////////////////////////////////
 //! \class burton_edge_t burton_entity_types.h
 //! \brief The burton_edge_t type provides an interface for managing
@@ -307,13 +311,16 @@ struct burton_element_t<2,2>
 
   // the flecsi id type
   using id_t = flecsi::id_t;
-  using connectivity_t = flecsi::connectivity_t;
+  using connectivity_t = flecsi::domain_connectivity<num_dimensions>;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
 
   //! the base edge type
   using edge_t = burton_edge_t<num_dimensions>;
+
+  //! the base corner type
+  using corner_t = burton_corner_t<num_dimensions>;
 
   //============================================================================
   // Constructors
@@ -388,8 +395,8 @@ struct burton_element_t<2,2>
   //!   entity and b) the number of vertices per collection.
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_entities(
-    size_t dim, const id_t & cell,
-    connectivity_t*  (&conn)[num_dimensions+1][num_dimensions], 
+    const id_t & cell, size_t dim,
+    const connectivity_t& conn,
     id_t * entities ) 
   { raise_runtime_error("you should never get here"); };
 
@@ -407,9 +414,9 @@ struct burton_element_t<2,2>
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id,
-    connectivity_t*  (&from_domain_conn)[num_dimensions+1][num_dimensions+1], 
-    connectivity_t*  (&  to_domain_conn)[num_dimensions+1][num_dimensions+1], 
-    id_t * c ) 
+    const connectivity_t& primal_conn,
+    const connectivity_t& domain_conn,
+    id_t * entities ) 
   { raise_runtime_error("you should never get here"); };
 
 
@@ -485,7 +492,7 @@ struct burton_element_t<3,2>
 
   // the flecsi id type
   using id_t = flecsi::id_t;
-  using connectivity_t = flecsi::connectivity_t;
+  using connectivity_t = flecsi::domain_connectivity<num_dimensions>;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
@@ -570,8 +577,8 @@ struct burton_element_t<3,2>
   //!   entity and b) the number of vertices per collection.
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_entities(
-    size_t dim, const id_t & cell,
-    connectivity_t*  (&conn)[num_dimensions+1][num_dimensions], 
+    const id_t & cell, size_t dim,
+    const connectivity_t& conn,
     id_t * entities ) 
   { raise_runtime_error("you should never get here"); };
 
@@ -589,9 +596,9 @@ struct burton_element_t<3,2>
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id,
-    connectivity_t*  (&from_domain_conn)[num_dimensions+1][num_dimensions+1], 
-    connectivity_t*  (&  to_domain_conn)[num_dimensions+1][num_dimensions+1], 
-    id_t * c )
+    const connectivity_t& primal_conn,
+    const connectivity_t& domain_conn,
+    id_t * entities )
   { raise_runtime_error("you should never get here"); };
 
   //! \brief reset the mesh pointer
@@ -678,7 +685,7 @@ struct burton_element_t<3,3>
 
   // the flecsi id type
   using id_t = flecsi::id_t;
-  using connectivity_t = flecsi::connectivity_t;
+  using connectivity_t = flecsi::domain_connectivity<num_dimensions>;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
@@ -691,6 +698,9 @@ struct burton_element_t<3,3>
 
   //! the base cell type
   using cell_t = burton_element_t<3,3>;
+
+  //! the base corner type
+  using corner_t = burton_corner_t<num_dimensions>;
 
   //============================================================================
   // Constructors
@@ -761,9 +771,9 @@ struct burton_element_t<3,3>
   //!   entity and b) the number of vertices per collection.
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_entities(
-    size_t dim, const id_t & cell,
-    connectivity_t*  (&conn)[num_dimensions+1][num_dimensions], 
-    id_t * entities ) 
+    const id_t & cell, size_t dim,
+    const connectivity_t& conn,
+    id_t * entities )
   { raise_runtime_error("you should never get here"); };
 
   //----------------------------------------------------------------------------
@@ -780,8 +790,8 @@ struct burton_element_t<3,3>
   //----------------------------------------------------------------------------
   virtual std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell,
-    connectivity_t*  (&from_domain_conn)[num_dimensions+1][num_dimensions+1], 
-    connectivity_t*  (&  to_domain_conn)[num_dimensions+1][num_dimensions+1], 
+    const connectivity_t& primal_conn,
+    const connectivity_t& domain_conn,
     id_t * entities )
   { raise_runtime_error("you should never get here"); };
  
