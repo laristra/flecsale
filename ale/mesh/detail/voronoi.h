@@ -119,7 +119,7 @@ void extract_boundaries(
   using point_t = typename mesh_t::point_t;
 
   // the number of dimenions and max points
-  constexpr auto num_dims = mesh_t::num_dimensions();
+  constexpr auto num_dims = mesh_t::num_dimensions;
   auto num_points = mesh.num_vertices();
 
   // how many boundary points are there
@@ -226,7 +226,7 @@ template< typename mesh_t >
 void create_generators( const mesh_t & mesh, Tessellator & tess ) {
 
   // the number of dimenions
-  constexpr auto num_dims = mesh_t::num_dimensions();
+  constexpr auto num_dims = mesh_t::num_dimensions;
 
   // figure out how many generators there are:
   // - one generator for each cell
@@ -265,7 +265,7 @@ void create_boundaries_clipped(const mesh_t & mesh, Tessellator & tess)
 {
 
   // the number of dimenions
-  constexpr auto num_dims = mesh_t::num_dimensions();
+  constexpr auto num_dims = mesh_t::num_dimensions;
 
   // extract the boundaries from the mesh
   std::vector<shapo_real_t>  bnd_point_coords;
@@ -297,7 +297,7 @@ void create_boundaries_constrained( const mesh_t & mesh, Tessellator & tess )
 {
 
   // the number of dimenions
-  constexpr auto num_dims = mesh_t::num_dimensions();
+  constexpr auto num_dims = mesh_t::num_dimensions;
 
   // the number of generators
   auto num_gens = tess.GetNumberOfGenerators();
@@ -359,7 +359,7 @@ mesh_t transfer_mesh( const Tessellator & tess )
   mesh_t mesh;
 
   // the number of dimensions
-  constexpr auto num_dims = mesh_t::num_dimensions();
+  constexpr auto num_dims = mesh_t::num_dimensions;
 
   //----------------------------------------------------------------------------
   // points

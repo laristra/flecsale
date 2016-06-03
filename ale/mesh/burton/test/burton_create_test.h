@@ -42,7 +42,7 @@ public:
   //! \brief the mesh int type
   using integer_t= typename mesh_t::integer_t;
   //! \brief the mesh dimensions
-  static constexpr size_t dimensions = mesh_t::num_dimensions();
+  static constexpr auto num_dimensions = mesh_t::num_dimensions;
 
   //! \brief the vertex type
   using vertex_t = typename mesh_t::vertex_t;

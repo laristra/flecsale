@@ -66,7 +66,7 @@ struct burton_element_t<2,1> :
   static constexpr auto num_domains = mesh_traits_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::dimension;
+  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;
@@ -182,7 +182,7 @@ struct burton_element_t<3,1> :
   static constexpr auto num_domains = mesh_traits_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::dimension;
+  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;
@@ -288,7 +288,7 @@ struct burton_element_t<2,2>
   static constexpr auto num_domains = mesh_traits_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::dimension;
+  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;
@@ -469,7 +469,7 @@ struct burton_element_t<3,2>
   static constexpr auto num_domains = mesh_traits_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::dimension;
+  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;
@@ -534,18 +534,6 @@ struct burton_element_t<3,2>
   //! the midpoint used in tesselating the element
   virtual point_t midpoint() const 
   { raise_runtime_error("you should never get here"); };
-
-  //! the direction the face is oriented in
-  char direction() const
-  { return direction_; }
-
-  //! flip the direction the face is oriented in
-  void flip() 
-  { direction_ = - direction_; }
-
-  //! flip the direction the face is oriented in
-  bool flipped() const
-  { return direction_ < 0; }
 
   //! the normal
   virtual vector_t normal() const 
@@ -622,9 +610,6 @@ private:
   //! a reference to the mesh topology
   const mesh_topology_base_t * mesh_ = nullptr;
 
-  //! a flag to indicate the direction of the face
-  char direction_ = 1;
-
 }; // class burton_element_t
 
 
@@ -662,7 +647,7 @@ struct burton_element_t<3,3>
   static constexpr auto num_domains = mesh_traits_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::dimension;
+  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;

@@ -17,7 +17,7 @@
  ******************************************************************************/
 
 //! user includes
-#include "burton_nd_test.h"
+#include "burton_2d_test.h"
 
 // using statements
 using std::cout;
@@ -153,11 +153,9 @@ TEST_F(burton_2d, mesh) {
   for(auto c : mesh_.corners()) {
     CINCH_CAPTURE() << "^^^^^^^^Corner id: " << c.id() << endl;
 
-#if 0
     CINCH_CAPTURE() << "    ----Wedges:" << endl;
     for(auto w: mesh_.wedges(c)) 
       CINCH_CAPTURE() << "    ++++ wedge id: " << w.id() << endl;
-#endif
 
     CINCH_CAPTURE() << "    ----Cells:" << endl;
     for(auto cl: mesh_.cells(c)) 

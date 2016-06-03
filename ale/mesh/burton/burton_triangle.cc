@@ -100,8 +100,7 @@ burton_3d_triangle_t::vector_t burton_3d_triangle_t::normal() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  auto dir = direction();
-  return dir * geom::triangle<num_dimensions>::normal( 
+  return geom::triangle<num_dimensions>::normal( 
     vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
 }
 

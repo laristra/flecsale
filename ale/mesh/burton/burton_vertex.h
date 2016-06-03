@@ -66,7 +66,7 @@ public:
   static constexpr auto num_domains = mesh_traits_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::dimension;
+  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;
@@ -158,7 +158,7 @@ public:
   static constexpr auto num_domains = mesh_traits_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::dimension;
+  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;

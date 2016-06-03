@@ -18,7 +18,7 @@
 
 
 //! user includes
-#include "burton_nd_test.h"
+#include "burton_3d_test.h"
 
 // using statements
 using std::cout;

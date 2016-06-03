@@ -17,7 +17,7 @@
  ******************************************************************************/
 
 //! user includes
-#include "burton_nd_test.h"
+#include "burton_2d_test.h"
 
 
 // explicitly use some stuff

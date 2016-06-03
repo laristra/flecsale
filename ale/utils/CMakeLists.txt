@@ -10,6 +10,7 @@ set(utils_HEADERS
   const_string.h
   exceptions.h
   errors.h
+  fixed_vector.h
   string_utils.h
   static_for.h     detail/static_for.h
   tasks.h
@@ -28,6 +29,7 @@ set(utils_HEADERS
 
 cinch_add_unit(utils
     SOURCES 
+      test/fixed_vector.cc
       test/static_for.cc
       test/tasks.cc
       test/tuple_for_each.cc

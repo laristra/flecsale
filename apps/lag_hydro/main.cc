@@ -343,7 +343,8 @@ int main(int argc, char** argv)
   //===========================================================================
   // Mesh Setup
   //===========================================================================
-
+  
+  mesh.is_valid();
   cout << mesh;
   
   //===========================================================================
@@ -351,8 +352,8 @@ int main(int argc, char** argv)
   //===========================================================================
 
   // type aliases
-  using matrix_t = matrix_t< mesh_t::num_dimensions() >;
-  using flux_data_t = flux_data_t< mesh_t::num_dimensions() >;
+  using matrix_t = matrix_t< mesh_t::num_dimensions >;
+  using flux_data_t = flux_data_t< mesh_t::num_dimensions >;
 
   // create some field data.  Fields are registered as struct of arrays.
   // this allows us to access the data in different patterns.
@@ -469,7 +470,7 @@ int main(int argc, char** argv)
 
     // move the mesh to n+1/2
     apps::hydro::move_mesh( mesh, 0.5 );
-    
+
     // update solution to n+1/2
     apps::hydro::apply_update( mesh, 0.5 );
 
@@ -490,7 +491,7 @@ int main(int argc, char** argv)
     apps::hydro::evaluate_forces( mesh );
 
     //--------------------------------------------------------------------------
-    // Move to n+1/2
+    // Move to n+1
     //--------------------------------------------------------------------------
 
     // restore the solution to n=0

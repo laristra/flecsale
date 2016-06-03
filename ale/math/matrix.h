@@ -65,7 +65,7 @@ auto outer_product(const C<T, D> &a, const C<T, D> &b)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Compute the determinant of a square matrix
+//! \brief Compute the cofactor of a square matrix
 //! \tparam T  The base value type.
 //! \tparam N  The matrix dimension.
 //! \param[in] mat  The matrix to invert

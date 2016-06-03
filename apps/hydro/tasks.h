@@ -64,7 +64,7 @@ template< typename T >
 int32_t update_state_from_pressure( T & mesh ) {
 
   // type aliases
-  using eqns_t = eqns_t<T::num_dimensions()>;
+  using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the collection accesor
   auto eos = access_global_state( mesh, "eos", eos_t );
@@ -89,7 +89,7 @@ template< typename T >
 int32_t update_state_from_energy( T & mesh ) {
 
   // type aliases
-  using eqns_t = eqns_t<T::num_dimensions()>;
+  using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the collection accesor
   auto eos = access_global_state( mesh, "eos", eos_t );
@@ -167,8 +167,8 @@ template< typename T >
 int32_t evaluate_fluxes( T & mesh ) {
 
   // type aliases
-  using eqns_t = eqns_t<T::num_dimensions()>;
-  using flux_data_t = flux_data_t<T::num_dimensions()>;
+  using eqns_t = eqns_t<T::num_dimensions>;
+  using flux_data_t = flux_data_t<T::num_dimensions>;
 
   // access what we need
   auto flux = access_state( mesh, "flux", flux_data_t );
@@ -224,8 +224,8 @@ int32_t apply_update( T & mesh ) {
 
   // type aliases
   using real_t = typename T::real_t;
-  using flux_data_t = flux_data_t<T::num_dimensions()>;
-  using eqns_t = eqns_t<T::num_dimensions()>;
+  using flux_data_t = flux_data_t<T::num_dimensions>;
+  using eqns_t = eqns_t<T::num_dimensions>;
 
   // access what we need
   auto flux = access_state( mesh, "flux", flux_data_t );

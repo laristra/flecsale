@@ -75,8 +75,7 @@ burton_3d_polygon_t::point_t burton_3d_polygon_t::midpoint() const
 burton_3d_polygon_t::vector_t burton_3d_polygon_t::normal() const
 {
   auto coords = coordinates();
-  auto dir = direction();
-  return dir * geom::polygon<num_dimensions>::normal( coords );
+  return geom::polygon<num_dimensions>::normal( coords );
 }
 
 //! the area of the cell

@@ -64,7 +64,7 @@ struct burton_mesh_types_t<2> {
   using mesh_traits_t = burton_mesh_traits_t<2>;
 
   //! The dimension of the burton mesh picked up from burton_mesh_traits_t.
-  static constexpr size_t dimension = mesh_traits_t::dimension;
+  static constexpr size_t num_dimensions = mesh_traits_t::num_dimensions;
 
   //! The number of domains in burton mesh picked up from burton_mesh_traits_t.
   static constexpr size_t num_domains = mesh_traits_t::num_domains;
@@ -80,22 +80,22 @@ struct burton_mesh_types_t<2> {
   //============================================================================
 
   //! Type for burton mesh vertices.
-  using vertex_t = burton_vertex_t<dimension>;
+  using vertex_t = burton_vertex_t<num_dimensions>;
 
   //! Type for burton mesh edges.
-  using edge_t = burton_edge_t<dimension>;
+  using edge_t = burton_edge_t<num_dimensions>;
 
   //! Type for burton mesh faces.
-  using face_t = burton_face_t<dimension>;
+  using face_t = burton_face_t<num_dimensions>;
 
   //! Type for burton mesh cells.
-  using cell_t = burton_cell_t<dimension>;
+  using cell_t = burton_cell_t<num_dimensions>;
 
   //! Type for burton mesh corners.
-  using corner_t = burton_corner_t<dimension>;
+  using corner_t = burton_corner_t<num_dimensions>;
 
   //! Type for burton mesh wedges.
-  using wedge_t = burton_wedge_t<dimension>;
+  using wedge_t = burton_wedge_t<num_dimensions>;
 
   //============================================================================
   // Specify mesh parameterizations.
@@ -118,6 +118,7 @@ struct burton_mesh_types_t<2> {
       std::tuple<flecsi::domain_<0>, vertex_t, edge_t>,
       std::tuple<flecsi::domain_<0>, vertex_t, cell_t>,
       std::tuple<flecsi::domain_<0>, edge_t, vertex_t>,
+      std::tuple<flecsi::domain_<0>, edge_t, edge_t>,
       std::tuple<flecsi::domain_<0>, edge_t, cell_t>,
       std::tuple<flecsi::domain_<0>, cell_t, vertex_t>,
       std::tuple<flecsi::domain_<0>, cell_t, edge_t>
@@ -200,7 +201,7 @@ struct burton_mesh_types_t<3> {
   using mesh_traits_t = burton_mesh_traits_t<3>;
 
   //! The dimension of the burton mesh picked up from burton_mesh_traits_t.
-  static constexpr size_t dimension = mesh_traits_t::dimension;
+  static constexpr size_t num_dimensions = mesh_traits_t::num_dimensions;
 
   //! The number of domains in burton mesh picked up from burton_mesh_traits_t.
   static constexpr size_t num_domains = mesh_traits_t::num_domains;
@@ -216,22 +217,22 @@ struct burton_mesh_types_t<3> {
   //============================================================================
 
   //! Type for burton mesh vertices.
-  using vertex_t = burton_vertex_t<dimension>;
+  using vertex_t = burton_vertex_t<num_dimensions>;
 
   //! Type for burton mesh edges.
-  using edge_t = burton_edge_t<dimension>;
+  using edge_t = burton_edge_t<num_dimensions>;
 
   //! Type for burton mesh cells.
-  using face_t = burton_face_t<dimension>;
+  using face_t = burton_face_t<num_dimensions>;
 
   //! Type for burton mesh cells.
-  using cell_t = burton_cell_t<dimension>;
+  using cell_t = burton_cell_t<num_dimensions>;
 
   //! Type for burton mesh corners.
-  using corner_t = burton_corner_t<dimension>;
+  using corner_t = burton_corner_t<num_dimensions>;
 
   //! Type for burton mesh wedges.
-  using wedge_t = burton_wedge_t<dimension>;
+  using wedge_t = burton_wedge_t<num_dimensions>;
 
   //============================================================================
   // Specify mesh parameterizations.
@@ -305,12 +306,12 @@ struct burton_mesh_types_t<3> {
     case (1,2):
       raise_runtime_error( "can't have <3 vertices" );
     case (3):
-      return mesh->template make< burton_triangle_t<dimension> >(*mesh);
+      return mesh->template make< burton_triangle_t<num_dimensions> >(*mesh);
     case (4):
-      return mesh->template make< burton_quadrilateral_t<dimension> >(*mesh);
+      return mesh->template make< burton_quadrilateral_t<num_dimensions> >(*mesh);
       break;
     default:
-      return mesh->template make< burton_polygon_t<dimension> >(*mesh);
+      return mesh->template make< burton_polygon_t<num_dimensions> >(*mesh);
       break;
     }
   }
@@ -329,7 +330,7 @@ struct burton_mesh_types_t<3> {
       case 2:
         return create_face(mesh, num_vertices);
       default:
-        raise_logic_error("invalid topological dimension");
+        raise_logic_error("invalid topological dimensions");
       }
       //---------- Dual Mesh ----------//
     case 1:

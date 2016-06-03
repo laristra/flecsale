@@ -38,7 +38,7 @@ namespace mesh {
 //! \return a new mesh object
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-std::enable_if_t< T::num_dimensions() == 2, T >
+std::enable_if_t< T::num_dimensions == 2, T >
 box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, 
      typename T::real_t min_x,       typename T::real_t min_y,
      typename T::real_t max_x,       typename T::real_t max_y ) 
@@ -106,7 +106,7 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
 //! \return a new mesh object
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-std::enable_if_t< T::num_dimensions() == 3, T >
+std::enable_if_t< T::num_dimensions == 3, T >
 box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T::size_t num_cells_z, 
      typename T::real_t min_x,       typename T::real_t min_y,       typename T::real_t min_z,
      typename T::real_t max_x,       typename T::real_t max_y,       typename T::real_t max_z ) 
@@ -160,42 +160,6 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
       return stride_vert_x*i + stride_vert_y*j +  + stride_vert_z*k; 
     };
   
-  // create each face
-  for( size_t k = 0; k < num_vert_z; ++k ) 
-    for( size_t j = 0; j < num_vert_y; ++j ) 
-      for( size_t i = 0; i < num_vert_x; ++i ) {
-        
-        // x plane
-        if ( j < num_cells_y && k < num_cells_z )
-          mesh.create_face( 
-            {
-              vs[ vert_index( i  , j  , k  ) ],
-              vs[ vert_index( i  , j  , k+1) ],
-              vs[ vert_index( i  , j+1, k+1) ],
-              vs[ vert_index( i  , j+1, k  ) ]
-             } );
-
-        // y plane
-        if ( i < num_cells_x && k < num_cells_z )
-          mesh.create_face( 
-            {
-              vs[ vert_index( i  , j  , k  ) ],
-              vs[ vert_index( i+1, j  , k  ) ],
-              vs[ vert_index( i+1, j  , k+1) ],
-              vs[ vert_index( i  , j  , k+1) ]
-             } );
-
-        // z plane
-        if ( i < num_cells_x && j < num_cells_y )
-          mesh.create_face( 
-            {
-              vs[ vert_index( i  , j  , k  ) ],
-              vs[ vert_index( i+1, j  , k  ) ],
-              vs[ vert_index( i+1, j+1, k  ) ],
-              vs[ vert_index( i  , j+1, k  ) ]
-             } );
-
-        }
 
   // go over vertices counter clockwise to define cell
   for( size_t k = 0; k < num_cells_z; ++k )
@@ -231,7 +195,7 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
 //! \return a new mesh object
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-std::enable_if_t< T::num_dimensions() == 2, T >
+std::enable_if_t< T::num_dimensions == 2, T >
 box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, 
      typename T::real_t length_x,    typename T::real_t length_y ) 
 {
@@ -253,7 +217,7 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
 //! \return a new mesh object
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-std::enable_if_t< T::num_dimensions() == 3, T >
+std::enable_if_t< T::num_dimensions == 3, T >
 box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T::size_t num_cells_z,
      typename T::real_t length_x,    typename T::real_t length_y,    typename T::real_t length_z ) 
 {
@@ -278,7 +242,7 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
 ////////////////////////////////////////////////////////////////////////////////
 template< 
   typename T,
-  typename = typename std::enable_if_t< T::num_dimensions() == 2, T >
+  typename = typename std::enable_if_t< T::num_dimensions == 2, T >
 >
 void rotate( T & mesh, std::size_t degrees ) 
 {
@@ -287,7 +251,7 @@ void rotate( T & mesh, std::size_t degrees )
   using real_t = typename T::real_t;
 
   // the number of dimensions
-  constexpr auto dims = T::num_dimensions();
+  constexpr auto dims = T::num_dimensions;
 
   // compute some angles
   auto radians = degrees * math::pi / 180;

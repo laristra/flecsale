@@ -34,9 +34,9 @@ using namespace apps::hydro;
 
 // right now cases are hard coded
 //#define SODX_2D
-//#define SODX_3D
+#define SODX_3D
 //#define SHOCK_BOX_2D
-#define SHOCK_BOX_3D
+//#define SHOCK_BOX_3D
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
@@ -55,7 +55,7 @@ int main(int argc, char** argv)
   using vector_t = mesh_t::vector_t;
 
   // the case prefix
-  std::string prefix = "sodx";
+  std::string prefix = "sodx2d";
   std::string postfix = "dat";
 
   // output frequency
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
   using vector_t = mesh_t::vector_t;
 
   // the case prefix
-  std::string prefix = "sodx";
+  std::string prefix = "sodx3d";
   std::string postfix = "dat";
 
   // output frequency
@@ -248,6 +248,7 @@ int main(int argc, char** argv)
   //===========================================================================
 
   // this is the mesh object
+  mesh.is_valid();
   cout << mesh;
   
   //===========================================================================
@@ -255,8 +256,8 @@ int main(int argc, char** argv)
   //===========================================================================
 
   // type aliases
-  using eqns_t = eqns_t<mesh_t::num_dimensions()>;
-  using flux_data_t = flux_data_t<mesh_t::num_dimensions()>;
+  using eqns_t = eqns_t<mesh_t::num_dimensions>;
+  using flux_data_t = flux_data_t<mesh_t::num_dimensions>;
 
   // create some field data.  Fields are registered as struct of arrays.
   // this allows us to access the data in different patterns.

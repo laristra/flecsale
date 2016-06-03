@@ -335,9 +335,6 @@ auto & operator<<(std::ostream& os, const tuple<Types...>& a)
   return os;
 }
   
- 
- 
- 
 
 } // namespace
 } // namespace

@@ -10,41 +10,37 @@
  *~-------------------------------------------------------------------------~~*/
 /*!
  *
- * \file operators.h
+ * \file utility.h
  * 
- * \brief Some helper functions for template foo magic.
+ * \brief Extensions to C++11 that are part of C++14.
  *
  ******************************************************************************/
 #pragma once
 
-namespace ale {
-namespace math {
-namespace detail {
+//! system includes
+#include <utility>
+
+namespace std {
 
 ////////////////////////////////////////////////////////////////////////////////
-// Template helper to compute averages
+//! Stuff not available till C++14
 ////////////////////////////////////////////////////////////////////////////////
 
-//! \brief average operator.
-template< class T >
-constexpr void average( T & res )
-{ 
-  // nothing left to do
-}
-
-//! \brief average operator.
-template< class T, class U, class ... Args >
-constexpr void average( T & res, U && u, Args&&... args )
-{ 
-  res += u;
-  average(res, std::forward<Args>(args)...); 
-}
+#if __cplusplus == 201103L
 
 
-}  // namespace
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+//! Stuff not available till C++17
+////////////////////////////////////////////////////////////////////////////////
+
+#if __cplusplus == 201402L
+
+
+#endif
+
 } // namespace
-} // namespace
-
 
 
 /*~------------------------------------------------------------------------~--*

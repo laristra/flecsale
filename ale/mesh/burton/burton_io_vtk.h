@@ -171,7 +171,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     };
 
     // get the general statistics
-    auto num_dims  = m.num_dimensions();
+    auto num_dims  = m.num_dimensions;
     auto num_nodes = m.num_vertices();
     auto num_elem  = m.num_cells();
 

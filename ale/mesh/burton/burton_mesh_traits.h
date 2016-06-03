@@ -46,7 +46,7 @@ struct burton_mesh_traits_t {
   using bitfield_t = flecsi::bitfield_t;
 
   //! The dimension of the burton mesh.
-  static constexpr size_t dimension = N;
+  static constexpr size_t num_dimensions = N;
 
   //! The number of mesh domains in the burton mesh.
   static constexpr size_t num_domains = 2;
@@ -58,10 +58,10 @@ struct burton_mesh_traits_t {
   using integer_t = common::integer_t;
 
   //! A point type with real_t data and mesh dimension.
-  using point_t = geom::point<real_t, dimension>;
+  using point_t = geom::point<real_t, num_dimensions>;
 
   //! A space ("physics") vector type with real_t data and mesh dimension.
-  using vector_t = math::vector<real_t, dimension>;
+  using vector_t = math::vector<real_t, num_dimensions>;
 
   //! Enumeration of the locations on the mesh where data may be sited.
   enum class attachment_site_t : size_t 

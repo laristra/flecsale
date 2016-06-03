@@ -337,7 +337,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     //--------------------------------------------------------------------------
 
     // some general mesh stats
-    auto num_dims = m.num_dimensions();
+    auto num_dims = m.num_dimensions;
 
     // a points comparison function
     auto is_same_point = [=](auto first1, auto last1, auto first2) 

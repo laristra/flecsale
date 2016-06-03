@@ -328,7 +328,7 @@ struct burton_io_tecplot_ascii_t :
     //--------------------------------------------------------------------------
 
     // get the general statistics
-    auto num_dims  = m.num_dimensions();
+    auto num_dims  = m.num_dimensions;
 
     // variable extension for vectors
     std::string var_ext[3];
@@ -685,7 +685,7 @@ struct burton_io_tecplot_binary_t :
       raise_implemented_error( "Can only output to tecplot with floats or doubls" );
 
     // get the general statistics
-    tec_int_t num_dims  = m.num_dimensions();
+    tec_int_t num_dims  = m.num_dimensions;
     tec_int_t num_nodes = m.num_vertices();
     tec_int_t num_elem  = m.num_cells();
     tec_int_t num_zones = m.num_regions();

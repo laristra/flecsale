@@ -56,10 +56,10 @@ public:
   using mesh_traits_t = typename mesh_types_t::mesh_traits_t;
 
   //! the number of dimensions
-  static constexpr auto dimensions = mesh_traits_t::dimension;
+  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
 
   //! Type for storing instance of template specialized low level mesh.
-  using mesh_topology_t = burton_mesh_topology_t< dimensions >;
+  using mesh_topology_t = burton_mesh_topology_t< num_dimensions >;
 
   //! a compile string type
   using const_string_t = typename mesh_traits_t::const_string_t;
@@ -355,7 +355,6 @@ public:
     // move the data
     data_t::instance().move( runtime_id, mesh_.runtime_id() );
     // reset each entity mesh pointer
-    std::cout << "move assignement" << std::endl;  
     for ( auto v : vertices() ) v->reset( mesh_ );
     for ( auto e : edges() ) e->reset( mesh_ );
     for ( auto f : faces() ) f->reset( mesh_ );
@@ -378,16 +377,6 @@ public:
   // Accessors
   //============================================================================
 
-  //! \brief Return the topological dimension of the burton mesh.
-  //!
-  //! \return A non-negative number describing the highest dimension
-  //!   of the entities in the burton mesh, e.g., 3 for a three-dimensional
-  //!   burton mesh.
-  static constexpr auto num_dimensions()
-  {
-    return dimensions;
-  } // dimension
-  
   //! \brief Return the time associated with the mesh
   auto time()
   {
@@ -1151,15 +1140,17 @@ public:
     );
 
     // now set the boundary flags
-    for ( auto e : edges() ) {
+    for ( auto f : faces() ) {
       // get the points and cells attached to the edge
-      auto points = vertices(e);
-      auto zones = cells(e);
+      auto ps = vertices(f);
+      auto es = edges(f);
+      auto cs = cells(f);
       // if there is only one cell, it is a boundary
-      if ( zones.size() == 1 ) {
-        edge_flags[e].set( 1 << bits::boundary );
-        point_flags[ points.front() ].setbit( bits::boundary );
-        point_flags[ points.back () ].setbit( bits::boundary );
+      if ( cs.size() == 1 ) {
+        for ( auto e : es ) 
+          edge_flags[e].setbit( bits::boundary );
+        for ( auto p : ps ) 
+          point_flags[ p ].setbit( bits::boundary );
       }
     } // for
 
@@ -1179,13 +1170,6 @@ public:
         attachment_site_t::global, persistent
       );
     *num_regions = 1;
-
-    // register some flags for identifying face direcions
-    auto face_dirs = data_.template register_state<char, flecsi_internal>(
-      "face_direction", num_faces(), mesh_.runtime_id(), 
-      attachment_site_t::faces, persistent
-    );
-    for ( auto f : faces() ) face_dirs[f] = 1;
 
   } // init
 
@@ -1242,15 +1226,15 @@ public:
         return raise_or_return( 
           ss << "Corner " << cn.id() << " has " << cs.size() << "/=1 cells" );
 
-      if ( fs.size() != num_dimensions() ) 
+      if ( fs.size() != num_dimensions ) 
         return raise_or_return( 
           ss << "Corner " << cn.id() << " has " << fs.size() << "/=" 
-          << num_dimensions() << " faces" );
+          << num_dimensions << " faces" );
 
-      if ( es.size() != num_dimensions() ) 
+      if ( es.size() != num_dimensions ) 
         return raise_or_return( 
           ss << "Corner " << cn.id() << " has " << es.size() << "/=" 
-          << num_dimensions() << " edges" );
+          << num_dimensions << " edges" );
 
       if ( vs.size() != 1 )
         return raise_or_return( 
@@ -1356,13 +1340,13 @@ public:
     case (1,2):
       raise_runtime_error( "can't have <3 vertices" );
     case (3):
-      e = mesh_.template make< burton_triangle_t<dimensions> >(mesh_);
+      e = mesh_.template make< burton_triangle_t<num_dimensions> >(mesh_);
       break;
     case (4):
-      e = mesh_.template make< burton_quadrilateral_t<dimensions> >(mesh_);
+      e = mesh_.template make< burton_quadrilateral_t<num_dimensions> >(mesh_);
       break;
     default:
-      e = mesh_.template make< burton_polygon_t<dimensions> >(mesh_);
+      e = mesh_.template make< burton_polygon_t<num_dimensions> >(mesh_);
       break;
     }
 

@@ -70,7 +70,7 @@ template< typename T >
 int32_t update_state_from_pressure( T & mesh ) {
 
   // type aliases
-  using eqns_t = eqns_t<T::num_dimensions()>;
+  using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the collection accesor
   auto eos = access_global_state( mesh, "eos", eos_t );
@@ -95,8 +95,8 @@ template< typename T >
 int32_t update_state_from_energy( T & mesh ) {
 
   // type aliases
-  using eqns_t = eqns_t<T::num_dimensions()>;
-  using flux_data_t = flux_data_t<T::num_dimensions()>;
+  using eqns_t = eqns_t<T::num_dimensions>;
+  using flux_data_t = flux_data_t<T::num_dimensions>;
 
   // get the collection accesor
   auto eos = access_global_state( mesh, "eos", eos_t );
@@ -125,8 +125,8 @@ int32_t evaluate_time_step( T & mesh ) {
   // type aliases
   using real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
-  using eqns_t = eqns_t<T::num_dimensions()>;
-  using flux_data_t = flux_data_t<T::num_dimensions()>;
+  using eqns_t = eqns_t<T::num_dimensions>;
+  using flux_data_t = flux_data_t<T::num_dimensions>;
 
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
@@ -191,16 +191,16 @@ int32_t evaluate_time_step( T & mesh ) {
   cout << "Time step limit: ";
   switch ( std::distance( dts.begin(), it ) ) {
   case 0:
-    std::cout << "accoustic";
+    cout << "accoustic";
     break;
   case 1:
-    std::cout << "volume";
+    cout << "volume";
     break;
   case 2:
-    std::cout << "growth";
+    cout << "growth";
     break;
   default:
-    std::cout << "unknown";
+    cout << "unknown";
     raise_runtime_error( "could not determine time step limit" );
     break;    
   };
@@ -226,11 +226,11 @@ int32_t evaluate_corner_coef( T & mesh ) {
   // type aliases
   using real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
-  using matrix_t = matrix_t< T::num_dimensions() >; 
-  using eqns_t = eqns_t<T::num_dimensions()>;
+  using matrix_t = matrix_t< T::num_dimensions >; 
+  using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the number of dimensions and create a matrix
-  constexpr size_t dims = T::num_dimensions();
+  constexpr size_t dims = T::num_dimensions;
   
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
@@ -259,30 +259,37 @@ int32_t evaluate_corner_coef( T & mesh ) {
     // get the nodal state
     auto uv = vertex_vel[vt];
 
-    // get the two wedge normals of the corner
+    // iterate over the wedges in pairs
     auto wedges = mesh.wedges(cn);
-    auto n_plus  = wedges.front()->facet_normal_right();
-    auto n_minus = wedges.back() ->facet_normal_left();
-    auto l_plus  = abs(n_plus);
-    auto l_minus = abs(n_minus);
-    auto un_plus  = unit(n_plus);
-    auto un_minus = unit(n_minus);
-       
-    // estimate impedances
-    auto delta_u = uv - uc;
-    auto zc_minus = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_minus)) );
-    auto zc_plus  = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_plus )) );
+    for ( auto wit = wedges.begin(); wit != wedges.end(); ++wit ) 
+    {
+      // get the two wedge normals of the corner
+      auto n_plus  = (*wit)->facet_normal_right();
+      ++wit;
+      auto n_minus = (*wit)->facet_normal_left();
+      auto l_plus  = abs(n_plus);
+      auto l_minus = abs(n_minus);
+      assert( l_plus > 0 );
+      assert( l_minus > 0 );
+      auto un_plus  = n_plus / l_plus;
+      auto un_minus = n_minus / l_minus;
+      
+      // estimate impedances
+      auto delta_u = uv - uc;
+      auto zc_minus = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_minus)) );
+      auto zc_plus  = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_plus )) );
 
-    // compute the mass matrix
-    auto M_plus  = math::outer_product( un_plus , un_plus  );
-    auto M_minus = math::outer_product( un_minus, un_minus );
-    M_plus  *= zc_plus  * l_plus;
-    M_minus *= zc_minus * l_minus;
-    // the final matrix
-    // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
-    Mpc[cn] = M_plus + M_minus;
-    // compute the pressure coefficient
-    npc[cn] = n_plus + n_minus;
+      // compute the mass matrix
+      auto M_plus  = math::outer_product( un_plus , un_plus  );
+      auto M_minus = math::outer_product( un_minus, un_minus );
+      M_plus  *= zc_plus  * l_plus;
+      M_minus *= zc_minus * l_minus;
+      // the final matrix
+      // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
+      Mpc[cn] += M_plus + M_minus;
+      // compute the pressure coefficient
+      npc[cn] += n_plus + n_minus;
+    } // wedge
   } // corner
   //----------------------------------------------------------------------------
 
@@ -333,14 +340,14 @@ int32_t evaluate_nodal_state( T & mesh ) {
   // type aliases
   using real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
-  using matrix_t = matrix_t< T::num_dimensions() >; 
-  using eqns_t = eqns_t<T::num_dimensions()>;
+  using matrix_t = matrix_t< T::num_dimensions >; 
+  using eqns_t = eqns_t<T::num_dimensions>;
 
   // get epsilon
   constexpr auto eps = std::numeric_limits<real_t>::epsilon();
 
   // get the number of dimensions and create a matrix
-  constexpr size_t dims = T::num_dimensions();
+  constexpr size_t dims = T::num_dimensions;
   
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
@@ -361,7 +368,7 @@ int32_t evaluate_nodal_state( T & mesh ) {
     // build point matrix
     for ( auto cn : mesh.corners(vt) ) {
       // corner attaches to one cell and one point
-    auto cl = mesh.cells(cn).front();
+      auto cl = mesh.cells(cn).front();
       // get the cell state (there is only one)
       auto state = cell_state(cl);
       // the cell quantities
@@ -386,6 +393,8 @@ int32_t evaluate_nodal_state( T & mesh ) {
       math::matrix<real_t, dims+1, dims+1> Mp_b;
       math::vector<real_t, dims+1> rhs_b;
 
+      std::cout << mesh.cells(vt).size() << std::endl;
+
       // create the new matrix
       // A = [ Mp       lpc*npc ]
       //     [ lpc*npc  0
@@ -401,6 +410,9 @@ int32_t evaluate_nodal_state( T & mesh ) {
       // y = [ pc*npc   bc ]
       std::copy( rhs.begin(), rhs.end(), rhs_b.begin() );
       rhs_b[ dims ] = 0;
+      std::cout << Mp_b;
+      std::cout << rhs_b << std::endl;
+      std::cout << determinant( Mp_b ) << std::endl;
 
       // now solve it
       auto res = math::solve( Mp_b, rhs_b );
@@ -437,9 +449,9 @@ int32_t evaluate_forces( T & mesh ) {
   // type aliases
   using real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
-  using matrix_t = matrix_t< T::num_dimensions() >; 
-  using flux_data_t = flux_data_t<T::num_dimensions()>;
-  using eqns_t = eqns_t<T::num_dimensions()>;
+  using matrix_t = matrix_t< T::num_dimensions >; 
+  using flux_data_t = flux_data_t<T::num_dimensions>;
+  using eqns_t = eqns_t<T::num_dimensions>;
 
   // access what we need
   auto dudt = access_state( mesh, "cell_residual", flux_data_t );
@@ -508,8 +520,8 @@ int32_t apply_update( T & mesh, real_t coef ) {
   // type aliases
   using real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
-  using flux_data_t = flux_data_t<T::num_dimensions()>;
-  using eqns_t = eqns_t<T::num_dimensions()>;
+  using flux_data_t = flux_data_t<T::num_dimensions>;
+  using eqns_t = eqns_t<T::num_dimensions>;
 
   // access what we need
   auto dudt = access_state( mesh, "cell_residual", flux_data_t );

@@ -131,7 +131,7 @@ public:
   { 
     
     // mesh statistics
-    auto num_dims  = m.num_dimensions();
+    auto num_dims  = m.num_dimensions;
     auto num_nodes = m.num_vertices();
 
     // storage for coordinates
@@ -168,7 +168,7 @@ public:
     mesh_t & m, size_t num_nodes, std::vector<vertex_t *> & vs ) 
   { 
     // mesh statistics
-    auto num_dims = m.num_dimensions();
+    auto num_dims = m.num_dimensions;
 
     // intitialize the number of nodes
     m.init_parameters(num_nodes);
@@ -210,7 +210,7 @@ public:
     int status;
 
     // mesh statistics
-    auto num_dims  = m.num_dimensions();
+    auto num_dims  = m.num_dimensions;
     auto num_nodes = m.num_vertices();
     auto num_elem = m.num_cells();
     auto num_elem_blk = m.num_regions();
@@ -488,7 +488,7 @@ struct burton_io_exodus_t<2> :
     assert(status == 0);
 
     // verify mesh dimension
-    assert(m.num_dimensions() == exopar.num_dim);
+    assert(m.num_dimensions == exopar.num_dim);
     auto num_dims = exopar.num_dim;
     auto num_nodes = exopar.num_nodes;
     auto num_elem = exopar.num_elem;
@@ -667,7 +667,7 @@ struct burton_io_exodus_t<2> :
     assert(exoid >= 0);
 
     // get the general statistics
-    auto num_dims = m.num_dimensions();
+    auto num_dims = m.num_dimensions;
     auto num_nodes = m.num_vertices();
     auto num_elem = m.num_cells();
     auto num_elem_blk = m.num_regions();
@@ -830,7 +830,7 @@ struct burton_io_exodus_t<3> :
     assert(status == 0);
 
     // verify mesh dimension
-    assert(m.num_dimensions() == exopar.num_dim);
+    assert(m.num_dimensions == exopar.num_dim);
     auto num_dims = exopar.num_dim;
     auto num_nodes = exopar.num_nodes;
     auto num_elem = exopar.num_elem;
@@ -1123,7 +1123,7 @@ struct burton_io_exodus_t<3> :
 
 
     // get the general statistics
-    auto num_dims = m.num_dimensions();
+    auto num_dims = m.num_dimensions;
     auto num_nodes = m.num_vertices();
     auto num_faces = m.num_faces();
     auto num_elem = m.num_cells();

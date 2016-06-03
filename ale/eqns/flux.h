@@ -79,11 +79,11 @@ auto rusanov_flux( const U & wl, const U & wr, const V & n) {
 template< typename E, typename U, typename V >
 auto hlle_flux( const U & wl, const U & wr, const V & n) { 
   // compute some things for the dissipation term
-  auto sl = E::eigenvalues( wl, n );
-  auto sr = E::eigenvalues( wr, n );
+  auto sl = E::minmax_eigenvalues( wl, n );
+  auto sr = E::minmax_eigenvalues( wr, n );
 
-  auto lambda_l = std::min( *math::min_element(sl), *math::min_element(sr) );
-  auto lambda_r = std::max( *math::max_element(sl), *math::max_element(sr) );
+  auto lambda_l = std::min( sl.first, sr.first );
+  auto lambda_r = std::max( sl.second, sr.second );
 
   if ( lambda_l >= 0 )   
     return E::flux( wl, n );

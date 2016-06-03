@@ -220,8 +220,7 @@ burton_3d_face_t::point_list_t burton_3d_face_t::coordinates( bool reverse ) con
   auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
   auto vs = mesh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   point_list_t coords;
-  auto swap = flipped() ? !reverse : reverse;
-  if ( swap ) {
+  if ( reverse ) {
     coords.resize( vs.size() );
     size_t cnt = vs.size()-1;
     for ( auto v : vs ) 
@@ -258,29 +257,6 @@ burton_3d_face_t::real_t burton_3d_face_t::min_length() const
   // return the result
   return min_length;
 }
-
-#if 0
-//! the direction the face is oriented in
-char burton_3d_face_t::direction() const
-{
-  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto dirs =
-    data_t::instance().template dense_accessor<char, flecsi_internal>(
-      "face_direction", mesh->runtime_id() );
-  return dirs[mesh_entity_base_t<num_domains>::template id<0>()];
-}
-
-//! flip the direction the face is oriented in
-void burton_3d_face_t::flip()
-{
-  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto dirs =
-    data_t::instance().template dense_accessor<char, flecsi_internal>(
-      "face_direction", mesh->runtime_id() );
-  auto & dir = dirs[mesh_entity_base_t<num_domains>::template id<0>()];
-  dir = - dir;
-}
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // 3d - Cell

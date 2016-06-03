@@ -69,7 +69,8 @@ cinch_add_unit(mesh
     SOURCES 
       burton/test/burton_test_base.h
       burton/test/burton_create_test.h
-      burton/test/burton_nd_test.h
+      burton/test/burton_2d_test.h
+      burton/test/burton_3d_test.h
       burton/test/burton_io_test.h
       burton/test/burton_voro_test.h
 

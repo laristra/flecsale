@@ -33,7 +33,7 @@ burton_polyhedron_t::point_t burton_polyhedron_t::centroid() const
   geom::polyhedron<point_t> poly;     
   for ( auto f : fs ) {
     auto cs = msh->template entities<cell_t::dimension, cell_t::domain>(f);
-    auto reverse = (cs[0] != this);
+    auto reverse = (cs[0] != this); // FIXME: reverse
     poly.insert( f->coordinates(reverse) );
   }
   return poly.centroid();
