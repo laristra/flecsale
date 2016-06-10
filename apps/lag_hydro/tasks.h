@@ -220,8 +220,10 @@ int32_t evaluate_time_step( T & mesh ) {
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int32_t evaluate_corner_coef( T & mesh ) {
+template< typename T, typename BC >
+int32_t evaluate_corner_coef( T & mesh, const BC & boundary_map ) {
+
+  return 0;
 
   // type aliases
   using real_t = typename T::real_t;
@@ -244,6 +246,10 @@ int32_t evaluate_corner_coef( T & mesh ) {
   // Loop over each corner
   for ( auto cn : mesh.corners() ) {
 
+    // initialize
+    Mpc[cn] = 0;
+    npc[cn] = 0;
+
     // a corner connects to a cell and a vertex
     auto cl = mesh.cells(cn).front();
     auto vt = mesh.vertices(cn).front();
@@ -265,14 +271,34 @@ int32_t evaluate_corner_coef( T & mesh ) {
     {
       // get the two wedge normals of the corner
       auto n_plus  = (*wit)->facet_normal_right();
-      ++wit;
-      auto n_minus = (*wit)->facet_normal_left();
       auto l_plus  = abs(n_plus);
-      auto l_minus = abs(n_minus);
       assert( l_plus > 0 );
-      assert( l_minus > 0 );
       auto un_plus  = n_plus / l_plus;
+
+      bool symm_plus = false;
+      matrix_t R_plus;
+      if ( (*wit)->is_boundary() ) {
+        auto f = mesh.faces(*wit).front();
+        auto b = boundary_map.at( f->boundary_tag() );
+        symm_plus = ( b->has_symmetry() );
+        R_plus = math::reflection_matrix( un_plus );
+      }
+
+      ++wit;
+
+      auto n_minus = (*wit)->facet_normal_left();
+      auto l_minus = abs(n_minus);
+      assert( l_minus > 0 );
       auto un_minus = n_minus / l_minus;
+      
+      bool symm_minus = false;
+      matrix_t R_minus;
+      if ( (*wit)->is_boundary() ) {
+        auto f = mesh.faces(*wit).front();
+        auto b = boundary_map.at( f->boundary_tag() );
+        symm_minus = ( b->has_symmetry() );
+        R_minus = math::reflection_matrix( un_minus );
+      }
       
       // estimate impedances
       auto delta_u = uv - uc;
@@ -286,9 +312,17 @@ int32_t evaluate_corner_coef( T & mesh ) {
       M_minus *= zc_minus * l_minus;
       // the final matrix
       // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
-      Mpc[cn] += M_plus + M_minus;
+      if ( ! symm_plus )  Mpc[cn] += M_plus;
+      if ( ! symm_minus ) Mpc[cn] += M_minus;
+      if ( symm_plus  ) 
+         math::matrix_multiply( M_plus,  R_plus,  Mpc[cn] );
+      if ( symm_minus ) 
+        math::matrix_multiply( M_minus, R_minus, Mpc[cn] );
       // compute the pressure coefficient
-      npc[cn] += n_plus + n_minus;
+      if ( ! symm_plus )  npc[cn] += n_plus;
+      if ( ! symm_minus ) npc[cn] += n_minus;
+
+
     } // wedge
   } // corner
   //----------------------------------------------------------------------------
@@ -334,8 +368,8 @@ int32_t estimate_nodal_state( T & mesh ) {
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int32_t evaluate_nodal_state( T & mesh ) {
+template< typename T, typename BC >
+int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 
   // type aliases
   using real_t = typename T::real_t;
@@ -355,6 +389,10 @@ int32_t evaluate_nodal_state( T & mesh ) {
   auto Mpc = access_state( mesh, "corner_matrix", matrix_t );
   auto npc = access_state( mesh, "corner_normal", vector_t );
 
+
+  // get the current time
+  auto soln_time = mesh.time();
+
   //----------------------------------------------------------------------------
   // Loop over each vertex
   for ( auto vt : mesh.vertices() ) {
@@ -362,70 +400,185 @@ int32_t evaluate_nodal_state( T & mesh ) {
     // create the final matrix the point
     matrix_t Mp(0);
     vector_t rhs(0);
-    vector_t np(0);
 
+    //std::cout << vt.id() << std::endl;
+
+    
     //--------------------------------------------------------------------------
-    // build point matrix
+    // build corner matrices
     for ( auto cn : mesh.corners(vt) ) {
-      // corner attaches to one cell and one point
+      
+      // initialize
+      Mpc[cn] = 0;
+      npc[cn] = 0;
+
+      matrix_t Mc(0);
+      vector_t nc(0);
+
+      // a corner connects to a cell and a vertex
       auto cl = mesh.cells(cn).front();
+      auto vt = mesh.vertices(cn).front();
+
       // get the cell state (there is only one)
       auto state = cell_state(cl);
       // the cell quantities
-      auto pc = eqns_t::pressure( state );
+      auto dc = eqns_t::density( state );
       auto uc = eqns_t::velocity( state );
-      // add to the global matrix
+      auto pc = eqns_t::pressure( state );
+      auto ac = eqns_t::sound_speed( state );
+      auto Gc = eqns_t::impedance_multiplier( state );
+    
+      // get the nodal state
+      auto uv = vertex_vel[vt];
+      
+      // iterate over the wedges in pairs
+      auto wedges = mesh.wedges(cn);
+      for ( auto wit = wedges.begin(); wit != wedges.end(); ++wit ) 
+      {
+        // get the first wedge normal
+        auto n_plus  = (*wit)->facet_normal_right();
+        auto l_plus  = abs(n_plus);
+        assert( l_plus > 0 );
+        auto un_plus  = n_plus / l_plus;
+        
+        bool symm_plus = false;
+        matrix_t R_plus;
+        if ( (*wit)->is_boundary() ) {
+          auto f = mesh.faces(*wit).front();
+          auto b = boundary_map.at( f->boundary_tag() );
+          symm_plus = ( b->has_symmetry() );
+          R_plus = math::reflection_matrix( un_plus );
+        }
+        
+        ++wit;
+
+        // get the second wedge normal
+        auto n_minus = (*wit)->facet_normal_left();
+        auto l_minus = abs(n_minus);
+        assert( l_minus > 0 );
+        auto un_minus = n_minus / l_minus;
+        
+        bool symm_minus = false;
+        matrix_t R_minus;
+        if ( (*wit)->is_boundary() ) {
+          auto f = mesh.faces(*wit).front();
+          auto b = boundary_map.at( f->boundary_tag() );
+          symm_minus = ( b->has_symmetry() );
+          R_minus = math::reflection_matrix( un_minus );
+        }
+        
+        // estimate impedances
+        auto delta_u = uv - uc;
+        auto zc_minus = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_minus)) );
+        auto zc_plus  = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_plus )) );
+
+        // compute the mass matrix
+        auto M_plus  = math::outer_product( un_plus , un_plus  );
+        auto M_minus = math::outer_product( un_minus, un_minus );
+        M_plus  *= zc_plus  * l_plus;
+        M_minus *= zc_minus * l_minus;
+        // the final matrix
+        // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
+        Mpc[cn] += M_plus;
+        Mpc[cn] += M_minus;
+        // compute the pressure coefficient
+        npc[cn] += n_plus;
+        npc[cn] += n_minus;
+        // deal with symmetry ( but don't alter the true corner normal/matrices )
+
+        ax_plus_y( M_plus, uc, rhs );      
+        ax_plus_y( M_minus, uc, rhs );      
+
+        if ( symm_plus ) {
+          // nc -= n_plus;
+          // math::matrix_multiply( M_plus,  R_plus,  Mc );
+          Mp += M_plus;
+          auto usymm = reflect( uc, n_plus );
+          ax_plus_y( M_plus, usymm, rhs );      
+        } else {
+          rhs += pc * n_plus;
+        }
+        if ( symm_minus ) {
+          // nc -= n_minus;
+          // math::matrix_multiply( M_minus, R_minus, Mc );
+          Mp += M_minus;
+          auto usymm = reflect( uc, n_minus );
+          ax_plus_y( M_minus, usymm, rhs );      
+        } else {
+          rhs += pc * n_minus;
+        }
+
+      } // wedges
+
+      // add to the final corner matrix
       Mp += Mpc[cn];
-      // add to the normal vector
-      np += npc[cn];
+    
+
       // add the pressure and velocity contributions to the system
-      rhs += pc * npc[cn];
-      ax_plus_y( Mpc[cn], uc, rhs );      
-    } // corner
+      // rhs += pc * nc;
+      // ax_plus_y( Mc, uc, rhs );      
+
+    } // corners
 
     //--------------------------------------------------------------------------
     // now solve the system for the point velocity
 
     //---------- boundary point
     if ( vt->is_boundary() ) {
-      
-      // at boundary points, solve a larger system
-      math::matrix<real_t, dims+1, dims+1> Mp_b;
-      math::vector<real_t, dims+1> rhs_b;
 
-      std::cout << mesh.cells(vt).size() << std::endl;
+      // get the boundary tags
+      const auto & point_tags =  vt->boundary_tags();
 
-      // create the new matrix
-      // A = [ Mp       lpc*npc ]
-      //     [ lpc*npc  0
-      for ( auto i=0; i<dims; i++ ) {
-        Mp_b( i, dims ) = np[i];
-        Mp_b( dims, i ) = np[i];
-        for ( auto j=0; j<dims; j++ )
-          Mp_b( i, j ) = Mp(i,j);        
+      // first check if this has a prescribed velocity.  If it does, then nothing to do
+      auto vel_bc = std::find_if( 
+        point_tags.begin(), point_tags.end(), 
+        [&boundary_map](const auto & id) { 
+          return boundary_map.at(id)->has_prescribed_velocity();
+        } );
+      if ( vel_bc != point_tags.end() ) {
+        vertex_vel[vt] = boundary_map.at(*vel_bc)->velocity( vt->coordinates(), soln_time );
+        continue;
       }
-      Mp_b( dims, dims ) = 0;
 
-      // create the new rhs
-      // y = [ pc*npc   bc ]
-      std::copy( rhs.begin(), rhs.end(), rhs_b.begin() );
-      rhs_b[ dims ] = 0;
-      std::cout << Mp_b;
-      std::cout << rhs_b << std::endl;
-      std::cout << determinant( Mp_b ) << std::endl;
-
-      // now solve it
-      auto res = math::solve( Mp_b, rhs_b );
-      for ( auto i=0; i<dims; i++ ) vertex_vel[vt][i] = res[i];
+      // otherwise, apply the pressure conditions
+      auto bnd_wedges = filter_boundary( mesh.wedges(vt) );
+      for ( auto wit = bnd_wedges.begin(); wit != bnd_wedges.end(); ++wit ) 
+      {
+        // get the even wedge
+        {
+          auto f = mesh.faces(*wit).front();
+          auto c = mesh.cells(*wit).front();
+          auto b = boundary_map.at( f->boundary_tag() );
+          if ( b->has_prescribed_pressure() ) {
+            auto n = (*wit)->facet_normal_right();
+            auto x = (*wit)->facet_centroid();
+            rhs -= b->pressure( x, soln_time ) * n;
+          }
+        }
+        // advance to the next wedge
+        assert( wit != bnd_wedges.end() );
+        ++wit;
+        // get the odd wedge
+        {
+          auto f = mesh.faces(*wit).front();
+          auto c = mesh.cells(*wit).front();
+          auto b = boundary_map.at( f->boundary_tag() );
+          if ( b->has_prescribed_pressure() ) {
+            auto n = (*wit)->facet_normal_left();
+            auto x = (*wit)->facet_centroid();
+            rhs -= b->pressure( x, soln_time ) * n;
+          }
+        }
+      }
       
-    }
-    //---------- internal point
-    else {
-      // make sure sum(lpc) = 0
-      assert( abs(np) < eps && "error in norms" );
-      // now solve for point velocity
-      vertex_vel[vt] = math::solve( Mp, rhs );
     } // point type
+
+    //---------- internal point
+    // make sure sum(lpc) = 0
+    //assert( abs(np) < eps && "error in norms" );
+    // now solve for point velocity
+    vertex_vel[vt] = math::solve( Mp, rhs );
+  
 
 
   } // vertex

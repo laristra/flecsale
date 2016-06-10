@@ -101,11 +101,11 @@ public:
   using corner_t = typename mesh_types_t::corner_t;
 
   //! \brief The locations of different bits that we set as flags
-  enum bits : size_t 
-  {
-    boundary = 0 //!< the boundary bit
-  };
+  using bits = typename mesh_traits_t::bits;
 
+  //! \brief the type of id for marking boundaries
+  using boundary_id_t = typename mesh_traits_t::boundary_id_t;
+  using boundary_id_vector_t = typename mesh_traits_t::boundary_id_vector_t;
 
 
   //! Type defining the execution policy.
@@ -460,6 +460,26 @@ public:
   {
     return mesh_.template entities<vertex_t::dimension, M, vertex_t::domain>(e.entity());
   }
+
+
+  //! \brief Return vertices associated with entity instance of type \e E.
+  //!
+  //! \tparam E entity type of instance to return vertices for.
+  //!
+  //! \param[in] e instance of entity to return vertices for.
+  //!
+  //! \return Return vertices associated with entity instance \e e as a
+  //!    sequence.
+  template <
+    typename P,
+    typename = typename std::enable_if_t< utils::is_callable_v<P> >
+  >
+  auto vertices( P && p ) const
+  {
+    
+    auto vs = vertices();
+    return vs.filter( std::forward<P>(p) );
+  } // vertices
 
   //! \brief Return ids for all vertices in the burton mesh.
   //!
@@ -1129,7 +1149,7 @@ public:
     );
     *step = 0;
 
-    // register some flags for identifying boundarys
+    // register some flags for identifying boundarys and various other things
     auto point_flags = data_.template register_state<bitfield_t, flecsi_internal>(
       "point_flags", num_vertices(), mesh_.runtime_id(), 
       attachment_site_t::vertices, persistent
@@ -1139,14 +1159,28 @@ public:
       attachment_site_t::edges, persistent
     );
 
-    // now set the boundary flags
+    // register some flags for associating boundaries with entities
+    data_.template register_state<boundary_id_vector_t, flecsi_internal>(
+      "point_boundary_ids", num_vertices(), mesh_.runtime_id(), 
+      attachment_site_t::vertices, persistent
+    );
+    data_.template register_state<boundary_id_vector_t, flecsi_internal>(
+      "edge_boundary_ids", num_edges(), mesh_.runtime_id(), 
+      attachment_site_t::edges, persistent
+    );
+    data_.template register_state<boundary_id_t, flecsi_internal>(
+      "face_boundary_ids", num_faces(), mesh_.runtime_id(), 
+      attachment_site_t::faces, persistent
+    );
+
+    // now set the boundary flags.
     for ( auto f : faces() ) {
       // get the points and cells attached to the edge
       auto ps = vertices(f);
       auto es = edges(f);
       auto cs = cells(f);
       // if there is only one cell, it is a boundary
-      if ( cs.size() == 1 ) {
+      if ( f->is_boundary() ) {
         for ( auto e : es ) 
           edge_flags[e].setbit( bits::boundary );
         for ( auto p : ps ) 
@@ -1311,6 +1345,61 @@ public:
 
 
   //============================================================================
+  // Boundary conditions
+  //============================================================================
+  template< typename P >
+  boundary_id_t install_boundary( P && p ) 
+  {
+    // increment the boundary face storage
+    auto this_bnd = face_sets_.size();
+    auto num_bnd = this_bnd + 1;
+    face_sets_.resize( num_bnd );
+    edge_sets_.resize( num_bnd );
+    vert_sets_.resize( num_bnd );
+
+    auto & this_bnd_faces = face_sets_[ this_bnd ];
+    auto & this_bnd_edges = edge_sets_[ this_bnd ];
+    auto & this_bnd_verts = vert_sets_[ this_bnd ];
+
+    // add the face tags and collect the attached edge and vertices
+    for ( auto f : faces() )
+      if ( p( f ) ) {
+        auto es = edges( f );
+        auto vs = vertices( f );
+        f->tag_boundary( this_bnd );
+        this_bnd_faces.emplace_back( f );
+        this_bnd_edges.reserve( this_bnd_edges.size() + es.size() );
+        this_bnd_verts.reserve( this_bnd_verts.size() + vs.size() );
+        for ( auto e : es ) 
+          this_bnd_edges.emplace_back( e );
+        for ( auto v : vs )
+          this_bnd_verts.emplace_back( v );
+      }
+
+    // need to remove duplicates from edge and vertex lists
+    std::sort( this_bnd_edges.begin(), this_bnd_edges.end() );
+    std::sort( this_bnd_verts.begin(), this_bnd_verts.end() );
+
+    this_bnd_edges.erase( 
+      std::unique( this_bnd_edges.begin(), this_bnd_edges.end() ), 
+      this_bnd_edges.end() 
+    );
+    this_bnd_verts.erase( 
+      std::unique( this_bnd_verts.begin(), this_bnd_verts.end() ), 
+      this_bnd_verts.end() 
+    );
+
+    // add the edge tags
+    for ( auto e : this_bnd_edges )
+      e->tag_boundary( this_bnd );
+    // add the vertex tags
+    for ( auto v : this_bnd_verts )
+      v->tag_boundary( this_bnd );
+
+    return num_bnd;
+  }
+
+  //============================================================================
   // Operators
   //============================================================================
 
@@ -1412,6 +1501,10 @@ public:
 
   mesh_topology_t mesh_;
 
+  std::vector< std::vector<face_t*> >   face_sets_;
+  std::vector< std::vector<edge_t*> >   edge_sets_;
+  std::vector< std::vector<vertex_t*> > vert_sets_;
+
 
 }; // class burton_mesh_t
 
@@ -1492,6 +1585,7 @@ std::ostream& operator<< (std::ostream& stream, const burton_mesh_t<M>& mesh)
   stream << " + Num Cells  = " << mesh.num_cells() << endl;
   return stream;
 }
+
 
 } // namespace mesh
 } // namespace ale

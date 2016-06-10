@@ -57,8 +57,8 @@ auto outer_product(const C<T, D> &a, const C<T, D> &b)
   auto it = tmp.begin();
   
   // this order does not matter
-  for ( auto i = 0; i<D; i++ )
-    for ( auto j = 0; j<D; j++ )
+  for ( std::size_t i = 0; i<D; i++ )
+    for ( std::size_t j = 0; j<D; j++ )
       *it++ = a[i] * b[j];
 
   return tmp;
@@ -231,8 +231,8 @@ template <
 >
 void ax_plus_y( const matrix<T, D1, D2> & A, const C<T,D2> & x, C<T,D1> & y )
 {
-  for ( auto i = 0; i<D1; i++ ) {
-    for ( auto j = 0; j<D2; j++ )
+  for ( std::size_t i = 0; i<D1; i++ ) {
+    for ( std::size_t j = 0; j<D2; j++ )
       y[i] += A(i,j) * x[j];
   }
 }
@@ -251,14 +251,37 @@ template <
 auto operator*( const matrix<T, D1, D2> & lhs, const C<T,D2> & rhs )
 {
   C<T,D1> tmp;
-  for ( auto i = 0; i<D1; i++ ) {
+  for ( std::size_t i = 0; i<D1; i++ ) {
     tmp[i] = 0;
-    for ( auto j = 0; j<D2; j++ )
+    for ( std::size_t j = 0; j<D2; j++ )
       tmp[i] += lhs(i,j) * rhs[j];
   }
   return tmp;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the product of a matrix times a matrix
+//! \tparam T  The base value type.
+//! \tparam D  The matrix/array dimension.
+//! \param[in] mat  The matrix
+//! \param[in] vec  The vector
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename T, std::size_t D1, std::size_t D2, std::size_t D3
+>
+void matrix_multiply( 
+  const matrix<T, D1, D2> & A, 
+  const matrix<T, D2, D3> & B,
+  matrix<T, D1, D3> & C )
+{
+  for ( std::size_t i = 0; i < D1; i++ )
+    for ( std::size_t j = 0; j < D3; j++) {
+      T sum = 0;
+      for ( std::size_t k = 0; k < D2; k++) 
+        sum += A(i,k)*B(k,j);
+      C(i,j) += sum;
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Compute the product of a matrix times a vector
@@ -277,6 +300,54 @@ auto solve( const matrix<T, D, D> & A, const C<T,D> & b )
   auto inv = inverse(A);
   ax_plus_y( inv, b, x );
   return x;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the rotation matrix
+//! \tparam T  The base value type.
+//! \tparam D  The matrix/array dimension.
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename T, std::size_t D,
+  typename = typename std::enable_if_t< (D==2) >
+>
+auto rotation_matrix( const T & radians ) {
+
+  // compute some angles
+  auto cos = std::cos( radians );
+  auto sin = std::sin( radians );
+
+  // create a rotation matrix
+  matrix< T, D, D > rot;
+
+  for ( auto i=0; i<D; i++ ) rot(i, i) = 1;
+
+  rot(0, 0) = cos;
+  rot(0, 1) = -sin;
+  rot(1, 0) = sin;
+  rot(1, 1) = cos;
+
+  return rot;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the rotation matrix
+//! \tparam T  The base value type.
+//! \tparam D  The matrix/array dimension.
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename T, std::size_t D,
+  template<typename, std::size_t> typename C
+>
+auto reflection_matrix( const C<T,D> & n ) {
+
+  // create a rotation matrix
+  auto mat = outer_product( n, n );
+  mat = - 2*mat;
+  for ( auto i=0; i<D; i++ ) mat(i, i) += 1;
+
+  return mat;
 }
 
 } // namespace

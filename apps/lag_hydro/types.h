@@ -66,6 +66,37 @@ using std::endl;
 
 
 
+template< std::size_t N >
+class boundary_condition_t
+{
+public:
+
+  using real_type   = real_t; 
+  using vector_type = math::vector< real_type, N >; 
+
+  virtual bool has_prescribed_velocity() const 
+  { return false; };
+
+  virtual bool has_prescribed_pressure() const 
+  { return false; };
+
+  virtual bool has_symmetry() const 
+  { return true; };
+
+  virtual vector_type velocity( const vector_type & x, const real_type & t ) const 
+  { return 0; };
+
+  virtual real_type pressure( const vector_type & x, const real_type & t ) const 
+  { return 0; };
+
+};
+
+
+// a type for storing boundary conditions
+template< std::size_t N >
+using boundary_map_t = std::vector< boundary_condition_t<N> * >;
+
+
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief A functor for accessing state in the mesh
 //! \tparam M  the mesh type

@@ -34,6 +34,29 @@ namespace math {
 template <typename T, std::size_t D> 
 using vector = array<T,D>;
 
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the rotation matrix
+//! \tparam T  The base value type.
+//! \tparam D  The matrix/array dimension.
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename T, std::size_t D,
+  template<typename, std::size_t> typename C
+>
+C<T,D> reflect( const C<T,D> & v, const C<T,D> & n ) {
+
+  auto dot = dot_product( v, n );
+
+  auto rot = n;
+  rot *= 2 * dot;
+
+  auto tmp = v;
+  tmp -= rot;
+
+  return tmp;
+}
+
 } // namespace
 } // namespace
 

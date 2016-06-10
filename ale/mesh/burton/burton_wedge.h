@@ -82,6 +82,9 @@ public:
   //! Physics vector type.
   using vector_t = typename mesh_traits_t::vector_t;
 
+  //! Coordinate point type.
+  using point_t = typename mesh_traits_t::point_t;
+
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
 
@@ -119,11 +122,21 @@ public:
   vector_t facet_normal_left() const;
   vector_t facet_normal_right() const;
 
+  //! \brief Get the cell facet centroid
+  //! \return Cell facet normal centroid.
+  point_t facet_centroid() const;
+  point_t facet_midpoint() const;
+
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
   { 
     mesh_ = &mesh;
   }
+
+
+  //! \brief Is this wedge on the boundary.
+  //! \return true if on boundary.
+  bool is_boundary() const;
 
   //============================================================================
   // Private Data
@@ -174,6 +187,9 @@ public:
   //! Physics vector type.
   using vector_t = typename mesh_traits_t::vector_t;
 
+  //! Coordinate point type.
+  using point_t = typename mesh_traits_t::point_t;
+
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
 
@@ -210,11 +226,20 @@ public:
   vector_t facet_normal_left() const;
   vector_t facet_normal_right() const;
 
+  //! \brief Get the cell facet centroid
+  //! \return Cell facet normal centroid.
+  point_t facet_centroid() const;
+  point_t facet_midpoint() const;
+
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
   { 
     mesh_ = &mesh;
   }
+
+  //! \brief Is this wedge on the boundary.
+  //! \return true if on boundary.
+  bool is_boundary() const;
 
   //============================================================================
   // Private Data

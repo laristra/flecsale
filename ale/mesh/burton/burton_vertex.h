@@ -80,6 +80,10 @@ public:
   //! The bitfield.
   using bitfield_t = typename mesh_traits_t::bitfield_t;
 
+  //! The boundary id type
+  using boundary_id_t = typename mesh_traits_t::boundary_id_t;
+  using boundary_id_vector_t = typename mesh_traits_t::boundary_id_vector_t;
+
   //============================================================================
   // Constructors
   //============================================================================
@@ -111,6 +115,11 @@ public:
 
   //! is this a boundary
   bool is_boundary() const;
+
+  //! tag as a boundary
+  void tag_boundary(const boundary_id_t & tag);
+  //! get boundary tags
+  const boundary_id_vector_t & boundary_tags() const;
 
 
   //! \brief reset the mesh pointer
@@ -172,6 +181,10 @@ public:
   //! The bitfield.
   using bitfield_t = typename mesh_traits_t::bitfield_t;
 
+  //! The boundary id type
+  using boundary_id_t = typename mesh_traits_t::boundary_id_t;
+  using boundary_id_vector_t = typename mesh_traits_t::boundary_id_vector_t;
+
   //============================================================================
   // Constructors
   //============================================================================
@@ -203,7 +216,11 @@ public:
 
   //! is this a boundary
   bool is_boundary() const;
+  //! get boundary tags
+  const boundary_id_vector_t & boundary_tags() const;
 
+  //! tag as a boundary
+  void tag_boundary(const boundary_id_t & tag);
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 

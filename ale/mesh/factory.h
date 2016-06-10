@@ -250,23 +250,11 @@ void rotate( T & mesh, std::size_t degrees )
   // get some alias
   using real_t = typename T::real_t;
 
-  // the number of dimensions
-  constexpr auto dims = T::num_dimensions;
-
   // compute some angles
   auto radians = degrees * math::pi / 180;
-  auto cos = std::cos( radians );
-  auto sin = std::sin( radians );
 
   // create a rotation matrix
-  math::matrix< real_t, dims, dims > rot;
-
-  for ( auto i=0; i<dims; i++ ) rot(i, i) = 1;
-
-  rot(0, 0) = cos;
-  rot(0, 1) = -sin;
-  rot(1, 0) = sin;
-  rot(1, 1) = cos;
+  auto rot = math::rotation_matrix< real_t, T::num_dimensions >( radians );
 
   // transform the coords
   for ( auto v : mesh.vertices() )

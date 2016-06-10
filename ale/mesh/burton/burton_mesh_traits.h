@@ -18,6 +18,7 @@
 #include "ale/common/types.h"
 #include "ale/geom/point.h"
 #include "ale/math/vector.h"
+#include "ale/utils/fixed_vector.h"
 #include "flecsi/utils/bitfield.h"
 #include "flecsi/data/data.h"
 
@@ -80,6 +81,16 @@ struct burton_mesh_traits_t {
     persistent = 0,
     temporary = 1 // just a placeholder for now
   }; // enum class state_attribute_t
+
+  //! \brief The locations of different bits that we set as flags
+  enum bits : uint8_t
+  {
+    boundary = 0 //!< the boundary bit
+  };
+
+  // the boundary id type
+  using boundary_id_t = uint8_t;
+  using boundary_id_vector_t = utils::fixed_vector< boundary_id_t, N*N >;
 
   //============================================================================
   // State type definitions

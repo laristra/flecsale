@@ -96,7 +96,7 @@ int main(int argc, char** argv)
 
   // this is the mesh object
   auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, length_x, length_y );
-
+  
   //===========================================================================
   // SOD-Y Inputs
   //===========================================================================
@@ -343,6 +343,11 @@ int main(int argc, char** argv)
   //===========================================================================
   // Mesh Setup
   //===========================================================================
+  boundary_map_t< mesh_t::num_dimensions > boundaries;
+
+  auto bc_type = boundary_condition_t< mesh_t::num_dimensions >();
+  auto bc_key = mesh.install_boundary( [](auto f) { return f->is_boundary(); } );
+  boundaries.emplace_back( &bc_type );
   
   mesh.is_valid();
   cout << mesh;
@@ -433,10 +438,10 @@ int main(int argc, char** argv)
     apps::hydro::estimate_nodal_state( mesh );
 
     // evaluate corner matrices and normals at n=0
-    apps::hydro::evaluate_corner_coef( mesh );
+    apps::hydro::evaluate_corner_coef( mesh, boundaries );
     
     // compute the nodal velocity at n=0
-    apps::hydro::evaluate_nodal_state( mesh );
+    apps::hydro::evaluate_nodal_state( mesh, boundaries );
 
     // compute the fluxes
     apps::hydro::evaluate_forces( mesh );
@@ -482,10 +487,10 @@ int main(int argc, char** argv)
     //--------------------------------------------------------------------------
 
     // evaluate corner matrices and normals at n=0
-    apps::hydro::evaluate_corner_coef( mesh );
+    apps::hydro::evaluate_corner_coef( mesh, boundaries );
     
     // compute the nodal velocity at n=0
-    apps::hydro::evaluate_nodal_state( mesh );
+    apps::hydro::evaluate_nodal_state( mesh, boundaries );
 
     // compute the fluxes
     apps::hydro::evaluate_forces( mesh );

@@ -228,6 +228,17 @@ using flecsi::temporary;
 #define state_attributes(mesh, key) \
   (mesh).state_attributes_((key))
 
+
+
+auto filter_boundary = []( auto && entities )  
+{
+  return 
+    std::forward<decltype(entities)>(entities).filter( 
+      [](auto e) { return e->is_boundary(); } 
+    );
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Alias mesh types
 ////////////////////////////////////////////////////////////////////////////////

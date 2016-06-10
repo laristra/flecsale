@@ -59,6 +59,7 @@ using decay_t = typename decay<T>::type;
 template< class T >
 constexpr bool is_pointer_v = is_pointer<T>::value;
 
+
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -79,6 +80,13 @@ constexpr bool is_same_v = is_same<T, U>::value;
 //==============================================================================
 template< class T >
 constexpr bool is_arithmetic_v = is_arithmetic<T>::value;
+
+//==============================================================================
+//! \brief a is_function helper type
+//==============================================================================
+template< class T >
+constexpr bool is_function_v = is_function<T>::value;
+
 
 #endif
 

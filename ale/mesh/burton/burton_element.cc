@@ -93,10 +93,30 @@ bool burton_2d_edge_t::is_boundary() const
 {
   using flecsi::mesh_entity_base_t;
   auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
+  auto cs = mesh->template entities<burton_2d_cell_t::dimension, burton_2d_cell_t::domain>(this);
+  return (cs.size() == 1);
+}
+
+//! tag a boundary
+void burton_2d_edge_t::tag_boundary(const boundary_id_t & tag)
+{
+  using flecsi::mesh_entity_base_t;
+  auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
   auto flag =
-    data_t::instance().template dense_accessor<bitfield_t, flecsi_internal>(
-      "edge_flags", mesh->runtime_id() );
-  return flag[mesh_entity_base_t<num_domains>::template id<0>()].anybitset();
+    data_t::instance().template dense_accessor<boundary_id_t, flecsi_internal>(
+      "face_boundary_ids", mesh->runtime_id() );
+  flag[mesh_entity_base_t<num_domains>::template id<0>()] = tag;
+}
+
+//! get boundary tags
+const burton_2d_edge_t::boundary_id_t & burton_2d_edge_t::boundary_tag() const
+{
+  using flecsi::mesh_entity_base_t;
+  auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
+  auto flags =
+    data_t::instance().template dense_accessor<boundary_id_t, flecsi_internal>(
+      "face_boundary_ids", mesh->runtime_id() );
+  return flags[mesh_entity_base_t<num_domains>::template id<0>()];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -135,7 +155,6 @@ burton_3d_edge_t::real_t  burton_3d_edge_t::length() const
 }
 
 
-//! is this a boundary
 bool burton_3d_edge_t::is_boundary() const
 {
   using flecsi::mesh_entity_base_t;
@@ -143,7 +162,27 @@ bool burton_3d_edge_t::is_boundary() const
   auto flag =
     data_t::instance().template dense_accessor<bitfield_t, flecsi_internal>(
       "edge_flags", mesh->runtime_id() );
-  return flag[mesh_entity_base_t<num_domains>::template id<0>()].anybitset();
+  return flag[mesh_entity_base_t<num_domains>::template id<0>()].bitset( mesh_traits_t::bits::boundary );
+}
+
+void burton_3d_edge_t::tag_boundary(const boundary_id_t & tag)
+{
+  using flecsi::mesh_entity_base_t;
+  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
+  auto flag =
+    data_t::instance().template dense_accessor<boundary_id_vector_t, flecsi_internal>(
+      "edge_boundary_ids", mesh->runtime_id() );
+  flag[mesh_entity_base_t<num_domains>::template id<0>()].push_back( tag );
+}
+
+const burton_3d_edge_t::boundary_id_vector_t & burton_3d_edge_t::boundary_tags() const
+{
+  using flecsi::mesh_entity_base_t;
+  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
+  auto flags =
+    data_t::instance().template dense_accessor<boundary_id_vector_t, flecsi_internal>(
+      "edge_boundary_ids", mesh->runtime_id() );
+  return flags[mesh_entity_base_t<num_domains>::template id<0>()];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -257,6 +296,36 @@ burton_3d_face_t::real_t burton_3d_face_t::min_length() const
   // return the result
   return min_length;
 }
+
+//! is this a boundary
+bool burton_3d_face_t::is_boundary() const
+{
+  using flecsi::mesh_entity_base_t;
+  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
+  auto cs = mesh->template entities<burton_3d_cell_t::dimension, burton_3d_cell_t::domain>(this);
+  return (cs.size() == 1);
+}
+
+void burton_3d_face_t::tag_boundary(const boundary_id_t & tag)
+{
+  using flecsi::mesh_entity_base_t;
+  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
+  auto flag =
+    data_t::instance().template dense_accessor<boundary_id_t, flecsi_internal>(
+      "face_boundary_ids", mesh->runtime_id() );
+  flag[mesh_entity_base_t<num_domains>::template id<0>()] = tag;
+}
+
+const burton_3d_face_t::boundary_id_t & burton_3d_face_t::boundary_tag() const
+{
+  using flecsi::mesh_entity_base_t;
+  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
+  auto flags =
+    data_t::instance().template dense_accessor<boundary_id_t, flecsi_internal>(
+      "face_boundary_ids", mesh->runtime_id() );
+  return flags[mesh_entity_base_t<num_domains>::template id<0>()];
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // 3d - Cell

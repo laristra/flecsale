@@ -222,6 +222,42 @@ TEST_F(burton_3d, normals) {
 
   } // for
 
+  auto bnd_vertices = filter_boundary( mesh_.vertices() );
+
+  for(auto vt : bnd_vertices) {
+    
+    auto ws = filter_boundary( mesh_.wedges(vt) );
+
+    ASSERT_EQ( 0, ws.size()%2 );
+
+    for ( auto wg = ws.begin(); wg != ws.end(); ++wg ) {
+      // first edge
+      {
+        auto cl = mesh_.cells(*wg).front();
+        auto fc = mesh_.faces(*wg).front();
+        auto n = wg->facet_normal_right();
+        auto fx = fc->centroid();
+        auto cx = cl->centroid();
+        auto delta = fx - cx;
+        auto dot = dot_product( n, delta );
+        ASSERT_GT( dot, 0 );
+      }
+      // second edge
+      ++wg;
+      {
+        auto cl = mesh_.cells(*wg).front();
+        auto fc = mesh_.faces(*wg).front();
+        auto n = wg->facet_normal_left();
+        auto fx = fc->centroid();
+        auto cx = cl->centroid();
+        auto delta = fx - cx;
+        auto dot = dot_product( n, delta );
+        ASSERT_GT( dot, 0 );
+      }
+    } // wedges
+
+  }
+
 } // TEST_F
 
 ////////////////////////////////////////////////////////////////////////////////
