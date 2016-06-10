@@ -284,10 +284,13 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 
     //std::cout << vt.id() << std::endl;
 
+
+    // ge the list of corners
+    auto cns = mesh.corners(vt);
     
     //--------------------------------------------------------------------------
     // build corner matrices
-    for ( auto cn : mesh.corners(vt) ) {
+    for ( auto cn : cns ) {
       
       // initialize
       Mpc[cn] = 0;
@@ -459,8 +462,15 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
     //assert( abs(np) < eps && "error in norms" );
     // now solve for point velocity
     vertex_vel[vt] = math::solve( Mp, rhs );
-  
-
+    if ( cns.size() == 1 ) {
+      auto fs = mesh.faces(cns.front());
+      auto b0 = boundary_map.at( fs[0]->boundary_tag() );
+      auto b1 = boundary_map.at( fs[1]->boundary_tag() );
+      auto b2 = boundary_map.at( fs[2]->boundary_tag() );
+      auto is_origin = ( b0->has_symmetry() && b2->has_symmetry() && b1->has_symmetry() );
+      if ( is_origin ) vertex_vel[vt] = 0;
+      std::cout << vertex_vel[vt] << std::endl;
+    }
 
   } // vertex
   //----------------------------------------------------------------------------

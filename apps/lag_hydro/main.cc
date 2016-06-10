@@ -34,10 +34,11 @@ using namespace apps::hydro;
 
 // right now cases are hard coded
 //#define SODX_2D
-#define SODX_3D
+//#define SODX_3D
 //#define SODY_2D
 //#define SODXY_2D
 //#define SEDOV_2D
+#define SEDOV_3D
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
@@ -333,6 +334,71 @@ int main(int argc, char** argv)
 
   // this is the mesh object
   auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, 0.0, 0.0, length_x, length_y );
+
+  //===========================================================================
+  // SEDOV Inputs
+  //===========================================================================
+
+#elif defined(SEDOV_3D)
+
+  using mesh_t = mesh_3d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
+
+  // the case prefix
+  std::string prefix  = "sedov";
+  std::string postfix = "plt";
+
+  // output frequency
+  constexpr size_t output_freq = 1;
+
+  // the grid dimensions
+  constexpr size_t num_cells_x = 30;
+  constexpr size_t num_cells_y = 30;
+  constexpr size_t num_cells_z = 30;
+
+  constexpr real_t length_x = 1.2;
+  constexpr real_t length_y = 1.2;
+  constexpr real_t length_z = 1.2;
+  
+  // the CFL and final solution time
+  constexpr time_constants_t 
+    CFL = { .accoustic = 0.25, .volume = 0.1, .growth = 1.01 };
+  constexpr real_t initial_time_step = 1.e-5;
+  constexpr real_t final_time = 1.0;
+
+  // the value of gamma
+  constexpr real_t gamma = 1.4;
+
+  // compute a reference volume
+  auto vol = 
+    (length_x / num_cells_x) * (length_y / num_cells_y) * (length_z / num_cells_z);
+
+  // compute a radial size
+  auto delta_r = 
+    std::sqrt( math::sqr( length_x/num_cells_x ) + 
+               math::sqr( length_y/num_cells_y ) + 
+               math::sqr( length_y/num_cells_z ) );
+  
+  // this is a lambda function to set the initial conditions
+  auto ics = [&delta_r,&vol] ( const auto & x )
+    {
+      constexpr real_t e0 = 0.244816;
+      real_t d = 1.0;
+      vector_t v = 0;
+      real_t p = 1.e-6;
+      auto r = sqrt( x[0]*x[0] + x[1]*x[1] +  + x[2]*x[2] );
+      if ( r < delta_r  ) 
+        p = (gamma - 1) * d * e0 / vol;
+      return std::make_tuple( d, v, p );
+    };
+  
+  // setup an equation of state
+  eos_t eos(  gamma, /* cv */ 1.0 ); 
+
+  // this is the mesh object
+  auto mesh = mesh::box<mesh_t>( 
+    num_cells_x, num_cells_y, num_cells_z, 0.0, 0.0, 0.0, length_x, length_y, length_z );
 
 #else
 
