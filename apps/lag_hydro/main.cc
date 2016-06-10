@@ -437,9 +437,6 @@ int main(int argc, char** argv)
     // estimate the nodal velocity at n=0
     apps::hydro::estimate_nodal_state( mesh );
 
-    // evaluate corner matrices and normals at n=0
-    apps::hydro::evaluate_corner_coef( mesh, boundaries );
-    
     // compute the nodal velocity at n=0
     apps::hydro::evaluate_nodal_state( mesh, boundaries );
 
@@ -486,9 +483,6 @@ int main(int argc, char** argv)
     // Corrector : Evaluate Forces at n=0
     //--------------------------------------------------------------------------
 
-    // evaluate corner matrices and normals at n=0
-    apps::hydro::evaluate_corner_coef( mesh, boundaries );
-    
     // compute the nodal velocity at n=0
     apps::hydro::evaluate_nodal_state( mesh, boundaries );
 
