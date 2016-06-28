@@ -19,6 +19,8 @@
 
 // system includes
 #include <algorithm> 
+#include <numeric>
+#include <cmath>
 
 // user includes
 #include "ale/std/type_traits.h"

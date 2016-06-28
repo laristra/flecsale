@@ -258,8 +258,12 @@ using burton_mesh_3d_t = burton_mesh_t<3>;
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "ale/mesh/burton/burton_io_exodus.h"
+#ifdef HAVE_TECIO
 #include "ale/mesh/burton/burton_io_tecplot.h"
+#endif
+#ifdef HAVE_VTK
 #include "ale/mesh/burton/burton_io_vtk.h"
+#endif
 #include "ale/mesh/burton/burton_io_vtu.h"
 #include "ale/mesh/burton/burton_io_vtm.h"
 
