@@ -412,7 +412,7 @@ struct burton_element_t<2,2>
   //! \return A pair with a) the number of vertex collections making up the
   //!   entity and b) the number of vertices per collection.
   //----------------------------------------------------------------------------
-  virtual std::vector<id_t> create_entities(
+  virtual std::vector<size_t> create_entities(
     const id_t & cell, size_t dim,
     const connectivity_t& conn,
     id_t * entities ) 
@@ -430,7 +430,7 @@ struct burton_element_t<2,2>
   //! \return A pair with a) the number of entity collections making up the
   //!   binding and b) the number of entities per collection.
   //----------------------------------------------------------------------------
-  virtual std::vector<id_t> create_bound_entities(
+  virtual std::vector<size_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id,
     const connectivity_t& primal_conn,
     const connectivity_t& domain_conn,
@@ -595,7 +595,7 @@ struct burton_element_t<3,2>
   //! \return A pair with a) the number of vertex collections making up the
   //!   entity and b) the number of vertices per collection.
   //----------------------------------------------------------------------------
-  virtual std::vector<id_t> create_entities(
+  virtual std::vector<size_t> create_entities(
     const id_t & cell, size_t dim,
     const connectivity_t& conn,
     id_t * entities ) 
@@ -786,7 +786,7 @@ struct burton_element_t<3,3>
   //! \return A pair with a) the number of vertex collections making up the
   //!   entity and b) the number of vertices per collection.
   //----------------------------------------------------------------------------
-  virtual std::vector<id_t> create_entities(
+  virtual std::vector<size_t> create_entities(
     const id_t & cell, size_t dim,
     const connectivity_t& conn,
     id_t * entities )
@@ -804,7 +804,7 @@ struct burton_element_t<3,3>
   //! \return A pair with a) the number of entity collections making up the
   //!   binding and b) the number of entities per collection.
   //----------------------------------------------------------------------------
-  virtual std::vector<id_t> create_bound_entities(
+  virtual std::vector<size_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell,
     const connectivity_t& primal_conn,
     const connectivity_t& domain_conn,
