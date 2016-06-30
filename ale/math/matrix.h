@@ -237,6 +237,23 @@ void ax_plus_y( const matrix<T, D1, D2> & A, const C<T,D2> & x, C<T,D1> & y )
   }
 }
 
+template < 
+  typename T, std::size_t D1, std::size_t D2,
+  template<typename, std::size_t> typename C
+>
+void matrix_vector( 
+  const T & alpha, 
+  const matrix<T, D1, D2> & A, 
+  const C<T,D2> & x, 
+  const T & beta,
+  C<T,D1> & y )
+{
+  for ( std::size_t i = 0; i<D1; i++ ) {
+    for ( std::size_t j = 0; j<D2; j++ )
+      y[i] = alpha * A(i,j) * x[j] + beta * y[i];
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Compute the product of a matrix times a vector
 //! \tparam T  The base value type.
@@ -281,6 +298,24 @@ void matrix_multiply(
         sum += A(i,k)*B(k,j);
       C(i,j) += sum;
     }
+}
+
+template < 
+  typename T, std::size_t D1, std::size_t D2, std::size_t D3
+>
+auto matrix_multiply( 
+  const matrix<T, D1, D2> & A, 
+  const matrix<T, D2, D3> & B )
+{
+  matrix<T, D1, D3> C(0);
+  for ( std::size_t i = 0; i < D1; i++ )
+    for ( std::size_t j = 0; j < D3; j++) {
+      T sum = 0;
+      for ( std::size_t k = 0; k < D2; k++) 
+        sum += A(i,k)*B(k,j);
+      C(i,j) += sum;
+    }
+  return C;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -345,6 +380,25 @@ auto reflection_matrix( const C<T,D> & n ) {
   // create a rotation matrix
   auto mat = outer_product( n, n );
   mat = - 2*mat;
+  for ( auto i=0; i<D; i++ ) mat(i, i) += 1;
+
+  return mat;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the rotation matrix
+//! \tparam T  The base value type.
+//! \tparam D  The matrix/array dimension.
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename T, std::size_t D,
+  template<typename, std::size_t> typename C
+>
+auto projection_matrix( const C<T,D> & n ) {
+
+  // create a rotation matrix
+  auto mat = outer_product( n, n );
+  mat = - mat;
   for ( auto i=0; i<D; i++ ) mat(i, i) += 1;
 
   return mat;

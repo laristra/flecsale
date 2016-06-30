@@ -6,11 +6,12 @@
 set(math_HEADERS
   array.h
   constants.h
+  qr.h
   math.h    detail/math.h
+  matrix.h
   multi_array.h
   tuple.h
   vector.h
-  matrix.h
   PARENT_SCOPE
 )
 

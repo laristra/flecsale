@@ -6,6 +6,7 @@
 set(utils_HEADERS
   algorithm.h
   array_ref.h
+  array_view.h
   type_traits.h    detail/type_traits.h
   const_string.h
   exceptions.h
@@ -29,6 +30,7 @@ set(utils_HEADERS
 
 cinch_add_unit(utils
     SOURCES 
+      test/array_view.cc
       test/fixed_vector.cc
       test/static_for.cc
       test/tasks.cc

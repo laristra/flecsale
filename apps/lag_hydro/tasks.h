@@ -21,6 +21,8 @@
 // hydro includes
 #include "types.h"
 
+//#include <ale/math/qr.h>
+
 namespace apps {
 namespace hydro {
 
@@ -280,7 +282,7 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 
     // create the final matrix the point
     matrix_t Mp(0);
-    vector_t rhs(0);
+    vector_t rhs(0), np(0);
 
     //std::cout << vt.id() << std::endl;
 
@@ -370,32 +372,36 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
         npc[cn] += n_minus;
         // deal with symmetry ( but don't alter the true corner normal/matrices )
 
-        ax_plus_y( M_plus, uc, rhs );      
-        ax_plus_y( M_minus, uc, rhs );      
+        // ax_plus_y( M_plus, uc, rhs );      
+        // ax_plus_y( M_minus, uc, rhs );      
 
-        if ( symm_plus ) {
-          // nc -= n_plus;
-          // math::matrix_multiply( M_plus,  R_plus,  Mc );
-          Mp += M_plus;
-          auto usymm = reflect( uc, n_plus );
-          ax_plus_y( M_plus, usymm, rhs );      
-        } else {
-          rhs += pc * n_plus;
-        }
-        if ( symm_minus ) {
-          // nc -= n_minus;
-          // math::matrix_multiply( M_minus, R_minus, Mc );
-          Mp += M_minus;
-          auto usymm = reflect( uc, n_minus );
-          ax_plus_y( M_minus, usymm, rhs );      
-        } else {
-          rhs += pc * n_minus;
-        }
+        // if ( symm_plus ) {
+        //   // nc -= n_plus;
+        //   // math::matrix_multiply( M_plus,  R_plus,  Mc );
+        //   Mp += M_plus;
+        //   auto usymm = reflect( uc, n_plus );
+        //   ax_plus_y( M_plus, usymm, rhs );      
+        // } else {
+        //  rhs += pc * n_plus;
+        // }
+        // if ( symm_minus ) {
+        //   // nc -= n_minus;
+        //   // math::matrix_multiply( M_minus, R_minus, Mc );
+        //   Mp += M_minus;
+        //   auto usymm = reflect( uc, n_minus );
+        //   ax_plus_y( M_minus, usymm, rhs );      
+        // } else {
+        //  rhs += pc * n_minus;
+        // }
 
       } // wedges
 
       // add to the final corner matrix
       Mp += Mpc[cn];
+      np += npc[cn];
+
+      ax_plus_y( Mpc[cn], uc, rhs );      
+      rhs += pc * npc[cn];
     
 
       // add the pressure and velocity contributions to the system
@@ -461,16 +467,90 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
     // make sure sum(lpc) = 0
     //assert( abs(np) < eps && "error in norms" );
     // now solve for point velocity
-    vertex_vel[vt] = math::solve( Mp, rhs );
-    if ( cns.size() == 1 ) {
-      auto fs = mesh.faces(cns.front());
-      auto b0 = boundary_map.at( fs[0]->boundary_tag() );
-      auto b1 = boundary_map.at( fs[1]->boundary_tag() );
-      auto b2 = boundary_map.at( fs[2]->boundary_tag() );
-      auto is_origin = ( b0->has_symmetry() && b2->has_symmetry() && b1->has_symmetry() );
-      if ( is_origin ) vertex_vel[vt] = 0;
-      std::cout << vertex_vel[vt] << std::endl;
+    if ( ! vt->is_boundary() ) {
+      
+      vertex_vel[vt] = math::solve( Mp, rhs );
+
     }
+    //---------- boundary point
+    if ( vt->is_boundary() ) {
+      
+      std::vector< vector_t > normals;
+
+      // get the boundary wedges
+      const auto & ws = filter_boundary( mesh.wedges(vt) );
+      // they are paired in groups of two
+      for ( auto wit = ws.begin(); wit != ws.end();  ) 
+      {
+        // get the face
+        auto f = mesh.faces( *wit ).front();
+        auto b = boundary_map.at( f->boundary_tag() );
+        // has a symmetry boundary
+        if ( b->has_symmetry() ) {
+          // get the first wedge normal
+          auto n_plus  = (*wit)->facet_normal_right();
+          // increment iterator
+          assert( wit != ws.end() ); // dont fall of the end
+          ++wit;
+          // get the second wedge normal
+          auto n_minus = (*wit)->facet_normal_left();
+          // pop the data onto the stack
+          normals.emplace_back( n_plus + n_minus );
+          // increment the iterator again
+          ++wit;
+        } 
+        // no symmetry boundary
+        else { 
+          ++wit;
+          ++wit;
+        }
+      }
+
+      // now construct the system to solve
+
+      // no additional symmetry constraints
+      if ( normals.empty() ) {
+        vertex_vel[vt]  = math::solve( Mp, rhs );
+      }
+      // add symmetry constraints and grow the system
+      else {
+        // how many extra constraints
+        auto num_symm = normals.size();
+        // the matrix size
+        auto num_rows = num_dims+num_symm;
+        // create storage for the new system in a 1d array
+        std::vector< real_t > A( num_rows * num_rows );
+        std::vector< real_t > b( num_rows );
+        // create the views
+        auto A_view = utils::make_array_ref( { num_rows, num_rows }, A );
+        auto M_view = utils::make_array_ref( { num_dims, num_dims }, Mp.data() );
+        auto b_view = utils::make_array_ref( b );
+        // insert the old system into the new one
+        std::copy( rhs.begin(), rhs.end(), b_view.begin() );
+        for ( std::size_t i=0; i<num_dims; i++ ) 
+          for ( std::size_t j=0; j<num_dims; j++ ) 
+            A_view[ {i,j} ] = Mp(i,j);
+        // insert each constraint
+        for ( std::size_t i=0; i<num_symm; i++ ) {
+          b_view[i] = 0;
+        }
+      }
+
+#if 0
+      for ( auto ws : ) ) {
+        auto b = boundary_map.at( f->boundary_tag() );
+        if ( b->has_symmetry() ) {
+          const auto & n = unit( f->normal() );
+          auto & v = vertex_vel[vt];
+          auto vn = dot_product( v, n ) * n;
+          v -= vn;        
+          
+        }
+      }
+#endif
+      // math::solve( Mp, rhs );
+      
+    }    
 
   } // vertex
   //----------------------------------------------------------------------------
@@ -478,7 +558,7 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 
 
   return 0;
-
+   
 }
 
 ////////////////////////////////////////////////////////////////////////////////
