@@ -26,17 +26,17 @@
 using namespace ale::utils;
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the construction of bounds_t's.
+//! \brief Test the construction of strided_bounds's.
 ///////////////////////////////////////////////////////////////////////////////
-TEST(array_view, bounds) 
+TEST(strided_array_view, bounds) 
 {
 
-  bounds_t< 1 > bounds_1d_var(1);
-  bounds_t< 1 > bounds_1d_list( {1} );
+  strided_bounds< 1 > bounds_1d_var(1);
+  strided_bounds< 1 > bounds_1d_list( {1} );
 
-  bounds_t< 2 > bounds_2d_var(1, 2);
-  bounds_t< 2 > bounds_2d_list( {1, 2} );
-  bounds_t< 2 > bounds_2d_copy( bounds_2d_list );
+  strided_bounds< 2 > bounds_2d_var(1, 2);
+  strided_bounds< 2 > bounds_2d_list( {1, 2} );
+  strided_bounds< 2 > bounds_2d_copy( bounds_2d_list );
 
   ASSERT_EQ( bounds_2d_var, bounds_2d_list );
 
@@ -45,11 +45,10 @@ TEST(array_view, bounds)
 
 } // TEST
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the construction of index_t's.
 ///////////////////////////////////////////////////////////////////////////////
-TEST(array_view, index) 
+TEST(strided_array_view, index) 
 {
   index_t< 1 > index_1d_var(1);
   index_t< 1 > index_1d_list( {1} );
@@ -68,14 +67,14 @@ TEST(array_view, index)
   ASSERT_NE( index_2d_list, index_2d_copy );
 
   index_1d_var++;
-  ASSERT_EQ( index_1d_var[0], 2 );
+  ASSERT_EQ( index_1d_var.at(0), 2 );
 
 } // TEST
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the construction of index_t's.
 ///////////////////////////////////////////////////////////////////////////////
-TEST(array_view, arithmetic) 
+TEST(strided_array_view, arithmetic) 
 {
 
   auto bnd1 = index_t<3>{ 3, 1, 4 };
@@ -86,20 +85,200 @@ TEST(array_view, arithmetic)
   ASSERT_EQ( bnd1, index_t<3>({ 1, 2, 4 }) );
 
   index_t<2> idx2{ 2, 3 };
-  auto res = idx2 * 1.5;  // res is {3, 4}
-  ASSERT_EQ( res, index_t<2>({ 3, 4 }) );
+  auto res = idx2 * 2;  // res is {4, 6}
+  ASSERT_EQ( res, index_t<2>({ 4, 6 }) );
  
 } // TEST
 
+
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the construction of bounds_iterators's.
+//! \brief Test the construction of array_views's.
 ///////////////////////////////////////////////////////////////////////////////
-TEST(array_view, bounds_iterator) 
+TEST(strided_array_view, constructor) 
+{
+  auto vec = std::vector<int>(10);
+  auto view = strided_array_view<int>{ vec };
+  view[0] = 42;
+  int v = vec[0]; // v == 42
+  ASSERT_EQ( vec[0], 42 );
+
+  // create a multidimensional array
+  int r[3][1][2];
+  for ( int i=0; i<3; i++ ) 
+    for ( int j=0; j<1; j++ )
+      for ( int k=0; k<2; k++ ) 
+        r[i][j][k] = i + j + k;
+        
+  strided_array_view<int, 3> mav{ r };  // av.bounds() is {3, 1, 2}
+  strided_array_view<int> fav{ mav };  // flatten multi-dimensional array
+
+  ASSERT_EQ( mav.size(), 6 );
+  
+  // check ordering
+  int cnt = 0;
+  for ( int i=0; i<3; i++ )
+    for ( int j=0; j<1; j++ )
+      for ( int k=0; k<2; k++ ) {
+        auto a = r[i][j][k];
+        auto b = mav[{i,j,k}];
+        auto c = fav[cnt++];
+        auto d = mav(i, j, k);
+        ASSERT_EQ( a, b );
+        ASSERT_EQ( a, c );
+        ASSERT_EQ( a, d );
+      }
+  
+  // check copy constructor
+  strided_array_view<const int, 3> c_mav(mav);
+
+  auto view_w_bounds_1 = strided_array_view<int,2>( {2,5}, vec );
+  auto view_w_bounds_2 = strided_array_view<int,2>( {2,5}, vec.data() );
+
+  strided_array_view<const int,2> const_view;
+  const_view = view_w_bounds_1;
+
+} // TEST
+
+
+///////////////////////////////////////////////////////////////////////////////
+//! \brief Test the slicing array_views's.
+///////////////////////////////////////////////////////////////////////////////
+TEST(strided_array_view, slice) 
 {
 
-  auto bnds = bounds_t<3>{ 3, 1, 4 };
-  auto it = bnds.begin();
-  ASSERT_TRUE( bnds.begin() != bnds.end() );
+  // create a multidimensional array
+  int r[3][1][2];
+  for ( int i=0; i<3; i++ ) 
+    for ( int j=0; j<1; j++ )
+      for ( int k=0; k<2; k++ ) 
+        r[i][j][k] = i + j + k;
+        
+  strided_array_view<int, 3> mav{ r };  // av.bounds() is {3, 1, 2}
+  ASSERT_EQ( mav.bounds().stride(), 2 );
+
+  auto slice = mav.slice( 0 );
+  ASSERT_EQ( slice.size(), 2 );
+
+  // check ordering
+  for ( int j=0; j<1; j++ )
+    for ( int k=0; k<2; k++ ) {
+      auto a = r[0][j][k];
+      auto b = slice[{j,k}];
+      ASSERT_EQ( a, b );
+    }
+
+  auto orig = index_t<3>({1,0,1});
+  auto sec = mav.section( orig );
+
+  for ( int i=0; i<2; i++ ) 
+    for ( int j=0; j<1; j++ )
+      for ( int k=0; k<2; k++ ) {
+        auto new_idx = orig + index_t<3>{i, j, k};
+        auto a = mav[ new_idx ];
+        auto b = sec[{i,j,k}];
+        ASSERT_EQ( a, b );
+      }
+
+  auto sec2 = mav.section( orig, {2,1,1} );
+
+  for ( int i=0; i<2; i++ ) 
+    for ( int j=0; j<1; j++ )
+      for ( int k=0; k<1; k++ ) {
+        auto new_idx = orig + index_t<3>{i, j, k};
+        auto a = mav[ new_idx ];
+        auto b = sec2[{i,j,k}];
+        ASSERT_EQ( a, b );
+      }
+
+} // TEST
+
+///////////////////////////////////////////////////////////////////////////////
+//! \brief Test the bounds iterator
+///////////////////////////////////////////////////////////////////////////////
+TEST(strided_array_view, bounds_iterator) 
+{
+
+  // create a multidimensional array
+  int r[3][1][2];
+  for ( int i=0; i<3; i++ ) 
+    for ( int j=0; j<1; j++ )
+      for ( int k=0; k<2; k++ ) 
+        r[i][j][k] = i + j + k;
+        
+  strided_bounds<3> bnds{ r };  // av.bounds() is {3, 1, 2}
+  ASSERT_EQ( bnds, strided_bounds<3>({3, 1, 2}) );
+
+  // check forward iterator
+  auto post_it = bnds.begin();
+  auto pre_it = bnds.begin();
+  for ( int i=0; i<3; i++ ) 
+    for ( int j=0; j<1; j++ )
+      for ( int k=0; k<2; k++ ) {
+        ASSERT_EQ( *post_it, index_t<3>({i, j, k}) );
+        post_it++;
+        ++pre_it;
+      }
+
+  ASSERT_EQ( post_it, bnds.end() );
+  ASSERT_EQ( pre_it, bnds.end() );
+
+  // check backward iterator
+  for ( int i=3; i-- > 0; ) 
+    for ( int j=1; j-- > 0; )
+      for ( int k=2; k-- > 0; ) {
+        post_it--;
+        --pre_it;
+        ASSERT_EQ( *post_it, index_t<3>({i, j, k}) );
+      }
+  
+  ASSERT_EQ( post_it, bnds.begin() );
+  ASSERT_EQ( pre_it, bnds.begin() );
+
+} // TEST
+
+
+///////////////////////////////////////////////////////////////////////////////
+//! \brief Test the bounds iterator
+///////////////////////////////////////////////////////////////////////////////
+TEST(strided_array_view, strided_iterator) 
+{
+
+  // create a multidimensional array
+  int r[3][1][2];
+  for ( int i=0; i<3; i++ ) 
+    for ( int j=0; j<1; j++ )
+      for ( int k=0; k<2; k++ ) 
+        r[i][j][k] = i + j + k;
+        
+  strided_array_view<int, 3> view{ r };
+
+  // check forward iterator
+  auto post_it = view.begin();
+  auto pre_it = view.begin();
+
+  for ( int i=0; i<3; i++ ) 
+    for ( int j=0; j<1; j++ )
+      for ( int k=0; k<2; k++ ) {
+        ASSERT_EQ( *post_it, r[i][j][k] );
+        post_it++;
+        ++pre_it;
+      }
+
+  ASSERT_EQ( post_it, view.end() );
+  ASSERT_EQ( pre_it, view.end() );
+
+  // check backward iterator
+  for ( int i=3; i-- > 0; ) 
+    for ( int j=1; j-- > 0; )
+      for ( int k=2; k-- > 0; ) {
+        post_it--;
+        --pre_it;
+        ASSERT_EQ( *post_it, r[i][j][k] );
+      }
+  
+  ASSERT_EQ( post_it, view.begin() );
+  ASSERT_EQ( pre_it, view.begin() );
+
 } // TEST
 
 
@@ -110,7 +289,7 @@ TEST(array_view, bounds_iterator)
 TEST(array_view, constructor) 
 {
   auto vec = std::vector<int>(10);
-  auto view = array_view<int>{ vec };
+  auto view = strided_array_view<int>{ vec };
   view[0] = 42;
   int v = vec[0]; // v == 42
   ASSERT_EQ( vec[0], 42 );
@@ -124,6 +303,9 @@ TEST(array_view, constructor)
         
   array_view<int, 3> mav{ r };  // av.bounds() is {3, 1, 2}
   array_view<int> fav{ mav };  // flatten multi-dimensional array
+
+  ASSERT_EQ( mav.size(), 6 );
+  ASSERT_EQ( mav.bounds().stride(), 2 );
   
   // check ordering
   int cnt = 0;
@@ -150,7 +332,6 @@ TEST(array_view, constructor)
 
 } // TEST
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the slicing array_views's.
 ///////////////////////////////////////////////////////////////////////////////
@@ -165,8 +346,10 @@ TEST(array_view, slice)
         r[i][j][k] = i + j + k;
         
   array_view<int, 3> mav{ r };  // av.bounds() is {3, 1, 2}
+  ASSERT_EQ( mav.bounds().stride(), 2 );
 
-  auto slice = mav.at( 0 );
+  auto slice = mav.slice( 0 );
+  ASSERT_EQ( slice.size(), 2 );
 
   // check ordering
   for ( int j=0; j<1; j++ )
@@ -185,24 +368,21 @@ TEST(array_view, slice)
         auto new_idx = orig + index_t<3>{i, j, k};
         auto a = mav[ new_idx ];
         auto b = sec[{i,j,k}];
-        std::cout << "sec1 " << a << " " << b << std::endl;
         ASSERT_EQ( a, b );
       }
 
-  auto sec2 = mav.section( orig, {2,1,2} );
+  auto sec2 = mav.section( orig, {2,1,1} );
 
   for ( int i=0; i<2; i++ ) 
     for ( int j=0; j<1; j++ )
-      for ( int k=0; k<2; k++ ) {
+      for ( int k=0; k<1; k++ ) {
         auto new_idx = orig + index_t<3>{i, j, k};
         auto a = mav[ new_idx ];
         auto b = sec2[{i,j,k}];
-        std::cout << "sec2 " << a << " " << b << std::endl;
         ASSERT_EQ( a, b );
       }
 
 } // TEST
-
 
 /*~-------------------------------------------------------------------------~-*
  * Formatting options
