@@ -64,8 +64,14 @@ endif()
 # Add subprojects
 #------------------------------------------------------------------------------#
 
-cinch_add_subproject("flecsi")
-list( APPEND ALE_LIBRARIES flecsi )
+find_package(FLECSI)
+if(NOT FLECSI_FOUND)
+  cinch_add_subproject("flecsi")
+  list( APPEND ALE_LIBRARIES flecsi )
+else()
+  include_directories(${FLECSI_INCLUDE_DIRS})
+  list( APPEND ALE_LIBRARIES ${FLECSI_LIBRARIES})
+endif()
 
 #------------------------------------------------------------------------------#
 # Add library targets
