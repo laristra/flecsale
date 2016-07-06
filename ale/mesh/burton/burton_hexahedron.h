@@ -72,7 +72,7 @@ public:
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_hexahedron_cell_t.
   //----------------------------------------------------------------------------
-  inline std::vector<id_t> create_entities(
+  inline std::vector<size_t> create_entities(
     const id_t & cell, size_t dim,
     const connectivity_t& conn,
     id_t * entities ) override
@@ -177,7 +177,7 @@ public:
   //----------------------------------------------------------------------------
   //! \brief create_bound_entities function for burton_hexahedron_cell_t.
   //----------------------------------------------------------------------------
-  inline std::vector<id_t> create_bound_entities(
+  inline std::vector<size_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell,
     const connectivity_t& primal_conn,
     const connectivity_t& domain_conn,
@@ -273,7 +273,7 @@ public:
       c[i++] =   faces[5]; // face 5, abuts vertex 7
       c[i++] =   faces[1]; // face 1, abuts vertex 7
 
-      return std::vector<id_t>(8, 7);
+      return std::vector<size_t>(8, 7);
 
       //------------------------------------------------------------------------
       // Wedges
@@ -541,7 +541,7 @@ public:
       c[i++] =   faces[1]; // face 1, abuts vertex 7
       c[i++] = corners[7]; // corner 7
 
-      return std::vector<id_t>(48, 4);
+      return std::vector<size_t>(48, 4);
     }
       //------------------------------------------------------------------------
       // failure

@@ -82,7 +82,7 @@ public:
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_polygonal_cell_t.
   //----------------------------------------------------------------------------
-  inline std::vector<id_t> create_entities(
+  inline std::vector<size_t> create_entities(
     const id_t & cell, size_t dim,
     const connectivity_t& conn,
     id_t * entities ) override
@@ -102,13 +102,13 @@ public:
     entities[ ind++ ] = v[ num_cell_verts-1 ];
     entities[ ind++ ] = v[ 0 ];
 
-    return std::vector<id_t>(num_cell_verts, 2);
+    return std::vector<size_t>(num_cell_verts, 2);
   }
 
   //----------------------------------------------------------------------------
   //!  \brief create_bound_entities function for burton_polygonal_cell_t.
   //----------------------------------------------------------------------------
-  inline std::vector<id_t> create_bound_entities(
+  inline std::vector<size_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell,
     const connectivity_t& primal_conn,
     const connectivity_t& domain_conn,
@@ -132,7 +132,7 @@ public:
         c[ ind++ ] = edges[vp]; // edge 3, abuts vertex 0
         vp = vn;
       }
-      return std::vector<id_t>(num_vertices, 3);
+      return std::vector<size_t>(num_vertices, 3);
     }
       //------------------------------------------------------------------------
       // wedges
@@ -153,7 +153,7 @@ public:
         c[ ind++ ] = corners[vn]; // corner 0
         vp = vn;
       }
-      return std::vector<id_t>(2*num_vertices, 3);
+      return std::vector<size_t>(2*num_vertices, 3);
     }
       //------------------------------------------------------------------------
       // Failure

@@ -1192,7 +1192,7 @@ struct burton_io_exodus_t<3> :
       
       // the block name
       char name[256];
-      sprintf( name, "face_block_%d", face_blk_id );
+      sprintf( name, "face_block_%lu", face_blk_id );
       status = ex_put_name( exoid, EX_FACE_BLOCK, face_blk_id, name );
 
       // build the connectivitiy list

@@ -42,7 +42,9 @@
 //! user includes
 #include "flecsi/io/io_base.h"
 #include "ale/mesh/burton/burton_mesh.h"
+#ifdef HAVE_VTK
 #include "ale/mesh/vtk_utils.h"
+#endif
 #include "ale/utils/errors.h"
 
 
