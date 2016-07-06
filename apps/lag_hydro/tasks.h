@@ -22,6 +22,7 @@
 #include "types.h"
 
 //#include <ale/math/qr.h>
+#include <ale/utils/array_view.h>
 
 namespace apps {
 namespace hydro {
@@ -514,6 +515,8 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
       }
       // add symmetry constraints and grow the system
       else {
+        // how many dimensions
+        constexpr auto num_dims = T::num_dimensions;
         // how many extra constraints
         auto num_symm = normals.size();
         // the matrix size
@@ -522,18 +525,20 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
         std::vector< real_t > A( num_rows * num_rows );
         std::vector< real_t > b( num_rows );
         // create the views
-        auto A_view = utils::make_array_ref( { num_rows, num_rows }, A );
-        auto M_view = utils::make_array_ref( { num_dims, num_dims }, Mp.data() );
-        auto b_view = utils::make_array_ref( b );
+        auto A_view = utils::make_array_view( A, num_rows, num_rows );
+        auto M_view = utils::make_array_view( Mp.data(), num_dims, num_dims );
+        auto b_view = utils::make_array_view( b );
         // insert the old system into the new one
         std::copy( rhs.begin(), rhs.end(), b_view.begin() );
         for ( std::size_t i=0; i<num_dims; i++ ) 
           for ( std::size_t j=0; j<num_dims; j++ ) 
-            A_view[ {i,j} ] = Mp(i,j);
+            A_view(i,j) = Mp(i,j);
         // insert each constraint
         for ( std::size_t i=0; i<num_symm; i++ ) {
-          b_view[i] = 0;
-        }
+          b_view[rhs.size() + i] = 0;
+          for ( std::size_t j=0; j<num_dims; j++ ) {
+          }
+        } // end constraints
       }
 
 #if 0
