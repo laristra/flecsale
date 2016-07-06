@@ -1541,10 +1541,10 @@ burton_mesh_t<N>::burton_mesh_t(burton_mesh_t &src)
 
   // create cells
   for ( auto c : src_mesh.cells() ) {
-    auto ids = src_mesh.vertex_ids( c );
-    auto n = ids.size();
+    auto verts = src_mesh.vertices( c );
+    auto n = verts.size();
     std::vector<vertex_t*> elem_vs( n );
-    for ( auto i=0; i<n; i++ ) elem_vs[i] = vs[ ids[i] ];
+    for ( auto i=0; i<n; i++ ) elem_vs[i] = vs[ verts[i].id() ];
     create_cell( elem_vs );   
   } // for
 
