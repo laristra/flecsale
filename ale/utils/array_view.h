@@ -21,6 +21,7 @@
 #include "ale/std/type_traits.h"
 #include "ale/utils/type_traits.h"
 #include "ale/utils/errors.h"
+#include "ale/utils/template_helpers.h"
 
 namespace ale {
 namespace utils {
@@ -80,23 +81,6 @@ class are_integral<T, Ts...>
 //! the helper expresion to get the value
 template< typename... Ts >
 constexpr bool are_integral_v = are_integral<Ts...>::value;
-
-
-
-////////////////////////////////////////////////////////////////////////////////    
-/// \brief A Helper to multiply values at compile time
-////////////////////////////////////////////////////////////////////////////////    
-
-constexpr std::size_t multiply() noexcept
-{
-  return 1;
-}
-
-template< typename Arg, typename... Args >
-constexpr auto multiply(Arg first, Args... rest) noexcept
-{
-  return first * multiply( rest... );
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////    
@@ -1276,7 +1260,7 @@ private:
   /// @{
 
   //! \brief computed size
-  static constexpr auto size_ = detail::multiply( FirstRange, RestRanges... );
+  static constexpr auto size_ = multiply( FirstRange, RestRanges... );
   //! \brief computed bounds
   static constexpr index_type bounds_ = { FirstRange, RestRanges... };
   //! \brief computed strides
@@ -3505,7 +3489,7 @@ protected:
     data_( reinterpret_cast<pointer>(arr) )
   { 
     static_assert( 
-      detail::multiply( std::extent<ArrayType, I>:: value... ) >= bounds_.size(), 
+      multiply( std::extent<ArrayType, I>:: value... ) >= bounds_.size(), 
       "container size is smaller than bounds"  );
   };  
 

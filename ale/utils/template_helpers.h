@@ -20,9 +20,6 @@
 // system includes
 #include <functional>
 
-// user includes
-#include "detail/template_helpers.h"
-
 namespace ale {
 namespace utils {
 
@@ -31,6 +28,22 @@ namespace utils {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief statically multiply arguments together
 ////////////////////////////////////////////////////////////////////////////////
+
+namespace detail {
+
+//! \brief return 1 for the final multiplcation
+constexpr std::size_t multiply() 
+{ return 1; }
+
+//! \brief main implementation for multiplication
+template<typename Arg, typename... Args>
+constexpr auto multiply(Arg first, Args... rest) 
+{ return first * multiply(rest...); }
+
+
+}  // namespace
+
+//! \brief the main interface
 template<typename... Args>
 constexpr auto multiply(Args... args) 
 { return detail::multiply(args...); }
