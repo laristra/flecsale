@@ -40,9 +40,6 @@ TEST(strided_array_view, bounds)
 
   ASSERT_EQ( bounds_2d_var, bounds_2d_list );
 
-  bounds_2d_copy[0] = 2;
-  ASSERT_NE( bounds_2d_list, bounds_2d_copy );
-
 } // TEST
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -131,8 +128,8 @@ TEST(strided_array_view, constructor)
   // check copy constructor
   strided_array_view<const int, 3> c_mav(mav);
 
-  auto view_w_bounds_1 = strided_array_view<int,2>( {2,5}, vec );
-  auto view_w_bounds_2 = strided_array_view<int,2>( {2,5}, vec.data() );
+  auto view_w_bounds_1 = strided_array_view<int,2>( vec, {2,5} );
+  auto view_w_bounds_2 = strided_array_view<int,2>( vec.data(), {2,5} );
 
   strided_array_view<const int,2> const_view;
   const_view = view_w_bounds_1;
@@ -324,11 +321,19 @@ TEST(array_view, constructor)
   // check copy constructor
   array_view<const int, 3> c_mav(mav);
 
-  auto view_w_bounds_1 = array_view<int,2>( {2,5}, vec );
-  auto view_w_bounds_2 = array_view<int,2>( {2,5}, vec.data() );
+  auto view_w_bounds_1 = array_view<int,2>( vec, {2,5} );
+  auto view_w_bounds_2 = array_view<int,2>( vec.data(), {2,5} );
 
   array_view<const int,2> const_view;
   const_view = view_w_bounds_1;
+
+  make_array_view( view_w_bounds_1 );
+  make_array_view( vec );
+  make_array_view( vec, 2, 5 );
+  make_array_view( vec.data(), 2, 5 );
+
+  auto view_3d = make_array_view( r );
+  ASSERT_EQ( view_3d.rank(), 3 );
 
 } // TEST
 
@@ -383,6 +388,67 @@ TEST(array_view, slice)
       }
 
 } // TEST
+
+
+///////////////////////////////////////////////////////////////////////////////
+//! \brief Test the slicing array_views's.
+///////////////////////////////////////////////////////////////////////////////
+TEST(static_array_view, bounds) 
+{
+
+  // create a multidimensional array
+  int r[3][1][2];
+  for ( int i=0; i<3; i++ ) 
+    for ( int j=0; j<1; j++ )
+      for ( int k=0; k<2; k++ ) 
+        r[i][j][k] = i + j + k;
+        
+  static_bounds<3,1,2> bnds;  // av.bounds() is {3, 1, 2}
+  ASSERT_EQ( bnds.as_index(), index_t<3>({ 3, 1, 2 }) );
+  ASSERT_EQ( bnds.extent<0>(), 3 );
+  ASSERT_EQ( bnds[0], 3 );
+
+  ASSERT_EQ( bnds.stride(), 2 );
+  
+  auto slice = bnds.slice();
+  ASSERT_EQ( slice.as_index(), index_t<2>({ 1, 2 }) );
+
+  static_bounds<1> bnds_1d;
+  
+
+} // TEST
+
+///////////////////////////////////////////////////////////////////////////////
+//! \brief Test the slicing array_views's.
+///////////////////////////////////////////////////////////////////////////////
+TEST(static_array_view, constructor) 
+{
+
+  // create a multidimensional array
+  int r[3][1][2];
+  for ( int i=0; i<3; i++ ) 
+    for ( int j=0; j<1; j++ )
+      for ( int k=0; k<2; k++ ) 
+        r[i][j][k] = i + j + k;
+
+  auto vec = std::vector<int>(10);
+  std::iota( vec.begin(), vec.end(), 0 );
+
+  
+  static_array_view< int, 3,1,2 > mav{ r };
+
+  auto view = make_array_view<2, 5>( vec );
+  ASSERT_EQ( static_cast<int>( view[ {1, 2 } ]), 7 );
+  ASSERT_EQ( static_cast<int>( view(1, 2) ), 7 );
+
+  auto view2 = make_array_view<10>( vec );
+  ASSERT_EQ( static_cast<int>( view2[0] ), 0 );
+
+  auto view_3d = make_array_view( r );
+
+
+} // TEST
+
 
 /*~-------------------------------------------------------------------------~-*
  * Formatting options

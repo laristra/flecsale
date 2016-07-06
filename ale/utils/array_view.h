@@ -81,21 +81,96 @@ class are_integral<T, Ts...>
 template< typename... Ts >
 constexpr bool are_integral_v = are_integral<Ts...>::value;
 
+
+
+////////////////////////////////////////////////////////////////////////////////    
+/// \brief A Helper to multiply values at compile time
+////////////////////////////////////////////////////////////////////////////////    
+
+constexpr std::size_t multiply() noexcept
+{
+  return 1;
+}
+
+template< typename Arg, typename... Args >
+constexpr auto multiply(Arg first, Args... rest) noexcept
+{
+  return first * multiply( rest... );
+}
+
+
+////////////////////////////////////////////////////////////////////////////////    
+/// \brief A Helper to make strides
+////////////////////////////////////////////////////////////////////////////////    
+template< typename IndexType >
+class make_strides {
+
+  using size_type = typename IndexType::size_type;
+  using value_type = typename IndexType::value_type;
+
+  constexpr value_type stride(const value_type * ids, const size_type & N )
+  {
+    if ( N > 0 )
+      return ids[1] * stride( &ids[1], N-1 );
+    else 
+      return 1;
+  }
+  
+  template< 
+    typename ArrayType,
+    size_type... I,
+    size_type N = sizeof...(I)
+  >
+  constexpr std::array<value_type, N> 
+  ordering_helper( ArrayType && ids, std::index_sequence<I...> ) 
+  {
+    return {{ stride( &std::forward<ArrayType>(ids)[I], N-I-1 )... }};
+  }
+
+public:
+  
+  template< 
+    size_type N,
+    typename = std::enable_if_t< N == IndexType::rank >
+  >
+  constexpr auto operator()( const value_type (&ids)[N] )    
+  {
+    return ordering_helper( ids, std::make_index_sequence<N>{} );
+  }
+
+  template< 
+    size_type N,
+    typename = std::enable_if_t< N == IndexType::rank >
+  >
+  constexpr auto operator()( const std::array<value_type, N> ids )    
+  {
+    return ordering_helper( ids, std::make_index_sequence<N>{} );
+  }
+
+  template<
+    typename... Args,
+    int N = sizeof...(Args),
+    std::enable_if_t< (N == IndexType::rank && detail::are_integral_v<Args...>) >* = nullptr
+  >
+  constexpr auto operator()(Args... args) noexcept
+  {
+    value_type exts[N] = { detail::narrow_cast<value_type>( std::forward<Args>(args) )... };
+    return ordering_helper( exts, std::make_index_sequence<N>{} );
+  }
+  
+};
+
+
+
 } // namespace detail
 
-
-////////////////////////////////////////////////////////////////////////////////    
-//! forward declarations
-////////////////////////////////////////////////////////////////////////////////    
-template <typename IndexType>
-class bounds_iterator;
 
 ////////////////////////////////////////////////////////////////////////////////    
 /// \brief the index represenation
 /// An N-dimensional vector identifying a point in N-dimensional space
 ////////////////////////////////////////////////////////////////////////////////    
 template <int Rank>
-class index_t {
+class index_t final {
 
   //! \brief declare other variations of index_t as a friend
   template< int R >
@@ -144,9 +219,9 @@ public:
   //! \brief the default move constructor
   constexpr index_t(index_t &&) noexcept = default;
   //! \brief the default assignment operator
-  index_t& operator=(const index_t &) noexcept = default;
+  constexpr index_t& operator=(const index_t &) noexcept = default;
   //! \brief the default move assignment operator
-  index_t& operator=(index_t &&) noexcept = default;
+  constexpr index_t& operator=(index_t &&) noexcept = default;
 
 
   //! \brief constructor with values, must be the same number as rank
@@ -159,12 +234,25 @@ public:
   {};
 
 
+  //! \brief constructor with values, must be the same number as rank
+  template< 
+    std::size_t N,
+    std::enable_if_t< (N == Rank) >* = nullptr 
+  >
+  constexpr explicit index_t( const std::array<value_type,N> & arr ) noexcept : 
+    index_{ arr } 
+  {};
+
   //! \brief constructor with static array, must be the same size as rank\
   //! \tparam N the rank of the array, must equal Rank
   //! \param [in] vals  the values to set
-  constexpr index_t(const value_type (&vals)[rank]) noexcept
+  template< 
+    std::size_t N,
+    std::enable_if_t< (N == Rank) >* = nullptr 
+  >
+  constexpr index_t(const value_type (&vals)[N]) noexcept
   {
-    std::copy( vals, vals+rank, index_ );
+    std::copy( vals, vals+rank, index_.begin() );
   };
   /// @}
   
@@ -219,13 +307,18 @@ public:
 
   //! \brief return the begining iterator {0} 
   //! \return an iterator to the first index
-  const_pointer begin() const noexcept 
+  constexpr const auto & as_array() const noexcept 
   { return index_; };
+
+  //! \brief return the begining iterator {0} 
+  //! \return an iterator to the first index
+  const_pointer begin() const noexcept 
+  { return index_.begin(); };
 
   //! \brief return the end iterator which is just past the bounds
   //! \return an iterator past the bounds
   const_pointer end() const noexcept
-  { return index_ + rank; }
+  { return index_.end(); }
   /// @}
 
   /// @}
@@ -239,7 +332,7 @@ public:
   //! \return true if equal
   constexpr bool operator==(const index_t & rhs) const noexcept 
   {  
-    return std::equal( index_, index_+rank, rhs.index_ ); 
+    return std::equal( index_.begin(), index_.end(), rhs.index_.begin() ); 
   };
 
   //! \brief test for non-equivalency
@@ -315,7 +408,11 @@ public:
   //! \return a reference to this object
   constexpr index_t& operator+=(const index_t<rank>& rhs) noexcept
   { 
-    std::transform(index_, index_ + rank, rhs.index_, index_, std::plus<value_type>{});
+    std::transform( 
+      index_.begin(), index_.end(), 
+      rhs.index_.begin(), index_.begin(), 
+      std::plus<value_type>{}
+    );
     return *this;
   };
 
@@ -324,7 +421,11 @@ public:
   //! \return a reference to this object
   constexpr index_t& operator-=(const index_t<rank>& rhs) noexcept
   { 
-    std::transform(index_, index_ + rank, rhs.index_, index_, std::minus<value_type>{});
+    std::transform( 
+      index_.begin(), index_.end(), 
+      rhs.index_.begin(), index_.begin(), 
+      std::minus<value_type>{}
+    );
     return *this;
   };
 
@@ -379,7 +480,7 @@ public:
   operator*=(T v) noexcept
   { 
     std::transform( 
-      index_, index_ + rank, index_,
+      index_.begin(), index_.end(), index_.begin(),
       [v](auto x) { return std::multiplies<value_type>{}(x, v); }
     );
     return *this;
@@ -395,7 +496,7 @@ public:
   operator/=(T v) noexcept
   { 
     std::transform(
-      index_, index_ + rank, index_,
+      index_.begin(), index_.end(), index_.begin(),
       [v](auto x) { return std::divides<value_type>{}(x, v); }
     );
     return *this;
@@ -418,7 +519,10 @@ public:
   constexpr auto operator-() const noexcept
   {
     index_t tmp;
-    std::transform( index_, index_ + rank, tmp.index_, std::negate<value_type>{});
+    std::transform( 
+      index_.begin(), index_.end(), tmp.index_.begin(), 
+      std::negate<value_type>{}
+    );
     return tmp;
   }
 
@@ -479,11 +583,16 @@ protected:
   /// \name private data
   //============================================================================
   /// @{  
-  value_type index_[rank] = {};
+  std::array<value_type, rank> index_ = {};
   /// @}
 
 };
 
+////////////////////////////////////////////////////////////////////////////////    
+//! forward declarations
+////////////////////////////////////////////////////////////////////////////////    
+template <typename IndexType>
+class bounds_iterator;
 
 ////////////////////////////////////////////////////////////////////////////////    
 /// \brief the bounds represenation
@@ -547,9 +656,9 @@ public:
     typename = typename std::enable_if_t< (sizeof...(T) == Rank) >
   > 
   constexpr strided_bounds(T... ts) noexcept : 
-    bounds_{ std::forward<T>(ts)...} 
+    bounds_{ std::forward<T>(ts)... }, 
+    strides_( detail::make_strides<index_type>{}( std::forward<T>(ts)... ) )
   {
-    set_strides();
   };
 
   //! \brief single parameter array constructor
@@ -561,18 +670,15 @@ public:
   >
   constexpr explicit strided_bounds(ArrayType & arr) noexcept :
     strided_bounds( arr, std::make_index_sequence< std::rank<ArrayType>::value >{} )
-  { 
-    set_strides();
-  }
+  {   }
 
   //! \brief constructor with static array, must be the same size as rank\
   //! \tparam N the rank of the array, must equal Rank
   //! \param [in] vals  the values to set
   constexpr strided_bounds(const value_type (&vals)[rank]) noexcept :
-    bounds_(vals)
-  {
-    set_strides();
-  };
+    bounds_(vals),
+    strides_( detail::make_strides<index_type>{}( vals ) )
+  {  };
 
   //! \brief constructor with static array, must be the same size as rank\
   //! \tparam N the rank of the array, must equal Rank
@@ -594,17 +700,20 @@ public:
   /// \name Accessors
   //============================================================================
   /// @{
-  //! \brief access the individual bounds for a specific dimension
-  //! \param [in] component_idx the component to return
-  //! \return the bounds
-  constexpr reference operator[](size_type component_idx) noexcept 
-  { return bounds_[component_idx]; };
 
   //! \brief access the individual bounds for a specific dimension
   //! \param [in] component_idx the component to return
   //! \return the bounds
   constexpr const_reference operator[](size_type component_idx) const noexcept 
   { return bounds_[component_idx]; };
+
+  //! \brief access the individual bounds for a specific dimension
+  //! \param [in] component_idx the component to return
+  //! \return the bounds
+  template< size_type D = 0 >
+  constexpr value_type extent() noexcept 
+  { return bounds_[D]; };
+
   /// @}
 
   //============================================================================
@@ -716,16 +825,11 @@ protected:
   template < typename ArrayType, std::size_t... I > 
   constexpr strided_bounds( 
     ArrayType &, std::index_sequence<I...> ) noexcept : 
-    bounds_( std::extent<ArrayType, I>::value... )
+    bounds_( std::extent<ArrayType, I>::value... ),
+    strides_( detail::make_strides<index_type>{}( std::extent<ArrayType, I>::value... ) )
+
   { };  
 
-  //! \brief set the stride using the default scheme
-  constexpr void set_strides() noexcept
-  { 
-    strides_[rank-1] = 1;
-    for ( int i=rank-2; i>-1; i-- )
-      strides_[i] = strides_[i+1]*bounds_[i+1];
-  };  
 
   /// @}
 
@@ -803,8 +907,9 @@ public:
     typename = typename std::enable_if_t< (sizeof...(T) == Rank) >
   > 
   constexpr contiguous_bounds(T... ts) noexcept : 
-    bounds_{ std::forward<T>(ts)...} 
-  { };
+    bounds_{ std::forward<T>(ts)...},
+    strides_( detail::make_strides<index_type>{}( std::forward<T>(ts)... ) )
+  {  };
 
   //! \brief single parameter array constructor
   //! \remark The array bounds are derived from the extents
@@ -815,19 +920,20 @@ public:
   >
   constexpr explicit contiguous_bounds(ArrayType & arr) noexcept :
     contiguous_bounds( arr, std::make_index_sequence< std::rank<ArrayType>::value >{} )
-  {   }
+  {  };
 
   //! \brief constructor with static array, must be the same size as rank \
   //! \tparam N the rank of the array, must equal Rank
   //! \param [in] vals  the values to set
   constexpr contiguous_bounds(const value_type (&vals)[rank]) noexcept :
-    bounds_(vals)
+    bounds_(vals),
+    strides_( detail::make_strides<index_type>{}( vals ) )
   {  };
 
   //! \brief constructor with index_type and strides
   //! \param [in] bounds  the bounds to set
   constexpr explicit contiguous_bounds(const index_type & bounds) noexcept :
-    bounds_(bounds)
+    bounds_(bounds), strides_( detail::make_strides<index_type>{}( bounds.as_array() ) )
   { };
 
   /// @}
@@ -882,21 +988,14 @@ public:
   }
 
   //! \brief return the stride of the array
-  constexpr index_type strides() const noexcept
+  constexpr const index_type & strides() const noexcept
   { 
-    index_type strides;
-    strides[rank-1] = 1;
-    for ( int i=rank-2; i>-1; i-- )
-      strides[i] = strides[i+1]*bounds_[i+1];
-    return strides; 
+    return strides_;
   }
 
-  constexpr value_type stride() const noexcept
+  constexpr const value_type & stride() const noexcept
   { 
-    value_type res = 1;
-    for (size_type i = rank; i-- > 1;) 
-      res *= bounds_[i];
-    return res;
+    return strides_[0];
   }
 
   //! \brief return the stride of the array
@@ -907,13 +1006,9 @@ public:
   //! \param [in] idx the index to linearize
   constexpr auto linearize( const index_type & idx ) const noexcept 
   {
-    value_type multiplier = 1;
-    value_type res = idx[rank-1];
-    for (size_type i = rank-1; i-- > 0;) {
-        multiplier *= bounds_[i+1];
-        res += idx[i] * multiplier;
-    }
-    return res;
+    auto offset = idx[0] * strides_[0];
+    for ( size_type i=1; i<rank; i++ ) offset += idx[i] * strides_[i];
+    return offset; 
   }
 
   //! \brief slice the bounds, i.e. fix the major dimension
@@ -970,7 +1065,8 @@ protected:
   template < typename ArrayType, std::size_t... I > 
   constexpr contiguous_bounds( 
     ArrayType &, std::index_sequence<I...> ) noexcept : 
-    bounds_( std::extent<ArrayType, I>::value... )
+    bounds_( std::extent<ArrayType, I>::value... ),
+    strides_( std::extent<ArrayType, I>::value... )
   { };  
 
   /// @}
@@ -983,9 +1079,227 @@ protected:
   //! \brief the bounds
   index_type bounds_;
 
+  //! \brief the strides
+  index_type strides_;
   /// @}
   
 };
+
+
+////////////////////////////////////////////////////////////////////////////////    
+/// \brief the bounds represenation
+///
+/// This is an N-dimensional axis aligned rectangle with the minimum point at 0
+////////////////////////////////////////////////////////////////////////////////    
+template< std::ptrdiff_t FirstRange, std::ptrdiff_t... RestRanges >
+class static_bounds {
+
+
+  //! \brief declare other variations of bound_t as a friend
+  template< std::ptrdiff_t First, std::ptrdiff_t... Rest >
+  friend class static_bounds;
+
+
+  //! \brief add a level of indirection to selecting the slice
+  //! This is necessary because static_bounds<Args...> is 
+  //! ill formed if rank==1
+  template <bool, typename T, std::ptrdiff_t ...Args>
+  struct slice_chooser
+  {
+    using type = static_bounds<Args...>;
+  };
+
+  template <typename T, std::ptrdiff_t ...Args>
+  struct slice_chooser<true, T, Args...>
+  {
+    using type = T;
+  };
+
+public:
+
+  //============================================================================
+  /// \name types
+  //============================================================================
+  /// @{
+  //! \brief the number of dimensions in the rectangle
+  static constexpr auto rank = 1 + sizeof...(RestRanges);
+  //! \brief the index type
+  using index_type = index_t<rank>;
+  using const_index_type = std::add_const_t<index_type>;
+  //! \brief the type of index, which is ptrdiff_t
+  //! This allows the index to both address every byte in the largest allocation 
+  //! and express any offset in the same
+  using value_type = typename index_type::value_type;
+  //! \brief the reference to a value
+  using reference = value_type &;
+  using const_reference = const value_type &;
+  //! \brief the size type used 
+  using size_type = std::size_t;
+  //! \brief the iterator type
+  using iterator = bounds_iterator<const_index_type>;
+  using const_iterator = bounds_iterator<const_index_type>;
+
+
+  //! a slice type
+  using sliced_type = typename slice_chooser< (rank == 1), value_type, RestRanges... >::type;
+
+  /// @}
+
+  //============================================================================
+  /// \name construct/copy
+  //============================================================================
+  /// @{
+
+  /// @}
+
+  //============================================================================
+  /// \name Accessors
+  //============================================================================
+  /// @{
+
+  //! \brief access the individual bounds for a specific dimension
+  //! \param [in] component_idx the component to return
+  //! \return the bounds
+  constexpr value_type operator[]( size_type component_idx ) noexcept 
+  { return bounds_[component_idx]; };
+  /// @}
+
+  //! \brief access the individual bounds for a specific dimension
+  //! \param [in] component_idx the component to return
+  //! \return the bounds
+  template< size_type D = 0 >
+  static constexpr value_type extent() noexcept 
+  { return bounds_[D]; };
+  /// @}
+
+  //============================================================================
+  /// \name bounds functions
+  //============================================================================
+  /// @{
+  
+  //! \brief the volume of the domain
+  //! \return the product of all dimensions
+  static constexpr auto size() noexcept
+  { return size_; }
+
+  
+  //! \brief the total volume of the contiguous chunk
+  static constexpr auto total_size() noexcept
+  { 
+    return size();
+  }
+  
+  //! \brief is particular index inside the domain bounds
+  //! \param [in] idx the index to check against the bounds
+  //! \return true if idx is within the bounds
+  static constexpr bool contains(const index_type & idx) noexcept
+  {
+    for ( size_type i=0; i<rank; i++ )
+      if ( idx[i] < 0 || idx[i] >= bounds_[i] )
+        return false;
+    return true;
+  }
+
+  //! \brief return the stride of the array
+  static constexpr index_type strides() noexcept
+  { 
+    return strides_;
+  }
+
+  static constexpr value_type stride() noexcept
+  { 
+    return rank > 1 ? strides_[0] : 1;
+  }
+
+  //! \brief return the stride of the array
+  static constexpr index_type as_index() noexcept
+  { return bounds_; }
+
+  //! \brief comnpute a 1d index from a multidimensional one
+  //! \param [in] idx the index to linearize
+  static constexpr auto linearize( const index_type & idx) noexcept
+  {
+    value_type res = 0;
+    for (size_type i=0; i < rank; i++) 
+      res += idx[i] * strides_[i];
+    return res;
+  }
+
+
+  //! \brief slice the bounds, i.e. fix the major dimension
+  template< 
+    bool Enabled = (rank > 1), 
+    typename Ret = std::enable_if_t<Enabled, sliced_type> 
+  >
+  static constexpr Ret  slice() noexcept 
+  {
+    return  {};
+  }
+
+  //! \brief return the begining iterator {0} 
+  //! \return an iterator to the first index
+  constexpr auto begin() const noexcept 
+  { return const_iterator( *this, index_type{} ); };
+
+  //! \brief return the end iterator which is just past the bounds
+  //! \return an iterator past the bounds
+  constexpr auto end() const noexcept
+  { return const_iterator( *this, bounds_ ); }
+  /// @}
+
+
+  //============================================================================
+  /// \name Comparison operators
+  //============================================================================
+  /// @{
+  //! \brief test for equivalency
+  //! \param [in] rhs the object on the right hand side of the operator
+  //! \return true if equal
+  constexpr bool operator==(const static_bounds & rhs) const noexcept 
+  {  
+    return ( bounds_ == rhs.bounds_ );
+  };
+
+  //! \brief test for non-equivalency
+  //! \param [in] rhs the object on the right hand side of the operator
+  //! \return true if not equal
+  constexpr bool operator!=(const static_bounds & rhs) const noexcept
+  {
+    return ( bounds_ != rhs.bounds_ );
+  };
+  /// @}
+
+private:
+  //============================================================================
+  /// \name private data
+  //============================================================================
+  /// @{
+
+  //! \brief computed size
+  static constexpr auto size_ = detail::multiply( FirstRange, RestRanges... );
+  //! \brief computed bounds
+  static constexpr index_type bounds_ = { FirstRange, RestRanges... };
+  //! \brief computed strides
+  static constexpr index_type strides_ = 
+    index_type(detail::template make_strides<index_type>{}( FirstRange, RestRanges... ));
+
+  /// @}
+};
+
+
+//==============================================================================
+/// \brief static types
+//==============================================================================
+
+//! \brief the bounds_ data
+template< std::ptrdiff_t FirstRange, std::ptrdiff_t... RestRanges >
+constexpr typename static_bounds<FirstRange,RestRanges...>::index_type 
+static_bounds<FirstRange,RestRanges...>::bounds_;
+
+//! \brief the stride_ data
+template< std::ptrdiff_t FirstRange, std::ptrdiff_t... RestRanges >
+constexpr typename static_bounds<FirstRange,RestRanges...>::index_type 
+static_bounds<FirstRange,RestRanges...>::strides_;
 
   
 ////////////////////////////////////////////////////////////////////////////////    
@@ -1676,6 +1990,19 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////    
+// forward declaration
+////////////////////////////////////////////////////////////////////////////////    
+template < typename ValueType, int Rank >
+class array_view;
+
+template < 
+  typename ValueType, 
+  std::ptrdiff_t FirstDim, 
+  std::ptrdiff_t... RestDims 
+>
+class static_array_view;
+
+////////////////////////////////////////////////////////////////////////////////    
 /// \brief represent multidimensional views onto regular collections of 
 /// objects of a uniform type.
 /// 
@@ -1761,6 +2088,44 @@ public:
     data_( rhs.data() ), bounds_( rhs.bounds() )
   {  };
 
+  //! \brief single parameter from array_view constructor
+  //! \remark Data must be convertible to pointer
+  //! \remark This serves as an implicit conversion
+  //!         between related array_view types, .e.g. converting non-const 
+  //!         to const data
+  //! \param [in] rhs  the array_vew to set the new view to
+  template<
+    typename ViewValueType, 
+    int ViewRank,
+    bool Enabled1 = std::is_convertible< std::add_pointer_t<ViewValueType>, pointer>::value,
+    bool Enabled2 = (ViewRank == rank),
+    std::enable_if_t< Enabled1 && Enabled2 >* = nullptr
+  >
+  constexpr strided_array_view( 
+    const array_view<ViewValueType, ViewRank>& rhs  ) noexcept :
+    data_( rhs.data() ), bounds_( rhs.bounds().as_index(), rhs.bounds().strides() )
+  {  };
+
+
+  //! \brief single parameter from static_array_view constructor
+  //! \remark Data must be convertible to pointer
+  //! \remark This serves as an implicit conversion
+  //!         between related array_view types, .e.g. converting non-const 
+  //!         to const data
+  //! \param [in] rhs  the array_vew to set the new view to
+  template<
+    typename ViewValueType, 
+    std::ptrdiff_t... Dimensions,
+    bool Enabled1 = std::is_convertible< std::add_pointer_t<ViewValueType>, pointer>::value,
+    bool Enabled2 = (sizeof...(Dimensions) == rank),
+    typename = std::enable_if_t< Enabled1 && Enabled2 >
+  >
+  constexpr strided_array_view( 
+    const static_array_view<ViewValueType, Dimensions...>& rhs  ) noexcept :
+    data_( rhs.data() ), bounds_( rhs.bounds().as_index(), rhs.bounds().strides() )
+  {  };
+
+
   //! \brief strided_array_view copy assignemnt operator
   //! \remark Data must be convertible to pointer
   //! \remark This serves a copy constructor but also as an implicit conversion
@@ -1807,7 +2172,7 @@ public:
       detail::is_container_v<Container>
     >
   >
-  constexpr strided_array_view(bounds_type bounds, Container& cont) noexcept :
+  constexpr strided_array_view(Container& cont, bounds_type bounds) noexcept :
     data_( cont.data() ), 
     bounds_( bounds )
   {
@@ -1841,7 +2206,7 @@ public:
   //! \remark only for arrays that can be converted to pointer with rank<> == rank
   //! \param [in] bounds  the bounds of the view to set
   //! \param [in] data  the data to set the view to
-  constexpr strided_array_view(bounds_type bounds, pointer data) noexcept :
+  constexpr strided_array_view(pointer data, bounds_type bounds) noexcept :
     data_( data ), bounds_( bounds )
   {  }
 
@@ -1852,7 +2217,7 @@ public:
   //! \param [in] bounds  the bounds of the view to set
   //! \param [in] stride  the stride of the view to set
   //! \param [in] data  the data to set the view to
-  constexpr strided_array_view(index_type bounds, index_type stride, pointer data) noexcept :
+  constexpr strided_array_view(pointer data, index_type bounds, index_type stride) noexcept :
     data_( data ), bounds_( bounds, stride )
   {  }
         
@@ -1935,7 +2300,7 @@ public:
   constexpr Ret operator[]( size_type idx ) const noexcept
   { 
     const auto ridx = idx * bounds_.stride();
-    return { bounds_.slice(), data_+ridx };
+    return { data_+ridx, bounds_.slice() };
   }
 
   //! \brief slice an array, i.e. fix the most significant dimension
@@ -1964,7 +2329,7 @@ public:
   { 
     assert( bounds().contains(origin) );
     auto bnds = bounds_.as_index() - origin;
-    return strided_array_view( bnds, bounds_.strides(), &this->operator[](origin) );
+    return strided_array_view( &this->operator[](origin), bnds, bounds_.strides() );
   }
 
   constexpr strided_array_view section( 
@@ -1973,7 +2338,7 @@ public:
   { 
     assert( bounds_.contains(origin) );
     assert( origin + bnds <= bounds_.as_index() );    
-    return strided_array_view( bnds, bounds_.strides(), &this->operator[](origin) );
+    return strided_array_view( &this->operator[](origin), bnds, bounds_.strides() );
   }
 
   
@@ -2184,10 +2549,8 @@ public:
   //============================================================================
 
   /// @{
-  //! \brief the rank of the array view
-  static constexpr auto rank = Rank;
   //! \brief the bounds type
-  using bounds_type = contiguous_bounds<rank>;
+  using bounds_type = contiguous_bounds<Rank>;
   //! \brief the size type
   using size_type = typename bounds_type::size_type;
   //! \brief the index type
@@ -2244,10 +2607,28 @@ public:
   //! \param [in] rhs  the array_vew to set the new view to
   template<typename ViewValueType>
   constexpr array_view( 
-    const array_view<ViewValueType, rank>& rhs,
+    const array_view<ViewValueType, Rank>& rhs,
     std::enable_if_t< std::is_convertible< std::add_pointer_t<ViewValueType>, pointer>::value >* = nullptr
   ) noexcept :
     data_( rhs.data() ), bounds_( rhs.bounds() )
+  {  };
+
+  //! \brief single parameter from static_array_view constructor
+  //! \remark Data must be convertible to pointer
+  //! \remark This serves as an implicit conversion
+  //!         between related array_view types, .e.g. converting non-const 
+  //!         to const data
+  //! \param [in] rhs  the array_vew to set the new view to
+  template<
+    typename ViewValueType, 
+    std::ptrdiff_t... Dimensions,
+    bool Enabled1 = std::is_convertible< std::add_pointer_t<ViewValueType>, pointer>::value,
+    bool Enabled2 = (sizeof...(Dimensions) == Rank),
+    typename = std::enable_if_t< Enabled1 && Enabled2 >
+  >
+  constexpr array_view( 
+    const static_array_view<ViewValueType, Dimensions...>& rhs  ) noexcept :
+    data_( rhs.data() ), bounds_( rhs.bounds().as_index() )
   {  };
 
   //! \brief array_view copy assignemnt operator
@@ -2261,7 +2642,7 @@ public:
     std::is_convertible< std::add_pointer_t<ViewValueType>, pointer>::value, 
     array_view&  
   >
-  operator=(const array_view<ViewValueType, rank>& rhs) noexcept
+  operator=(const array_view<ViewValueType, Rank>& rhs) noexcept
   {
     data_ = rhs.data();
     bounds_ = rhs.bounds();
@@ -2276,7 +2657,7 @@ public:
   template<
     typename Container,
     typename = typename std::enable_if_t< 
-      detail::is_container_v<Container> && (rank == 1)
+      detail::is_container_v<Container> && (Rank == 1)
     >
   >
   constexpr explicit array_view(Container & cont) noexcept :
@@ -2296,7 +2677,7 @@ public:
       detail::is_container_v<Container>
     >
   >
-  constexpr array_view(bounds_type bounds, Container& cont) noexcept :
+  constexpr array_view(Container& cont, bounds_type bounds) noexcept :
     data_( cont.data() ), 
     bounds_( bounds )
   {
@@ -2314,7 +2695,7 @@ public:
       // can convert pointers
       std::is_convertible< std::add_pointer_t< std::remove_all_extents_t<ArrayType> >, pointer >::value
       // has same rank
-      && std::rank<ArrayType>::value == rank 
+      && std::rank<ArrayType>::value == Rank 
       // has same type
       &&  std::is_same_v< std::remove_all_extents_t<ArrayType>, value_type >
     >* = nullptr
@@ -2330,21 +2711,9 @@ public:
   //! \remark only for arrays that can be converted to pointer with rank<> == rank
   //! \param [in] bounds  the bounds of the view to set
   //! \param [in] data  the data to set the view to
-  constexpr array_view(bounds_type bounds, pointer data) noexcept :
+  constexpr array_view(pointer data, bounds_type bounds) noexcept :
     data_( data ), bounds_( bounds )
   {  }
-
-  //! \brief two parameter constructor with bounds and pointer
-  //! \remark  pointed to storage contains at least as many adjacent objects 
-  //!          as the bounds size()
-  //! \remark only for arrays that can be converted to pointer with rank<> == rank
-  //! \param [in] bounds  the bounds of the view to set
-  //! \param [in] stride  the stride of the view to set
-  //! \param [in] data  the data to set the view to
-  constexpr array_view(index_type bounds, index_type stride, pointer data) noexcept :
-    data_( data ), bounds_( bounds, stride )
-  {  }
-        
   /// @}
         
         
@@ -2369,6 +2738,9 @@ public:
  
   constexpr const auto & stride() const noexcept
   { return bounds_.stride(); }
+
+  //! \brief return the rank
+  static constexpr auto rank() { return Rank; }
 
   //! convert to a boolean
   //! \return true if empty
@@ -2404,7 +2776,7 @@ public:
 
   template <
     typename... Indices,
-    typename = std::enable_if_t< sizeof...(Indices) == rank >
+    typename = std::enable_if_t< sizeof...(Indices) == Rank >
   >
   constexpr reference operator()(Indices... indices) const noexcept
   {
@@ -2424,7 +2796,7 @@ public:
   constexpr Ret operator[]( size_type idx ) const noexcept
   { 
     const auto ridx = idx * bounds_.stride();
-    return { bounds_.slice(), data_+ridx };
+    return { data_+ridx, bounds_.slice() };
   }
 
   //! \brief slice an array, i.e. fix the most significant dimension
@@ -2453,7 +2825,7 @@ public:
   { 
     assert( bounds().contains(origin) );
     auto bnds = bounds_.as_index() - origin;
-    return strided_view( bnds, bounds_.strides(), &this->operator[](origin) );
+    return strided_view( &this->operator[](origin), bnds, bounds_.strides() );
   }
 
   constexpr strided_view section( 
@@ -2462,9 +2834,15 @@ public:
   { 
     assert( bounds_.contains(origin) );
     assert( origin + bnds <= bounds_.as_index() );    
-    return strided_view( bnds, bounds_.strides(), &this->operator[](origin) );
+    return strided_view( &this->operator[](origin), bnds, bounds_.strides() );
   }
 
+  //! \brief conversion operator
+  //! \return a strided version of the same view
+  explicit operator strided_view() const 
+  {
+    return strided_view( data(), bounds_.as_index(), bounds_.strides() );
+  }
   
   /// @}
 
@@ -2644,6 +3022,614 @@ protected:
   
         
 };
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////    
+/// \brief represent multidimensional views onto regular collections of 
+/// objects of a uniform type.
+/// 
+/// The view semantics convey that objects of these types do not store the 
+/// actual data, but instead enables patterns congruent to that of random 
+/// access iterators or pointers.
+///
+/// This container assumes the data is contiguous 
+////////////////////////////////////////////////////////////////////////////////    
+template < typename ValueType, std::ptrdiff_t FirstDim, std::ptrdiff_t... RestDims >
+class static_array_view {
+
+
+  //! \brief declare other variations of array_view as a friend
+  template< typename U, std::ptrdiff_t FirstRange, std::ptrdiff_t... RestRanges >
+  friend class static_array_view;
+
+  //! \brief add a level of indirection to selecting the slice
+  //! This is necessary because static_bounds<Args...> is 
+  //! ill formed if rank==1
+  template <bool, typename T, std::ptrdiff_t ...Args>
+  struct slice_chooser
+  {
+    using type = static_array_view<T, Args...>;
+  };
+
+  template <typename T, std::ptrdiff_t ...Args>
+  struct slice_chooser<true, T, Args...>
+  {
+    using type = T;
+  };
+
+public:
+
+  //============================================================================
+  /// \name types
+  //============================================================================
+
+  /// @{
+  //! \brief the rank of the array view
+  static constexpr auto Rank = sizeof...(RestDims) + 1;
+  //! \brief the bounds type
+  using bounds_type = static_bounds< FirstDim, RestDims... >;
+  //! \brief the size type
+  using size_type = typename bounds_type::size_type;
+  //! \brief the index type
+  using index_type = typename bounds_type::index_type;
+
+  //! \brief the value type
+  using value_type = ValueType;
+  using const_value_type = std::add_const_t<value_type>;
+  //! \brief a pointer to the data type
+  using pointer = std::add_pointer_t<value_type>;
+  //! \brief a reference to the data type
+  using reference = std::add_lvalue_reference_t<value_type>;
+
+  //! \brief a constant version of the same view
+  using const_static_array_view = static_array_view<const_value_type, Rank>;
+
+  //! \brief a strided version of the same view
+  using strided_view = strided_array_view<value_type, Rank>;
+  //! \brief a dynamic version of the same contiguous view
+  using dynamic_view = array_view<value_type, Rank>;
+
+  //! \brief the iterators
+  using iterator = contiguous_iterator<static_array_view>;
+  using const_iterator = contiguous_iterator<const_static_array_view>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+
+  //! a sliced type
+  using sliced_type = slice_chooser< (Rank == 1),  value_type, RestDims... >;
+
+  /// @}
+        
+  //============================================================================
+  /// \name construct/copy
+  //============================================================================
+  /// @{
+
+  //! \brief default constructor
+  constexpr static_array_view() noexcept = default;
+  //! \brief default copy constructor
+  constexpr static_array_view(const static_array_view&) noexcept = default; 
+  //! \brief default move constructor
+  constexpr static_array_view(static_array_view&&) noexcept = default;
+  //! \brief default assignement operator
+  static_array_view& operator=(const static_array_view&) noexcept = default;
+  //! \brief default move assignement operator
+  static_array_view& operator=(static_array_view&&) noexcept = default;
+
+
+  //! \brief single parameter array_view constructor
+  //! \remark Data must be convertible to pointer
+  //! \remark This serves a copy constructor but also as an implicit conversion
+  //!         between related array_view types, .e.g. converting non-const 
+  //!         to const data
+  //! \param [in] rhs  the array_vew to set the new view to
+  template<typename ViewValueType  >
+  constexpr static_array_view( 
+    const static_array_view<ViewValueType, FirstDim, RestDims...>& rhs,
+    std::enable_if_t< std::is_convertible< std::add_pointer_t<ViewValueType>, pointer>::value >* = nullptr 
+  ) noexcept : data_( rhs.data() )
+  {  };
+
+  //! \brief array_view copy assignemnt operator
+  //! \remark Data must be convertible to pointer
+  //! \remark This serves a copy constructor but also as an implicit conversion
+  //!         between related array_view types, .e.g. converting non-const 
+  //!         to const data
+  //! \param [in] rhs  the array_vew to set the new view to
+  template<typename ViewValueType>
+  std::enable_if_t< 
+    std::is_convertible< std::add_pointer_t<ViewValueType>, pointer>::value, 
+    static_array_view&  
+  >
+  operator=(const static_array_view<ViewValueType, FirstDim, RestDims...>& rhs) noexcept
+  {
+    data_ = rhs.data();
+  }
+
+  //! \brief single parameter container
+  //! \remark only for stl-like containers
+  //! \param [in] cont  the container to set the view to
+  template<
+    typename Container,
+    typename = typename std::enable_if_t< 
+      detail::is_container_v<Container>
+    >
+  >
+  constexpr explicit static_array_view(Container & cont) noexcept :
+    data_( cont.data() )
+  {
+    // the container size() must be greater than or equal to the bounds size
+    assert( cont.size() >= bounds_.size() && "container size is smaller than bounds" );
+  }
+
+
+  //! \brief single parameter array constructor
+  //! \remark The array bounds are derived from the extents
+  //! \remark only for arrays that can be converted to pointer with rank<> == rank
+  //! \param [in] arr  the container to set the view to
+  template<
+    typename ArrayType,
+    typename std::enable_if_t< 
+      // can convert pointers
+      std::is_convertible< std::add_pointer_t< std::remove_all_extents_t<ArrayType> >, pointer >::value
+      // has same rank
+      && std::rank<ArrayType>::value == Rank 
+      // has same type
+      &&  std::is_same_v< std::remove_all_extents_t<ArrayType>, value_type >
+    >* = nullptr
+  >
+  constexpr explicit static_array_view(ArrayType & arr) noexcept :
+    static_array_view( arr, std::make_index_sequence< std::rank<ArrayType>::value >{} )
+  {  }
+
+
+  //! \brief single parameter constructor with  pointer
+  //! \remark  pointed to storage contains at least as many adjacent objects 
+  //!          as the bounds size()
+  //! \remark only for arrays that can be converted to pointer with rank<> == rank
+  //! \param [in] data  the data to set the view to
+  constexpr static_array_view(pointer data) noexcept : data_( data )
+  {  }
+        
+
+  /// @}
+        
+        
+  //============================================================================
+  /// \name observers
+  //============================================================================
+  /// @{
+
+  //! \brief return the total size of the array
+  constexpr size_type size() const { return bounds().size(); }
+
+  //! \brief return true if empty
+  constexpr bool empty() const { return data_ != nullptr; }
+
+  //! \brief return the bounds of the array
+  constexpr const auto & bounds() const noexcept
+  { return bounds_; }
+
+  //! \brief return the stride of the array
+  constexpr const auto & strides() const noexcept
+  { return bounds_.strides(); }
+ 
+  constexpr const auto & stride() const noexcept
+  { return bounds_.stride(); }
+
+
+  //! \brief return the rank
+  static constexpr auto rank() { return Rank; }
+
+  //! convert to a boolean
+  //! \return true if empty
+  constexpr explicit operator bool() const noexcept { return data_ != nullptr; }
+
+  /// @}
+        
+  //============================================================================
+  /// \name element access
+  //============================================================================
+  /// @{
+
+  //! \brief access the element at a specified index
+  //! \remark this version has no bounds checking
+  //! \param [in] idx the index
+  //! \return a reference to the indexed location
+  constexpr reference operator[](const index_type &idx) const noexcept
+  { 
+    return data_[ bounds_.linearize(idx) ]; 
+  }
+
+  //! \brief access the element at a specified index
+  //! \remark this version has bounds checking
+  //! \param [in] idx the index
+  //! \return a reference to the indexed location
+  constexpr reference at(const index_type &idx) const noexcept 
+  {
+    // This makes at() constexpr as long as the argument is within the
+    // bounds of the array_view.    
+    return bounds().contains(idx) ? this->operator[](idx) : 
+      throw std::out_of_range("at() argument out of range");
+  }
+
+  template <
+    typename... Indices,
+    typename = std::enable_if_t< sizeof...(Indices) == Rank >
+  >
+  constexpr reference operator()(Indices... indices) const noexcept
+  {
+    index_type idx{indices...};
+    return this->operator[](idx);
+  }        
+  /// \returns A pointer such that [<code>data()</code>,<code>data() +
+  /// size()</code>) is a valid range. For a non-empty array_view,
+  /// <code>data() == &front()</code>.
+  constexpr pointer data() const noexcept { return data_; }
+                                                                 
+  //! \brief slice an array, i.e. fix the most significant dimension
+  //! \remark this version has no bounds checking
+  //! \param [in] idx the index to slice at
+  //! \return a reference to the indexed location
+  template< 
+    bool Enabled = (Rank > 1), 
+    typename Ret = std::enable_if_t<Enabled, sliced_type> 
+  >
+  constexpr Ret operator[]( size_type idx ) const noexcept
+  { 
+    const auto ridx = idx * bounds_.stride();
+    return { bounds_.slice(), data_+ridx };
+  }
+
+  //! \brief slice an array, i.e. fix the most significant dimension
+  //! \remark this version has bounds checking
+  //! \param [in] slice the index
+  //! \return a reference to the indexed location
+  constexpr auto slice( size_type idx ) const noexcept
+  { 
+    // This makes at() constexpr as long as the argument is within the
+    // bounds of the array_view.    
+    return (idx >= bounds_[0] ) ? 
+      throw std::out_of_range("at() argument out of range") :
+      this->operator[](idx);
+  }
+
+
+                                                                 
+  //! \brief section an array, i.e. create a sub-view
+  //! \param [in] origin   the index, if non specified, use {0} origin
+  //! \param [in] bnds     the new bounds, if non is specified, keep old bounds
+  //! \return a the new view
+  constexpr strided_view section() const noexcept
+  { return *this; }
+
+  constexpr strided_view section( const index_type & origin ) const noexcept
+  { 
+    assert( bounds().contains(origin) );
+    auto bnds = bounds_.as_index() - origin;
+    return strided_view( bnds, bounds_.strides(), &this->operator[](origin) );
+  }
+
+  constexpr strided_view section( 
+    const index_type & origin, 
+    const index_type & bnds ) const noexcept
+  { 
+    assert( bounds_.contains(origin) );
+    assert( origin + bnds <= bounds_.as_index() );    
+    return strided_view( bnds, bounds_.strides(), &this->operator[](origin) );
+  }
+
+  //! \brief conversion operator
+  //! \return a strided version of the same view
+  explicit operator strided_view() const 
+  {
+    return strided_view( bounds_.as_index(), bounds_.strides(), data() );
+  }
+
+  //! \brief conversion operator
+  //! \return a strided version of the same view
+  explicit operator dynamic_view() const 
+  {
+    return dynamic_view( bounds_.as_index(), data() );
+  }
+  
+  /// @}
+
+  //============================================================================
+  /// \name mutators
+  //============================================================================
+  /// @{
+        
+  /// Resets *this to its default-constructed state.
+  void clear() { *this = static_array_view(); }
+
+  /// @}
+
+  //============================================================================
+  /// \name mutators
+  //============================================================================
+  /// @{
+
+  //! \brief non-const iterators
+  //! \return the desired iterator position
+  constexpr iterator begin() const 
+  { 
+    return iterator{this, true}; 
+  }
+  constexpr iterator end() const 
+  { 
+    return iterator{this, false}; 
+  }
+
+  //! \brief const iterators
+  //! \return the desired iterator position
+  constexpr const_iterator cbegin() const
+  {
+    return const_iterator{reinterpret_cast<const const_static_array_view*>(this), true};
+  }
+  constexpr const_iterator cend() const
+  {
+    return const_iterator{reinterpret_cast<const const_static_array_view*>(this), false};
+  }
+
+  //! \brief non-const reverse iterators
+  //! \return the desired iterator position
+  constexpr reverse_iterator rbegin() const 
+  { 
+    return reverse_iterator{end()}; 
+  }
+
+  constexpr reverse_iterator rend() const 
+  { 
+    return reverse_iterator{begin()}; 
+  }
+
+  //! \brief const reverse iterators
+  //! \return the desired iterator position
+  constexpr const_reverse_iterator crbegin() const 
+  { 
+    return const_reverse_iterator{cend()}; 
+  }
+
+  constexpr const_reverse_iterator crend() const { 
+    return const_reverse_iterator{cbegin()}; 
+  }
+
+  /// @}
+
+  //============================================================================
+  /// \name Comparison operators
+  //============================================================================
+  /// @{
+
+  template <
+    typename OtherValueType, std::ptrdiff_t OtherFirstDim, std::ptrdiff_t... OtherRestDims,
+    typename Dummy = std::enable_if_t< 
+      std::is_same_v< std::remove_cv_t<value_type>, std::remove_cv_t<OtherValueType> >
+    >
+  >
+  constexpr bool operator==(
+    const static_array_view<OtherValueType, OtherFirstDim, OtherRestDims...>& other ) const noexcept
+  {
+    return bounds_.size() == other.bounds_.size() &&
+      (data_ == other.data_ || std::equal(this->begin(), this->end(), other.begin()));
+  }
+
+  template <
+    typename OtherValueType, std::ptrdiff_t OtherFirstDim, std::ptrdiff_t... OtherRestDims,
+    typename Dummy = std::enable_if_t<
+      std::is_same_v< std::remove_cv_t<value_type>, std::remove_cv_t<OtherValueType> >
+    >
+  >
+  constexpr bool operator!=(
+    const static_array_view<OtherValueType, OtherFirstDim, OtherRestDims...>& other) const noexcept
+  {
+    return !(*this == other);
+  }
+
+  template <
+    typename OtherValueType, std::ptrdiff_t OtherFirstDim, std::ptrdiff_t... OtherRestDims,
+    typename Dummy = std::enable_if_t<
+      std::is_same_v< std::remove_cv_t<value_type>, std::remove_cv_t<OtherValueType> > 
+    >
+  >
+  constexpr bool operator<(
+    const static_array_view<OtherValueType, OtherFirstDim, OtherRestDims...>& other) const noexcept
+  {
+    return std::lexicographical_compare(this->begin(), this->end(), other.begin(), other.end());
+  }
+
+  template < 
+    typename OtherValueType, std::ptrdiff_t OtherFirstDim, std::ptrdiff_t... OtherRestDims,
+    typename Dummy = std::enable_if_t<
+      std::is_same_v< std::remove_cv_t<value_type>, std::remove_cv_t<OtherValueType> > 
+    >
+  >
+  constexpr bool operator<=(
+    const static_array_view<OtherValueType, OtherFirstDim, OtherRestDims...>& other) const noexcept
+  {
+    return !(other < *this);
+  }
+
+  template <
+    typename OtherValueType, std::ptrdiff_t OtherFirstDim, std::ptrdiff_t... OtherRestDims,
+    typename Dummy = std::enable_if_t<
+      std::is_same_v< std::remove_cv_t<value_type>, std::remove_cv_t<OtherValueType> > 
+    >
+  >
+  constexpr bool operator>(
+    const static_array_view<OtherValueType, OtherFirstDim, OtherRestDims...>& other) const noexcept
+  {
+    return (other < *this);
+  }
+
+  template <
+    typename OtherValueType, std::ptrdiff_t OtherFirstDim, std::ptrdiff_t... OtherRestDims,
+    typename Dummy = std::enable_if_t<
+      std::is_same_v< std::remove_cv_t<value_type>, std::remove_cv_t<OtherValueType> > 
+    >
+  >
+  constexpr bool operator>=(
+    const static_array_view<OtherValueType, OtherFirstDim, OtherRestDims...>& other) const noexcept
+  {
+    return !(*this < other);
+  }
+
+
+  //! swap two array views
+  void swap(static_array_view& rhs) noexcept
+  {
+    std::swap(data_, rhs.data_);
+    std::swap(bounds_, rhs.bounds_);
+  }
+
+  /// @}
+
+
+protected:
+
+
+  //============================================================================
+  /// \name private helpers
+  //============================================================================
+
+  //! \brief constructor with static array, must be the same size as rank
+  //! \tparam N the rank of the array, must equal Rank
+  //! \param [in] vals  the values to set
+  template < typename ArrayType, std::size_t... I > 
+  constexpr static_array_view( 
+    ArrayType & arr, std::index_sequence<I...> ) noexcept : 
+    data_( reinterpret_cast<pointer>(arr) )
+  { 
+    static_assert( 
+      detail::multiply( std::extent<ArrayType, I>:: value... ) >= bounds_.size(), 
+      "container size is smaller than bounds"  );
+  };  
+
+  
+
+  //============================================================================
+  /// \name private data
+  //============================================================================
+
+  //! \brief a pointer to the data
+  pointer data_ = nullptr;
+  //! \brief the bounds of the array in multidimensional space
+  static bounds_type bounds_;
+  
+        
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////    
+/// \name deducing constructor wrappers
+///
+/// These functions do the same thing as the constructor with the same
+/// signature. They just allow users to avoid writing the types/bounds.
+////////////////////////////////////////////////////////////////////////////////    
+
+
+namespace detail {
+
+template < typename ArrayType, std::size_t... I > 
+auto make_static_array_view( ArrayType & arr, std::index_sequence<I...> ) 
+{
+  using value_type = std::remove_all_extents_t<ArrayType>;
+  return static_array_view< value_type, std::extent<ArrayType, I>:: value... >( arr );
+}
+
+}
+
+
+//! \brief general type deduction with no dimensions
+//! \param [in] cont the array container
+//! \return the array view
+template< typename ContainerType >
+auto make_array_view( ContainerType && cont) noexcept
+{
+  using value_type = typename std::decay_t<ContainerType>::value_type;
+  return array_view<value_type>( std::forward<ContainerType>(cont) );
+}
+
+
+//! \brief general type deduction with dimensions passed
+//! \param [in] cont the array container
+//! \param [in] dims the dimensions of the array
+//! \return the array view
+template< 
+  typename ContainerType,
+  typename... Dims,
+  int N = sizeof...(Dims)
+>
+auto make_array_view( ContainerType && rhs, Dims...dims ) noexcept
+{
+  using value_type = typename std::decay_t< decltype( std::declval<ContainerType>()[0] ) >;
+  return array_view< value_type, N >( 
+    std::forward<ContainerType>(rhs), {dims...}
+  );
+}
+
+
+
+//! \brief general type deduction with dimensions passed
+//! \tparam FirstDim the first dimension of the array
+//! \tparam RestDims the rest of the dimensions
+//! \param [in] cont the array container
+//! \return the static array view
+template< 
+  std::ptrdiff_t FirstDim,
+  std::ptrdiff_t... RestDims
+>
+auto make_array_view( auto && cont ) noexcept
+{
+  using container_type = decltype( cont );
+  using value_type = typename std::decay_t< decltype( std::declval<container_type>()[0] ) >;
+  return static_array_view< value_type, FirstDim, RestDims... >( 
+    std::forward<container_type>(cont)
+  );
+}
+
+
+#if 0
+
+//! \brief special deduction for arrays with derived extents
+//! \param [in] arr the array container
+//! \return the array view
+//! \remark this one returns a dynamic view
+template<
+  typename ArrayType,
+  int N = std::rank<ArrayType>::value,
+  typename = std::enable_if_t< std::is_array< ArrayType >::value >
+>
+auto make_array_view( ArrayType & arr ) noexcept
+{
+  using value_type = typename std::remove_all_extents<ArrayType>::type;
+  return array_view< value_type, N >( arr );
+}
+
+#else
+
+//! \brief special deduction for arrays with derived extents
+//! \param [in] arr the array 
+//! \return the static array view
+//! \remark this one returns a static view
+template<
+  typename ArrayType,
+  typename = std::enable_if_t< std::is_array< ArrayType >::value >
+>
+auto make_array_view( ArrayType & arr ) noexcept
+{
+  using Indices = std::make_index_sequence< std::rank<ArrayType>::value >;
+  return detail::make_static_array_view( arr, Indices{} );
+}
+
+#endif    
+    
+/// @}
 
     
 }      // End namespace
