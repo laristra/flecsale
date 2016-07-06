@@ -64,7 +64,7 @@ endif()
 # Add subprojects
 #------------------------------------------------------------------------------#
 
-find_package(FLECSI)
+find_package(FLECSI QUIET)
 if(NOT FLECSI_FOUND)
   cinch_add_subproject("flecsi")
   list( APPEND ALE_LIBRARIES flecsi )
