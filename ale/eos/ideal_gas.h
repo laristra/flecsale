@@ -18,7 +18,7 @@
 #pragma once
 
 //! system includes
-
+#include <cmath>
 
 namespace ale {
 namespace eos {

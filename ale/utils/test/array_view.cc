@@ -19,6 +19,7 @@
 // system includes
 #include<cinchtest.h>
 #include<iostream>
+#include <numeric>
 
 // user includes
 #include "ale/utils/array_view.h"

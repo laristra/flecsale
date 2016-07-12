@@ -19,6 +19,7 @@
 // system includes
 #include <cinchtest.h>
 #include <iostream>
+#include <cmath>
 
 // user includes
 #include "ale/common/types.h"
