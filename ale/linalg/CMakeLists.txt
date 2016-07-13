@@ -3,22 +3,10 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-set(math_HEADERS
-  array.h
-  constants.h
-  math.h    detail/math.h
-  matrix.h
-  multi_array.h
-  tuple.h
-  vector.h
+set(linalg_HEADERS
+  types.h
+  qr.h
   PARENT_SCOPE
-)
-
-cinch_add_unit(math
-    SOURCES 
-      test/tuple.cc 
-      test/vector.cc
-      test/matrix.cc
 )
 
 #----------------------------------------------------------------------------~-#

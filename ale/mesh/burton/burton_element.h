@@ -91,8 +91,8 @@ struct burton_element_t<2,1> :
   using vertex_t = burton_vertex_t<num_dimensions>;
 
   //! The boundary id type
-  using boundary_id_t = typename mesh_traits_t::boundary_id_t;
-  using boundary_id_vector_t = typename mesh_traits_t::boundary_id_vector_t;
+  using tag_t = typename mesh_traits_t::tag_t;
+  using tag_list_t = typename mesh_traits_t::tag_list_t;
 
   //============================================================================
   // Constructors
@@ -140,10 +140,13 @@ struct burton_element_t<2,1> :
   //! is this a boundary
   bool is_boundary() const;
 
-  //! tag as a boundary
-  void tag_boundary(const boundary_id_t & tag);
-  //! get boundary tag
-  const boundary_id_t & boundary_tag() const;
+
+  //! get all entity tags
+  const tag_list_t & tags() const;
+  //! tag entity
+  void tag(const tag_t & tag);
+  //! does entity have a tag
+  bool has_tag(const tag_t & tag);
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
@@ -216,8 +219,8 @@ struct burton_element_t<3,1> :
   using vertex_t = burton_vertex_t<num_dimensions>;
 
   //! The boundary id type
-  using boundary_id_t = typename mesh_traits_t::boundary_id_t;
-  using boundary_id_vector_t = typename mesh_traits_t::boundary_id_vector_t;
+  using tag_t = typename mesh_traits_t::tag_t;
+  using tag_list_t = typename mesh_traits_t::tag_list_t;
 
   //============================================================================
   // Constructors
@@ -250,10 +253,12 @@ struct burton_element_t<3,1> :
   //! is this a boundary
   bool is_boundary() const;
 
-  //! tag as a boundary
-  void tag_boundary(const boundary_id_t & tag);
-  //! get boundary tags
-  const boundary_id_vector_t & boundary_tags() const;
+  //! get all entity tags
+  const tag_list_t & tags() const;
+  //! tag entity
+  void tag(const tag_t & tag);
+  //! does entity have a tag
+  bool has_tag(const tag_t & tag);
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
@@ -519,8 +524,8 @@ struct burton_element_t<3,2>
   using edge_t = burton_edge_t<num_dimensions>;
 
   //! The boundary id type
-  using boundary_id_t = typename mesh_traits_t::boundary_id_t;
-  using boundary_id_vector_t = typename mesh_traits_t::boundary_id_vector_t;
+  using tag_t = typename mesh_traits_t::tag_t;
+  using tag_list_t = typename mesh_traits_t::tag_list_t;
 
   //============================================================================
   // Constructors
@@ -550,10 +555,12 @@ struct burton_element_t<3,2>
   //! is this a boundary
   bool is_boundary() const;
 
-  //! tag as a boundary
-  void tag_boundary(const boundary_id_t & tag);
-  //! get boundary tag
-  const boundary_id_t & boundary_tag() const;
+  //! get all entity tags
+  const tag_list_t & tags() const;
+  //! tag entity
+  void tag(const tag_t & tag);
+  //! does entity have a tag
+  bool has_tag(const tag_t & tag);
 
   //! the list of actual coordinates
   point_list_t coordinates( bool reverse = false ) const;

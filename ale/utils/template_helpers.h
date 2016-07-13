@@ -48,6 +48,49 @@ template<typename... Args>
 constexpr auto multiply(Args... args) 
 { return detail::multiply(args...); }
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief statically fill an array with a constant value
+////////////////////////////////////////////////////////////////////////////////
+
+template <std::size_t N>
+struct fill {
+  template <typename T, typename ...Tn>
+  static constexpr auto apply(T v, Tn ...vs)
+  {
+    return fill<N - 1>::apply(v, v, vs...);
+  }
+};
+
+template <>
+struct fill<1> {
+  template <typename T, typename ...Tn>
+  static constexpr auto apply(T v, Tn ...vs)
+  {
+    return std::array<T, sizeof...(vs) + 1>{v, vs...};
+  }
+
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief statically make an array with a constant value
+////////////////////////////////////////////////////////////////////////////////
+
+namespace detail {
+
+template <typename T, std::size_t...Is>
+constexpr std::array<T, sizeof...(Is)> make_array(T val, std::index_sequence<Is...>)
+{
+  return {(static_cast<void>(Is), val)...};
+}
+
+} // namespace 
+
+
+template <typename T, std::size_t N>
+constexpr std::array<T, N> make_array(T val)
+{
+  return detail::make_array(val, std::make_index_sequence<N>());
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief a tie using constant references

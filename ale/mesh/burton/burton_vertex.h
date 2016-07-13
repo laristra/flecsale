@@ -81,8 +81,8 @@ public:
   using bitfield_t = typename mesh_traits_t::bitfield_t;
 
   //! The boundary id type
-  using boundary_id_t = typename mesh_traits_t::boundary_id_t;
-  using boundary_id_vector_t = typename mesh_traits_t::boundary_id_vector_t;
+  using tag_t = typename mesh_traits_t::tag_t;
+  using tag_list_t = typename mesh_traits_t::tag_list_t;
 
   //============================================================================
   // Constructors
@@ -116,10 +116,12 @@ public:
   //! is this a boundary
   bool is_boundary() const;
 
-  //! tag as a boundary
-  void tag_boundary(const boundary_id_t & tag);
-  //! get boundary tags
-  const boundary_id_vector_t & boundary_tags() const;
+  //! get all entity tags
+  const tag_list_t & tags() const;
+  //! tag entity
+  void tag(const tag_t & tag);
+  //! does entity have a tag
+  bool has_tag(const tag_t & tag);
 
 
   //! \brief reset the mesh pointer
@@ -182,8 +184,8 @@ public:
   using bitfield_t = typename mesh_traits_t::bitfield_t;
 
   //! The boundary id type
-  using boundary_id_t = typename mesh_traits_t::boundary_id_t;
-  using boundary_id_vector_t = typename mesh_traits_t::boundary_id_vector_t;
+  using tag_t = typename mesh_traits_t::tag_t;
+  using tag_list_t = typename mesh_traits_t::tag_list_t;
 
   //============================================================================
   // Constructors
@@ -216,11 +218,13 @@ public:
 
   //! is this a boundary
   bool is_boundary() const;
-  //! get boundary tags
-  const boundary_id_vector_t & boundary_tags() const;
 
-  //! tag as a boundary
-  void tag_boundary(const boundary_id_t & tag);
+  //! get all entity tags
+  const tag_list_t & tags() const;
+  //! tag entity
+  void tag(const tag_t & tag);
+  //! does entity have a tag
+  bool has_tag(const tag_t & tag);
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 

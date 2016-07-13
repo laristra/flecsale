@@ -147,10 +147,10 @@ public:
   // Iterators
   //============================================================================
 
-  constexpr iterator begin() { return data_; }
-  constexpr iterator end() { return data_ + length_; }
-  constexpr const_iterator begin() const { return data_; }
-  constexpr const_iterator end() const { return data_ + length_; }
+  constexpr iterator begin() { return data_.begin(); }
+  constexpr iterator end() { return std::next(data_.begin(), length_); }
+  constexpr const_iterator begin() const { return data_.begin(); }
+  constexpr const_iterator end() const { return std::next(data_.begin(), length_); }
   constexpr const_iterator cbegin() const { return begin(); }
   constexpr const_iterator cend() const { return end(); }
   reverse_iterator rbegin() const {
@@ -328,7 +328,7 @@ public:
   void emplace_back( Args&&... args )
   {
     assert( size() < capacity() );
-    data_[length_++] = fixed_vector( std::forward<Args>(args)... );
+    data_[length_++] = value_type( std::forward<Args>(args)... );
   }
 
   void pop_back() 
@@ -374,7 +374,7 @@ private:
   //============================================================================
 
   //! \brief the actual data is stored in an array of fixed size
-  value_type data_[N];
+  std::array<value_type, N> data_;
   //! the length of the array that is actually used
   size_type  length_;
         

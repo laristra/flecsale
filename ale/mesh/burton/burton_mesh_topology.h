@@ -28,7 +28,6 @@ namespace mesh {
 ////////////////////////////////////////////////////////////////////////////////
 
 //! some flexi flags
-using flecsi::persistent;
 using flecsi::flecsi_internal;
 using flecsi::flecsi_user_space;
 
@@ -43,6 +42,7 @@ using burton_mesh_topology_t =
 //! Two dimensional and three dimensional versions
 using burton_2d_mesh_topology_t = burton_mesh_topology_t<2>; 
 using burton_3d_mesh_topology_t = burton_mesh_topology_t<3>; 
+
 
 } // namespace
 } // namespace

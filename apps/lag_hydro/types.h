@@ -93,8 +93,10 @@ public:
 
 
 // a type for storing boundary conditions
+using tag_t = mesh_2d_t::tag_t;
+
 template< std::size_t N >
-using boundary_map_t = std::vector< boundary_condition_t<N> * >;
+using boundary_map_t = std::map< tag_t, boundary_condition_t<N> * >;
 
 
 ////////////////////////////////////////////////////////////////////////////////

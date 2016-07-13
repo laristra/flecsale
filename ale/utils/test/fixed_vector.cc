@@ -43,7 +43,7 @@ TEST(fixed_vector, construction)
   // size and value constructor
   fixed_vector vec3(4, 1);
   ASSERT_EQ( 4, vec3.size() );
-  for ( auto x : vec3 )
+  for ( auto x : vec3 ) 
     ASSERT_EQ( 1, x );
 
   // stl-like constructor

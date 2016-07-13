@@ -1,39 +1,54 @@
-/////////////////////////////////////////////////////////////////////
-/// \author Marc R.J. "T-Bone"  Charest
-///
-/// Functions for solving linear systems based on QR factorization.
-///
-/// \date Thursday, August 12 2010
-/////////////////////////////////////////////////////////////////////
+/*~-------------------------------------------------------------------------~~*
+ *     _   ______________     ___    __    ______
+ *    / | / / ____/ ____/    /   |  / /   / ____/
+ *   /  |/ / / __/ /  ______/ /| | / /   / __/   
+ *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
+ * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
+ * 
+ * Copyright (c) 2016 Los Alamos National Laboratory, LLC
+ * All rights reserved
+ *~-------------------------------------------------------------------------~~*/
+/*!
+ *
+ * \file qr.h
+ * 
+ * \brief Defines some functions for a qr solver
+ *
+ ******************************************************************************/
 #pragma once
 
-namespace ale {
-namespace math {
+//! user includes
+#include "types.h"
 
-template< typename T >
-using matrix_view = utils::strided_array_view<T,2>;
+namespace ale {
+namespace linalg {
 
 namespace detail {
 
 ///////////////////////////////////////////////////////////////////
 /// Column Pivoting.
 ///////////////////////////////////////////////////////////////////
-template< typename T, typename I >
-auto get_next_col( const utils::array_view<T,2> &A, 
+template< 
+  template <typename, std::ptrdiff_t...> class MatrixViewType,
+  typename T, 
+  typename I,
+  std::ptrdiff_t...MatArgs
+>
+auto get_next_col( const MatrixViewType<T, MatArgs...>&A, 
                    I row_pos,
                    I* p ) 
 {
   
   // get the size type
-  using size_type = utils::multi_array_ref<T>::size_type;
+  using size_type = typename MatrixViewType<T, MatArgs...>::size_type;
 
   // some matrix dimensions
-  auto rows = A.dimension(0);
-  auto cols = A.dimension(1);
+  auto rows = A.template extent<0>();
+  auto cols = A.template extent<1>();
 
   auto max_loc = static_cast<size_type>(0);
 
-  vector<T> col_norms(cols);
+  std::vector<T> col_norms(cols);
     
   // Compute the norms of the sub columns.
   for(size_type j = 0; j < cols; j++) {
@@ -58,17 +73,22 @@ auto get_next_col( const utils::array_view<T,2> &A,
 ///////////////////////////////////////////////////////////////////
 /// Determine the householder transformation.
 ///////////////////////////////////////////////////////////////////
-template< typename T, typename I >
-void householder( const utils::multi_array_ref<T> &A,
+template< 
+  template <typename, std::ptrdiff_t...> class MatrixViewType,
+  typename T, 
+  typename I,
+  std::ptrdiff_t...MatArgs
+>
+void householder( const MatrixViewType<T, MatArgs...> &A,
                   I row_pos, I col_pos, 
                   T * result)
 {
   // get the size type
-  using size_type = utils::multi_array_ref<T>::size_type;
+  using size_type = typename MatrixViewType<T, MatArgs...>::size_type;
 
   // some matrix dimensions
-  auto rows = A.dimension(0);
-  auto cols = A.dimension(1);
+  auto rows = A.template extent<0>();
+  auto cols = A.template extent<1>();
 
   auto norm = static_cast<T>(0);
 
@@ -90,7 +110,7 @@ void householder( const utils::multi_array_ref<T> &A,
 
   if(norm == 0) return;
 
-   norm = sqrt(norm);
+  norm = std::sqrt(norm);
 
   for(size_type i = 0; i < (rows - row_pos); i++)
     result[i] *= (1.0/norm);
@@ -100,27 +120,37 @@ void householder( const utils::multi_array_ref<T> &A,
 ///////////////////////////////////////////////////////////////////
 /// Apply the householder transformation.  VECTOR RHS VERION
 ///////////////////////////////////////////////////////////////////
-template< typename T, typename I >
-void apply_householder( const utils::multi_array_ref<T> &A,
-                        T * B, 
+template< 
+  template <typename, std::ptrdiff_t...> class MatrixViewType,
+  template <typename, std::ptrdiff_t...> class VectorViewType,
+  typename T, 
+  typename I,
+  std::ptrdiff_t...MatArgs,
+  std::ptrdiff_t...VecArgs
+>
+void apply_householder( const MatrixViewType<T, MatArgs...> & A,
+                        const VectorViewType<T, VecArgs...> & B, 
                         T * house, 
                         I row_pos, I *p )
 {
     
   // get the size type
-  using size_type = utils::multi_array_ref<T>::size_type;
+  using size_type = typename matrix_view<T>::size_type;
 
   // some matrix dimensions
-  auto rows = A.dimension(0);
-  auto cols = A.dimension(1);
+  auto rows = A.template extent<0>();
+  auto cols = A.template extent<1>();
 
   // Get the dimensions for the Q matrix.
   auto nn = rows - row_pos;
 
   // some temporary matrices
-  math::Matrix2D A_cpy(A);
-  std::vector<T> B_cpy( B, B+rows );
+  std::vector<T> A_cpy( A.begin(), A.end() );
+  std::vector<T> B_cpy( B.begin(), B.end() );
   std::vector<T> hhmat(nn*nn);
+
+  // shape the matrix view
+  auto A_cpy_view = MatrixViewType<T, MatArgs...>( A_cpy, A.bounds() );
       
   // Build the Q matrix from the Householder transform.
   for(size_type j = 0; j < nn; j++)
@@ -137,7 +167,7 @@ void apply_householder( const utils::multi_array_ref<T> &A,
       auto temp = static_cast<T>(0);
 
       for(size_type i = 0; i < nn; i++)
-        temp += hhmat[i+nn*j]*A_cpy(i + row_pos,p[k]);
+        temp += hhmat[i+nn*j]*A_cpy_view(i + row_pos,p[k]);
         
       A(j + row_pos,p[k]) = temp;
     }
@@ -158,9 +188,16 @@ void apply_householder( const utils::multi_array_ref<T> &A,
 ///////////////////////////////////////////////////////////////////
 /// Apply the householder transformation.  VECTOR RHS VERSION.
 ///////////////////////////////////////////////////////////////////
-template< typename T, typename I >
-void back_solve( const utils::multi_array_ref<T> &A,
-                 T * B, 
+template< 
+  template <typename, std::ptrdiff_t...> class MatrixViewType,
+  template <typename, std::ptrdiff_t...> class VectorViewType,
+  typename T, 
+  typename I,
+  std::ptrdiff_t...MatArgs,
+  std::ptrdiff_t...VecArgs
+>
+void back_solve( const MatrixViewType<T, MatArgs...> & A,
+                 const VectorViewType<T, VecArgs...> & B, 
                  I * p )
 {
 
@@ -168,19 +205,19 @@ void back_solve( const utils::multi_array_ref<T> &A,
   constexpr auto eps = std::numeric_limits<T>::epsilon();
 
   // get the size type
-  using size_type = utils::multi_array_ref<T>::size_type;
+  using size_type = typename MatrixViewType<T, MatArgs...>::size_type;
 
   // some matrix dimensions
-  auto rows = A.dimension(0);
-  auto cols = A.dimension(1);
+  auto rows = A.template extent<0>();
+  auto cols = A.template extent<1>();
 
-  size_type bottom;
+  size_type bottom = 0;
 
   // setup some temporary arrays
-  std::vector<T> B_cpy( B, B+rows );
+  std::vector<T> B_cpy( B.begin(), B.end() );
     
   // Find the first non-zero row from the bottom and start solving from here.
-  for(size_type i = rows - 1; i >= 0; i--) {
+  for(size_type i = rows; i-- > 0;) {
     if( std::abs(A(i,p[cols - 1])) > eps ) {
       bottom = i;
       break;
@@ -190,13 +227,13 @@ void back_solve( const utils::multi_array_ref<T> &A,
   bottom = std::min( bottom, cols-1 );
 
   // Standard back solving routine starting at the first non-zero diagonal.
-  for(size_type i = bottom; i >= 0; i--) {
+  for(size_type i = bottom+1; i-- > 0;) {
         
     auto sum = static_cast<T>(0);
 
-    for(size_type j = cols - 1; j >= 0; j--)
-      if(j > i)
-        sum += B[p[j]]*A(i,p[j]);
+    for(size_type j = cols; j-- > i+1;) 
+      // if(j > i) 
+      sum += B[p[j]]*A(i,p[j]);
       
     if ( std::abs(A(i,p[i])) > eps ) {
       auto temp = 1 / A(i,p[i]);
@@ -215,18 +252,32 @@ void back_solve( const utils::multi_array_ref<T> &A,
 /// computes the minimum-norm solution to a real linear least 
 /// squares problem using a QR-based routine. VECTOR RHS VERSION.
 ///////////////////////////////////////////////////////////////////
-template< typename T >
-qr( matrix_view<T> &A, vector_view<T> &B) 
-{
+template< 
+  template <typename, std::ptrdiff_t...> class MatrixViewType,
+  template <typename, std::ptrdiff_t...> class VectorViewType,
+  typename T, std::ptrdiff_t...MatArgs, std::ptrdiff_t...VecArgs
+>
+void qr ( 
+  MatrixViewType<T,MatArgs...> A, 
+  VectorViewType<T,VecArgs...> B 
+) {
 
-  auto rows = A.dimension(0);
-  auto cols = A.dimension(1);
+  // some static assertions
+  static_assert( A.rank() == 2, "System matrix must have rank 2" );
+  static_assert( B.rank() == 1, "Right-hand-side vector must have rank 1" );
+
+  // get the size type
+  using size_type = typename MatrixViewType<T,MatArgs...>::size_type;
+
+  // the dimensions
+  auto rows = A.template extent<0>();
+  auto cols = A.template extent<1>();
     
   // initial checks
   if (rows < 1 || cols < 1) 
     raise_runtime_error("Incorect matrix sizes");
 
-  if ( B.size() != rows ) 
+  if ( B.template extent<0>() != rows ) 
     raise_runtime_error("RHS vector wrong size");
 
   // householder vector
@@ -234,7 +285,7 @@ qr( matrix_view<T> &A, vector_view<T> &B)
 
 
   // Initial permutation vector.
-  auto jpvt = vector<size_type>(cols);
+  auto jpvt = std::vector<size_type>(cols);
   std::iota( jpvt.begin(), jpvt.end(), static_cast<size_type>(0) );
   
   // Apply rotators to make R and Q'*b 
@@ -248,13 +299,13 @@ qr( matrix_view<T> &A, vector_view<T> &B)
 
     // work -> Q matrix, A copy, B copy
     detail::householder(A, i, jpvt[i], v.data());
-    detail::apply_householder(A, B.data(), v.data(), i, jpvt.data());
+    detail::apply_householder(A, B, v.data(), i, jpvt.data());
 
   }
 
 
   // Back solve Rx = Q'*b 
-  detail::back_solve(A, B, jpvt);
+  detail::back_solve(A, B, jpvt.data());
 }
 
 

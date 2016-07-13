@@ -246,6 +246,18 @@ public:
   //============================================================================
   /// @{
 
+  //! \brief return the extent of the array
+  //! \tparam Dim the dimension to query
+  template< size_type Dim = 0 >
+  constexpr size_type get() const noexcept
+  {
+    static_assert(
+      Dim < rank, 
+      "dimension should be less than Rank (dimension count starts from 0)" 
+    );
+    return std::get<Dim>( index_ );
+  }
+
   //! \brief access the individual bounds for a specific dimension
   //! \param [in] component_idx the component to return
   //! \return the index
@@ -691,12 +703,17 @@ public:
   constexpr const_reference operator[](size_type component_idx) const noexcept 
   { return bounds_[component_idx]; };
 
-  //! \brief access the individual bounds for a specific dimension
-  //! \param [in] component_idx the component to return
-  //! \return the bounds
-  template< size_type D = 0 >
-  constexpr value_type extent() noexcept 
-  { return bounds_[D]; };
+  //! \brief return the extent of the array
+  //! \tparam Dim the dimension to query
+  template< size_type Dim = 0 >
+  constexpr size_type extent() const noexcept
+  {
+    static_assert(
+      Dim < rank, 
+      "dimension should be less than Rank (dimension count starts from 0)" 
+    );
+    return bounds_.template get<Dim>();
+  }
 
   /// @}
 
@@ -939,6 +956,19 @@ public:
   { return bounds_[component_idx]; };
   /// @}
 
+
+  //! \brief return the extent of the array
+  //! \tparam Dim the dimension to query
+  template< size_type Dim = 0 >
+  constexpr size_type extent() const noexcept
+  {
+    static_assert(
+      Dim < rank, 
+      "dimension should be less than Rank (dimension count starts from 0)" 
+    );
+    return bounds_.template get<Dim>();
+  }
+
   //============================================================================
   /// \name bounds functions
   //============================================================================
@@ -1148,12 +1178,18 @@ public:
   { return bounds_[component_idx]; };
   /// @}
 
-  //! \brief access the individual bounds for a specific dimension
-  //! \param [in] component_idx the component to return
-  //! \return the bounds
-  template< size_type D = 0 >
-  static constexpr value_type extent() noexcept 
-  { return bounds_[D]; };
+  //! \brief return the extent of the array
+  //! \tparam Dim the dimension to query
+  template< size_type Dim = 0 >
+  static constexpr size_type extent() noexcept
+  {
+    static_assert(
+      Dim < rank, 
+      "dimension should be less than Rank (dimension count starts from 0)" 
+    );
+    return bounds_.template get<Dim>();
+  }
+
   /// @}
 
   //============================================================================
@@ -1976,7 +2012,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////    
 // forward declaration
 ////////////////////////////////////////////////////////////////////////////////    
-template < typename ValueType, int Rank >
+template < typename ValueType, std::ptrdiff_t Rank >
 class array_view;
 
 template < 
@@ -1994,12 +2030,12 @@ class static_array_view;
 /// actual data, but instead enables patterns congruent to that of random 
 /// access iterators or pointers. 
 ////////////////////////////////////////////////////////////////////////////////    
-template < typename ValueType, int Rank = 1 >
+template < typename ValueType, std::ptrdiff_t Rank = 1 >
 class strided_array_view {
 
 
   //! \brief declare other variations of strided_array_view as a friend
-  template< typename U,  int R >
+  template< typename U,  std::ptrdiff_t R >
   friend class strided_array_view;
 
 public:
@@ -2009,10 +2045,8 @@ public:
   //============================================================================
 
   /// @{
-  //! \brief the rank of the array view
-  static constexpr auto rank = Rank;
   //! \brief the bounds type
-  using bounds_type = strided_bounds<rank>;
+  using bounds_type = strided_bounds<Rank>;
   //! \brief the size type
   using size_type = typename bounds_type::size_type;
   //! \brief the index type
@@ -2066,7 +2100,7 @@ public:
   //! \param [in] rhs  the array_vew to set the new view to
   template<typename ViewValueType>
   constexpr strided_array_view( 
-    const strided_array_view<ViewValueType, rank>& rhs,
+    const strided_array_view<ViewValueType, Rank>& rhs,
     std::enable_if_t< std::is_convertible< std::add_pointer_t<ViewValueType>, pointer>::value >* = nullptr
   ) noexcept :
     data_( rhs.data() ), bounds_( rhs.bounds() )
@@ -2082,7 +2116,7 @@ public:
     typename ViewValueType, 
     int ViewRank,
     bool Enabled1 = std::is_convertible< std::add_pointer_t<ViewValueType>, pointer>::value,
-    bool Enabled2 = (ViewRank == rank),
+    bool Enabled2 = (ViewRank == Rank),
     std::enable_if_t< Enabled1 && Enabled2 >* = nullptr
   >
   constexpr strided_array_view( 
@@ -2101,7 +2135,7 @@ public:
     typename ViewValueType, 
     std::ptrdiff_t... Dimensions,
     bool Enabled1 = std::is_convertible< std::add_pointer_t<ViewValueType>, pointer>::value,
-    bool Enabled2 = (sizeof...(Dimensions) == rank),
+    bool Enabled2 = (sizeof...(Dimensions) == Rank),
     typename = std::enable_if_t< Enabled1 && Enabled2 >
   >
   constexpr strided_array_view( 
@@ -2121,7 +2155,7 @@ public:
     std::is_convertible< std::add_pointer_t<ViewValueType>, pointer>::value, 
     strided_array_view&  
   >
-  operator=(const strided_array_view<ViewValueType, rank>& rhs) noexcept
+  operator=(const strided_array_view<ViewValueType, Rank>& rhs) noexcept
   {
     data_ = rhs.data();
     bounds_ = rhs.bounds();
@@ -2136,7 +2170,7 @@ public:
   template<
     typename Container,
     typename = typename std::enable_if_t< 
-      detail::is_container_v<Container> && (rank == 1)
+      detail::is_container_v<Container> && (Rank == 1)
     >
   >
   constexpr explicit strided_array_view(Container & cont) noexcept :
@@ -2174,7 +2208,7 @@ public:
       // can convert pointers
       std::is_convertible< std::add_pointer_t< std::remove_all_extents_t<ArrayType> >, pointer >::value
       // has same rank
-      && std::rank<ArrayType>::value == rank 
+      && std::rank<ArrayType>::value == Rank 
       // has same type
       &&  std::is_same_v< std::remove_all_extents_t<ArrayType>, value_type >
     >* = nullptr
@@ -2230,6 +2264,22 @@ public:
   constexpr const auto & stride() const noexcept
   { return bounds_.stride(); }
 
+
+  //! \brief return the rank
+  static constexpr auto rank() { return Rank; }
+
+  //! \brief return the extent of the array
+  //! \tparam Dim the dimension to query
+  template <size_type Dim = 0>
+  constexpr size_type extent() const noexcept
+  {
+    static_assert(
+      Dim < Rank, 
+      "dimension should be less than Rank (dimension count starts from 0)" 
+    );
+    return bounds_.template extent<Dim>();
+  }
+
   //! convert to a boolean
   //! \return true if empty
   constexpr explicit operator bool() const noexcept { return data_ != nullptr; }
@@ -2264,7 +2314,7 @@ public:
 
   template <
     typename... Indices,
-    typename = std::enable_if_t< sizeof...(Indices) == rank >
+    typename = std::enable_if_t< sizeof...(Indices) == Rank >
   >
   constexpr reference operator()(Indices... indices) const noexcept
   {
@@ -2396,7 +2446,7 @@ public:
   /// @{
 
   template <
-    typename OtherValueType, int OtherRank,
+    typename OtherValueType, std::ptrdiff_t OtherRank,
     typename Dummy = std::enable_if_t< 
       std::is_same_v< std::remove_cv_t<value_type>, std::remove_cv_t<OtherValueType> >
     >
@@ -2506,8 +2556,6 @@ protected:
 };
 
 
-
-
 ////////////////////////////////////////////////////////////////////////////////    
 /// \brief represent multidimensional views onto regular collections of 
 /// objects of a uniform type.
@@ -2518,12 +2566,12 @@ protected:
 ///
 /// This container assumes the data is contiguous 
 ////////////////////////////////////////////////////////////////////////////////    
-template < typename ValueType, int Rank = 1 >
+template < typename ValueType, std::ptrdiff_t Rank = 1 >
 class array_view {
 
 
   //! \brief declare other variations of array_view as a friend
-  template< typename U,  int R >
+  template< typename U,  std::ptrdiff_t R >
   friend class array_view;
 
 public:
@@ -2726,6 +2774,18 @@ public:
   //! \brief return the rank
   static constexpr auto rank() { return Rank; }
 
+  //! \brief return the extent of the array
+  //! \tparam Dim the dimension to query
+  template <size_t Dim = 0>
+  constexpr size_type extent() const noexcept
+  {
+    static_assert(
+      Dim < Rank, 
+      "dimension should be less than Rank (dimension count starts from 0)" 
+    );
+    return bounds_.template extent<Dim>();
+  }
+
   //! convert to a boolean
   //! \return true if empty
   constexpr explicit operator bool() const noexcept { return data_ != nullptr; }
@@ -2898,7 +2958,7 @@ public:
   /// @{
 
   template <
-    typename OtherValueType, int OtherRank,
+    typename OtherValueType, std::ptrdiff_t OtherRank,
     typename Dummy = std::enable_if_t< 
       std::is_same_v< std::remove_cv_t<value_type>, std::remove_cv_t<OtherValueType> >
     >
@@ -3020,7 +3080,11 @@ protected:
 ///
 /// This container assumes the data is contiguous 
 ////////////////////////////////////////////////////////////////////////////////    
-template < typename ValueType, std::ptrdiff_t FirstDim, std::ptrdiff_t... RestDims >
+template < 
+  typename ValueType, 
+  std::ptrdiff_t FirstDim, 
+  std::ptrdiff_t... RestDims 
+>
 class static_array_view {
 
 
@@ -3102,6 +3166,15 @@ public:
   static_array_view& operator=(const static_array_view&) noexcept = default;
   //! \brief default move assignement operator
   static_array_view& operator=(static_array_view&&) noexcept = default;
+
+
+  //! \brief two parameter constructor that throws away the bounds if provided
+  //! \remark  this is to enable interoperability between array_view and static_array_view
+  //! \param [in] cont  the container to set the view to
+  template< typename Container >
+  constexpr static_array_view(Container && cont, bounds_type ) noexcept :
+    static_array_view( std::forward<Container>(cont) )
+  {  }
 
 
   //! \brief single parameter array_view constructor
@@ -3204,6 +3277,18 @@ public:
   constexpr const auto & stride() const noexcept
   { return bounds_.stride(); }
 
+
+  //! \brief return the extent of the array
+  //! \tparam Dim the dimension to query
+  template <size_t Dim = 0>
+  constexpr size_type extent() const noexcept
+  {
+    static_assert(
+      Dim < Rank, 
+      "dimension should be less than Rank (dimension count starts from 0)" 
+    );
+    return bounds_.template extent<Dim>();
+  }
 
   //! \brief return the rank
   static constexpr auto rank() { return Rank; }
@@ -3506,6 +3591,20 @@ protected:
   
         
 };
+
+
+//==============================================================================
+/// \brief static types
+//==============================================================================
+
+//! \brief the bounds_ data
+template < 
+  typename ValueType, 
+  std::ptrdiff_t FirstDim, 
+  std::ptrdiff_t... RestDims 
+>
+typename static_array_view<ValueType,FirstDim,RestDims...>::bounds_type 
+static_array_view<ValueType,FirstDim,RestDims...>::bounds_;
 
 
 

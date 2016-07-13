@@ -104,8 +104,8 @@ public:
   using bits = typename mesh_traits_t::bits;
 
   //! \brief the type of id for marking boundaries
-  using boundary_id_t = typename mesh_traits_t::boundary_id_t;
-  using boundary_id_vector_t = typename mesh_traits_t::boundary_id_vector_t;
+  using tag_t = typename mesh_traits_t::tag_t;
+  using tag_list_t = typename mesh_traits_t::tag_list_t;
 
 
   //! Type defining the execution policy.
@@ -1103,7 +1103,7 @@ public:
     // register coordinate state
     data_t::instance().template register_state<point_t, flecsi_internal>(
       "coordinates", num_nodes, mesh_.runtime_id(), 
-      attachment_site_t::vertices, persistent
+      attachment_site_t::vertices, flecsi::persistent
     );
   } // init_parameters
 
@@ -1140,37 +1140,41 @@ public:
     // register time state
     auto soln_time = 
       data_.template register_global_state<real_t, flecsi_internal>(
-        "time", mesh_.runtime_id(), attachment_site_t::global, persistent
+        "time", mesh_.runtime_id(), attachment_site_t::global, flecsi::persistent
       );
     soln_time = 0;
 
     auto step = data_.template register_global_state<real_t, flecsi_internal>(
-      "time_step", mesh_.runtime_id(), attachment_site_t::global, persistent
+      "time_step", mesh_.runtime_id(), attachment_site_t::global, flecsi::persistent
     );
     *step = 0;
 
     // register some flags for identifying boundarys and various other things
     auto point_flags = data_.template register_state<bitfield_t, flecsi_internal>(
       "point_flags", num_vertices(), mesh_.runtime_id(), 
-      attachment_site_t::vertices, persistent
+      attachment_site_t::vertices, flecsi::persistent
     );
     auto edge_flags = data_.template register_state<bitfield_t, flecsi_internal>(
       "edge_flags", num_edges(), mesh_.runtime_id(), 
-      attachment_site_t::edges, persistent
+      attachment_site_t::edges, flecsi::persistent
     );
 
     // register some flags for associating boundaries with entities
-    data_.template register_state<boundary_id_vector_t, flecsi_internal>(
-      "point_boundary_ids", num_vertices(), mesh_.runtime_id(), 
-      attachment_site_t::vertices, persistent
+    data_.template register_state<tag_list_t, flecsi_internal>(
+      "point_tags", num_vertices(), mesh_.runtime_id(), 
+      attachment_site_t::vertices, flecsi::persistent
     );
-    data_.template register_state<boundary_id_vector_t, flecsi_internal>(
-      "edge_boundary_ids", num_edges(), mesh_.runtime_id(), 
-      attachment_site_t::edges, persistent
+    data_.template register_state<tag_list_t, flecsi_internal>(
+      "edge_tags", num_edges(), mesh_.runtime_id(), 
+      attachment_site_t::edges, flecsi::persistent
     );
-    data_.template register_state<boundary_id_t, flecsi_internal>(
-      "face_boundary_ids", num_faces(), mesh_.runtime_id(), 
-      attachment_site_t::faces, persistent
+    data_.template register_state<tag_list_t, flecsi_internal>(
+      "face_tags", num_faces(), mesh_.runtime_id(), 
+      attachment_site_t::faces, flecsi::persistent
+    );
+    data_.template register_state<tag_list_t, flecsi_internal>(
+      "cell_tags", num_cells(), mesh_.runtime_id(), 
+      attachment_site_t::cells, flecsi::persistent
     );
 
     // now set the boundary flags.
@@ -1191,7 +1195,7 @@ public:
     // identify the cell regions
     auto cell_region = data_.template register_state<size_t, flecsi_internal>(
       "cell_region", num_cells(), mesh_.runtime_id(), 
-      attachment_site_t::cells, persistent
+      attachment_site_t::cells, flecsi::persistent
     );
 
     for ( auto c : cells() )
@@ -1201,7 +1205,7 @@ public:
     auto num_regions = 
       data_.template register_global_state<size_t, flecsi_internal>(
         "num_regions", mesh_.runtime_id(), 
-        attachment_site_t::global, persistent
+        attachment_site_t::global, flecsi::persistent
       );
     *num_regions = 1;
 
@@ -1348,7 +1352,7 @@ public:
   // Boundary conditions
   //============================================================================
   template< typename P >
-  boundary_id_t install_boundary( P && p ) 
+  tag_t install_boundary( P && p ) 
   {
     // increment the boundary face storage
     auto this_bnd = face_sets_.size();
@@ -1366,14 +1370,12 @@ public:
       if ( p( f ) ) {
         auto es = edges( f );
         auto vs = vertices( f );
-        f->tag_boundary( this_bnd );
+        f->tag( this_bnd );
         this_bnd_faces.emplace_back( f );
         this_bnd_edges.reserve( this_bnd_edges.size() + es.size() );
         this_bnd_verts.reserve( this_bnd_verts.size() + vs.size() );
-        for ( auto e : es ) 
-          this_bnd_edges.emplace_back( e );
-        for ( auto v : vs )
-          this_bnd_verts.emplace_back( v );
+        for ( auto e : es ) this_bnd_edges.emplace_back( e );
+        for ( auto v : vs ) this_bnd_verts.emplace_back( v );
       }
 
     // need to remove duplicates from edge and vertex lists
@@ -1390,13 +1392,19 @@ public:
     );
 
     // add the edge tags
-    for ( auto e : this_bnd_edges )
-      e->tag_boundary( this_bnd );
+    for ( auto e : this_bnd_edges ) e->tag( this_bnd );
     // add the vertex tags
-    for ( auto v : this_bnd_verts )
-      v->tag_boundary( this_bnd );
+    for ( auto v : this_bnd_verts ) v->tag( this_bnd );
 
-    return num_bnd;
+    return this_bnd;
+  }
+
+  //============================================================================
+  // Boundary conditions
+  //============================================================================
+  const auto & tagged_vertices( tag_t id ) const noexcept
+  {
+    return vert_sets_[ id ];
   }
 
   //============================================================================

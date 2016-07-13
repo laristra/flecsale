@@ -308,13 +308,16 @@ int main(int argc, char** argv)
   // the value of gamma
   constexpr real_t gamma = 1.4;
 
+  // some length scales
+  auto dx = length_x / num_cells_x;
+  auto dy = length_y / num_cells_y;
+
   // compute a reference volume
-  auto vol = (length_x / num_cells_x) * (length_y / num_cells_y);
+  auto vol = dx * dy;
 
   // compute a radial size
-  auto delta_r = 
-    std::sqrt( math::sqr( length_x/num_cells_x ) + 
-               math::sqr( length_y/num_cells_y ) );
+  auto delta_r = std::numeric_limits<real_t>::epsilon() + 
+    std::sqrt( math::sqr( dx/2 ) + math::sqr( dy/2 );
   
   // this is a lambda function to set the initial conditions
   auto ics = [&delta_r,&vol] ( const auto & x )
@@ -350,12 +353,12 @@ int main(int argc, char** argv)
   std::string postfix = "plt";
 
   // output frequency
-  constexpr size_t output_freq = 1;
+  constexpr size_t output_freq = 10;
 
   // the grid dimensions
-  constexpr size_t num_cells_x = 30;
-  constexpr size_t num_cells_y = 30;
-  constexpr size_t num_cells_z = 30;
+  constexpr size_t num_cells_x = 20;
+  constexpr size_t num_cells_y = 20;
+  constexpr size_t num_cells_z = 20;
 
   constexpr real_t length_x = 1.2;
   constexpr real_t length_y = 1.2;
@@ -366,28 +369,31 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 0.25, .volume = 0.1, .growth = 1.01 };
   constexpr real_t initial_time_step = 1.e-5;
   constexpr real_t final_time = 1.0;
+  constexpr size_t max_steps = 10;
 
   // the value of gamma
   constexpr real_t gamma = 1.4;
+  
+  // some length scales
+  auto dx = length_x / num_cells_x;
+  auto dy = length_y / num_cells_y;
+  auto dz = length_z / num_cells_z;
 
   // compute a reference volume
-  auto vol = 
-    (length_x / num_cells_x) * (length_y / num_cells_y) * (length_z / num_cells_z);
+  auto vol = dx * dy * dz;
 
   // compute a radial size
-  auto delta_r = 
-    std::sqrt( math::sqr( length_x/num_cells_x ) + 
-               math::sqr( length_y/num_cells_y ) + 
-               math::sqr( length_y/num_cells_z ) );
+  auto delta_r = std::numeric_limits<real_t>::epsilon() + 
+    std::sqrt( math::sqr( dx/2 ) + math::sqr( dy/2 ) + math::sqr( dz/2 ) );
   
   // this is a lambda function to set the initial conditions
   auto ics = [&delta_r,&vol] ( const auto & x )
     {
-      constexpr real_t e0 = 0.244816;
+      constexpr real_t e0 = 0.106384;
       real_t d = 1.0;
       vector_t v = 0;
       real_t p = 1.e-6;
-      auto r = sqrt( x[0]*x[0] + x[1]*x[1] +  + x[2]*x[2] );
+      auto r = sqrt( x[0]*x[0] + x[1]*x[1] + x[2]*x[2] );
       if ( r < delta_r  ) 
         p = (gamma - 1) * d * e0 / vol;
       return std::make_tuple( d, v, p );
@@ -409,12 +415,53 @@ int main(int argc, char** argv)
   //===========================================================================
   // Mesh Setup
   //===========================================================================
+  
+  // the boundary mapper
   boundary_map_t< mesh_t::num_dimensions > boundaries;
 
+  // create a single boundary right now
   auto bc_type = boundary_condition_t< mesh_t::num_dimensions >();
-  auto bc_key = mesh.install_boundary( [](auto f) { return f->is_boundary(); } );
-  boundaries.emplace_back( &bc_type );
   
+  // install each boundary
+  // -  both +ve and -ve side boundaries can be installed at once since 
+  //    they will never overlap
+
+  // x-boundaries
+  auto bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[0] == 0.0 || fx[0] == length_x );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
+  // y-boundaries
+  bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[1] == 0.0 || fx[1] == length_y );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
+  // z-boundaries
+  bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[2] == 0.0 || fx[2] == length_z );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
+  
+
+  // now check the mesh
   mesh.is_valid();
   cout << mesh;
   
@@ -444,6 +491,8 @@ int main(int argc, char** argv)
 
   register_state(mesh, "node_velocity",    vertices, vector_t, persistent);
   register_state(mesh, "node_coordinates", vertices, vector_t, temporary);
+  register_state(mesh, "node_matrix", vertices, matrix_t, temporary);
+  register_state(mesh, "node_rhs",    vertices, vector_t, temporary);
 
   register_state(mesh, "corner_matrix", corners, matrix_t, temporary);
   register_state(mesh, "corner_normal", corners, vector_t, temporary);
@@ -503,6 +552,9 @@ int main(int argc, char** argv)
     // estimate the nodal velocity at n=0
     apps::hydro::estimate_nodal_state( mesh );
 
+    // evaluate corner matrices and normals at n=0 
+    apps::hydro::evaluate_corner_coef( mesh );
+
     // compute the nodal velocity at n=0
     apps::hydro::evaluate_nodal_state( mesh, boundaries );
 
@@ -530,7 +582,8 @@ int main(int argc, char** argv)
     cout.unsetf( std::ios::scientific );
     cout.precision(ss);
 
-#if 1 // set to 0 for first order
+// #define USE_FIRST_ORDER_TIME_STEPPING
+#ifndef USE_FIRST_ORDER_TIME_STEPPING // set to 0 for first order
 
     //--------------------------------------------------------------------------
     // Move to n+1/2
@@ -546,10 +599,13 @@ int main(int argc, char** argv)
     apps::hydro::update_state_from_energy( mesh );
 
     //--------------------------------------------------------------------------
-    // Corrector : Evaluate Forces at n=0
+    // Corrector : Evaluate Forces at n=1/2
     //--------------------------------------------------------------------------
 
-    // compute the nodal velocity at n=0
+    // evaluate corner matrices and normals at n=1/2
+    apps::hydro::evaluate_corner_coef( mesh );
+
+    // compute the nodal velocity at n=1/2
     apps::hydro::evaluate_nodal_state( mesh, boundaries );
 
     // compute the fluxes
@@ -584,6 +640,9 @@ int main(int argc, char** argv)
   
     // now output the solution
     apps::hydro::output(mesh, prefix, postfix, output_freq);
+
+    // break if finished
+    if ( time_cnt >= max_steps ) break;
 
   } while ( soln_time < final_time );
 

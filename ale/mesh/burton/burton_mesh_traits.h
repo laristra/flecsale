@@ -88,9 +88,9 @@ struct burton_mesh_traits_t {
     boundary = 0 //!< the boundary bit
   };
 
-  // the boundary id type
-  using boundary_id_t = uint8_t;
-  using boundary_id_vector_t = utils::fixed_vector< boundary_id_t, N*N >;
+  // the tags type
+  using tag_t = uint8_t;
+  using tag_list_t = utils::fixed_vector< tag_t, N*N >;
 
   //============================================================================
   // State type definitions

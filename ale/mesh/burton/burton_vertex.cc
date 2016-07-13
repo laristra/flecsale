@@ -93,46 +93,46 @@ bool burton_3d_vertex_t::is_boundary() const
 ////////////////////////////////////////////////////////////////////////////////
 // tag as a boundary
 ////////////////////////////////////////////////////////////////////////////////
-void burton_2d_vertex_t::tag_boundary(const boundary_id_t & tag)
+void burton_2d_vertex_t::tag(const burton_2d_vertex_t::tag_t & tag)
 {
   using flecsi::mesh_entity_base_t;
   auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
   auto flag =
-    data_t::instance().template dense_accessor<boundary_id_vector_t, flecsi_internal>(
-      "point_boundary_ids", mesh->runtime_id() );
+    data_t::instance().template dense_accessor<tag_list_t, flecsi_internal>(
+      "point_tags", mesh->runtime_id() );
   flag[mesh_entity_base_t<num_domains>::template id<0>()].push_back( tag );
 }
 
-void burton_3d_vertex_t::tag_boundary(const boundary_id_t & tag)
+void burton_3d_vertex_t::tag(const burton_3d_vertex_t::tag_t & tag)
 {
   using flecsi::mesh_entity_base_t;
   auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
   auto flag =
-    data_t::instance().template dense_accessor<boundary_id_vector_t, flecsi_internal>(
-      "point_boundary_ids", mesh->runtime_id() );
+    data_t::instance().template dense_accessor<tag_list_t, flecsi_internal>(
+      "point_tags", mesh->runtime_id() );
   flag[mesh_entity_base_t<num_domains>::template id<0>()].push_back( tag );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // get the boundary tags
 ////////////////////////////////////////////////////////////////////////////////
-const burton_2d_vertex_t::boundary_id_vector_t &  burton_2d_vertex_t::boundary_tags() const
+const burton_2d_vertex_t::tag_list_t &  burton_2d_vertex_t::tags() const
 {
   using flecsi::mesh_entity_base_t;
   auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
   auto flags =
-    data_t::instance().template dense_accessor<boundary_id_vector_t, flecsi_internal>(
-      "point_boundary_ids", mesh->runtime_id() );
+    data_t::instance().template dense_accessor<tag_list_t, flecsi_internal>(
+      "point_tags", mesh->runtime_id() );
   return flags[mesh_entity_base_t<num_domains>::template id<0>()];
 }
 
-const burton_3d_vertex_t::boundary_id_vector_t &  burton_3d_vertex_t::boundary_tags() const
+const burton_3d_vertex_t::tag_list_t &  burton_3d_vertex_t::tags() const
 {
   using flecsi::mesh_entity_base_t;
   auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
   auto flags =
-    data_t::instance().template dense_accessor<boundary_id_vector_t, flecsi_internal>(
-      "point_boundary_ids", mesh->runtime_id() );
+    data_t::instance().template dense_accessor<tag_list_t, flecsi_internal>(
+      "point_tags", mesh->runtime_id() );
   return flags[mesh_entity_base_t<num_domains>::template id<0>()];
 }
 

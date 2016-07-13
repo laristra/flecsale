@@ -21,8 +21,10 @@
 // hydro includes
 #include "types.h"
 
-//#include <ale/math/qr.h>
+#include <ale/linalg/qr.h>
+#include <ale/utils/algorithm.h>
 #include <ale/utils/array_view.h>
+#include <ale/utils/filter_iterator.h>
 
 namespace apps {
 namespace hydro {
@@ -252,17 +254,104 @@ int32_t estimate_nodal_state( T & mesh ) {
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T, typename BC >
-int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
+template< typename T >
+int32_t evaluate_corner_coef( T & mesh ) {
 
   // type aliases
+  using size_t = typename T::size_t;
   using real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
   using matrix_t = matrix_t< T::num_dimensions >; 
   using eqns_t = eqns_t<T::num_dimensions>;
 
-  // get epsilon
-  constexpr auto eps = std::numeric_limits<real_t>::epsilon();
+  // get the number of dimensions and create a matrix
+  constexpr size_t num_dims = T::num_dimensions;
+  
+  // access what we need
+  auto cell_state = cell_state_accessor<T>( mesh );
+  auto vertex_vel = access_state( mesh, "node_velocity", vector_t );
+  auto Mpc = access_state( mesh, "corner_matrix", matrix_t );
+  auto npc = access_state( mesh, "corner_normal", vector_t );
+
+
+  //----------------------------------------------------------------------------
+  // build corner matrices
+  for ( auto cn : mesh.corners() ) {
+      
+    // initialize
+    Mpc[cn] = 0;
+    npc[cn] = 0;
+
+    // a corner connects to a cell and a vertex
+    auto cl = mesh.cells(cn).front();
+    auto vt = mesh.vertices(cn).front();
+
+    // get the cell state (there is only one)
+    auto state = cell_state(cl);
+    // the cell quantities
+    auto dc = eqns_t::density( state );
+    auto uc = eqns_t::velocity( state );
+    auto ac = eqns_t::sound_speed( state );
+    auto Gc = eqns_t::impedance_multiplier( state );
+    
+    // get the nodal state
+    auto uv = vertex_vel[vt];
+      
+    // iterate over the wedges in pairs
+    auto wedges = mesh.wedges(cn);
+    for ( auto wit = wedges.begin(); wit != wedges.end(); ++wit ) 
+    {
+      // get the first wedge normal
+      auto n_plus  = (*wit)->facet_normal_right();
+      auto l_plus  = abs(n_plus);
+      assert( l_plus > 0 );
+      auto un_plus  = n_plus / l_plus;
+      // move to next wedge
+      ++wit;
+      assert( wit != wedges.end() );
+      // get the second wedge normal
+      auto n_minus = (*wit)->facet_normal_left();
+      auto l_minus = abs(n_minus);
+      assert( l_minus > 0 );
+      auto un_minus = n_minus / l_minus;      
+      // estimate impedances
+      auto delta_u = uv - uc;
+      auto zc_minus = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_minus)) );
+      auto zc_plus  = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_plus )) );
+      // compute the mass matrix
+      auto M_plus  = math::outer_product( un_plus , un_plus  );
+      auto M_minus = math::outer_product( un_minus, un_minus );
+      M_plus  *= zc_plus  * l_plus;
+      M_minus *= zc_minus * l_minus;
+      // the final matrix
+      // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
+      Mpc[cn] += M_plus;
+      Mpc[cn] += M_minus;
+      // compute the pressure coefficient
+      npc[cn] += n_plus;
+      npc[cn] += n_minus;
+    } // wedges
+
+  } // corners
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to compute nodal quantities
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T, typename BC >
+int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
+
+  // type aliases
+  using size_t = typename T::size_t;
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
+  using matrix_t = matrix_t< T::num_dimensions >; 
+  using eqns_t = eqns_t<T::num_dimensions>;
+
 
   // get the number of dimensions and create a matrix
   constexpr size_t dims = T::num_dimensions;
@@ -272,10 +361,82 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
   auto vertex_vel = access_state( mesh, "node_velocity", vector_t );
   auto Mpc = access_state( mesh, "corner_matrix", matrix_t );
   auto npc = access_state( mesh, "corner_normal", vector_t );
+  // auto Mp  = access_state( mesh, "node_matrix", matrix_t );
+  // auto rhs = access_state( mesh, "node_rhs",    vector_t );
 
 
   // get the current time
   auto soln_time = mesh.time();
+
+#if 0
+  //----------------------------------------------------------------------------
+  // Categorize the different bcs
+
+  // get iterators to each of the different types of bcs
+  auto prescribed_velocity_bcs = utils::make_filter_iterator( 
+    boundary_map.begin(), boundary_map.end(), 
+    [](const auto & key_pair) { 
+      return key_pair.second->has_prescribed_velocity();
+    } 
+  );
+
+  auto symmetry_bcs = utils::make_filter_iterator( 
+    boundary_map.begin(), boundary_map.end(), 
+    [](const auto & key_pair) { 
+      return key_pair.second->has_symetry();
+    } 
+  );
+
+  //----------------------------------------------------------------------------
+  // Apply prescribed velocity bcs
+
+  // get the type of value in the tagged vertex list
+  using vertex_list_t = std::decay_t< decltype( mesh.tagged_vertices(0) ) >;
+  using vertex_t = typename vertex_list_t::value_type;
+  // create a list of vertices for this condition
+  std::vector< vertex_t > prescribed_velocity_verts;
+
+  for ( auto bc_pair : prescribed_velocity_bcs ) {   
+    // get the key and boundary condition
+    auto key = bc_pair.first;
+    auto bc = bc_pair.second;
+    // the set of tagged vertices
+    const auto & vs = mesh.tagged_vertices( key );
+    // add to the set of remaining vertices
+    prescribed_velocity_verts.reserve( 
+      prescribed_velocity_verts.size() + vs.size() 
+    );
+    // apply the condition
+    for ( auto vt : vs ) {
+      vertex_vel[vt] = bc->velocity( vt->coordinates(), soln_time );
+      prescribed_velocity_verts.emplace_back( vt );
+    }
+  }
+
+  // sort the list and remove duplicates
+  std::sort( prescribed_velocity_verts.begin(), prescribed_velocity_verts.end() );
+  utils::remove_duplicates( prescribed_velocity_verts );
+
+  //----------------------------------------------------------------------------
+  // Do some set arithmatic
+
+  // FIXME, this conversion operation shouldnt be needed
+  auto verts = mesh.vertices();
+  std::vector< vertex_t > all_verts( verts.size() );
+  std::transform( 
+    verts.begin(), verts.end(), all_verts.begin(), 
+    [](auto v) { return v; }
+  );
+
+  // now find the remaining vertices left
+  std::vector< vertex_t > remaining_verts;
+
+  std::set_difference(
+    all_verts.begin(), all_verts.end(), 
+    prescribed_velocity_verts.begin(), prescribed_velocity_verts.end(), 
+    std::inserter( remaining_verts, remaining_verts.begin() )
+  );
+#endif
 
   //----------------------------------------------------------------------------
   // Loop over each vertex
@@ -283,133 +444,24 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 
     // create the final matrix the point
     matrix_t Mp(0);
-    vector_t rhs(0), np(0);
+    vector_t rhs(0);
 
-    //std::cout << vt.id() << std::endl;
-
-
-    // ge the list of corners
-    auto cns = mesh.corners(vt);
-    
     //--------------------------------------------------------------------------
-    // build corner matrices
-    for ( auto cn : cns ) {
-      
-      // initialize
-      Mpc[cn] = 0;
-      npc[cn] = 0;
-
-      matrix_t Mc(0);
-      vector_t nc(0);
-
-      // a corner connects to a cell and a vertex
+    // build point matrix
+    for ( auto cn : mesh.corners(vt) ) {
+      // corner attaches to one cell and one point
       auto cl = mesh.cells(cn).front();
-      auto vt = mesh.vertices(cn).front();
-
       // get the cell state (there is only one)
       auto state = cell_state(cl);
       // the cell quantities
-      auto dc = eqns_t::density( state );
-      auto uc = eqns_t::velocity( state );
       auto pc = eqns_t::pressure( state );
-      auto ac = eqns_t::sound_speed( state );
-      auto Gc = eqns_t::impedance_multiplier( state );
-    
-      // get the nodal state
-      auto uv = vertex_vel[vt];
-      
-      // iterate over the wedges in pairs
-      auto wedges = mesh.wedges(cn);
-      for ( auto wit = wedges.begin(); wit != wedges.end(); ++wit ) 
-      {
-        // get the first wedge normal
-        auto n_plus  = (*wit)->facet_normal_right();
-        auto l_plus  = abs(n_plus);
-        assert( l_plus > 0 );
-        auto un_plus  = n_plus / l_plus;
-        
-        bool symm_plus = false;
-        matrix_t R_plus;
-        if ( (*wit)->is_boundary() ) {
-          auto f = mesh.faces(*wit).front();
-          auto b = boundary_map.at( f->boundary_tag() );
-          symm_plus = ( b->has_symmetry() );
-          R_plus = math::reflection_matrix( un_plus );
-        }
-        
-        ++wit;
-
-        // get the second wedge normal
-        auto n_minus = (*wit)->facet_normal_left();
-        auto l_minus = abs(n_minus);
-        assert( l_minus > 0 );
-        auto un_minus = n_minus / l_minus;
-        
-        bool symm_minus = false;
-        matrix_t R_minus;
-        if ( (*wit)->is_boundary() ) {
-          auto f = mesh.faces(*wit).front();
-          auto b = boundary_map.at( f->boundary_tag() );
-          symm_minus = ( b->has_symmetry() );
-          R_minus = math::reflection_matrix( un_minus );
-        }
-        
-        // estimate impedances
-        auto delta_u = uv - uc;
-        auto zc_minus = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_minus)) );
-        auto zc_plus  = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_plus )) );
-
-        // compute the mass matrix
-        auto M_plus  = math::outer_product( un_plus , un_plus  );
-        auto M_minus = math::outer_product( un_minus, un_minus );
-        M_plus  *= zc_plus  * l_plus;
-        M_minus *= zc_minus * l_minus;
-        // the final matrix
-        // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
-        Mpc[cn] += M_plus;
-        Mpc[cn] += M_minus;
-        // compute the pressure coefficient
-        npc[cn] += n_plus;
-        npc[cn] += n_minus;
-        // deal with symmetry ( but don't alter the true corner normal/matrices )
-
-        // ax_plus_y( M_plus, uc, rhs );      
-        // ax_plus_y( M_minus, uc, rhs );      
-
-        // if ( symm_plus ) {
-        //   // nc -= n_plus;
-        //   // math::matrix_multiply( M_plus,  R_plus,  Mc );
-        //   Mp += M_plus;
-        //   auto usymm = reflect( uc, n_plus );
-        //   ax_plus_y( M_plus, usymm, rhs );      
-        // } else {
-        //  rhs += pc * n_plus;
-        // }
-        // if ( symm_minus ) {
-        //   // nc -= n_minus;
-        //   // math::matrix_multiply( M_minus, R_minus, Mc );
-        //   Mp += M_minus;
-        //   auto usymm = reflect( uc, n_minus );
-        //   ax_plus_y( M_minus, usymm, rhs );      
-        // } else {
-        //  rhs += pc * n_minus;
-        // }
-
-      } // wedges
-
-      // add to the final corner matrix
+      auto uc = eqns_t::velocity( state );
+      // add to the global matrix
       Mp += Mpc[cn];
-      np += npc[cn];
-
-      ax_plus_y( Mpc[cn], uc, rhs );      
-      rhs += pc * npc[cn];
-    
-
       // add the pressure and velocity contributions to the system
-      // rhs += pc * nc;
-      // ax_plus_y( Mc, uc, rhs );      
-
-    } // corners
+      rhs += pc * npc[cn];
+      ax_plus_y( Mpc[cn], uc, rhs );      
+    } // corner
 
     //--------------------------------------------------------------------------
     // now solve the system for the point velocity
@@ -418,7 +470,7 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
     if ( vt->is_boundary() ) {
 
       // get the boundary tags
-      const auto & point_tags =  vt->boundary_tags();
+      const auto & point_tags =  vt->tags();
 
       // first check if this has a prescribed velocity.  If it does, then nothing to do
       auto vel_bc = std::find_if( 
@@ -439,12 +491,15 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
         {
           auto f = mesh.faces(*wit).front();
           auto c = mesh.cells(*wit).front();
-          auto b = boundary_map.at( f->boundary_tag() );
-          if ( b->has_prescribed_pressure() ) {
-            auto n = (*wit)->facet_normal_right();
-            auto x = (*wit)->facet_centroid();
-            rhs -= b->pressure( x, soln_time ) * n;
-          }
+          for ( auto tag : f->tags() ) {
+            auto b = boundary_map.at( tag );
+            if ( b->has_prescribed_pressure() ) {
+              auto n = (*wit)->facet_normal_right();
+              auto x = (*wit)->facet_centroid();
+              rhs -= b->pressure( x, soln_time ) * n;
+              break;
+            } // has pressure
+          } // foreachtag
         }
         // advance to the next wedge
         assert( wit != bnd_wedges.end() );
@@ -453,12 +508,15 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
         {
           auto f = mesh.faces(*wit).front();
           auto c = mesh.cells(*wit).front();
-          auto b = boundary_map.at( f->boundary_tag() );
-          if ( b->has_prescribed_pressure() ) {
-            auto n = (*wit)->facet_normal_left();
-            auto x = (*wit)->facet_centroid();
-            rhs -= b->pressure( x, soln_time ) * n;
-          }
+          for ( auto tag : f->tags() ) {
+            auto b = boundary_map.at( tag );
+            if ( b->has_prescribed_pressure() ) {
+              auto n = (*wit)->facet_normal_left();
+              auto x = (*wit)->facet_centroid();
+              rhs -= b->pressure( x, soln_time ) * n;
+              break;
+            } // has pressure
+          } // foreach tag
         }
       }
       
@@ -466,7 +524,7 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 
     //---------- internal point
     // make sure sum(lpc) = 0
-    //assert( abs(np) < eps && "error in norms" );
+    // assert( abs(np) < eps && "error in norms" );
     // now solve for point velocity
     if ( ! vt->is_boundary() ) {
       
@@ -476,18 +534,30 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
     //---------- boundary point
     if ( vt->is_boundary() ) {
       
-      std::vector< vector_t > normals;
+      std::map< tag_t, vector_t > normals;
+
+      //std::cout << vt->tags().size() << std::endl;
 
       // get the boundary wedges
       const auto & ws = filter_boundary( mesh.wedges(vt) );
       // they are paired in groups of two
       for ( auto wit = ws.begin(); wit != ws.end();  ) 
       {
-        // get the face
+        // get the face and associated tags
         auto f = mesh.faces( *wit ).front();
-        auto b = boundary_map.at( f->boundary_tag() );
-        // has a symmetry boundary
-        if ( b->has_symmetry() ) {
+        const auto & tags = f->tags();
+        // look for a tag with symmetry
+        auto it = std::find_if( 
+          std::begin(tags), std::end(tags), 
+          [&](auto tag) { 
+            // get the boundary
+            auto b = boundary_map.at( tag );
+            // has a symmetry boundary
+            return ( b->has_symmetry() );
+          } 
+        );
+        // found symmetry!!!
+        if ( it != std::end(tags) ) {
           // get the first wedge normal
           auto n_plus  = (*wit)->facet_normal_right();
           // increment iterator
@@ -496,10 +566,13 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
           // get the second wedge normal
           auto n_minus = (*wit)->facet_normal_left();
           // pop the data onto the stack
-          normals.emplace_back( n_plus + n_minus );
+          if ( normals.count(*it) )
+            normals[*it] += ( n_plus + n_minus );
+          else
+            normals[*it]  = ( n_plus + n_minus );
           // increment the iterator again
           ++wit;
-        } 
+        }           
         // no symmetry boundary
         else { 
           ++wit;
@@ -522,38 +595,35 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
         // the matrix size
         auto num_rows = num_dims+num_symm;
         // create storage for the new system in a 1d array
-        std::vector< real_t > A( num_rows * num_rows );
-        std::vector< real_t > b( num_rows );
+        std::vector< real_t > A( num_rows * num_rows, 0 ); // zerod
+        std::vector< real_t > b( num_rows ); // zerod
         // create the views
         auto A_view = utils::make_array_view( A, num_rows, num_rows );
         auto M_view = utils::make_array_view( Mp.data(), num_dims, num_dims );
         auto b_view = utils::make_array_view( b );
         // insert the old system into the new one
         std::copy( rhs.begin(), rhs.end(), b_view.begin() );
-        for ( std::size_t i=0; i<num_dims; i++ ) 
-          for ( std::size_t j=0; j<num_dims; j++ ) 
+        for ( size_t i=0; i<num_dims; i++ ) 
+          for ( size_t j=0; j<num_dims; j++ ) 
             A_view(i,j) = Mp(i,j);
         // insert each constraint
-        for ( std::size_t i=0; i<num_symm; i++ ) {
-          b_view[rhs.size() + i] = 0;
-          for ( std::size_t j=0; j<num_dims; j++ ) {
-          }
-        } // end constraints
+        for ( size_t i=0; i<num_dims; i++ ) {
+          size_t j = num_dims;
+          for ( const auto & n : normals )
+            A_view( i, j++ ) = n.second[i];          
+        }
+        size_t i = num_dims;
+        for ( const auto & n : normals ) {
+          for ( size_t j=0; j<num_dims; j++ ) 
+            A_view( i, j ) = n.second[j];          
+          i++;
+        }               
+
+        ale::linalg::qr( A_view, b_view );
+        std::copy_n( b_view.begin(), num_dims, vertex_vel[vt].begin() );
+
       }
 
-#if 0
-      for ( auto ws : ) ) {
-        auto b = boundary_map.at( f->boundary_tag() );
-        if ( b->has_symmetry() ) {
-          const auto & n = unit( f->normal() );
-          auto & v = vertex_vel[vt];
-          auto vn = dot_product( v, n ) * n;
-          v -= vn;        
-          
-        }
-      }
-#endif
-      // math::solve( Mp, rhs );
       
     }    
 

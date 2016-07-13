@@ -75,7 +75,7 @@ private:
   //===========================================================================
 
   //! \brief The main data container, which is just a std::array.
-  T elems_[ length ];
+  std::array<T, length > elems_;
 
 public:
 
@@ -84,7 +84,7 @@ public:
   //===========================================================================
 
   //! \brief force the default constructor
-  array() = default;
+  constexpr array() noexcept = default;
 
   //! \brief force the default copy constructor
   array(const array &) = default;
@@ -92,7 +92,7 @@ public:
 
   //! \brief fancier copy constructor
   template <typename T2>
-  array(const array<T2,N> &rhs) 
+  constexpr array(const array<T2,N> &rhs) noexcept
   {
     std::copy(rhs.begin(),rhs.end(), begin());    
   }
@@ -105,7 +105,7 @@ public:
       ( sizeof...(Args) == N && sizeof...(Args) >= 2 )
     >
   >
-  array(Args&&... args) : 
+  constexpr array(Args&&... args) noexcept : 
     elems_{ static_cast<T>( std::forward<Args>(args) )... }
   { 
     //std::cout << "array (variadic constructor)\n";
@@ -114,10 +114,12 @@ public:
   //! \brief Constructor with one value.
   //! \param[in] val The value to set the array to
   template < typename T2 >
-  array(const T2 & val) 
+  constexpr array(const T2 & val)  noexcept : 
+  //elems_( utils::fill<length>::apply( static_cast<T>(val) ) )
+    elems_( utils::make_array<value_type,length>( static_cast<T>(val) ) )
   { 
     //std::cout << "array (single value constructor)\n";
-    fill( val ); 
+    //fill( val );
   }
    
   //===========================================================================
@@ -125,13 +127,13 @@ public:
   //===========================================================================
 
   //! \brief return an iterator to the beginning of the array
-                  iterator  begin()       { return elems_; }
-  constexpr const_iterator  begin() const { return elems_; }
+                  iterator  begin()       { return elems_.begin(); }
+  constexpr const_iterator  begin() const { return elems_.begin(); }
   constexpr const_iterator cbegin() const { return begin(); }
         
   //! \brief return an iterator to the end of the array
-                  iterator  end()       { return elems_+size(); }
-  constexpr const_iterator  end() const { return elems_+size(); }
+                  iterator  end()       { return elems_.end(); }
+  constexpr const_iterator  end() const { return elems_.end(); }
   constexpr const_iterator cend() const { return end(); }
 
 
@@ -218,10 +220,10 @@ public:
 
   //  \brief direct access to data (read-only)
   const T* data() const { return elems_; }
-  T* data() { return elems_; }
+  T* data() { return elems_.data(); }
 
   // use array as C array (direct read/write access to data)
-  T* c_array() { return elems_; }
+  T* c_array() { return elems_.data(); }
 
   //===========================================================================
   // Capacity

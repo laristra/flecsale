@@ -438,6 +438,8 @@ TEST(static_array_view, constructor)
   
   static_array_view< int, 3,1,2 > mav{ r };
 
+  static_array_view< int, 3,1,2 > av( vec, mav.bounds() );
+
   auto view = make_array_view<2, 5>( vec );
   ASSERT_EQ( static_cast<int>( view[ {1, 2 } ]), 7 );
   ASSERT_EQ( static_cast<int>( view(1, 2) ), 7 );

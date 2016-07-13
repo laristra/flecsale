@@ -18,7 +18,7 @@
 #pragma once
 
 //! system includes
-#include <alorithm>
+#include <algorithm>
 
 namespace ale {
 namespace utils {
@@ -35,8 +35,8 @@ OutputIt unsorted_set_intersection( InputIt1 first1, InputIt1 last1,
                                     InputIt2 first2, InputIt2 last2,
                                     OutputIt d_first )
 {
-  using value_type1 = std::iterator_traits<InputIt1>::value_type;
-  using value_type2 = std::iterator_traits<InputIt2>::value_type;
+  using value_type1 = typename std::iterator_traits<InputIt1>::value_type;
+  using value_type2 = typename std::iterator_traits<InputIt2>::value_type;
   
   std::vector< value_type1 > sorted1( first1, last1 );
   std::vector< value_type2 > sorted2( first2, last2 );
@@ -47,6 +47,17 @@ OutputIt unsorted_set_intersection( InputIt1 first1, InputIt1 last1,
   return std::set_intersection( sorted1.begin(), sorted1.end(), 
                                 sorted2.begin(), sorted2.end(),
                                 d_first );
+}
+
+//==============================================================================
+// remove unique items from a container
+//==============================================================================
+template<class Container>
+void remove_duplicates( Container && cont )
+{
+  auto end = std::forward<Container>(cont).end();
+  auto last = std::unique( std::forward<Container>(cont).begin(), end );
+  std::forward<Container>(cont).erase( last, end );
 }
 
 } // namespace

@@ -11,6 +11,7 @@ set(utils_HEADERS
   const_string.h
   exceptions.h
   errors.h
+  filter_iterator.h
   fixed_vector.h
   string_utils.h
   static_for.h     detail/static_for.h
