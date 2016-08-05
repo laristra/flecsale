@@ -35,5 +35,5 @@ test:ubuntu:
     - cd build
     - cmake -DENABLE_UNIT_TESTS=ON ..
     - make -j4
-    - make test
+    - make test VERBOSE=1
     - make install DESTDIR=${PWD}
