@@ -35,7 +35,6 @@ test:ubuntu:
     - cd build
     - cmake -DENABLE_UNIT_TESTS=ON ..
     - make -j4
-    - ctest -V
     - cd test/mesh
     - ./mesh
     - cd ../..
