@@ -182,7 +182,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     // WRITE HEADERS
     //--------------------------------------------------------------------------
     
-    using ale::utils::vtk_writer;
+    using ale::io::vtk_writer;
 
     // open the file
     vtk_writer writer;
