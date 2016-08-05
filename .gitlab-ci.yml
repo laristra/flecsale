@@ -1,22 +1,22 @@
-test:flecsi_serial:
-  image: flecsi/flecsi:ubuntu_serial
-  script:
-    - export http_proxy="http://proxyout.lanl.gov:8080"
-    - export https_proxy="${http_proxy}"
-    - apt-get update
-    - apt-get install -y libboost-all-dev
-    - sed -i 's%git@github.com:%https://github.com/%' .gitmodules
-    - git submodule sync
-    - git submodule init
-    - git submodule update
-    - git -C cinch submodule init
-    - git -C cinch submodule update
-    - mkdir build
-    - cd build
-    - cmake -DENABLE_UNIT_TESTS=ON ..
-    - make -j4
-    - make test ARGS="-E mesh"
-    - make install DESTDIR=${PWD}
+# test:flecsi_serial:
+#   image: flecsi/flecsi:ubuntu_serial
+#   script:
+#     - export http_proxy="http://proxyout.lanl.gov:8080"
+#     - export https_proxy="${http_proxy}"
+#     - apt-get update
+#     - apt-get install -y libboost-all-dev
+#     - sed -i 's%git@github.com:%https://github.com/%' .gitmodules
+#     - git submodule sync
+#     - git submodule init
+#     - git submodule update
+#     - git -C cinch submodule init
+#     - git -C cinch submodule update
+#     - mkdir build
+#     - cd build
+#     - cmake -DENABLE_UNIT_TESTS=ON ..
+#     - make -j4
+#     - make test ARGS="-E mesh"
+#     - make install DESTDIR=${PWD}
 
 test:ubuntu:
   image: ubuntu:latest
@@ -35,5 +35,5 @@ test:ubuntu:
     - cd build
     - cmake -DENABLE_UNIT_TESTS=ON ..
     - make -j4
-    - make test ARGS="-E mesh"
+    - make test
     - make install DESTDIR=${PWD}
