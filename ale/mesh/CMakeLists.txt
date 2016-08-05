@@ -81,8 +81,13 @@ cinch_add_unit(mesh
       burton/test/burton_voro.cc
       burton/test/burton_grad.cc
     INPUTS 
-      burton/test/burton_2d.blessed
-      burton/test/burton_3d.blessed
+      burton/test/burton_2d.dump.blessed
+      burton/test/burton_2d.mesh.blessed
+      burton/test/burton_2d.geometry.blessed
+      burton/test/burton_2d.copy.blessed
+      burton/test/burton_3d.dump.blessed
+      burton/test/burton_3d.mesh.blessed
+      burton/test/burton_3d.geometry.blessed
       ${DATA_DIR}/meshes/2d/mixed/mixed.g
       ${DATA_DIR}/meshes/2d/mixed/mixed.exo
       ${DATA_DIR}/meshes/2d/mixed/mixed.vtu

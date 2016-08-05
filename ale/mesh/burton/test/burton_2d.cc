@@ -27,27 +27,26 @@ using std::endl;
 //! \brief dump the mesh to std out
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(burton_2d, dump) {
+
   std::string separator;
   separator.insert(0,80,'=');
   separator.append("\n");
 
-  CINCH_CAPTURE() << separator;
-  CINCH_CAPTURE() << "dump" << endl;
-  CINCH_CAPTURE() << separator;
+  mesh_.dump( CINCH_CAPTURE() );
 
-  mesh_.dump();
+  cout << CINCH_DUMP() << endl;
+  std::string outfile = output_prefix()+".blessed";
+  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test the mesh connectivity
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(burton_2d, mesh) {
+
   std::string separator;
   separator.insert(0,80,'=');
   separator.append("\n");
-
-  CINCH_CAPTURE() << separator;
-  CINCH_CAPTURE() << "mesh" << endl;
 
   CINCH_CAPTURE() << separator;
   CINCH_CAPTURE() << "Vertices in mesh:" << endl;
@@ -171,12 +170,17 @@ TEST_F(burton_2d, mesh) {
 
   } // for
 
+  cout << CINCH_DUMP() << endl;
+  std::string outfile = output_prefix()+".blessed";
+  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
+
 } // TEST_F
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test the mesh geometry functions
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(burton_2d, geometry) {
+
   std::string separator;
   separator.insert(0,80,'=');
   separator.append("\n");
@@ -247,6 +251,10 @@ TEST_F(burton_2d, geometry) {
     ASSERT_NEAR( 0, sum[1], test_tolerance );
   } // for
 
+  cout << CINCH_DUMP() << endl;
+  std::string outfile = output_prefix()+".blessed";
+  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
+
 } // TEST_F
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -311,9 +319,9 @@ TEST_F(burton_2d, accessors) {
   separator.insert(0,80,'=');
   separator.append("\n");
 
-  CINCH_CAPTURE() << separator;
-  CINCH_CAPTURE() << "accessors" << endl;
-  CINCH_CAPTURE() << separator;
+  cout << separator;
+  cout << "accessors" << endl;
+  cout << separator;
 
   register_state(mesh_, "pressure", cells, real_t, persistent);
   register_state(mesh_, "density", cells, real_t);
@@ -328,7 +336,7 @@ TEST_F(burton_2d, accessors) {
   };  
   register_global_state(mesh_, "const", data_t);
 
-  CINCH_CAPTURE() << "Accessing state with type real_t" << endl;
+  cout << "Accessing state with type real_t" << endl;
 
   std::vector<std::string> labels;
   auto vr = access_type(mesh_, real_t);
@@ -345,7 +353,7 @@ TEST_F(burton_2d, accessors) {
     != labels.end());
   labels.clear();
 
-  CINCH_CAPTURE() << "Accessing state with type data_t" << endl;
+  cout << "Accessing state with type data_t" << endl;
 
   auto vd = access_type(mesh_, data_t);
   for(auto v: vd) {
@@ -355,7 +363,7 @@ TEST_F(burton_2d, accessors) {
     != labels.end());
   labels.clear();
 
-  CINCH_CAPTURE() << "Accessing state with type real_t at cells" << endl;
+  cout << "Accessing state with type real_t at cells" << endl;
 
   auto va = access_type_if(mesh_, real_t, is_at(mesh_,cells));
   for(auto v: va) {
@@ -369,7 +377,7 @@ TEST_F(burton_2d, accessors) {
     != labels.end());
   labels.clear();
 
-  CINCH_CAPTURE() << "Accessing persistent state with type real_t at cells"
+  cout << "Accessing persistent state with type real_t at cells"
     << endl;
 
   auto vp = access_type_if(mesh_, real_t, is_persistent_at(mesh_,cells));
@@ -383,7 +391,7 @@ TEST_F(burton_2d, accessors) {
     != labels.end());
   labels.clear();
 
-  CINCH_CAPTURE() << "Accessing state with type vector_t at vertices" << endl;
+  cout << "Accessing state with type vector_t at vertices" << endl;
 
   auto vv = access_type_if(mesh_, vector_t, is_at(mesh_,vertices));
   for(auto v: vv) {
@@ -393,7 +401,7 @@ TEST_F(burton_2d, accessors) {
     != labels.end());
   labels.clear();
 
-  CINCH_CAPTURE()
+  cout
     << "Accessing persistent state with type vector_t at vertices" << endl;
 
   auto vpv = access_type_if(mesh_, vector_t, is_persistent_at(mesh_,vertices));
@@ -404,7 +412,7 @@ TEST_F(burton_2d, accessors) {
     != labels.end());
   labels.clear();
 
-  CINCH_CAPTURE() << "Accessing state with type vector_t at edges" << endl;
+  cout << "Accessing state with type vector_t at edges" << endl;
 
   auto ve = access_type_if(mesh_, vector_t, is_at(mesh_,edges));
   for(auto v: ve) {
@@ -414,7 +422,7 @@ TEST_F(burton_2d, accessors) {
     != labels.end());
   labels.clear();
 
-  CINCH_CAPTURE() << "Accessing state with type point_t at vertices" << endl;
+  cout << "Accessing state with type point_t at vertices" << endl;
 
   auto pv = access_type_if(mesh_, point_t, is_at(mesh_,vertices));
   for(auto v: pv) {
@@ -426,7 +434,7 @@ TEST_F(burton_2d, accessors) {
     != labels.end());
   labels.clear();
 
-  CINCH_CAPTURE() << "Accessing persistent state with type point_t at vertices"
+  cout << "Accessing persistent state with type point_t at vertices"
             << endl;
 
   auto ppv = access_type_if(mesh_, point_t, is_persistent_at(mesh_,vertices));
@@ -447,9 +455,9 @@ TEST_F(burton_2d, state) {
   separator.insert(0,80,'=');
   separator.append("\n");
 
-  CINCH_CAPTURE() << separator;
-  CINCH_CAPTURE() << "state" << endl;
-  CINCH_CAPTURE() << separator;
+  cout << separator;
+  cout << "state" << endl;
+  cout << separator;
 
   register_state(mesh_, "pressure", cells, real_t, persistent);
   register_state(mesh_, "velocity", vertices, vector_t, persistent);
@@ -553,15 +561,11 @@ TEST_F(burton_2d, copy) {
       << " with coordinates " << v->coordinates() << std::endl;
   } // for
 
-} // TEST
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief A final test to compare the blessed file and do CINCH_DUMP().
-////////////////////////////////////////////////////////////////////////////////
-TEST_F(burton_2d, cinch_dump) {
   cout << CINCH_DUMP() << endl;
-  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED("burton_2d.blessed"));
-}
+  std::string outfile = output_prefix()+".blessed";
+  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
+
+} // TEST
 
 /*~------------------------------------------------------------------------~--*
  * Formatting options

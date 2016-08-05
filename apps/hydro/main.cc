@@ -34,9 +34,9 @@ using namespace apps::hydro;
 
 // right now cases are hard coded
 //#define SODX_2D
-#define SODX_3D
+//#define SODX_3D
 //#define SHOCK_BOX_2D
-//#define SHOCK_BOX_3D
+#define SHOCK_BOX_3D
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
   using vector_t = mesh_t::vector_t;
 
   // the case prefix
-  std::string prefix = "shock_box";
+  std::string prefix = "shock_box_2d";
   std::string postfix = "plt";
 
   // output frequency
@@ -196,7 +196,7 @@ int main(int argc, char** argv)
   using vector_t = mesh_t::vector_t;
 
   // the case prefix
-  std::string prefix = "shock_box";
+  std::string prefix = "shock_box_3d";
   std::string postfix = "plt";
 
   // output frequency

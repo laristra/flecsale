@@ -32,5 +32,5 @@ set(TECIO_TGZ tecio2013.tar)
 set(TECIO_MD5 "9dcfb785f57e061174334f14dccc717b")
 
 set(SHAPO_URL http://nowhere/)
-set(SHAPO_TGZ ShaPo-20160219.tgz)
-set(SHAPO_MD5 95e48d5b0a007aed6d46ea74dfcc9782)
+set(SHAPO_TGZ ShaPo-20160607.tgz)
+set(SHAPO_MD5 1856ca2e0b4071727f220abc20a7faae)

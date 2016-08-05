@@ -75,6 +75,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 1.0, .volume = 1.0, .growth = 1.e3 };
   constexpr real_t final_time = 0.2;
   constexpr real_t initial_time_step = 1.0;
+  constexpr size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -127,6 +128,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 1.0, .volume = 1.0, .growth = 1.e3 };
   constexpr real_t final_time = 0.2;
   constexpr real_t initial_time_step = 1.0;
+  constexpr size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -179,6 +181,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 1.0, .volume = 1.0, .growth = 1.e3 };
   constexpr real_t final_time = 0.2;
   constexpr real_t initial_time_step = 1.0;
+  constexpr size_t max_steps = 1e6;
 
   // rotate by 45 degrees
   constexpr real_t degrees = 45;
@@ -229,7 +232,7 @@ int main(int argc, char** argv)
   using vector_t = mesh_t::vector_t;
 
   // the case prefix
-  std::string prefix = "sodx";
+  std::string prefix = "sodx_3d";
   std::string postfix = "dat";
 
   // output frequency
@@ -249,6 +252,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 1.0, .volume = 1.0, .growth = 1.e3 };
   constexpr real_t final_time = 0.2;
   constexpr real_t initial_time_step = 1.0;
+  constexpr size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -304,6 +308,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 0.25, .volume = 0.1, .growth = 1.01 };
   constexpr real_t initial_time_step = 1.e-5;
   constexpr real_t final_time = 1.0;
+  constexpr size_t max_steps = 1e6;
 
   // the value of gamma
   constexpr real_t gamma = 1.4;
@@ -369,7 +374,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 0.25, .volume = 0.1, .growth = 1.01 };
   constexpr real_t initial_time_step = 1.e-5;
   constexpr real_t final_time = 1.0;
-  constexpr size_t max_steps = 10;
+  constexpr size_t max_steps = 1e6;
 
   // the value of gamma
   constexpr real_t gamma = 1.4;
@@ -535,7 +540,11 @@ int main(int argc, char** argv)
   auto soln_time = mesh.time();
   auto time_cnt  = mesh.time_step_counter();
 
-  do {   
+  for ( 
+    size_t steps = 0; 
+    (steps < max_steps && soln_time < final_time); 
+    steps++ 
+  ) {   
 
     //--------------------------------------------------------------------------
     // Begin Time step
@@ -641,10 +650,7 @@ int main(int argc, char** argv)
     // now output the solution
     apps::hydro::output(mesh, prefix, postfix, output_freq);
 
-    // break if finished
-    if ( time_cnt >= max_steps ) break;
-
-  } while ( soln_time < final_time );
+  }
 
 
   //===========================================================================

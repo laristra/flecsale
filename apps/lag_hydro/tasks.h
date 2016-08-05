@@ -316,8 +316,8 @@ int32_t evaluate_corner_coef( T & mesh ) {
       auto un_minus = n_minus / l_minus;      
       // estimate impedances
       auto delta_u = uv - uc;
-      auto zc_minus = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_minus)) );
-      auto zc_plus  = dc * ( ac + Gc * std::abs(dot_product(delta_u, un_plus )) );
+      auto zc_minus = dc * ( ac /*+ Gc * std::abs(dot_product(delta_u, un_minus))*/ );
+      auto zc_plus  = dc * ( ac /*+ Gc * std::abs(dot_product(delta_u, un_plus ))*/ );
       // compute the mass matrix
       auto M_plus  = math::outer_product( un_plus , un_plus  );
       auto M_minus = math::outer_product( un_minus, un_minus );

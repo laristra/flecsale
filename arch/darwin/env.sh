@@ -42,7 +42,7 @@ else
   export BOOST_ROOT=$BOOST_INCLUDES/..
 
   if [ "$compiler" == "gcc" ]; then
-    module load gcc/5.3.0
+    module load gcc/6.1.0
     export CC=gcc
     export CXX=g++  
     TPL_DEFAULT_INSTALL_PREFIX=${TPL_DEFAULT_PATH}/builds/$compiler/install

@@ -1089,9 +1089,9 @@ public:
   //============================================================================
 
   //! \brief Dump the burton mesh to standard out.
-  void dump()
+  std::ostream & dump( std::ostream & stream )
   {
-    mesh_.dump();
+    return mesh_.dump( stream );
   }
 
   //! \brief Initialize burton mesh state for the number of \e vertices.
@@ -1247,6 +1247,7 @@ public:
       auto delta = fx - cx;
       auto dot = dot_product( n, delta );      
       if ( dot < 0 ) {
+        //mesh_.template reverse_entities<vertex_t::dimension, vertex_t::domain>(f);
         return raise_or_return( ss << "Face " << f.id() << " has opposite normal" );
       }
     } 

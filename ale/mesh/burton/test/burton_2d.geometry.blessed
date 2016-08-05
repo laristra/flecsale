@@ -1,0 +1,181 @@
+================================================================================
+geometry
+================================================================================
+---- cell id: 0 with centroid ( 0.5 0.5 ) and area 1
+++++ vertex id: 0 with coordinates ( 0 0 )
+++++ vertex id: 1 with coordinates ( 1 0 )
+++++ vertex id: 4 with coordinates ( 1 1 )
+++++ vertex id: 3 with coordinates ( 0 1 )
+---- cell id: 1 with centroid ( 1.5 0.5 ) and area 1
+++++ vertex id: 1 with coordinates ( 1 0 )
+++++ vertex id: 2 with coordinates ( 2 0 )
+++++ vertex id: 5 with coordinates ( 2 1 )
+++++ vertex id: 4 with coordinates ( 1 1 )
+---- cell id: 2 with centroid ( 0.5 1.5 ) and area 1
+++++ vertex id: 3 with coordinates ( 0 1 )
+++++ vertex id: 4 with coordinates ( 1 1 )
+++++ vertex id: 7 with coordinates ( 1 2 )
+++++ vertex id: 6 with coordinates ( 0 2 )
+---- cell id: 3 with centroid ( 1.5 1.5 ) and area 1
+++++ vertex id: 4 with coordinates ( 1 1 )
+++++ vertex id: 5 with coordinates ( 2 1 )
+++++ vertex id: 8 with coordinates ( 2 2 )
+++++ vertex id: 7 with coordinates ( 1 2 )
+================================================================================
+---- edge id: 0 with midpoint ( 0.5 0 ), length 1 and normal ( 0 -1 )
+++++ vertex id: 0 with coordinates ( 0 0 )
+++++ vertex id: 1 with coordinates ( 1 0 )
+---- edge id: 1 with midpoint ( 1 0.5 ), length 1 and normal ( 1 0 )
+++++ vertex id: 1 with coordinates ( 1 0 )
+++++ vertex id: 4 with coordinates ( 1 1 )
+---- edge id: 2 with midpoint ( 0.5 1 ), length 1 and normal ( 0 1 )
+++++ vertex id: 4 with coordinates ( 1 1 )
+++++ vertex id: 3 with coordinates ( 0 1 )
+---- edge id: 3 with midpoint ( 0 0.5 ), length 1 and normal ( -1 0 )
+++++ vertex id: 3 with coordinates ( 0 1 )
+++++ vertex id: 0 with coordinates ( 0 0 )
+---- edge id: 4 with midpoint ( 1.5 0 ), length 1 and normal ( 0 -1 )
+++++ vertex id: 1 with coordinates ( 1 0 )
+++++ vertex id: 2 with coordinates ( 2 0 )
+---- edge id: 5 with midpoint ( 2 0.5 ), length 1 and normal ( 1 0 )
+++++ vertex id: 2 with coordinates ( 2 0 )
+++++ vertex id: 5 with coordinates ( 2 1 )
+---- edge id: 6 with midpoint ( 1.5 1 ), length 1 and normal ( 0 1 )
+++++ vertex id: 5 with coordinates ( 2 1 )
+++++ vertex id: 4 with coordinates ( 1 1 )
+---- edge id: 7 with midpoint ( 1 1.5 ), length 1 and normal ( 1 0 )
+++++ vertex id: 4 with coordinates ( 1 1 )
+++++ vertex id: 7 with coordinates ( 1 2 )
+---- edge id: 8 with midpoint ( 0.5 2 ), length 1 and normal ( 0 1 )
+++++ vertex id: 7 with coordinates ( 1 2 )
+++++ vertex id: 6 with coordinates ( 0 2 )
+---- edge id: 9 with midpoint ( 0 1.5 ), length 1 and normal ( -1 0 )
+++++ vertex id: 6 with coordinates ( 0 2 )
+++++ vertex id: 3 with coordinates ( 0 1 )
+---- edge id: 10 with midpoint ( 2 1.5 ), length 1 and normal ( 1 0 )
+++++ vertex id: 5 with coordinates ( 2 1 )
+++++ vertex id: 8 with coordinates ( 2 2 )
+---- edge id: 11 with midpoint ( 1.5 2 ), length 1 and normal ( 0 1 )
+++++ vertex id: 8 with coordinates ( 2 2 )
+++++ vertex id: 7 with coordinates ( 1 2 )
+================================================================================
+^^^^^^^^Cell id: 0
+    ----Corners:
+    ++++ corner id: 0
+    .... wedge
+         facet_normal_left: ( 0 0.5 )
+         facet_normal_right: ( 0 -0.5 )
+    .... wedge
+         facet_normal_left: ( -0.5 0 )
+         facet_normal_right: ( 0.5 0 )
+    ++++ corner id: 1
+    .... wedge
+         facet_normal_left: ( -0.5 0 )
+         facet_normal_right: ( 0.5 0 )
+    .... wedge
+         facet_normal_left: ( 0 -0.5 )
+         facet_normal_right: ( 0 0.5 )
+    ++++ corner id: 2
+    .... wedge
+         facet_normal_left: ( 0 -0.5 )
+         facet_normal_right: ( 0 0.5 )
+    .... wedge
+         facet_normal_left: ( 0.5 0 )
+         facet_normal_right: ( -0.5 0 )
+    ++++ corner id: 3
+    .... wedge
+         facet_normal_left: ( 0.5 0 )
+         facet_normal_right: ( -0.5 0 )
+    .... wedge
+         facet_normal_left: ( 0 0.5 )
+         facet_normal_right: ( 0 -0.5 )
+^^^^^^^^Cell id: 1
+    ----Corners:
+    ++++ corner id: 4
+    .... wedge
+         facet_normal_left: ( 0 0.5 )
+         facet_normal_right: ( 0 -0.5 )
+    .... wedge
+         facet_normal_left: ( -0.5 0 )
+         facet_normal_right: ( 0.5 0 )
+    ++++ corner id: 5
+    .... wedge
+         facet_normal_left: ( -0.5 0 )
+         facet_normal_right: ( 0.5 0 )
+    .... wedge
+         facet_normal_left: ( 0 -0.5 )
+         facet_normal_right: ( 0 0.5 )
+    ++++ corner id: 6
+    .... wedge
+         facet_normal_left: ( 0 -0.5 )
+         facet_normal_right: ( 0 0.5 )
+    .... wedge
+         facet_normal_left: ( 0.5 0 )
+         facet_normal_right: ( -0.5 0 )
+    ++++ corner id: 7
+    .... wedge
+         facet_normal_left: ( 0.5 0 )
+         facet_normal_right: ( -0.5 0 )
+    .... wedge
+         facet_normal_left: ( 0 0.5 )
+         facet_normal_right: ( 0 -0.5 )
+^^^^^^^^Cell id: 2
+    ----Corners:
+    ++++ corner id: 8
+    .... wedge
+         facet_normal_left: ( 0 0.5 )
+         facet_normal_right: ( 0 -0.5 )
+    .... wedge
+         facet_normal_left: ( -0.5 0 )
+         facet_normal_right: ( 0.5 0 )
+    ++++ corner id: 9
+    .... wedge
+         facet_normal_left: ( -0.5 0 )
+         facet_normal_right: ( 0.5 0 )
+    .... wedge
+         facet_normal_left: ( 0 -0.5 )
+         facet_normal_right: ( 0 0.5 )
+    ++++ corner id: 10
+    .... wedge
+         facet_normal_left: ( 0 -0.5 )
+         facet_normal_right: ( 0 0.5 )
+    .... wedge
+         facet_normal_left: ( 0.5 0 )
+         facet_normal_right: ( -0.5 0 )
+    ++++ corner id: 11
+    .... wedge
+         facet_normal_left: ( 0.5 0 )
+         facet_normal_right: ( -0.5 0 )
+    .... wedge
+         facet_normal_left: ( 0 0.5 )
+         facet_normal_right: ( 0 -0.5 )
+^^^^^^^^Cell id: 3
+    ----Corners:
+    ++++ corner id: 12
+    .... wedge
+         facet_normal_left: ( 0 0.5 )
+         facet_normal_right: ( 0 -0.5 )
+    .... wedge
+         facet_normal_left: ( -0.5 0 )
+         facet_normal_right: ( 0.5 0 )
+    ++++ corner id: 13
+    .... wedge
+         facet_normal_left: ( -0.5 0 )
+         facet_normal_right: ( 0.5 0 )
+    .... wedge
+         facet_normal_left: ( 0 -0.5 )
+         facet_normal_right: ( 0 0.5 )
+    ++++ corner id: 14
+    .... wedge
+         facet_normal_left: ( 0 -0.5 )
+         facet_normal_right: ( 0 0.5 )
+    .... wedge
+         facet_normal_left: ( 0.5 0 )
+         facet_normal_right: ( -0.5 0 )
+    ++++ corner id: 15
+    .... wedge
+         facet_normal_left: ( 0.5 0 )
+         facet_normal_right: ( -0.5 0 )
+    .... wedge
+         facet_normal_left: ( 0 0.5 )
+         facet_normal_right: ( 0 -0.5 )

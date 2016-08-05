@@ -51,7 +51,9 @@ TEST(zip, simple) {
   array<int,5> c_fail{5,4,3,2,1};
 
   // should die
+#ifndef NDEBUG
   ASSERT_DEATH( zip(a, b, c_fail), "size mismatch" );
+#endif
 
   // now test for real
   auto d = zip( a, b, c );

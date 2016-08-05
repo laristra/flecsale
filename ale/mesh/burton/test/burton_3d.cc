@@ -28,15 +28,16 @@ using std::endl;
 //! \brief dump the mesh to std out
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(burton_3d, dump) {
+
   std::string separator;
   separator.insert(0,80,'=');
   separator.append("\n");
 
-  CINCH_CAPTURE() << separator;
-  CINCH_CAPTURE() << "dump" << endl;
-  CINCH_CAPTURE() << separator;
+  mesh_.dump( CINCH_CAPTURE() );
 
-  mesh_.dump();
+  cout << CINCH_DUMP() << endl;
+  std::string outfile = output_prefix()+".blessed";
+  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -94,6 +95,8 @@ TEST_F(burton_3d, mesh) {
   } // for
 
   cout << CINCH_DUMP() << endl;
+  std::string outfile = output_prefix()+".blessed";
+  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 
 } // TEST_F
 
@@ -158,6 +161,10 @@ TEST_F(burton_3d, geometry) {
     } // for
 
   } // for
+
+  cout << CINCH_DUMP() << endl;
+  std::string outfile = output_prefix()+".blessed";
+  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 
 } // TEST_F
 
@@ -259,14 +266,6 @@ TEST_F(burton_3d, normals) {
   }
 
 } // TEST_F
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief A final test to compare the blessed file and do CINCH_DUMP().
-////////////////////////////////////////////////////////////////////////////////
-TEST_F(burton_3d, cinch_dump) {
-  cout << CINCH_DUMP() << endl;
-  CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED("burton_3d.blessed"));
-}
 
 /*~------------------------------------------------------------------------~--*
  * Formatting options

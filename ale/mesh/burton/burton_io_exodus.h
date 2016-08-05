@@ -26,6 +26,9 @@
 #  include <exodusII.h>
 #endif
 
+// exodus has a problem with regions in nfaced data
+// #define EXODUS_3D_REGION_BUGFIX
+
 //! user includes
 #include "flecsi/io/io_base.h"
 #include "ale/mesh/burton/burton_mesh.h"
@@ -862,7 +865,6 @@ struct burton_io_exodus_t<3> :
     // read each block
     for ( auto iblk=0; iblk<num_face_blk; iblk++ ) {
 
-
       auto face_blk_id = face_block_ids[iblk];
 
       // get the info about this block
@@ -909,7 +911,7 @@ struct burton_io_exodus_t<3> :
         // get the number of nodes
         num_nodes_per_face = face_node_counts[e];
         // copy local vertices into vector ( exodus uses 1 indexed arrays )
-        for ( auto v=0;  v<num_nodes_per_face; v++ ) 
+        for ( auto v=0;  v<num_nodes_per_face; v++ )
           face_vs.emplace_back( vertices[ face_nodes[base+v] - 1 ] );
         // create acual face
         auto f = m.create_face( face_vs );
@@ -1053,10 +1055,13 @@ struct burton_io_exodus_t<3> :
     // final mesh setup
     m.init();
 
+#ifndef EXODUS_3D_REGION_BUGFIX
+
     // override the region ids
     m.set_regions( region_ids.data() );
     m.set_num_regions( num_elem_blk );
 
+#endif
 
     // loop over faces that got created in the face blocks and and
     // make sure the owner is the first cell
