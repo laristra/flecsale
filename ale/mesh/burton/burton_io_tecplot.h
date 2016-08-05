@@ -67,8 +67,11 @@ public:
 
   //! some tecplot typedefs
   using tec_real_t = real_t;
+#ifdef HAVE_TECIO
   using tec_int_t = INTEGER4;
-
+#else
+  using tec_int_t = integer_t;
+#endif
 
   //! class for variable locations
   enum class tec_var_location_t 
@@ -244,11 +247,6 @@ public:
   };
 
         
-
-  //============================================================================
-  //! \brief extract the variable information from the 
-  //============================================================================
-  // auto 
 };
 
 
