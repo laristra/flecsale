@@ -262,14 +262,14 @@ static auto to_vtk( M & m )
 
 }
 
+#ifdef HAVE_VTK 
+
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief convert a vtk unstructured grid to a burton mesh
 ////////////////////////////////////////////////////////////////////////////////
 template< typename M >
 static auto to_mesh( vtkUnstructuredGrid* ug ) 
 {
-
-#ifdef HAVE_VTK 
 
   // alias some types
   using std::vector;
@@ -347,15 +347,11 @@ static auto to_mesh( vtkUnstructuredGrid* ug )
 
   return m;
 
-#else
-
-    raise_implemented_error( "not built with vtk support." );
-
-    return -1;
-
-#endif
 
 }
+
+
+#endif // HAVE_VTK
 
 } // namespace
 } // namespace
