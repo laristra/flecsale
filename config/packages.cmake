@@ -7,8 +7,8 @@
 # Thirdparty libraries
 #------------------------------------------------------------------------------#
 
-find_package(Boost 1.47 REQUIRED)
-include_directories( ${Boost_INCLUDE_DIRS} )
+# find_package(Boost 1.47 REQUIRED)
+# include_directories( ${Boost_INCLUDE_DIRS} )
 
 set( IO_LIBRARIES )
 set( VORO_LIBRARIES )

@@ -38,8 +38,6 @@ namespace ale {
 namespace mesh {
 
 
-#ifdef HAVE_EXODUS
-
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief provides base functionality for exodus writer
 ////////////////////////////////////////////////////////////////////////////////
@@ -67,6 +65,8 @@ public:
   using  ex_real_t  = real_t;
   using  ex_index_t = int;
 
+
+#ifdef HAVE_EXODUS
 
   //============================================================================
   //! \brief open 
@@ -771,9 +771,8 @@ struct burton_io_exodus_t<2> :
 #else
 
     std::cerr << "FLECSI not build with exodus support." << std::endl;
-    std::exit(1);
 
-    return -1;
+    return 0;
 
 #endif
 
@@ -1318,9 +1317,8 @@ struct burton_io_exodus_t<3> :
 #else
 
     std::cerr << "FLECSI not build with exodus support." << std::endl;
-    std::exit(1);
 
-    return -1;
+    return 0;
 
 #endif
 

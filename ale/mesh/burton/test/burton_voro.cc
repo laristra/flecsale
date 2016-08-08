@@ -22,6 +22,7 @@
 //! user includes
 #include "ale/mesh/voronoi.h"
 
+#if defined(HAVE_EXODUS) && defined(HAVE_SHAPO)
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief test reading an exodus file
@@ -77,6 +78,7 @@ TEST_F(burton_voro, read_write_3d) {
 
 } // TEST_F
 
+#endif
 
 /*~------------------------------------------------------------------------~--*
  * Formatting options
