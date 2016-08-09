@@ -240,6 +240,33 @@ public:
   geom::geometric_shapes_t type() const override 
   { return geom::triangle<num_dimensions>::shape; };
 
+
+  //----------------------------------------------------------------------------
+  //! \brief create_entities function for burton_triangle_cell_t.
+  //----------------------------------------------------------------------------
+  inline std::vector<size_t> create_entities(
+    const id_t & cell, size_t dim,
+    const connectivity_t& conn,
+    id_t * entities ) override
+  {
+    assert( dim == 1 );
+
+    auto v = conn.get_entity_vec( cell, vertex_t::dimension );
+
+    assert( v.size() == 3 );
+
+    entities[0] = v[0];
+    entities[1] = v[1];
+
+    entities[2] = v[1];
+    entities[3] = v[2];
+
+    entities[4] = v[2];
+    entities[5] = v[0];
+
+    return {2, 2, 2};
+  } // create_entities
+
 }; // class burton_triangle_cell_t
 
 } // namespace

@@ -213,6 +213,33 @@ public:
   geom::geometric_shapes_t type() const override 
   { return geom::polygon<num_dimensions>::shape; };
 
+
+  //----------------------------------------------------------------------------
+  //! \brief create_entities function for burton_polygonal_cell_t.
+  //----------------------------------------------------------------------------
+  inline std::vector<size_t> create_entities(
+    const id_t & cell, size_t dim,
+    const connectivity_t& conn,
+    id_t * entities ) override
+  {
+    assert( dim == 1 );
+
+    auto v = conn.get_entity_vec( cell, vertex_t::dimension );
+    auto num_cell_verts = v.size();
+
+    size_t ind=0;
+    for ( auto i=0; i<num_cell_verts-1; i++ ) {
+      auto vp = v[i];
+      auto vn = v[i+1];
+      entities[ ind++ ] = vp;
+      entities[ ind++ ] = vn;
+    }
+    entities[ ind++ ] = v[ num_cell_verts-1 ];
+    entities[ ind++ ] = v[ 0 ];
+
+    return std::vector<size_t>(num_cell_verts, 2);
+  }
+
 };
 
 
