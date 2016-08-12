@@ -30,6 +30,6 @@ test:ubuntu:
     - mkdir build
     - cd build
     - cmake -DENABLE_UNIT_TESTS=ON ..
-    - make -j-j${NUM_THREADS}
+    - make -j${NUM_THREADS}
     - make test -j${NUM_THREADS} 
     - make install DESTDIR=${PWD}
