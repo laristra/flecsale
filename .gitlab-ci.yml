@@ -9,6 +9,7 @@ test:flecsi_serial:
     - export https_proxy="${http_proxy}"
     - apt-get update
     - apt-get install -y libboost-all-dev
+    - git submodule update --init --recursive
     - mkdir build
     - cd build
     - cmake -DENABLE_UNIT_TESTS=ON ..
@@ -23,6 +24,7 @@ test:ubuntu:
     - export https_proxy="${http_proxy}"
     - apt-get update
     - apt-get install -y git cmake g++ libboost-all-dev libexodusii-dev pkg-config 
+    - git submodule update --init --recursive
     - mkdir build
     - cd build
     - cmake -DENABLE_UNIT_TESTS=ON ..
