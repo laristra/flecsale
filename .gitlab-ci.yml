@@ -9,6 +9,7 @@ test:flecsi_serial:
     - export https_proxy="${http_proxy}"
     - apt-get update
     - apt-get install -y libboost-all-dev
+    - cat .gitmodules
     - git submodule update --init --recursive
     - mkdir build
     - cd build
