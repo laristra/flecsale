@@ -1,30 +1,21 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file factory.h
- * 
- * \brief Some functionality for creating meshes.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Some functionality for creating meshes.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
-//! system includes
-#include<cmath>
-#include<vector>
-
-//! user includes
+// user includes
 #include "ale/math/constants.h"
 #include "ale/math/matrix.h"
+
+// system includes
+#include<cmath>
+#include<vector>
 
 namespace ale {
 namespace mesh {
@@ -100,9 +91,9 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Create a box mesh
 //!
-//! \param [in] num_cells_x,num_cells_y  the number of cells in the x and y dir
-//! \param [in] min_x,min_y              the min coordinate in the x and y dir
-//! \param [in] max_x,max_y              the max coordinate in the x and y dir
+//! \param [in] num_cells_x,num_cells_y,num_cells_z  the number of cells in the x, y, and z dir
+//! \param [in] min_x,min_y,min_z  The min coordinate in the x, y, and z dir.
+//! \param [in] max_x,max_y,max_z  The max coordinate in the x, y, and z dir.
 //! \return a new mesh object
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
@@ -187,11 +178,10 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Create a box mesh
+//! \brief Create a box mesh centered about the origin.
 //!
 //! \param [in] num_cells_x,num_cells_y  the number of cells in the x and y dir
-//! \param [in] min_x,min_y              the min coordinate in the x and y dir
-//! \param [in] max_x,max_y              the max coordinate in the x and y dir
+//! \param [in] length_x,length_y        the length in the x and y dir
 //! \return a new mesh object
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
@@ -209,11 +199,10 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Create a box mesh
+//! \brief Create a box mesh centered about the origin.
 //!
-//! \param [in] num_cells_x,num_cells_y  the number of cells in the x and y dir
-//! \param [in] min_x,min_y              the min coordinate in the x and y dir
-//! \param [in] max_x,max_y              the max coordinate in the x and y dir
+//! \param [in] num_cells_x,num_cells_y,num_cells_z  the number of cells in the x, y, and z dir
+//! \param [in] length_x,length_y,length_z   the length in the x, y, and z dir
 //! \return a new mesh object
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
@@ -235,16 +224,14 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Rotate a 2d mesh
 //!
-//! \param [in] num_cells_x,num_cells_y  the number of cells in the x and y dir
-//! \param [in] min_x,min_y              the min coordinate in the x and y dir
-//! \param [in] max_x,max_y              the max coordinate in the x and y dir
-//! \return a new mesh object
+//! \param [in,out] mesh   the mesh to rotate
+//! \param [in] degrees    the number of degrees to rotate by
 ////////////////////////////////////////////////////////////////////////////////
 template< 
   typename T,
   typename = typename std::enable_if_t< T::num_dimensions == 2, T >
 >
-void rotate( T & mesh, std::size_t degrees ) 
+void rotate( T & mesh, typename T::real_t degrees ) 
 {
   
   // get some alias

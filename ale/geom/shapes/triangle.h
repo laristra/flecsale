@@ -1,28 +1,20 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file triangle.h
- * 
- * \brief Some utility functions for triangles.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file triangle.h
+/// \brief Some utility functions for triangles.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/geom/shapes/geometric_shapes.h"
 #include "ale/math/math.h"
 
 namespace ale {
 namespace geom {
+namespace shapes {
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief the triangle class
@@ -145,5 +137,6 @@ struct triangle<3> {
   
 };
 
+} // namespace shapes
 } // namespace geom
 } // namespace ale

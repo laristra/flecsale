@@ -1,27 +1,19 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/    /_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file fixed_vector.cc
- * 
- * \brief Tests related to a fixed vector.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Tests related to a fixed vector.
+////////////////////////////////////////////////////////////////////////////////
+
+// user includes
+#include "ale/utils/fixed_vector.h"
+
 
 // system includes
 #include<cinchtest.h>
 #include<iostream>
-
-// user includes
-#include "ale/utils/fixed_vector.h"
 
 // explicitly use some stuff
 using fixed_vector = ale::utils::fixed_vector<int, 5>;
@@ -179,8 +171,3 @@ TEST(fixed_vector, append)
     ASSERT_EQ( i, vec[i] );
 }
 
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

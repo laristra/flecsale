@@ -1,15 +1,10 @@
 #~----------------------------------------------------------------------------~#
-# Copyright (c) 2014 Los Alamos National Security, LLC
-# All rights reserved.
+# Copyright (c) 2016 Los Alamos National Laboratory, LLC
+# All rights reserved
 #~----------------------------------------------------------------------------~#
 
 set(linalg_HEADERS
   types.h
-  qr.h
+  qr.h  detail/qr_impl.h
   PARENT_SCOPE
 )
-
-#----------------------------------------------------------------------------~-#
-# Formatting options for vim.
-# vim: set tabstop=2 shiftwidth=2 expandtab :
-#----------------------------------------------------------------------------~-#

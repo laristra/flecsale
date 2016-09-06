@@ -1,20 +1,15 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  // 
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Defines the mesh traits for the burton_mesh_t class.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/common/types.h"
 #include "ale/geom/point.h"
 #include "ale/math/vector.h"
@@ -22,17 +17,12 @@
 #include "flecsi/utils/bitfield.h"
 #include "flecsi/data/data.h"
 
-/*!
- * \file burton_mesh_traits.h
- * \authors bergen
- * \date Initial file creation: Nov 15, 2015
- */
-
 namespace ale {
 namespace mesh {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief The mesh traits
+/// \tparam N  The number of mesh dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 struct burton_mesh_traits_t {
@@ -80,7 +70,7 @@ struct burton_mesh_traits_t {
   enum class state_attribute_t : bitfield_t::field_type_t {
     persistent = 0,
     temporary = 1 // just a placeholder for now
-  }; // enum class state_attribute_t
+  };
 
   //! \brief The locations of different bits that we set as flags
   enum bits : uint8_t
@@ -121,13 +111,8 @@ struct burton_mesh_traits_t {
     flecsi::data_model::data_t<private_state_meta_data_t, MESH_STORAGE_POLICY>;
 #endif
 
-}; // struct burton_mesh_traits_t
+};
 
 } // namespace mesh
 } // namespace ale
 
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

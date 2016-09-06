@@ -1,25 +1,16 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file dummy.cc
- * 
- * \brief A dummy part of the ale library used a template for developpers.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief A dummy part of the ale library used a template for developpers.
+////////////////////////////////////////////////////////////////////////////////
 
-//! system includes go here
+// system includes go here
 #include <vector>
 
-//! user includes go here ( note the path layout )
+// user includes go here ( note the path layout )
 #include "ale/dummy/dummy.h"
 
 // everything in src falls within the ale namespace
@@ -51,8 +42,3 @@ int bar()
 
 } // dummy namespace
 } // ale namespace
-
-/*~------------------------------------------------------------------------~--*
- * Formatting options for vim.
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~------------------------------------------------------------------------~--*/

@@ -1,37 +1,31 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file dummy.cc
- * 
- * \brief Tests a part of the dummy code.
- *
- * This creates an executable `dummy` that runs the tests.    Tests are created
- * with the "TEST(group_name, test_name)" macro.  Executing
- *    ./dummy
- * runs all the tests, and calling
- *    ./dummy --gtest_list_tests
- * will list all the available tests.  You can execute specific tests by calling
- *    ./dummy --gtest_filter=<PATTERN>
- * where <PATTERN> is a typicall shell regex patern.  For example,
- *    ./dummy --gtest_filter=dummy.*
- * means run all tests in the dummy group.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+///
+/// \file
+/// 
+/// \brief Tests a part of the dummy code.
+///
+/// This creates an executable `dummy` that runs the tests.    Tests are created
+/// with the "TEST(group_name, test_name)" macro.  Executing
+///    ./dummy
+/// runs all the tests, and calling
+///    ./dummy --gtest_list_tests
+/// will list all the available tests.  You can execute specific tests by calling
+///    ./dummy --gtest_filter=<PATTERN>
+/// where <PATTERN> is a typicall shell regex patern.  For example,
+///    ./dummy --gtest_filter=dummy.*
+/// means run all tests in the dummy group.
+///
+////////////////////////////////////////////////////////////////////////////////
 
 //
 // system includes
 //
 
-//! this include is needed for the TEST framework
+// this include is needed for the TEST framework
 #include <cinchtest.h>
 
 //! this include is needed for std::cout and std::endl
@@ -41,7 +35,7 @@
 // user includes
 //
 
-//! this include is needed to get the dummy functionality so we can test it
+// this include is needed to get the dummy functionality so we can test it
 #include "ale/dummy/dummy.h"
 
 

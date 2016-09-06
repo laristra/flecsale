@@ -1,38 +1,42 @@
+/*~-------------------------------------------------------------------------~~*
+ * Copyright (c) 2016 Los Alamos National Laboratory, LLC
+ * All rights reserved
+ *~-------------------------------------------------------------------------~~*/
 ////////////////////////////////////////////////////////////////////////////////
 ///
-/// Functions to write binary files in vtk format
+/// \file
+/// \brief Functions to write binary files in vtk format.
 ///
-/// \date Friday, May 20 2011
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
+// user includes
+#include "write_binary.h"
 
 // system includes
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
 
-// user includes
-#include "write_binary.h"
-
 namespace ale {
 namespace io {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief a vtk writer class for legacy files
+//! \brief A vtk writer class for legacy files.
 ////////////////////////////////////////////////////////////////////////////////
 class vtk_writer {
 
 public :
 
   /*! *************************************************************************
-   * type map
+   * \brief A type map.
    ****************************************************************************/
   using type_map_t = std::unordered_map<std::type_index, std::string>;
   static const type_map_t type_map;
 
   /*! *************************************************************************
-   * element map
+   * \brief The element map.
    ****************************************************************************/
   enum class cell_type_t
   {
@@ -46,7 +50,10 @@ public :
   };
 
   /*! *************************************************************************
-   * Open a tecplot file for writing
+   * \brief Open a tecplot file for writing.
+   * \param [in] filename The name of the file to open.
+   * \param [in] binary  If true, open the file for binary writing.
+   * \return 0 for success, 1 otherwise.
    ****************************************************************************/
   auto open( const char* filename, bool binary = true ) 
   {
@@ -63,7 +70,8 @@ public :
 
 
   /*! *************************************************************************
-   * close the tecplot file once comleted
+   * \brief Close the tecplot file once completed.
+   * \return 0 for success, 1 otherwise.
    ****************************************************************************/
   auto close( void ) 
   {   
@@ -73,7 +81,8 @@ public :
   }
 
   /*! *************************************************************************
-   * write the header
+   * \brief Write the header.
+   * \return 0 for success, 1 otherwise.
    ****************************************************************************/
   auto init( const char* title ) 
   {
@@ -94,10 +103,17 @@ public :
 
 
   /*! *************************************************************************
-   * write nodes
+   * \brief Write node coordinates.
+   * \param [in] data  The coordinate data to write, in dimension major format.
+   * \param [in] npoints The number of points to write.
+   * \param [in] ndims  The number of dimensions.
+   * \tparam C The container class the data is stored in.
+   * \tparam T  The type of data stored in the container.
+   * \tparam Args The rest of the args in the container.
+   * \return 0 for success, 1 otherwise.   
    ****************************************************************************/
   template< 
-    template<typename,typename...> typename C, 
+    template<typename,typename...> class C, 
     typename T, typename... Args 
   >
   auto write_points( const C<T,Args...> & data, std::size_t npoints, std::size_t ndims )
@@ -145,10 +161,23 @@ public :
 
 
   /*! *****************************************************************
-   * write connectivity
+   * \brief Write connectivity information, i.e. cell to vertex
+   *        connectivity.
+   *
+   * The number of vertices for each cell is ascertained from the 
+   * cell type.
+   *
+   * \param [in] data  The connectivity data to write.  This is a 
+   *                   flat array with the vertex ids listed for
+   *                   each cell.
+   * \param [in] cell_type The array of cell type flags for each cell.
+   * \tparam C The container class the data is stored in.
+   * \tparam T  The type of data stored in the container.
+   * \tparam Args The rest of the args in the container.
+   * \return 0 for success, 1 otherwise.   
    ********************************************************************/
   template< 
-    template<typename...> typename C, 
+    template<typename...> class C, 
     typename T,
     typename... Args 
   >
@@ -243,7 +272,9 @@ public :
 
 
   /*! *****************************************************************
-   * mark the start of cell data
+   * \brief Mark the start of cell data.
+   * \param [in] ncells  The number of cells in the mesh.
+   * \return 0 for success, 1 otherwise.
    ********************************************************************/
   auto start_cell_data( std::size_t ncells ) 
   {      
@@ -252,7 +283,9 @@ public :
   }
   
   /*! *****************************************************************
-   * mark the start of cell data
+   * \brief Mark the start of point data.
+   * \param [in] npoints  The number of points in the mesh.
+   * \return 0 for success, 1 otherwise.
    ********************************************************************/
   auto start_point_data( std::size_t npoints ) 
   {   
@@ -262,10 +295,20 @@ public :
 
 
   /*! *****************************************************************
-   * write nodes
+   * \brief Write field data.
+   *
+   * For vector or other multi-dimensional fields, the data is stored
+   * in dimension-major format.
+   *
+   * \param [in] data  The field data to write.
+   * \param [in] ndims The number of dimensions the data has.
+   * \tparam C The container class the data is stored in.
+   * \tparam T  The type of data stored in the container.
+   * \tparam Args The rest of the args in the container.
+   * \return 0 for success, 1 otherwise.   
    ********************************************************************/
   template< 
-    template<typename,typename...> typename C, 
+    template<typename,typename...> class C, 
     typename T, typename... Args 
   >
   auto write_field( const char* name, const C<T,Args...> & data, std::size_t ndims = 1 )

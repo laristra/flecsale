@@ -1,31 +1,21 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file vector.h
- * 
- * \brief Provides a dimensioned array which functions as a vector.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Provides a dimensioned array which functions as a vector.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/math/array.h"
 
 namespace ale {
 namespace math {
 
 ////////////////////////////////////////////////////////////////////////////////
-//!  \brief The dimensioned_array type provides a general base for defining
-//!  contiguous array types that have a specific dimension.
+//!  \brief An alias of the dimensioned array type.
 //!
 //!  \tparam T The type of the array, e.g., P.O.D. type.
 //!  \tparam D The dimension of the array, i.e., the number of elements
@@ -36,13 +26,15 @@ using vector = array<T,D>;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Compute the rotation matrix
+//! \brief Reflect a vector about a plane given a normal to that plane.
 //! \tparam T  The base value type.
-//! \tparam D  The matrix/array dimension.
+//! \tparam D  The array dimension.
+//! \param [in] v  The vector to reflect.
+//! \param [in] n  The normal of the plane to reflect in.
 ////////////////////////////////////////////////////////////////////////////////
 template < 
   typename T, std::size_t D,
-  template<typename, std::size_t> typename C
+  template<typename, std::size_t> class C
 >
 C<T,D> reflect( const C<T,D> & v, const C<T,D> & n ) {
 
@@ -59,8 +51,3 @@ C<T,D> reflect( const C<T,D> & v, const C<T,D> & n ) {
 
 } // namespace
 } // namespace
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

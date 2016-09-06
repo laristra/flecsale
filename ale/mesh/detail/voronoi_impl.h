@@ -1,62 +1,34 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file vornoi.h
- * 
- * \brief Details for generating vornoit mesh.
- *
- * \remark these are the hidden implementation details
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file vornoi.h
+/// \brief Details for generating vornoit mesh.
+/// \remark these are the hidden implementation details
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
 
 #ifdef HAVE_SHAPO
 
+
+// library includes
+#include <shapo/Mesh2D.hxx>
+#include <shapo/Tessellator.hxx>
+#include <vtkPoints.h>
+
 namespace ale {
 namespace mesh {
+namespace detail {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Global type aliases
+// Global type aliases
 ////////////////////////////////////////////////////////////////////////////////
-
 
 //! shapo real and index type
 using shapo_real_t = double;
 using shapo_index_t = shapo::IdType;
-
-//! the tesselator
-using shapo::Tessellator;
-
-//! a unique pointer type for shapo
-//! \tparam T the shapo type
-template<class T>
-using shapo_unique_ptr = 
-  std::unique_ptr<T, std::function<void(T*)> >;
-
-//! \brief Constructs a unique pointer for shapo of non-array type T
-//! \tparam T the shapo type
-//! \param [in]  args  the arguments to the constructor
-//! \return a unique_ptr
-template<class T, class... Args>
-shapo_unique_ptr<T>
-shapo_make_unique(Args&&... args) {
-  return shapo_unique_ptr<T>( new T(std::forward<Args>(args)...), 
-                              [](T* t){ t->Delete(); } );
-}
-
-
-
-namespace detail {
 
 ////////////////////////////////////////////////////////////////////////////////
 // HELPER FUNCTIONS - THESE SHOULD NOT BE CALLED OUTSIDE OF THIS UNIT
@@ -222,7 +194,7 @@ void extract_boundaries(
 //! \param [in] mesh the delfi mesh to extract from
 //! \param [in,out] tess the tesselator to inject to
 //==============================================================================
-template< typename mesh_t >
+template< typename mesh_t, typename Tessellator >
 void create_generators( const mesh_t & mesh, Tessellator & tess ) {
 
   // the number of dimenions
@@ -260,7 +232,7 @@ void create_generators( const mesh_t & mesh, Tessellator & tess ) {
 //! \param [in] mesh the delfi mesh to extract from
 //! \param [in,out] tess the tesselator to inject to
 //==============================================================================
-template< typename mesh_t >
+template< typename mesh_t, typename Tessellator >
 void create_boundaries_clipped(const mesh_t & mesh, Tessellator & tess) 
 {
 
@@ -292,7 +264,7 @@ void create_boundaries_clipped(const mesh_t & mesh, Tessellator & tess)
 //! \param [in] mesh the delfi mesh to extract from
 //! \param [in,out] tess the tesselator to inject to
 //==============================================================================
-template< typename mesh_t >
+template< typename mesh_t, typename Tessellator >
 void create_boundaries_constrained( const mesh_t & mesh, Tessellator & tess ) 
 {
 
@@ -337,7 +309,7 @@ void create_boundaries_constrained( const mesh_t & mesh, Tessellator & tess )
 //! \param [in] mesh_handle the handle of the parent to create under
 //! \return a unique pointer to the mesh
 //==============================================================================
-template < typename mesh_t >
+template < typename mesh_t, typename Tessellator >
 mesh_t transfer_mesh( const Tessellator & tess ) 
 {
 

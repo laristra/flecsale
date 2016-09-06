@@ -1,25 +1,11 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file centroid.cc
- * 
- * \brief Tests related to the centroid operation.
- *
- ******************************************************************************/
-
-// system includes
-#include<array>
-#include<cinchtest.h>
-#include<vector>
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Tests related to the computational geometry for different shapes.
+////////////////////////////////////////////////////////////////////////////////
 
 // user includes
 #include "ale/common/types.h"
@@ -33,13 +19,19 @@
 #include "ale/math/matrix.h"
 #include "ale/math/vector.h"
 
+
+// system includes
+#include<array>
+#include<cinchtest.h>
+#include<vector>
+
 // explicitly use some stuff
 using std::cout;
 using std::endl;
 using std::vector;
 
 using namespace ale;
-using namespace ale::geom;
+using namespace ale::geom::shapes;
 
 //! the real type
 using real_t = common::real_t;
@@ -477,8 +469,3 @@ TEST(shapes, compare_3d)
 
 }
 
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

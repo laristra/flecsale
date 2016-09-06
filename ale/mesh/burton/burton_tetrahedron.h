@@ -1,13 +1,4 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  //
- *
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
@@ -19,7 +10,7 @@
 
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/geom/shapes/tetrahedron.h"
 #include "ale/mesh/burton/burton_element.h"
 
@@ -28,10 +19,8 @@ namespace ale {
 namespace mesh {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_tetrahedron_t burton_entity_types.h
-//!
-//! \brief The burton_tetrahedron_t type provides a derived instance of
-//!   burton_cell_t for 2D tetrahedron cells.
+//! \brief Provides a derived instance of burton_cell_t for 3D tetrahedron '
+//!        cells.
 ////////////////////////////////////////////////////////////////////////////////
 class burton_tetrahedron_t : public burton_element_t<3,3>
 {
@@ -66,8 +55,8 @@ public:
   real_t volume() const override;
 
   //! the cell type
-  geom::geometric_shapes_t type() const override 
-  { return geom::tetrahedron::shape; };
+  geom::shapes::geometric_shapes_t type() const override 
+  { return geom::shapes::tetrahedron::shape; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_tetrahedron_cell_t.

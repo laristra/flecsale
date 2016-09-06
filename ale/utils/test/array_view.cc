@@ -1,28 +1,19 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/    /_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file fixed_vector.cc
- * 
- * \brief Tests related to a fixed vector.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+////////////////////////////////////////////////////////////////////////////////
+
+// user includes
+#include "ale/utils/array_view.h"
+
 
 // system includes
 #include<cinchtest.h>
 #include<iostream>
 #include <numeric>
-
-// user includes
-#include "ale/utils/array_view.h"
 
 using namespace ale::utils;
 
@@ -440,20 +431,15 @@ TEST(static_array_view, constructor)
 
   static_array_view< int, 3,1,2 > av( vec, mav.bounds() );
 
-  auto view = make_array_view<2, 5>( vec );
+  auto view = make_static_array_view<2, 5>( vec );
   ASSERT_EQ( static_cast<int>( view[ {1, 2 } ]), 7 );
   ASSERT_EQ( static_cast<int>( view(1, 2) ), 7 );
 
-  auto view2 = make_array_view<10>( vec );
+  auto view2 = make_static_array_view<10>( vec );
   ASSERT_EQ( static_cast<int>( view2[0] ), 0 );
 
-  auto view_3d = make_array_view( r );
+  auto view_3d = make_static_array_view( r );
 
 
 } // TEST
 
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

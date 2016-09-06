@@ -1,192 +1,92 @@
-# Summary
+# FleCSALE
 
-This is a *hopefully* parallel unstructured solver infrastructure for
-devlopping multi-physics simulations. The plan is to support 2D and 3D
-arbitrary polyhedral meshes distributed over hundreds to thousands of
-nodes. The code is built upon
-[FleCSI](https://github.com/flecsi/flecsi), an open source general
-purpose set of tools for execution and state control.
+FleCSALE is a computer software package developed for studying problems that
+can be characterized using continuum dynamics, such as fluid flow. It is
+specifically developed for existing and emerging large distributed memory
+system architectures. FleCSALE uses the Flexible Computational Science
+Infrastructure ([FleCSI](https://github.com/losalamos/flecsi)) project for mesh
+and data structure support. FleCSALE has support for multi-phase fluids and
+tabular equation of state (EOS).
 
-Right now most new developpers should focus on building tests in the
-`src` directory to excersize different functionality.  See the
-[README](src) on building library functionality and tests. Developpers
-can also start by creating their own apps using this [README](apps).
+# Requirements
 
----
+## Minimal
 
-# Current Status
+- [FleCSI](https://github.com/losalamos/flecsi)
+- [CMake](http://www.cmake.org/) >= 2.8
+- C++14 compliant compiler  (gcc >= 5.3.0, clang>=3.7.0)
 
-A proxy application has been written to solve the two-dimensional
-Euler equations on fixed meshes.  The solution algorithm uses a
-first-order Godunov-type finite-volume method and an approximate flux
-function.  Below is the computed density 
-for the standard Sod shock tube problem at *t* = 0.2 s:
-<center>
-<a href="doc/sod.png"><img src="doc/sod.png" width="400" alt="The Sod shock tube at t=0.2s"></a>
-</center>
+## Optional
 
-The shock-box problem is a two-dimensional version of Sod's shock
-tube.  Below are the computed solutions at (left) *t* = 0 s and
-(right) *t* = 0.2 s:
-<center>
-<a href="doc/shock_box1.png"><img src="doc/shock_box1.png" width="400" alt="A 2d shock box at t=0s"></a>
-<a href="doc/shock_box2.png"><img src="doc/shock_box2.png" width="400" alt="A 2d shock box at t=0.2s"></a>
-</center>
-
----
-
-# Thirdparty Libraries
-
-This project uses a number of third party libraries.  Below is a list
-of the required thirdparty libraries and their respective
-dependants. The library dependency graph is as follows:
-
-- [Cinch](https://github.com/losalamos/cinch) - A set of utilities and
-  configuration options to simplify [CMake](https://cmake.org/)
-  configuration.
-  
-  
-- [FleCSI](https://github.com/flecsi/flecsi) - For mesh/state and
-  execution control. 
-    - [METIS](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview) -
-      A graph partitioner
-      
-    - [Scotch](https://www.labri.fr/perso/pelegrin/scotch/) - A graph
-      partitioner
-      
-    - [ExodusII](https://sourceforge.net/projects/exodusii/) - A
-      finite-element data file format
-        - [NetCDF](http://www.unidata.ucar.edu/software/netcdf/) -
-          Provides machine-independant file formats
-            - [HDF5](https://www.hdfgroup.org/HDF5/) - A data model and
-              file format
+- [Doxygen](http://doxygen.org) to generate documentation
+- [Exodus](https://github.com/gsjaardema/seacas) to read/write ExodusII formatted files
+- [VTK](http://vtk.org) to read/write VTK formatted files
 
 
----
-
-# Getting the ALE Project Source
+# Getting the code
 
 This project uses [Git](https://git-scm.com/) for revision control and
 distribution, and [CMake](https://cmake.org/) for build configuration.
-Below are some general instructions for obtaining and building ALE.
+Below are some general instructions for obtaining and building FleCSALE.
 
-To clone the repository, type
+FleCSALE uses git submodules, so it mush be checked out recursively.  Type
 
-    git clone --recursive ssh://git@xcp-stash.lanl.gov:7999/ngc/ale.git
+    $ git clone --recursive git@gitlab.lanl.gov:flecsale/flecsale.git
+    
+to clone the repository using ssh, or 
+
+    $ git clone --recursive https://gitlab.lanl.gov/flecsale/flecsale.git
+    
+to clone using https.
     
 **Make sure to include the `--recursive` so that all of the
 submodules are cloned as well.** 
 
 
----
+# Installation
 
-# <a name="simple"></a> Simple Installation
+Building the code is simply performed through the following steps
+using [CMake](https://cmake.org/):
 
-To make building the code simpler, the thirdparty libraries have
-already been downloaded and installed for you on some LANL machines.
-Currently the simple installation process is avaliable on
-[darwin](darwin.lanl.gov) and moonlight. All you need to do is
-compiler the ALE source.  Fist, create a build directory somewhere, run the
-cmake configure script, then make the code.  This is performed by
-executing the following commands:
+    $ mkdir build
+    $ cd build
+    $ CC=gcc CXX=g++ cmake /path/to/source/directory [options]
+    $ make -j
 
-    mkdir build
-    cd build
-    <ALE_DIR>/arch/<MACHINE>/cmake-ale.sh gcc
-    make -j
+The environment variables `CC` and `CXX` are only necessary to select
+specific compilers and may be omitted.  The first parameter provided
+to [CMake](https://cmake.org/) must be the root of the source
+directory created by cloning the FleCSALE repository.
 
-where `<ALE_DIR>` is the location of the cloned ALE git
-repository and `<MACHINE>` is the LANL machine you are using.
-Right now `<MACHINE>` can be one of **darwin** or **moonlight**.
-This command will use the gcc compilers to build the code.
+Options provded to the [CMake](https://cmake.org/) command line can be
+any CMake build options listed below (use `-Doption_name=value` to
+specify an option.  For example, to build the unit tests, specify
+`-DENABLE_UNIT_TESTS=ON`.
 
+# CMake installation options
 
----
+ - `ENABLE_UNIT_TESTS`:  Build the unit tests - Default is OFF
+ - `ENABLE_DOXYGEN`:  Generate HTML API documentation with Doxygen - Default is OFF
+ - `CMAKE_BUILD_TYPE`:  Type of build: Release (for users) or Debug (for developers)
 
-# Advanced Installation
+# Release
 
-The advanced installation lets users build they're own thirdparty
-libraries if they want.  This is a three step process:  1) downloading
-the thirdparty libraries; 2) building the thirdparty
-libraries; and 3) compiling the final ALE project.  To start,
-create seperate build directories as follows:
+This software has been approved for open source release and has
+been assigned **LA-CC-16-076**.
 
-    mkdir build          # main build directory
-    mkdir -p build/files # thirdparty tarball directory
-    mkdir -p build/tpl   # thirdparty build directory
-    mkdir -p build/ale   # ale build directory
-    ls build
-    $ ale files tpl 
+# Copyright
 
+Copyright (c) 2016, Los Alamos National Security, LLC
+All rights reserved.
 
+Copyright 2016. Los Alamos National Security, LLC. This software was produced under U.S. Government contract DE-AC52-06NA25396 for Los Alamos National Laboratory (LANL), which is operated by Los Alamos National Security, LLC for the U.S. Department of Energy. The U.S. Government has rights to use, reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR LOS ALAMOS NATIONAL SECURITY, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is modified to produce derivative works, such modified software should be clearly marked, so as not to confuse it with the version available from LANL.
+ 
+Additionally, redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:  
 
-## 1. Obtaining the Thirdparty Libraries (optional)
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
 
-If you already have the necessary libraries in a folder somewhere, you
-can skip this step.  For example, they have already been downloaded
-for you on the LANL machines described in the
-[Simple Installation](#simple) section.  The build system can also
-download them for you.  To download the files to `build/files`
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
 
-    cd build/files
-    TPL_DOWNLOAD_PATH=. <ALE_DIR>/arch/download-tpl.sh
+3. Neither the name of Los Alamos National Security, LLC, Los Alamos National Laboratory, LANL, the U.S. Government, nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 
-
-## 2. Build the Thirdparty Libraries
-
-Build them using the following commands: 
-
-    cd ../tpl
-    TPL_INSTALL_PREFIX=./install TPL_DOWNLOAD_PATH=../files <ALE_DIR>/arch/<MACHINE>/cmake-tpl.sh gcc
-    make -j
-    
-You do not need to provide `TPL_DOWNLOAD_PATH=../files` if you skipped
-the previous step in the advanced installation process.
-
-
-## 2. Build the ALE Project
-
-Now build the final ALE project.  Execute the following:
-
-    cd ../ale
-    TPL_INSTALL_PREFIX=../tpl/install <ALE_DIR>/arch/<MACHINE>/cmake-ale.sh gcc
-    make -j
-    
-You do not have to rebuild the thirdparty libraries if you make
-changes to the ALE source code in `<ALE_DIR>`.  Simply recompile the
-ALE source using the make command:
-
-    cd build/ale
-    make -j
-
-
-
----
-
-# Code Structure
-
-The directory structure is layed out as follows:
-
-```
-root
-├───apps
-│   Applications that make use of the ALE library.
-│
-├───arch
-│   CMake configuration scripts for the overall project.
-│
-├───config
-│   Cinch configuration files.
-│
-├───doc
-│   Project documention.
-│
-├───examples
-│   Example full applications that utilize the fullALE/FlecSI library (not completed yet!).
-│
-├───src
-│   The main ALE project source code to construct the ALE library.
-│
-└───thirdparty
-    CMake configuration scripts for building the thirdparty libraries.
-```
+THIS SOFTWARE IS PROVIDED BY LOS ALAMOS NATIONAL SECURITY, LLC AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LOS ALAMOS NATIONAL SECURITY, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

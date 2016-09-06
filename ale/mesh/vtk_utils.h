@@ -1,23 +1,16 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  // 
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
-/*!
- * \file io_vtk.h
- * \date Initial file creation: Oct 07, 2015
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
+
+
+// user includes
+#include "ale/io/vtk.h"
 
 #ifdef HAVE_VTK
 #  include <vtkCellArray.h>
@@ -35,9 +28,6 @@
 #  include <vtkLongLongArray.h>
 #endif
 
-//! user includes
-#include "ale/io/vtk.h"
-
 
 namespace ale {
 namespace mesh {
@@ -45,10 +35,14 @@ namespace mesh {
 #ifdef HAVE_VTK 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! figure out the vtk array type at compile time
+//! \brief A struct to figure out the vtk array type at compile time.
 ////////////////////////////////////////////////////////////////////////////////
+//! @{
+
+//! \remark Base template.
 template< typename T >
 struct vtk_array_t {};
+
 
 template<>
 struct vtk_array_t<float>
@@ -79,17 +73,20 @@ struct vtk_array_t<long long>
 { 
   using type = vtkLongLongArray;
 };
+//! @}
 
 #endif
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! The vtk types
+//! \brief The vtk real type
 ////////////////////////////////////////////////////////////////////////////////
 using vtkRealType = double;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief convert a burton mesh to a vtk unstructured grid
+//! \param [in] m A mesh to convert to vtk.
+//! \return a VTK mesh object constructed using \a m.
 ////////////////////////////////////////////////////////////////////////////////
 template< typename M >
 static auto to_vtk( M & m ) 
@@ -266,6 +263,8 @@ static auto to_vtk( M & m )
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief convert a vtk unstructured grid to a burton mesh
+//! \param [in] ug  A mesh in VTK's unstructured format.
+//! \return A new mesh of type \a M.
 ////////////////////////////////////////////////////////////////////////////////
 template< typename M >
 static auto to_mesh( vtkUnstructuredGrid* ug ) 

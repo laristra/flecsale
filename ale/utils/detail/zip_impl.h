@@ -1,36 +1,35 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file zip.h
- * 
- * \brief Provides the main implementation for zip.
- *
- * This lets us do something like: for (auto i : zip(a, b, c) )
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+///
+/// \file
+///
+/// \brief Provide a zip-like iterator for range-based fors.
+///
+/// This lets us do something like: for (auto i : zip(a, b, c) )
+///
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-//! user includes
-#include "ale/std/type_traits.h"
+// system includes
+#include <cstddef>
+#include <tuple>
 
 namespace ale {
 namespace utils {
 namespace detail {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! helper for tuple_subset and tuple_tail 
-//! (from http://stackoverflow.com/questions/8569567/get-part-of-stdtuple)
+//! \brief helper for tuple_subset and tuple_tail 
+//!
+//! This is essentially a std::integer_sequence, whith an ability to append
+//! indices statically at compile time.
+//!
+//! \see http://stackoverflow.com/questions/8569567/get-part-of-stdtuple
 ////////////////////////////////////////////////////////////////////////////////
-template <size_t... n>
+template <std::size_t... n>
 struct ct_integers_list {
   template <size_t m>
   struct push_back
@@ -39,22 +38,33 @@ struct ct_integers_list {
   };
 };
 
-template <size_t max>
+////////////////////////////////////////////////////////////////////////////////
+//! \brief A compile time type that provides functionality like std::iota.
+////////////////////////////////////////////////////////////////////////////////
+//! @{
+template <std::size_t max>
 struct ct_iota_1
 {
   using type = typename ct_iota_1<max-1>::type::template push_back<max>::type;
 };
 
+//! \remark This ends the recursive expansion.
 template <>
 struct ct_iota_1<0>
 {
   using type = ct_integers_list<>;
 };
+//! @}
 
 ////////////////////////////////////////////////////////////////////////////////
-//! return a subset of a tuple
+//! \brief Return a subset of a tuple.
+//! \param [in] tpl  The tuple to index.
+//! \param [in] ct_integers_list  The compile-time list of indices to extract.
+//! \tparam Tuple The tuple type.
+//! \tparam indices The indices of the tuple to extract.
+//! \return The subset of the original tuple \a tpl.
 ////////////////////////////////////////////////////////////////////////////////
-template <size_t... indices, typename Tuple>
+template <std::size_t... indices, typename Tuple>
 decltype(auto) tuple_subset(Tuple&& tpl, ct_integers_list<indices...>)
 {
   return std::make_tuple(std::get<indices>(std::forward<Tuple>(tpl))...);
@@ -63,7 +73,12 @@ decltype(auto) tuple_subset(Tuple&& tpl, ct_integers_list<indices...>)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! return the tail of a tuple
+//! \brief Return a the tail of a tuple.
+//! \param [in] tpl  The tuple to index.
+//! \param [in] ct_integers_list  The compile-time list of indices to extract.
+//! \tparam Tuple The tuple type.
+//! \tparam indices The indices of the tuple to extract.
+//! \return The subset of the original tuple \a tpl.
 ////////////////////////////////////////////////////////////////////////////////
 template <typename Head, typename... Tail>
 decltype(auto) tuple_tail(const std::tuple<Head, Tail...>& tpl)
@@ -74,8 +89,11 @@ decltype(auto) tuple_tail(const std::tuple<Head, Tail...>& tpl)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! increment every element in a tuple (that is referenced)
+//! \brief increment every element in a tuple (that is referenced)
+//! \tparam Tp  The tuple types.
+//! \param [in] t  The tuple to increment.
 ////////////////////////////////////////////////////////////////////////////////
+//! @{
 template<std::size_t I = 0, typename... Tp>
 typename std::enable_if<I == sizeof...(Tp), void>::type
 increment(std::tuple<Tp...>& t)
@@ -88,10 +106,15 @@ increment(std::tuple<Tp...>& t)
   std::get<I>(t)++ ;
   increment<I + 1, Tp...>(t);
 }
+//! @}
 
 ////////////////////////////////////////////////////////////////////////////////
-//! check equality of a tuple
+//! \brief check inequality of a tuple
+//! \param [in] t1,t2 The tuples to check inequality.
+//! \tparam T1,T2 The tuple types.
+//! \return true if the \a t1 and \a t2 are not equal.
 ////////////////////////////////////////////////////////////////////////////////
+//! @{
 template<typename T1>
 bool not_equal_tuples( const std::tuple<T1>& t1,  const std::tuple<T1>& t2 )
 {
@@ -107,10 +130,15 @@ std::enable_if_t<(sizeof...(Ts) > 0), bool> not_equal_tuples(
     (std::get<0>(t1) != std::get<0>(t2)) && 
     not_equal_tuples( tuple_tail(t1), tuple_tail(t2) );
 }
+//! @}
 
 ////////////////////////////////////////////////////////////////////////////////
-//! check equality of a tuple
+//! \brief check equality of a tuple
+//! \param [in] t1,t2 The tuples to check equality.
+//! \tparam T1,T2 The tuple types.
+//! \return true if the \a t1 and \a t2 are equal.
 ////////////////////////////////////////////////////////////////////////////////
+//! @{
 template<typename T1>
 bool equal_tuples( const std::tuple<T1>& t1,  const std::tuple<T1>& t2 )
 {
@@ -126,19 +154,26 @@ std::enable_if_t<(sizeof...(Ts) > 0), bool> equal_tuples(
     (std::get<0>(t1) == std::get<0>(t2)) && 
     equal_tuples( tuple_tail(t1), tuple_tail(t2) );
 }
+//! @}
 
 ////////////////////////////////////////////////////////////////////////////////
-//! dereference a subset of elements of a tuple (dereferencing the iterators)
+//! \brief dereference a subset of elements of a tuple (dereferencing the 
+//!        iterators)
+//! \param [in] t1 The tuple to dereference
+//! \param [in] ct_integers_list  The compile list of indidces
+//! \return A tuple of dereferenced objects constructed from \t1 
 ////////////////////////////////////////////////////////////////////////////////
-template <size_t... indices, typename Tuple>
+template <std::size_t... indices, typename Tuple>
 decltype(auto) dereference_subset(Tuple& tpl, ct_integers_list<indices...>)
 {
   return std::tie(*std::get<indices-1>(tpl)...);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! dereference every element of a tuple (applying operator* to each
-//! element, and returning the tuple)
+//! \brief dereference every element of a tuple  (applying operator* to 
+//!        each element, and returning the tuple)
+//! \param [in] t1 The tuple to dereference
+//! \return A tuple of dereferenced objects constructed from \t1 
 ////////////////////////////////////////////////////////////////////////////////
 template<typename... Ts>
 decltype(auto) dereference_tuple(std::tuple<Ts...>& t1)
@@ -148,22 +183,19 @@ decltype(auto) dereference_tuple(std::tuple<Ts...>& t1)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! a reference remover helper template from cppreference.com: 
+//! \brief a struct to get the value type of a referenced or unreferenced object
 ////////////////////////////////////////////////////////////////////////////////
-template< class T >
-using remove_reference_t = typename std::remove_reference<T>::type;
-
-
-////////////////////////////////////////////////////////////////////////////////
-//! a struct to get the value type of a referenced or unreferenced object
-////////////////////////////////////////////////////////////////////////////////
+//! @{
 template <class T, class Enable = void>
 struct value_type
 { };
 
+//! \remark This version gets used if \a T is not a reference
 template <class T>
-struct value_type< T, 
-                   typename std::enable_if< !std::is_reference<T>::value >::type >
+struct value_type< 
+  T, 
+  typename std::enable_if< !std::is_reference<T>::value >::type 
+>
 {
   // use this to use by value, but i dont like that
   // using type = typename T::value_type;
@@ -172,20 +204,25 @@ struct value_type< T,
   using type = typename T::value_type&;
 };
 
-
+//! \remark This version gets used if \a T is a reference
 template <class T>
-struct value_type< T, 
-                   typename std::enable_if< std::is_reference<T>::value >::type >
+struct value_type< 
+  T, 
+  typename std::enable_if< std::is_reference<T>::value >::type 
+>
 {
-  using type =  typename remove_reference_t<T>::value_type&;
+  using type =  typename std::remove_reference_t<T>::value_type&;
 };
 
+//! \brief Converts to the resulting referenced value type
 template< class T >
 using value_type_t = typename value_type<T>::type;
+//! @}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! the zipper class with iterator
+//! \brief the zipper class with iterator
+//! \tparam T1,Ts  The types to zip together.
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T1, typename... Ts >
 class zipper
@@ -196,12 +233,12 @@ public:
                                   std::tuple<value_type_t<T1>, value_type_t<Ts>...> >
   {
   protected:
-    std::tuple<typename remove_reference_t<T1>::iterator, 
-               typename remove_reference_t<Ts>::iterator...> current;
+    std::tuple<typename std::remove_reference_t<T1>::iterator, 
+               typename std::remove_reference_t<Ts>::iterator...> current;
   public:
 
-    explicit iterator(  typename remove_reference_t<T1>::iterator s1, 
-                        typename remove_reference_t<Ts>::iterator... s2 ) : 
+    explicit iterator(  typename std::remove_reference_t<T1>::iterator s1, 
+                        typename std::remove_reference_t<Ts>::iterator... s2 ) : 
       current(s1, s2...) {};
 
     iterator( const iterator& rhs ) :  current(rhs.current) {};
@@ -258,28 +295,6 @@ public:
   iterator end_;
 };
 
-
-////////////////////////////////////////////////////////////////////////////////
-//! from cppreference.com: 
-////////////////////////////////////////////////////////////////////////////////
-template <class T>
-struct special_decay
-{
-  using type = typename std::decay<T>::type;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-//! allows the use of references:
-////////////////////////////////////////////////////////////////////////////////
-template <class T>
-struct special_decay<std::reference_wrapper<T>>
-{
-  using type = T&;
-};
-
-template <class T>
-using special_decay_t = typename special_decay<T>::type;
-
-} // namespace
+} // namespace detail
 } // namespace
 } // namespace

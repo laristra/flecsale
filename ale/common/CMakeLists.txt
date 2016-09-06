@@ -1,6 +1,6 @@
 #~----------------------------------------------------------------------------~#
-# Copyright (c) 2014 Los Alamos National Security, LLC
-# All rights reserved.
+# Copyright (c) 2016 Los Alamos National Laboratory, LLC
+# All rights reserved
 #~----------------------------------------------------------------------------~#
 
 set(common_HEADERS
@@ -22,8 +22,3 @@ set(common_HEADERS
 #    THREADS 1 2 4
 #  )
 #endif(ENABLE_UNIT_TESTS)
-
-#----------------------------------------------------------------------------~-#
-# Formatting options for vim.
-# vim: set tabstop=2 shiftwidth=2 expandtab :
-#----------------------------------------------------------------------------~-#

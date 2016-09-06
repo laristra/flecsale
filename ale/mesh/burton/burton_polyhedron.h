@@ -1,25 +1,15 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  //
- *
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
-/*!
- * \file burton_entity_types.h
- * \authors bergen
- * \date Initial file creation: Nov 15, 2015
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Defines polyhedral elements for the burton_mesh_t class.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/geom/shapes/polyhedron.h"
 #include "ale/mesh/burton/burton_element.h"
 
@@ -28,10 +18,8 @@ namespace ale {
 namespace mesh {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_polyhedron_t burton_entity_types.h
-//!
 //! \brief The burton_polyhedron_t type provides a derived instance of
-//!   burton_cell_t for 2D polyhedron cells.
+//!   burton_cell_t for 3D polyhedron cells.
 ////////////////////////////////////////////////////////////////////////////////
 class burton_polyhedron_t : public burton_element_t<3,3>
 {
@@ -70,8 +58,8 @@ public:
   real_t volume() const override;
 
   //! the cell type
-  geom::geometric_shapes_t type() const override 
-  { return geom::polyhedron<point_t>::shape; };
+  geom::shapes::geometric_shapes_t type() const override 
+  { return geom::shapes::polyhedron<point_t>::shape; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_polyhedron_cell_t.
@@ -145,7 +133,7 @@ public:
     return std::vector<size_t>( num_edges, 2 );
 
       
-  } // create_entities
+  }
 
   //----------------------------------------------------------------------------
   // \brief create_bound_entities function for burton_polyhedron_cell_t.
@@ -311,7 +299,7 @@ public:
     default:
       raise_runtime_error("Unknown bound entity type");
     } // switch
-  } // create_bound_entities
+  }
 
 
   //============================================================================

@@ -1,26 +1,17 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file area.h
- * 
- * \brief Evaluate the area of geometric entities.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Evaluate the area of geometric entities.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
 // user includes
 #include "ale/std/type_traits.h"
 #include "ale/utils/type_traits.h"
-#include "detail/area.h"
+#include "detail/area_impl.h"
 
 namespace ale {
 namespace geom {

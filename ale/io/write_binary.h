@@ -1,10 +1,14 @@
-/////////////////////////////////////////////////////////////////////
-/// \file write_binary.h
+/*~-------------------------------------------------------------------------~~*
+ * Copyright (c) 2016 Los Alamos National Laboratory, LLC
+ * All rights reserved
+ *~-------------------------------------------------------------------------~~*/
+////////////////////////////////////////////////////////////////////////////////
 ///
-/// Utilities for writing binary files
+/// \file
 ///
-/// \date Wednesday, March 14 2012
-/////////////////////////////////////////////////////////////////////
+/// \brief Utilities for writing binary files.
+///
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
@@ -15,32 +19,48 @@
 namespace ale {
 namespace io {
 
-//! data types
+// data types
 using int32 = int;
 using int64 = long;
 using float32 = float;
 using float64 = double;
 
-/*! *****************************************************************
- * Determine endienness
- ********************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Determine endienness.
+/// \return Return true if machine is big endian.
+////////////////////////////////////////////////////////////////////////////////
 inline bool isBigEndian(void) {
   static unsigned long x(1);
   static bool result(reinterpret_cast<unsigned char*>(&x)[0] == 0);
   return result;
 }
 
-/*! *****************************************************************
- * The main binary writing functions
- ********************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Write data in binary to a stream.
+/// \param [in,out] file  The file stream.
+/// \param [in]  buffer  The buffer to write.
+/// \tparam T  The type of the buffer.
+////////////////////////////////////////////////////////////////////////////////
 template <class T> 
 inline void WriteBinary(std::ostream &file, T buffer) {
   file.write(reinterpret_cast<char*>(&buffer), sizeof(T));
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+/// \defgroup WriteBinarySwap A group of functions to write binary data.
+/// \brief Write data in binary to a stream, swapping endienness.
+/// \param [in,out] file  The file stream.
+/// \param [in]  buffer  The buffer to write.
+/// \tparam T  The type of the buffer.
+////////////////////////////////////////////////////////////////////////////////
+///@{
+
+/// \brief This is the base template.
 template <class T> 
 inline void WriteBinarySwap(std::ofstream &file, T buffer) {};
 
+/// \brief This is a specialization for 32-bit integers.
 template <>
 inline void WriteBinarySwap(std::ofstream &file, int32 buffer) 
 { 
@@ -59,6 +79,7 @@ inline void WriteBinarySwap(std::ofstream &file, int32 buffer)
   file.write(out.c, sizeof(int32));
 }
 
+/// \brief This is a specialization for 64-bit integers.
 template<>
 inline void WriteBinarySwap(std::ofstream &file, int64 buffer) 
 { 
@@ -81,6 +102,7 @@ inline void WriteBinarySwap(std::ofstream &file, int64 buffer)
   file.write(out.c, sizeof(int64));
 }
 
+/// \brief This is a specialization for 32-bit floats.
 template<>
 inline void WriteBinarySwap(std::ofstream &file, float32 buffer) 
 { 
@@ -99,6 +121,7 @@ inline void WriteBinarySwap(std::ofstream &file, float32 buffer)
   file.write(out.c, sizeof(float32));
 }
 
+/// \brief This is a specialization for 64-bit floats.
 template<>
 inline void WriteBinarySwap(std::ofstream &file, float64 buffer) 
 { 
@@ -120,8 +143,14 @@ inline void WriteBinarySwap(std::ofstream &file, float64 buffer)
   
   file.write(out.c, sizeof(float64));
 }
+///@}
 
 
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Write string data in binary to a stream.
+/// \param [in,out] file  The file stream.
+/// \param [in]  S  The buffer to write.
+////////////////////////////////////////////////////////////////////////////////
 inline void WriteString(std::ofstream &file, const char *S) {
   int L = 0;
   while (S[L] != '\0')

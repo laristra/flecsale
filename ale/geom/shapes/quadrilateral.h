@@ -1,28 +1,20 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file quadrilateral.h
- * 
- * \brief Some utility functions for quadrilaterals.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Some utility functions for quadrilaterals.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/geom/shapes/geometric_shapes.h"
 #include "ale/geom/shapes/polygon.h"
 
 namespace ale {
 namespace geom {
+namespace shapes {
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief the quadrilateral class
@@ -33,7 +25,7 @@ template<std::size_t N>
 struct quadrilateral {};
 
 ////////////////////////////////////////////////////////////////////////////////
-//! the quadrilateral class
+//! \brief the quadrilateral class
 //! \remark this is the 2D specialization
 ////////////////////////////////////////////////////////////////////////////////
 template<>
@@ -182,6 +174,6 @@ struct quadrilateral<3> {
     
 };
 
-
+} // namespace shapes
 } // namespace geom
 } // namespace ale

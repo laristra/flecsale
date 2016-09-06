@@ -1,13 +1,4 @@
 #~----------------------------------------------------------------------------~#
-#  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
-# /@@/////  /@@          @@////@@ @@////// /@@
-# /@@       /@@  @@@@@  @@    // /@@       /@@
-# /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
-# /@@////   /@@/@@@@@@@/@@       ////////@@/@@
-# /@@       /@@/@@//// //@@    @@       /@@/@@
-# /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
-# //       ///  //////   //////  ////////  // 
-# 
 # Copyright (c) 2016 Los Alamos National Laboratory, LLC
 # All rights reserved
 #~----------------------------------------------------------------------------~#
@@ -40,7 +31,7 @@ set(mesh_HEADERS
   burton/burton_polyhedron.h
 
   factory.h
-  voronoi.h  detail/voronoi.h
+  voronoi.h  detail/voronoi_impl.h
   vtk_utils.h
 
   PARENT_SCOPE
@@ -50,7 +41,6 @@ set(mesh_HEADERS
 set(mesh_SOURCES
   burton/burton_element.cc
   burton/burton_hexahedron.cc
-  burton/burton_io_exodus.cc
   burton/burton_polygon.cc
   burton/burton_polyhedron.cc
   burton/burton_quadrilateral.cc
@@ -104,8 +94,3 @@ cinch_add_unit(mesh
       ${DATA_DIR}/meshes/3d/voro/sedov-0_05cm.exo
     LIBRARIES ${ALE_LIBRARIES}
 )
-
-#~---------------------------------------------------------------------------~-#
-# Formatting options
-# vim: set tabstop=2 shiftwidth=2 expandtab :
-#~---------------------------------------------------------------------------~-#

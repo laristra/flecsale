@@ -1,27 +1,21 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  // 
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
-/*!
- * \file io_vtm.h
- * \date Initial file creation: Oct 07, 2015
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief  Provides functionality for writing vtm files.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
-//! system includes
-#include <cstring>
-#include <fstream>
+// user includes
+#include "flecsi/io/io_base.h"
+#include "ale/mesh/burton/burton_mesh.h"
+#ifdef HAVE_VTK
+#include "ale/mesh/vtk_utils.h"
+#endif
+#include "ale/utils/errors.h"
 
 // vtk doesnt like double-precision
 #ifdef DOUBLE_PRECISION
@@ -41,24 +35,16 @@
 #  define DOUBLE_PRECISION
 #endif
 
-//! user includes
-#include "flecsi/io/io_base.h"
-#include "ale/mesh/burton/burton_mesh.h"
-#ifdef HAVE_VTK
-#include "ale/mesh/vtk_utils.h"
-#endif
-#include "ale/utils/errors.h"
+// system includes
+#include <cstring>
+#include <fstream>
 
 
 namespace ale {
 namespace mesh {
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \class io_vtm_t io_vtm.h
-/// \brief io_vtm_t provides a derived type of io_base.h and registrations
-///   of the vtm file extensions.
-///
-/// \tparam mesh_t Mesh to template io_base_t on.
+/// \brief This is the mesh reader and writer based on the vtm format.
 ////////////////////////////////////////////////////////////////////////////////
 struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
@@ -66,7 +52,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
   burton_io_vtm_t() {}
 
   //============================================================================
-  //! Implementation of vtm mesh write for burton specialization.
+  //! \brief Implementation of vtm mesh write for burton specialization.
   //!
   //! \param[in] name Write burton mesh \e m to \e name.
   //! \param[in] m Burton mesh to write to \e name.
@@ -304,16 +290,15 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 #endif
 
 
-  } // io_vtm_t::write
+  }
 
   //============================================================================
-  //! Implementation of vtu mesh read for burton specialization.
+  //! \brief Implementation of vtu mesh read for burton specialization.
   //!
   //! \param[in] name Read burton mesh \e m to \e name.
   //! \param[in] m Burton mesh to Read to \e name.
   //!
   //! \return vtu error code. 0 on success.
-  //!
   //============================================================================
   int32_t read( const std::string &name, burton_mesh_2d_t &m) override
   {
@@ -577,8 +562,3 @@ static bool burton_vtm_dat_registered =
 
 } // namespace mesh
 } // namespace ale
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

@@ -1,25 +1,19 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@ @@       @@@@@@@@ @@     @@ @@
- ale/ale/@@    ale/ale//@@   @@ /@@
- * /@@      /@@      /@@       //@@ @@  /@@
- * /@@@@@@@ /@@      /@@@@@@@   //@@@   /@@
- ale/ale/@@    ale////     @@/@@  /@@
- * /@@      /@@      /@@        @@ //@@ /@@
- * /@@      /@@@@@@@@/@@@@@@@@ @@  ale/@@
- * //     ale/ale/ale// //   ale// 
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+////////////////////////////////////////////////////////////////////////////////
+
+// user includes
+#include "ale/utils/tuple_for_each.h"
+
 
 // system includes
 #include <cinchtest.h>
 #include <iostream>
 #include <string>
-
-// user includes
-#include "ale/utils/tuple_for_each.h"
-
 
 // using declarations
 using std::cout;
@@ -39,10 +33,4 @@ TEST(tuple_for_each, simple) {
                     cout << tup << endl; 
                   } );
 }
-
-
-/*~------------------------------------------------------------------------~--*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~------------------------------------------------------------------------~--*/
 

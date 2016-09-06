@@ -1,6 +1,6 @@
 #~----------------------------------------------------------------------------~#
-# Copyright (c) 2014 Los Alamos National Security, LLC
-# All rights reserved.
+# Copyright (c) 2016 Los Alamos National Laboratory, LLC
+# All rights reserved
 #~----------------------------------------------------------------------------~#
 
 set(eos_HEADERS
@@ -16,8 +16,3 @@ set(eos_HEADERS
 cinch_add_unit( eos
   SOURCES test/ideal_gas.cc
 )
-
-#----------------------------------------------------------------------------~-#
-# Formatting options for vim.
-# vim: set tabstop=2 shiftwidth=2 expandtab :
-#----------------------------------------------------------------------------~-#

@@ -1,35 +1,28 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file check_types.h
- * 
- * \brief Statically check if all arguments are of the same type.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Some utilities to extend C++'s type_traits library.
+////////////////////////////////////////////////////////////////////////////////
+
 #pragma once
 
-// system inculdes
-#include <type_traits>
-
 // user includes
-#include "detail/type_traits.h"
+#include "detail/type_traits_impl.h"
 
+// system inculdes
+#include <iterator>
+#include <type_traits>
+#include <utility>
 
 namespace ale {
 namespace utils {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Test to see if all variadic template arguments are of type Target
+//! \brief Test to see if all variadic template arguments Ts are of type Target.
 ////////////////////////////////////////////////////////////////////////////////
 template<typename Target, typename... Ts>
 using are_type_t = detail::and_< 
@@ -38,13 +31,13 @@ using are_type_t = detail::and_<
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief check if a particular type is an iterator
+//! \brief Check if a particular type T is an iterator.
 ////////////////////////////////////////////////////////////////////////////////
-
 template <typename T>
 struct is_iterator {
+  //! \brief This function will get always get instantiated.
   static char test(...);
-
+  //! \brief Use SFINAE to create this function if T is an iterator.
   template <typename U,
             typename=typename std::iterator_traits<U>::difference_type,
             typename=typename std::iterator_traits<U>::pointer,
@@ -52,70 +45,49 @@ struct is_iterator {
             typename=typename std::iterator_traits<U>::value_type,
             typename=typename std::iterator_traits<U>::iterator_category
   > static long test(U&&);
-
+  //! \breif True if T is an iterator and test(U) function exists.
   constexpr static bool value = std::is_same<decltype(test(std::declval<T>())),long>::value;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//! \brief helper function for checking if iterator
-////////////////////////////////////////////////////////////////////////////////
+//! \brief Equal to true if T is an iterator.
 template< typename T >
 constexpr bool is_iterator_v = is_iterator<T>::value;
 
+
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief check if a particular type is callable
+//! \brief Check if a particular type T is callable.
 ////////////////////////////////////////////////////////////////////////////////
-
-template<typename T>
-struct is_callable_impl {
-private:
-  typedef char(&yes)[1];
-  typedef char(&no)[2];
-
-  struct Fallback { void operator()(); };
-  struct Derived : T, Fallback { };
-
-  template<typename U, U> struct Check;
-
-  template<typename>
-  static yes test(...);
-
-  template<typename C>
-  static no test(Check<void (Fallback::*)(), &C::operator()>*);
-
-public:
-  static const bool value = sizeof(test<Derived>(0)) == sizeof(yes);
-};
-
 template<typename T>
 struct is_callable : std::conditional<
   std::is_class<T>::value,
-  is_callable_impl<T>,
+  detail::is_callable<T>,
   std::false_type 
 >::type
 { };
 
-////////////////////////////////////////////////////////////////////////////////
-//! \brief helper function for checking if callable
-////////////////////////////////////////////////////////////////////////////////
+//! \brief Equal to true if T is callable.
 template< typename T >
 constexpr bool is_callable_v = is_callable<T>::value;
 
+
+
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief check if a particular type is a container
+//! \brief Check if a particular type T is a container.
+//! \remark If T is not, this version is instantiated.
+//! \remark This version adheres to the strict requirements of an STL container.
 ////////////////////////////////////////////////////////////////////////////////
 template<typename T, typename _ = void>
 struct is_container : std::false_type {};
 
-template<typename... Ts>
-struct is_container_helper {};
-
+//! \brief Check if a particular type T is a container.
+//! \remark If T is, this version is instantiated.
+//! \remark This version adheres to the strict requirements of an STL container.
 template<typename T>
 struct is_container<
   T,
   std::conditional_t<
     false,
-    is_container_helper<
+    detail::is_container<
       typename T::value_type,
       typename T::size_type,
       typename T::allocator_type,
@@ -132,37 +104,101 @@ struct is_container<
   >
 > : public std::true_type {};
 
-////////////////////////////////////////////////////////////////////////////////
-//! \brief helper function for checking if container
-////////////////////////////////////////////////////////////////////////////////
+//! \brief Equal to true if T is a container.
+//! \remark This version adheres to the strict requirements of an STL container.
 template< typename T >
 constexpr bool is_container_v = is_container<T>::value;
 
+
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief extract the extents from an array
+/// \brief A Helper to identify if this is a container
+//! \remark If T is, this version is instantiated.
+//! \remark This version uses to a reduced set of requirements for a container.
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T, std::size_t... I >
-constexpr auto extract_extents_helper( std::index_sequence<I...> )
-{
-  constexpr std::size_t extents[ std::rank<T>::value ] = 
-    { std::extent<T, I>::value... };
-  return  extents;
-};
+template<typename T, typename _ = void>
+struct is_minimal_container : std::false_type {};
+
+/// \brief A Helper to identify if this is a container
+//! \remark If T is, this version is instantiated.
+//! \remark This version uses to a reduced set of requirements for a container.
+template<typename T>
+struct is_minimal_container<
+  T,
+  std::conditional_t<
+    false,
+    is_container<
+      decltype(std::declval<T>().size()),
+      decltype(std::declval<T>().data())
+    >,
+    void
+  >
+> : public std::true_type {};
+
+//! \brief Equal to true if T is a container.
+//! \remark This version uses to a reduced set of requirements for a container.
+template< typename T >
+constexpr bool is_minimal_container_v = is_minimal_container<T>::value;
 
 
+////////////////////////////////////////////////////////////////////////////////    
+/// \brief A helper to identify if all types Ts are integral.
+//! \remark If they are not, this version is instantiated.
+////////////////////////////////////////////////////////////////////////////////    
+template <typename... Ts>
+class are_integral : public std::integral_constant<bool, true>
+{};
+
+/// \brief A helper to identify if all types Ts are integral.
+//! \remark If they are, this version is instantiated.
+template <typename T, typename... Ts>
+class are_integral<T, Ts...>
+  : public std::integral_constant <
+      bool,
+      std::is_integral<T>::value && are_integral<Ts...>::value
+    >
+{};
+
+//! Equal to true if Ts are all integral types.
+template< typename... Ts >
+constexpr bool are_integral_v = are_integral<Ts...>::value;
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Extract the extents from an array of type T.
+////////////////////////////////////////////////////////////////////////////////
 template< typename T >
 constexpr auto & extract_extents() 
 {
   using Indices = std::make_index_sequence< std::rank<T>::value >;
-  return extract_extents_helper< T >( Indices{} );
+  return detail::extract_extents_helper< T >( Indices{} );
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief A special version of decay that allows the use of references
+//! \see cppreference.com
+//! \remark This is the general template version.
+////////////////////////////////////////////////////////////////////////////////
+template <class T>
+struct special_decay
+{
+  using type = typename std::decay<T>::type;
+};
+
+//! \brief A special version of decay that allows the use of references
+//! \see cppreference.com
+//! \remark This is the specialized version for references.
+template <class T>
+struct special_decay<std::reference_wrapper<T>>
+{
+  using type = T&;
+};
+
+//! \brief Converts to a decayed reference to an object of type T.
+template <class T>
+using special_decay_t = typename special_decay<T>::type;
+
 } // namespace
 } // namespace
 
-
-
-/*~------------------------------------------------------------------------~--*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~------------------------------------------------------------------------~--*/

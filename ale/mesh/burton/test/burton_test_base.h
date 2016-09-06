@@ -1,27 +1,18 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file burton_test_base.h
- * 
- * \brief Defines a base test fixture.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file burton_test_base.h
+/// \brief Defines a base test fixture.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-//! system includes
-#include <cinchtest.h>
-
-//! user includes
+// user includes
 #include "ale/mesh/burton/burton.h"
+
+// system includes
+#include <cinchtest.h>
 
 //! \brief the mesh type
 using mesh_2d_t   = ale::mesh::burton_mesh_2d_t;

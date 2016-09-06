@@ -1,25 +1,19 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file zip.h
- * 
- * \brief Provide a zip-like iterator for range-based fors.
- *
- * This lets us do something like: for (auto i : zip(a, b, c) )
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+///
+/// \file
+///
+/// \brief Provide a zip-like iterator for range-based fors.
+///
+/// This lets us do something like: for (auto i : zip(a, b, c) )
+///
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-//! \brief uncomment to use boost's zip iterator
+// uncomment to use boost's zip iterator
 //#define USE_BOOST_ZIP
 
 #ifdef USE_BOOST_ZIP
@@ -30,13 +24,15 @@
 
 #else
 
+// user includes
+#include "detail/zip_impl.h"
+#include "ale/utils/type_traits.h"
+
 // system includes
+#  include <cassert>
 #  include <iterator>
 #  include <tuple>
 #  include <utility>
-
-// user includes
-#  include "detail/zip.h"
 
 #endif
 
@@ -45,7 +41,11 @@ namespace ale {
 namespace utils {
 
 
+//##############################################################################
+//##############################################################################
 #ifdef USE_BOOST_ZIP
+//##############################################################################
+//##############################################################################
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -60,10 +60,11 @@ using boost::get;
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Combine iterators together using boost
 //!
-//! \tparam Types   a variadic template parameter for the different container 
-//!                 types
+//! \tparam T   a variadic template parameter for the different container 
+//!             types
 //!
-//! \param [in,out] args  The different list containters to zip together
+//! \param [in,out] containers  The different list containters to zip together.
+//! \return An iterator range.
 ////////////////////////////////////////////////////////////////////////////////
 template <typename... T>
 decltype(auto) zip(T&&... containers)
@@ -89,8 +90,11 @@ decltype(auto) zip(T&&... containers)
 // delete from scope
 #undef USE_BOOST_ZIP
 
-#else 
-
+//##############################################################################
+//##############################################################################
+#else // USE_BOOST_ZIP
+//##############################################################################
+//##############################################################################
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief put this get in the open
@@ -112,6 +116,7 @@ using std::get;
 //!                 types
 //!
 //! \param [in,out] args  The different list containters to zip together
+//! \return A new iterator.
 ////////////////////////////////////////////////////////////////////////////////
 template <class... Types>
 decltype(auto) zip(Types&&... args)
@@ -131,7 +136,11 @@ decltype(auto) zip(Types&&... args)
   return zipper<special_decay_t<Types>...>(std::forward<Types>(args)...);
 }
 
-#endif
+//##############################################################################
+//##############################################################################
+#endif // USE_BOOST_ZIP
+//##############################################################################
+//##############################################################################
 
 } // namespace
 } // namespace

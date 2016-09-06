@@ -1,27 +1,18 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file centroid.h
- * 
- * \brief Evaluate the centroid of a list of points.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Evaluate the centroid of a list of points.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
 
 // user includes
 #include "ale/std/type_traits.h"
 #include "ale/utils/type_traits.h"
-#include "detail/centroid.h"
+#include "detail/centroid_impl.h"
 
 
 namespace ale {

@@ -1,20 +1,11 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file burton_test.h
- * 
- * \brief Defines a test fixture.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file burton_test.h
+/// \brief Defines a test fixture.
+////////////////////////////////////////////////////////////////////////////////
 
 //! test include
 #include "burton_test_base.h"
@@ -84,7 +75,7 @@ public:
 
 
   // a 3d to 1d indexing function for the vertices
-  auto vert_index(auto i, auto j, auto k) 
+  auto vert_index(size_t i, size_t j, size_t k) 
   {
     return i*vert_stride_x +  j*vert_stride_y +  k*vert_stride_z;
   };
@@ -104,17 +95,17 @@ public:
   static constexpr auto face_z_stride_z = face_z_stride_y * num_cells_y;
 
   // a 3d to 1d indexing function for the faces
-  auto face_x_index(auto i, auto j, auto k) 
+  auto face_x_index(size_t i, size_t j, size_t k) 
   {
     return i*face_x_stride_x +  j*face_x_stride_y +  k*face_x_stride_z;
   };
 
-  auto face_y_index(auto i, auto j, auto k) 
+  auto face_y_index(size_t i, size_t j, size_t k) 
   {
     return i*face_y_stride_x +  j*face_y_stride_y +  k*face_y_stride_z;
   };
 
-  auto face_z_index(auto i, auto j, auto k) 
+  auto face_z_index(size_t i, size_t j, size_t k) 
   {
     return i*face_z_stride_x +  j*face_z_stride_y +  k*face_z_stride_z;
   };

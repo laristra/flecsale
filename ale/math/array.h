@@ -1,33 +1,24 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file array.h
- * 
- * \brief Provides a dimensioned array which functions as a vector.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Provides a dimensioned array which functions as a vector.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
-
-// system includes
-#include <algorithm>
-#include <array>
-#include <cassert>
-#include <iostream>
 
 // user includes
 #include "ale/std/type_traits.h"
 #include "ale/utils/type_traits.h"
 #include "ale/utils/template_helpers.h"
 #include "ale/utils/tuple_visit.h"
+
+// system includes
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <iostream>
 
 namespace ale {
 namespace math {
@@ -37,7 +28,7 @@ namespace math {
 //!  contiguous array types that have a specific dimension.
 //!
 //!  \tparam T The type of the array, e.g., P.O.D. type.
-//!  \tparam D The dimension of the array, i.e., the number of elements
+//!  \tparam N The dimension of the array, i.e., the number of elements
 //!    to be stored in the array.
 ////////////////////////////////////////////////////////////////////////////////
 template <typename T, std::size_t N> 
@@ -46,10 +37,9 @@ class array {
 public:
 
   //===========================================================================
-  // Typedefs
+  //! \brief Typedefs
   //===========================================================================
-
-
+  // @{
   using value_type      = T;
   using reference       = T &;
   using pointer         = T *;
@@ -57,33 +47,43 @@ public:
   using const_pointer   = const T *;
   using size_type       = std::size_t;
   using difference_type = std::ptrdiff_t;
-
-  //! iterator support
+  
+  //! \brief For iterator support.
+  //! @{
   using iterator        = pointer;
   using const_iterator  = const_pointer;
-  //! reverse iterator support
+  //! @}
+
+  //! \brief For reverse iterator support.
+  //! @{
   using reverse_iterator       = std::reverse_iterator<iterator>;
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+  //! @}
 
-  //! array size
+  //! \brief The array size.
   static constexpr size_type length  = N;
+  //! @}
 
 private:
 
   //===========================================================================
-  // Private Data
+  //! \brief Private Data
   //===========================================================================
+  //! @{
 
   //! \brief The main data container, which is just a std::array.
   std::array<T, length > elems_;
 
+  //! @}
+
 public:
 
   //===========================================================================
-  // Constructors / Destructors
+  //! \brief Constructors / Destructors
   //===========================================================================
+  //! @{
 
-  //! \brief force the default constructor
+  //! \brief Force the default constructor.
   constexpr array() noexcept = default;
 
   //! \brief force the default copy constructor
@@ -97,8 +97,8 @@ public:
     std::copy(rhs.begin(),rhs.end(), begin());    
   }
 
-  //! \brief Constructor with initializer list
-  //! \param[in] list the initializer list of values
+  //! \brief Constructor with variadic arguments.
+  //! \param[in] args The individual array values.
   template <
     typename... Args,
     typename = std::enable_if_t< 
@@ -112,7 +112,7 @@ public:
   }
  
   //! \brief Constructor with one value.
-  //! \param[in] val The value to set the array to
+  //! \param[in] val The value to set the array to.
   template < typename T2 >
   constexpr array(const T2 & val)  noexcept : 
   //elems_( utils::fill<length>::apply( static_cast<T>(val) ) )
@@ -121,23 +121,30 @@ public:
     //std::cout << "array (single value constructor)\n";
     //fill( val );
   }
+
+  // @}
    
   //===========================================================================
-  // Iterators
+  //! \brief Iterators.
   //===========================================================================
+  // @{
 
   //! \brief return an iterator to the beginning of the array
+  //! @{
                   iterator  begin()       { return elems_.begin(); }
   constexpr const_iterator  begin() const { return elems_.begin(); }
   constexpr const_iterator cbegin() const { return begin(); }
+  //! @}
         
   //! \brief return an iterator to the end of the array
+  //! @{
                   iterator  end()       { return elems_.end(); }
   constexpr const_iterator  end() const { return elems_.end(); }
   constexpr const_iterator cend() const { return end(); }
 
 
   //! \brief return a reverse iterator to the beginning of the aray
+  //! @{
   reverse_iterator rbegin() 
   { return reverse_iterator(end()); }
   
@@ -146,8 +153,10 @@ public:
   
   const_reverse_iterator crbegin() const 
   { return const_reverse_iterator(end()); }
+  //! @}
 
   //! \brief return a reverse iterator to the end of the aray
+  //! @{
   reverse_iterator rend() 
   { return reverse_iterator(begin()); }
 
@@ -156,12 +165,17 @@ public:
   
   const_reverse_iterator crend() const 
   { return const_reverse_iterator(begin()); }
+  //! @}
  
+  //! @}
+
   //===========================================================================
   // Element Access
   //===========================================================================
 
-  //! \brief return the ith element
+  //! \brief Return the `i`th element.
+  //! \param [in] i  The element to access.
+  //! @{
   reference operator[](size_type i) 
   { 
     assert( i < size() && "out of range" );
@@ -174,7 +188,6 @@ public:
     return elems_[i]; 
   }
 
-  //! \brief return the ith element
   reference operator()(size_type i) 
   { 
     assert( i < size() && "out of range" );
@@ -186,9 +199,11 @@ public:
     assert( i < size() && "out of range" );
     return elems_[i];
   }
+  //! @}
 
-
-  //! \brief at() with range check
+  //! \brief Return the `i`th element with a range check.
+  //! \param [in] i  The element to access.
+  //! @{
   reference at(size_type i) 
   { 
     return i >= size() ? 
@@ -202,32 +217,40 @@ public:
       throw std::out_of_range("array<>: index out of range") : 
       elems_[i];
   }
-    
+  //! @}
+
   //! \brief return the first element
+  //! @{
   reference front() 
   { return elems_[0]; }
         
   const_reference front() const 
   { return elems_[0]; }
+  //! @}
         
   //! \brief return the last element
+  //! @{
   reference back() 
   { return elems_[size()-1]; }
         
   const_reference back() const 
   {  return elems_[size()-1]; }
+  //! @}
 
 
   //  \brief direct access to data (read-only)
+  //! @{
   const T* data() const { return elems_; }
   T* data() { return elems_.data(); }
+  //! @}
 
   // use array as C array (direct read/write access to data)
   T* c_array() { return elems_.data(); }
 
   //===========================================================================
-  // Capacity
+  //! \brief Capacity
   //===========================================================================
+  //! @{
 
   //! \brief return the size
   static constexpr size_type     size() { return length; }
@@ -238,11 +261,13 @@ public:
   
   //! \brief returns the maximum possible number of elements
   static constexpr size_type max_size() { return size(); }
+  //! @}
 
 
   //===========================================================================
-  // operations
+  //! \brief Modifiers
   //===========================================================================
+  //! @{
 
   //  \brief swap contents (note: linear complexity)
   void swap (array& y) 
@@ -271,10 +296,12 @@ public:
     assert( list.size() == size() && "input list size mismatch" );
     assign( list.begin(), list.end() );
   }
+  //! @}
 
   //===========================================================================
-  // Operators
+  //! \brief Operators
   //===========================================================================
+  //! @{
 
   // use std::move
   // http://stackoverflow.com/questions/11726171/numeric-vector-operator-overload-rvalue-reference-parameter
@@ -391,6 +418,8 @@ public:
     std::transform( begin(), end(), tmp.begin(), std::negate<>() );    
     return tmp;
   }
+
+  //! @}
 
 };
 
@@ -645,8 +674,3 @@ auto & operator<<(std::ostream& os, const array<T,N>& a)
 
 } // namespace
 } // namespace
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

@@ -1,29 +1,19 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file vector.cc
- * 
- * \brief Tests related to the vector class.
- *
- ******************************************************************************/
-
-// system includes
-#include <cinchtest.h>
-#include <iostream>
+///////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Tests related to the vector class.
+///////////////////////////////////////////////////////////////////////////////
 
 // user includes
 #include "ale/common/types.h"
 #include "ale/math/tuple.h"
 
+// system includes
+#include <cinchtest.h>
+#include <iostream>
 
 // explicitly use some stuff
 using namespace ale;
@@ -39,7 +29,7 @@ using std_tuple_2d = std::tuple<real_t,real_t>;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the intialization
+//! \brief Test the intialization.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(tuple, init) {
 
@@ -73,7 +63,7 @@ TEST(tuple, init) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the addition
+//! \brief Test the addition of a tuple with one value.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(tuple, addition_1d) {
 
@@ -109,7 +99,7 @@ TEST(tuple, addition_1d) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the addition
+//! \brief Test the addition of a tuple with two values.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(tuple, addition_2d) {
 
@@ -143,7 +133,7 @@ TEST(tuple, addition_2d) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the subtraction
+//! \brief Test the subtraction of a tuple with one value.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(tuple, subtraction_1d) {
 
@@ -180,7 +170,7 @@ TEST(tuple, subtraction_1d) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the subtraction
+//! \brief Test the subtraction of a tuple with two values.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(tuple, subtraction_2d) {
 
@@ -218,7 +208,7 @@ TEST(tuple, subtraction_2d) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the multiplication
+//! \brief Test the multiplication of a tuple with one value.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(tuple, multiply_1d) {
 
@@ -254,7 +244,7 @@ TEST(tuple, multiply_1d) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the multiplication
+//! \brief Test the multiplication of a tuple with two values.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(tuple, multiply_2d) {
 
@@ -292,7 +282,7 @@ TEST(tuple, multiply_2d) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the multiplication
+//! \brief Test the division of a tuple with one value.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(tuple, divide_1d) {
 
@@ -329,7 +319,7 @@ TEST(tuple, divide_1d) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the multiplication
+//! \brief Test the division of a tuple with two values.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(tuple, divide_2d) {
 
@@ -365,9 +355,3 @@ TEST(tuple, divide_2d) {
   ASSERT_TRUE( g == ans ) << " error in operator/ with scalar";
  
 }
-
-
-/*~------------------------------------------------------------------------~--*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~------------------------------------------------------------------------~--*/

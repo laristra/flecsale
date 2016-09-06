@@ -1,27 +1,22 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  // 
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
-/*!
- * \file io_vtk.h
- * \date Initial file creation: Oct 07, 2015
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief This file defines the vtk reader and writer.  
+/// \details There are two versions, one uses the vtk library and the other
+///          uses a native reader.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
-//! system includes
-#include <cstring>
-#include <fstream>
+// user includes
+#include "flecsi/io/io_base.h"
+#include "ale/mesh/burton/burton_mesh.h"
+#include "ale/mesh/vtk_utils.h"
+#include "ale/utils/errors.h"
+
 
 // vtk doesnt like double-precision
 #ifdef DOUBLE_PRECISION
@@ -40,12 +35,9 @@
 #  define DOUBLE_PRECISION
 #endif
 
-
-//! user includes
-#include "flecsi/io/io_base.h"
-#include "ale/mesh/burton/burton_mesh.h"
-#include "ale/mesh/vtk_utils.h"
-#include "ale/utils/errors.h"
+// system includes
+#include <cstring>
+#include <fstream>
 
 
 namespace ale {
@@ -53,11 +45,7 @@ namespace mesh {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \class io_vtk_t io_vtk.h
-/// \brief io_vtk_t provides a derived type of io_base.h and registrations
-///   of the vtk file extensions.
-///
-/// \tparam mesh_t Mesh to template io_base_t on.
+/// \brief This is the mesh reader and writer based on the vtk format.
 ////////////////////////////////////////////////////////////////////////////////
 struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
@@ -68,12 +56,12 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
 
   //============================================================================
-  //! Implementation of vtu mesh write for burton specialization.
+  //! \brief Implementation of vtk mesh write for burton specialization.
   //!
   //! \param[in] name Write burton mesh \e m to \e name.
   //! \param[in] m Burton mesh to write to \e name.
   //!
-  //! \return vtu error code. 0 on success.
+  //! \return error code. 0 on success.
   //!
   //! FIXME: should allow for const mesh_t &
   //!
@@ -99,16 +87,16 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     return 0;
 
 
-  } // io_vtu_t::write
+  }
 
 
   //============================================================================
-  //! Implementation of vtu mesh read for burton specialization.
+  //! \brief Implementation of vtk mesh read for burton specialization.
   //!
   //! \param[in] name Read burton mesh \e m to \e name.
   //! \param[in] m Burton mesh to Read to \e name.
   //!
-  //! \return vtu error code. 0 on success.
+  //! \return error code. 0 on success.
   //!
   //! \remark this uses in vtk library reader
   //============================================================================
@@ -135,7 +123,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 #else
 
   //============================================================================
-  //! Implementation of vtk mesh write for burton specialization.
+  //! \brief Implementation of vtk mesh write for burton specialization.
   //!
   //! \param[in] name Write burton mesh \e m to \e name.
   //! \param[in] m Burton mesh to write to \e name.
@@ -337,7 +325,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 
 
   //============================================================================
-  //! Implementation of vtk mesh read for burton specialization.
+  //! \brief Implementation of vtk mesh read for burton specialization.
   //!
   //! \param[in] name Read burton mesh \e m to \e name.
   //! \param[in] m Burton mesh to Read to \e name.
@@ -354,7 +342,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 #endif // HAVE_VTK
 
   //============================================================================
-  //! Implementation of vtk mesh write for burton specialization.
+  //! \brief Implementation of vtk mesh write for burton specialization.
   //!
   //! \param[in] name Write burton mesh \e m to \e name.
   //! \param[in] m Burton mesh to write to \e name.
@@ -367,7 +355,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
   //============================================================================
   int32_t write( const std::string &name, burton_mesh_2d_t &m ) override
   {
-    write( name, m, true );
+    return write( name, m, true );
   }
 
 }; // struct io_vtk_t
@@ -395,8 +383,3 @@ static bool burton_vtk_dat_registered =
 
 } // namespace mesh
 } // namespace ale
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

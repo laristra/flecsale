@@ -1,23 +1,18 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file lagrange_eqns.h
- * 
- * \brief The desrciption of the euler equations.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+///
+/// \file lagrange_eqns.h
+/// 
+/// \brief The desrciption of the euler equations in a lagrangian reference 
+///        frame.
+///
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/math/tuple.h"
 #include "ale/math/math.h"
 #include "ale/math/vector.h"
@@ -27,7 +22,10 @@ namespace ale {
 namespace eqns {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Specialization of the euler equations
+//! \brief Specialization of the euler equations in a lagrangian reference 
+//!        frame.
+//! \tparam T The real type.
+//! \tparam N The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template<typename T, size_t N>
 struct lagrange_eqns_t {
@@ -39,29 +37,29 @@ public:
   // Typedefs
   //============================================================================
 
-  //! \brief the size type
+  //! \brief The size type.
   using size_t = std::size_t;
 
-  // \brief the real type
+  // \brief The real type.
   using real_t = T;
 
-  //! \brief the vector_type
+  //! \brief The vector type.
   using vector_t = math::vector<real_t,N>;
 
-  //! the number of dimensions
+  //! The number of dimensions.
   static constexpr size_t dimensions = N;
 
-  //! a minimum sound speed
+  //! A minimum sound speed.
   static constexpr real_t min_sound_speed = 1.e-6;
 
   //============================================================================
-  // \brief The equations struct
+  //! \brief The equations struct.
   //============================================================================
   struct equations {
 
-    //! \brief  the type for holding the state data (mass, momentum, and energy)
+    //! \brief  The type for holding the state data (mass, momentum, and energy).
     //! 
-    //! tuple_t is a std::tuple with a real_t for mass, a vector_t for momentum
+    //! data_t is a std::tuple with a real_t for mass, a vector_t for momentum
     //! and a real_t for energy.  This needs to correspond to index
     //! or there may be problems
     using data_t = math::tuple<real_t,vector_t,real_t>;
@@ -81,7 +79,7 @@ public:
   };
 
   //============================================================================
-  // \brief The variables struct
+  //! \brief The variables struct.
   //============================================================================
   struct variables {
 
@@ -113,13 +111,14 @@ public:
     //! \brief the number of variables
     static constexpr std::array< utils::const_string, number() > names = 
       { 
-        utils::const_string{"volume"}, 
-        utils::const_string{"mass"},
-        utils::const_string{"velocity"}, 
-        utils::const_string{"pressure"}, 
-        utils::const_string{"internal_energy"}, 
-        utils::const_string{"temperature"}, 
-        utils::const_string{"sound_speed"}
+        "volume", 
+        "mass",
+        "velocity", 
+        "pressure", 
+        "density",
+        "internal_energy", 
+        "temperature", 
+        "sound_speed"
       };
     
   };
@@ -142,7 +141,7 @@ public:
 
 
   //============================================================================
-  //! \brief accessors for various quantities
+  //! \brief Accessors for various quantities.
   //!
   //! Wrapper functions are only used for accessing either independant or 
   //! derived quantities.  Modifictions of variables should access
@@ -163,42 +162,49 @@ public:
     return get<variables::index::volume>( u ); 
   }
 
+  //! \copydoc volume
   static auto mass( const state_data_t & u )
   { 
     using math::get;
     return get<variables::index::mass>( u ); 
   }
 
+  //! \copydoc volume
   static auto velocity( const state_data_t & u )
   { 
     using math::get;
     return get<variables::index::velocity>( u ); 
   }
 
+  //! \copydoc volume
   static auto pressure(  const state_data_t & u )
   { 
     using math::get;
     return get<variables::index::pressure>( u ); 
   }
 
+  //! \copydoc volume
   static auto density( const state_data_t & u )
   { 
     using math::get;
     return get<variables::index::density>( u ); 
   }
 
+  //! \copydoc volume
   static auto internal_energy( const state_data_t & u )
   { 
     using math::get;
     return get<variables::index::internal_energy>( u ); 
   }
 
+  //! \copydoc volume
   static auto sound_speed( const state_data_t & u )
   { 
     using math::get;
     return get<variables::index::sound_speed>( u ); 
   }
 
+  //! \copydoc volume
   static auto total_energy( const state_data_t & u )
   { 
     using math::abs;
@@ -207,20 +213,24 @@ public:
     return ie + dot_product( vel, vel ) / 2;
   }
 
+  //! \copydoc volume
   static auto impedance( const state_data_t & u )
   { 
     return density(u) * sound_speed(u);
   }
 
+  //! \copydoc volume
   static auto impedance_multiplier( const state_data_t & u )
   { 
+    // FIXME
     return 2.4 / 2;
   }
 
   //============================================================================
-  //! \brief update the state from the pressure
-  //! \param [in,out] u   The state to update
-  //! \param [in]     eos The state to update
+  //! \brief Update the state from the pressure.
+  //! \param [in,out] u   The state to update.
+  //! \param [in]     eos The equation of state object to apply.
+  //! \tparam E  The EOS object type.
   //============================================================================
   template <typename E>
   static void update_state_from_pressure( state_ref_t & u, const E & eos )
@@ -252,9 +262,10 @@ public:
 
 
   //============================================================================
-  //! \brief update the state from the energy
-  //! \param [in,out] u   The state to update
-  //! \param [in]     eos The state to update
+  //! \brief Update the state from the energy.
+  //! \param [in,out] u   The state to update.
+  //! \param [in]     eos The equation of state object to apply.
+  //! \tparam E  The EOS object type.
   //============================================================================
   template <typename E>
   static void update_state_from_energy( state_ref_t & u, const E & eos )
@@ -282,9 +293,9 @@ public:
 
 
   //============================================================================
-  //! \brief apply an update from conservative fluxes
-  //! \param [in,out] u   The state to update
-  //! \param [in]     du  The conservative change in state
+  //! \brief Apply an update from conservative fluxes.
+  //! \param [in,out] u   The state to update.
+  //! \param [in]     du  The conservative change in state.
   //============================================================================
   static void update_state_from_flux( state_ref_t & u, const flux_data_t & du )
   {
@@ -333,9 +344,10 @@ public:
 
 
   //============================================================================
-  //! \brief apply an update from conservative fluxes
-  //! \param [in,out] u   The state to update
-  //! \param [in]     du  The conservative change in state
+  //! \brief Update the volume, and consequentially the density assuming mass
+  //!        remains constant..
+  //! \param [in,out] u   The state to update.
+  //! \param [in]     du  The conservative change in state.
   //============================================================================
   static void update_volume( state_ref_t & u, real_t new_vol )
   {
@@ -358,8 +370,8 @@ public:
 
 
   //============================================================================
-  //! \brief return the volumetric rate of change from the residuals
-  //! \param [in]     du  The conservative change in state
+  //! \brief Return the volumetric rate of change from the residuals.
+  //! \param [in]     du  The conservative change in state.
   //============================================================================
   static auto volumetric_rate_of_change( const flux_data_t & dudt )
   {
@@ -381,9 +393,3 @@ constexpr T lagrange_eqns_t<T,N>::min_sound_speed;
 } // namespace
 } // namespace
 
-
-
-/*~------------------------------------------------------------------------~--*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~------------------------------------------------------------------------~--*/

@@ -1,25 +1,15 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  // 
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
-/*!
- * \file burton_types.h
- * \authors bergen
- * \date Initial file creation: Sep 02, 2015
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file 
+/// \brief Associate the mesh entities with flecsi.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
-//! user incldues
+// user incldues
 #include "ale/mesh/burton/burton_vertex.h"
 #include "ale/mesh/burton/burton_corner.h"
 #include "ale/mesh/burton/burton_element.h"
@@ -41,17 +31,17 @@ namespace mesh {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_mesh_types_t burton_types.h
 //! \brief A collection of type information needed to specialize the flecsi
 //!   low-level mesh infrastructure for ALE methods.
+//! \tparam N  The number of mesh dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 struct burton_mesh_types_t {};
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_mesh_types_t burton_types.h
 //! \brief A collection of type information needed to specialize the flecsi
 //!   low-level mesh infrastructure for ALE methods.
+//! \remark This is the two-dimensional version.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 struct burton_mesh_types_t<2> {
@@ -102,7 +92,6 @@ struct burton_mesh_types_t<2> {
   //============================================================================
 
   //! Definitions of burton mesh entities and their domain.
-  // clang-format off
   using entity_types =
       std::tuple<
         std::pair<flecsi::domain_<0>, vertex_t>,
@@ -145,12 +134,13 @@ struct burton_mesh_types_t<2> {
         std::tuple<flecsi::domain_<1>, flecsi::domain_<1>,  wedge_t,  corner_t>,
         std::tuple<flecsi::domain_<1>, flecsi::domain_<1>,  corner_t, wedge_t>
       >;
-  // clang-format on
 
 
   //============================================================================
-  //! depending upon the dimension/number of verices, create different types 
-  //! of entities
+  //! \brief depending upon the dimension/number of verices, create different 
+  //!   types of entities
+  //! \tparam M The domain index.
+  //! \tparam D The dimensional index.
   //============================================================================
   template<size_t M, size_t D>
   static constexpr 
@@ -182,11 +172,10 @@ struct burton_mesh_types_t<2> {
     }
   }
   
-}; // struct burton_mesh_types_t
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_mesh_types_t burton_types.h
 //! \brief A collection of type information needed to specialize the flecsi
 //!   low-level mesh infrastructure for ALE methods.
 ////////////////////////////////////////////////////////////////////////////////
@@ -239,7 +228,6 @@ struct burton_mesh_types_t<3> {
   //============================================================================
 
   //! Definitions of burton mesh entities and their domain.
-  // clang-format off
   using entity_types =
       std::tuple<
         std::pair<flecsi::domain_<0>, vertex_t>,
@@ -292,13 +280,11 @@ struct burton_mesh_types_t<3> {
         std::tuple<flecsi::domain_<1>, flecsi::domain_<1>,  wedge_t,  corner_t>,
         std::tuple<flecsi::domain_<1>, flecsi::domain_<1>,  corner_t, wedge_t>
       >;
-  // clang-format on
-
+ 
   //============================================================================
-  //! depending upon the dimension/number of verices, create different types 
-  //! of entities
-  //============================================================================
-  
+  //! \brief depending upon the dimension/number of verices, create different 
+  //!   types of face entities
+  //============================================================================  
   static
   mesh_entity_base_t *
   create_face(mesh_topology_base_t* mesh, size_t num_vertices) {
@@ -316,6 +302,12 @@ struct burton_mesh_types_t<3> {
     }
   }
 
+  //============================================================================
+  //! \brief depending upon the dimension/number of verices, create different 
+  //!   types of entities
+  //! \tparam M The domain index.
+  //! \tparam D The dimensional index.
+  //============================================================================
   template<size_t M, size_t D>
   static constexpr
   mesh_entity_base_t *
@@ -348,13 +340,7 @@ struct burton_mesh_types_t<3> {
     }
   }
 
-}; // struct burton_mesh_types_t
+};
 
 } // namespace mesh
 } // namespace ale
-
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

@@ -1,18 +1,9 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  //
- *
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
 
-//! user includes
+// user includes
 #include "ale/mesh/burton/burton_wedge.h"
 #include "ale/mesh/burton/burton_mesh_topology.h"
 
@@ -96,7 +87,7 @@ burton_3d_wedge_t::vector_t burton_3d_wedge_t::facet_normal_left() const
   auto e = es.front()->midpoint();
   auto v = vs.front()->coordinates();
   auto f = fs.front()->midpoint();
-  return geom::triangle<num_dimensions>::normal( v, e, f );
+  return geom::shapes::triangle<num_dimensions>::normal( v, e, f );
 }
 
 burton_3d_wedge_t::vector_t burton_3d_wedge_t::facet_normal_right() const
@@ -112,7 +103,7 @@ burton_3d_wedge_t::vector_t burton_3d_wedge_t::facet_normal_right() const
   auto e = es.front()->midpoint();
   auto v = vs.front()->coordinates();
   auto f = fs.front()->midpoint();
-  return geom::triangle<num_dimensions>::normal( v, f, e );
+  return geom::shapes::triangle<num_dimensions>::normal( v, f, e );
 }
 
 
@@ -137,7 +128,7 @@ burton_3d_wedge_t::point_t burton_3d_wedge_t::facet_centroid() const
   auto e = es.front()->midpoint();
   auto v = vs.front()->coordinates();
   auto f = fs.front()->midpoint();
-  return geom::triangle<num_dimensions>::centroid( v, f, e );
+  return geom::shapes::triangle<num_dimensions>::centroid( v, f, e );
 }
 
 burton_3d_wedge_t::point_t burton_3d_wedge_t::facet_midpoint() const
@@ -153,14 +144,9 @@ burton_3d_wedge_t::point_t burton_3d_wedge_t::facet_midpoint() const
   auto e = es.front()->midpoint();
   auto v = vs.front()->coordinates();
   auto f = fs.front()->midpoint();
-  return geom::triangle<num_dimensions>::midpoint( v, f, e );
+  return geom::shapes::triangle<num_dimensions>::midpoint( v, f, e );
 }
 
 } // namespace mesh
 } // namespace ale
 
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

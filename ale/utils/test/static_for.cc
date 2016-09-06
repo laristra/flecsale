@@ -1,24 +1,18 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@ @@       @@@@@@@@ @@     @@ @@
- ale/ale/@@    ale/ale//@@   @@ /@@
- * /@@      /@@      /@@       //@@ @@  /@@
- * /@@@@@@@ /@@      /@@@@@@@   //@@@   /@@
- ale/ale/@@    ale////     @@/@@  /@@
- * /@@      /@@      /@@        @@ //@@ /@@
- * /@@      /@@@@@@@@/@@@@@@@@ @@  ale/@@
- * //     ale/ale/ale// //   ale// 
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
-
-// system includes
-#include <cinchtest.h>
-#include <iostream>
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+////////////////////////////////////////////////////////////////////////////////
 
 // user includes
 #include "ale/utils/static_for.h"
 
+
+// system includes
+#include <cinchtest.h>
+#include <iostream>
 
 // using declarations
 using std::cout;
@@ -38,10 +32,4 @@ TEST(static_for, simple) {
                   ASSERT_EQ( cnt++, i );
                 } );
 }
-
-
-/*~------------------------------------------------------------------------~--*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~------------------------------------------------------------------------~--*/
 

@@ -1,25 +1,15 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  //
- *
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
-/*!
- * \file burton_entity_types.h
- * \authors bergen
- * \date Initial file creation: Nov 15, 2015
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+//! \file
+//! \brief Provides the wedge type for use in burton_mesh_t.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/geom/shapes/triangle.h"
 #include "ale/mesh/burton/burton_vertex.h"
 #include "ale/mesh/burton/burton_element.h"
@@ -35,21 +25,18 @@ class burton_corner_t;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_wedge_t burton_entity_types.h
 //! \brief The burton_wedge_t type provides an interface for managing and
 //!   geometry and state associated with mesh wedges.
 //!
-//! \tparam N The domain of the wedge.
+//! \tparam N The dimension of the wedge.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 class burton_wedge_t {};
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_wedge_t burton_entity_types.h
 //! \brief The burton_wedge_t type provides an interface for managing and
 //!   geometry and state associated with mesh wedges.
-//!
-//! \tparam N The domain of the wedge.
+//! \remark This is a two-dimensional specialization.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 class burton_wedge_t<2>
@@ -101,14 +88,14 @@ public:
   // Constructors
   //============================================================================
 
-  //! default constructor
+  // default constructor
   burton_wedge_t(mesh_topology_base_t & mesh) : mesh_(&mesh) {};
 
-  //! dissallow copying
+  // dissallow copying
   burton_wedge_t( burton_wedge_t & ) = delete;
   burton_wedge_t & operator=( burton_wedge_t & ) = delete;
 
-  //! dissallow moving
+  // dissallow moving
   burton_wedge_t( burton_wedge_t && ) = delete;
   burton_wedge_t & operator=( burton_wedge_t && ) = delete;
 
@@ -120,14 +107,18 @@ public:
   //! \brief Get the cell facet normal for the wedge.
   //! \return Cell facet normal vector.
   vector_t facet_normal_left() const;
+  //! \copydoc facet_normal_left
   vector_t facet_normal_right() const;
 
   //! \brief Get the cell facet centroid
-  //! \return Cell facet normal centroid.
+  //! \return Cell facet centroid.
   point_t facet_centroid() const;
+  //! \brief Get the cell facet midpoint
+  //! \return Cell facet midpoint.
   point_t facet_midpoint() const;
 
   //! \brief reset the mesh pointer
+  //! \param [in] mesh The new mesh to point to.
   void reset(mesh_topology_base_t & mesh) 
   { 
     mesh_ = &mesh;
@@ -147,14 +138,12 @@ public:
   //! a reference to the mesh topology
   const mesh_topology_base_t * mesh_ = nullptr;
 
-}; // struct burton_wedge_t
+};
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_wedge_t burton_entity_types.h
 //! \brief The burton_wedge_t type provides an interface for managing and
 //!   geometry and state associated with mesh wedges.
-//!
-//! \tparam N The domain of the wedge.
+//! \remark This is a three-dimensional specialization.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 class burton_wedge_t<3>
@@ -206,14 +195,14 @@ public:
   // Constructors
   //============================================================================
 
-  //! default constructor
+  // default constructor
   burton_wedge_t(mesh_topology_base_t & mesh) : mesh_(&mesh) {};
 
-  //! dissallow copying
+  // dissallow copying
   burton_wedge_t( burton_wedge_t & ) = delete;
   burton_wedge_t & operator=( burton_wedge_t & ) = delete;
 
-  //! dissallow moving
+  // dissallow moving
   burton_wedge_t( burton_wedge_t && ) = delete;
   burton_wedge_t & operator=( burton_wedge_t && ) = delete;
 
@@ -224,14 +213,19 @@ public:
   //! \brief Get the cell facet normal for the wedge.
   //! \return Cell facet normal vector.
   vector_t facet_normal_left() const;
+  //! \copydoc facet_normal_left
   vector_t facet_normal_right() const;
 
   //! \brief Get the cell facet centroid
-  //! \return Cell facet normal centroid.
+  //! \return Cell facet centroid.
   point_t facet_centroid() const;
+
+  //! \brief Get the cell facet midpoint
+  //! \return Cell facet midpoint.
   point_t facet_midpoint() const;
 
   //! \brief reset the mesh pointer
+  //! \param [in] mesh The new mesh to point to.
   void reset(mesh_topology_base_t & mesh) 
   { 
     mesh_ = &mesh;

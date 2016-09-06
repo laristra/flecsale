@@ -3,7 +3,7 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-project(ale)
+project(FleCSALE)
 
 #if(COMMAND cmake_policy)
 #  cmake_policy(SET CMP0005 NEW)  # generate escape sequences for defines
@@ -92,8 +92,3 @@ cinch_add_application_directory(apps)
 
 set(CINCH_HEADER_SUFFIXES "\\.h")
 
-
-#~---------------------------------------------------------------------------~-#
-# Formatting options for vim.
-# vim: set tabstop=2 shiftwidth=2 expandtab :
-#~---------------------------------------------------------------------------~-#

@@ -1,25 +1,15 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  //
- *
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
-/*!
- * \file burton_entity_types.h
- * \authors bergen
- * \date Initial file creation: Nov 15, 2015
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief This file defines the corner entity for the burton mesh.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/mesh/burton/burton_vertex.h"
 #include "ale/mesh/burton/burton_element.h"
 
@@ -34,7 +24,6 @@ template< std::size_t N >
 class burton_wedge_t;
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_corner_t burton_entity_types.h
 //! \brief The burton_corner_t type provides an interface for managing and
 //!   geometry and state associated with mesh corners.
 //!
@@ -94,13 +83,13 @@ public:
   //============================================================================
 
   //! default constructor
-  burton_corner_t(mesh_topology_base_t & mesh) {}
+  burton_corner_t(mesh_topology_base_t & mesh) {};
 
-  //! dissallow copying
+  // dissallow copying
   burton_corner_t( burton_corner_t & ) = delete;
   burton_corner_t & operator=( burton_corner_t & ) = delete;
 
-  //! dissallow moving
+  // dissallow moving
   burton_corner_t( burton_corner_t && ) = delete;
   burton_corner_t & operator=( burton_corner_t && ) = delete;
 
@@ -112,7 +101,7 @@ public:
   void reset(mesh_topology_base_t & mesh) { }
 
 
-}; // class burton_corner_t
+};
 
 } // namespace mesh
 } // namespace ale

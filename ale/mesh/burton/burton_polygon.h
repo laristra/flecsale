@@ -1,25 +1,15 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  //
- *
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
-/*!
- * \file burton_entity_types.h
- * \authors bergen
- * \date Initial file creation: Nov 15, 2015
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Defines some multidimensional polygon types.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/geom/shapes/polygon.h"
 #include "ale/mesh/burton/burton_element.h"
 
@@ -28,19 +18,13 @@ namespace ale {
 namespace mesh {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_polygon_t burton_entity_types.h
-//!
-//! \brief The burton_polygon_t type provides a derived instance of
-//!   burton_cell_t for 2D polygon cells.
+//! \brief Provides some multidimensional polygon types.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 class burton_polygon_t {};
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_polygon_t burton_entity_types.h
-//!
-//! \brief The burton_polygon_t type provides a derived instance of
-//!   burton_cell_t for 2D polygon cells.
+//! \brief A two-dimensional polygonal cell.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 class burton_polygon_t<2> : public burton_element_t<2,2>
@@ -76,8 +60,8 @@ public:
   real_t area() const override;
 
   //! the cell type
-  geom::geometric_shapes_t type() const override 
-  { return geom::polygon<num_dimensions>::shape; };
+  geom::shapes::geometric_shapes_t type() const override 
+  { return geom::shapes::polygon<num_dimensions>::shape; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_polygonal_cell_t.
@@ -168,10 +152,7 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_polygon_t burton_entity_types.h
-//!
-//! \brief The burton_polygon_t type provides a derived instance of
-//!   burton_cell_t for 2D polygon cells.
+//! \brief A three dimensional polygonal face.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 class burton_polygon_t<3> : public burton_element_t<3,2>
@@ -210,8 +191,8 @@ public:
   real_t area() const override;
 
   //! the cell type
-  geom::geometric_shapes_t type() const override 
-  { return geom::polygon<num_dimensions>::shape; };
+  geom::shapes::geometric_shapes_t type() const override 
+  { return geom::shapes::polygon<num_dimensions>::shape; };
 
 
   //----------------------------------------------------------------------------

@@ -1,30 +1,20 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file matrix.cc
- * 
- * \brief Tests related to the matrix class.
- *
- ******************************************************************************/
-
-// system includes
-#include <cinchtest.h>
-#include <iostream>
-#include <cmath>
+///////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Tests related to the matrix class.
+///////////////////////////////////////////////////////////////////////////////
 
 // user includes
 #include "ale/common/types.h"
 #include "ale/math/matrix.h"
 
+// system includes
+#include <cinchtest.h>
+#include <iostream>
+#include <cmath>
 
 // explicitly use some stuff
 using namespace ale;
@@ -37,7 +27,7 @@ using matrix_2d_t = matrix<real_t,2,3>;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the intialization
+//! \brief Test the intialization.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(matrix, init) {
 
@@ -96,7 +86,7 @@ TEST(matrix, init) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the addition
+//! \brief Test the addition of a one-by-one matrix.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(matrix, addition_1d) {
 
@@ -130,19 +120,21 @@ TEST(matrix, addition_1d) {
 
 }
 
-#if 0
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the addition
+//! \brief Test the addition of a two-by-three matrix.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(matrix, addition_2d) {
 
 
   // { 1.0, 2.0 } + { 2.0, 1.0 } = { 3.0, 3.0 }
-  matrix_2d_t a{ 1.0, 2.0 };
-  matrix_2d_t b{ 2.0, 1.0 };
-  matrix_2d_t ans{ 3.0, 3.0 };
+  matrix_2d_t a{ 1.0, 2.0, 0.0, 
+                 1.0, 2.0, 0.0 };
+  matrix_2d_t b{ 2.0, 1.0, 0.0,
+                 2.0, 1.0, 0.0 };
+  matrix_2d_t ans{ 3.0, 3.0, 0.0,
+                   3.0, 3.0, 0.0 };
 
   auto c = a;
   c += b;
@@ -152,7 +144,8 @@ TEST(matrix, addition_2d) {
   ASSERT_TRUE( d == ans ) << " error in operator+ with matrix";
 
   // { 1.0, 2.0 } + 2.0 = { 3.0, 4.0 }
-  ans = { 3.0, 4.0 };
+  ans = { 3.0, 4.0, 2.0,
+          3.0, 4.0, 2.0 };
   real_t val = 2.0;
 
   auto e = a;
@@ -167,10 +160,8 @@ TEST(matrix, addition_2d) {
  
 }
 
-#endif
-
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the subtraction
+//! \brief Test the subtraction of a one-by-one matrix.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(matrix, subtraction_1d) {
 
@@ -205,18 +196,19 @@ TEST(matrix, subtraction_1d) {
 
 }
 
-#if 0
-
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the subtraction
+//! \brief Test the subtraction of a two-by-three matrix.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(matrix, subtraction_2d) {
 
 
   // { 1.0, 2.0 } - { 2.0, 1.0 } = { -1.0, 1.0 }
-  matrix_2d_t a{ 1.0, 2.0 };
-  matrix_2d_t b{ 2.0, 1.0 };
-  matrix_2d_t ans{ -1.0, 1.0 };
+  matrix_2d_t a{ 1.0, 2.0, 0.0,
+                 1.0, 2.0, 0.0 };
+  matrix_2d_t b{ 2.0, 1.0, 0.0,
+                 2.0, 1.0, 0.0 };
+  matrix_2d_t ans{ -1.0, 1.0, 0.0,
+                   -1.0, 1.0, 0.0 };
 
   auto c = a;
   c -= b;
@@ -226,7 +218,8 @@ TEST(matrix, subtraction_2d) {
   ASSERT_TRUE( d == ans ) << " error in operator- with matrix";
 
   // { 1.0, 2.0 } - 2.0 = { -1.0, 0.0 }
-  ans = { -1.0, 0.0 };
+  ans = { -1.0, 0.0, -2.0,
+          -1.0, 0.0, -2.0 };
   real_t val = 2.0;
 
   auto e = a;
@@ -237,17 +230,16 @@ TEST(matrix, subtraction_2d) {
   ASSERT_TRUE( f == ans ) << " error in operator- with scalar";
    
   // 2.0 - { 1.0, 2.0 } = { 1.0, 0.0 }
-  ans = { 1.0, 0.0 };
+  ans = { 1.0, 0.0, 2.0,
+          1.0, 0.0, 2.0 };
 
   auto g = val - a; 
   ASSERT_TRUE( g == ans ) << " error in operator- with scalar";
 
 }
 
-#endif
-
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the multiplication
+//! \brief Test the multiplication of a one-by-one matrix.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(matrix, multiply_1d) {
 
@@ -282,18 +274,19 @@ TEST(matrix, multiply_1d) {
 
 }
 
-#if 0
-
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the multiplication
+//! \brief Test the multiplication of a two-by-three matrix..
 ///////////////////////////////////////////////////////////////////////////////
 TEST(matrix, multiply_2d) {
 
 
   // { 2.0, 3.0 } + { 3.0, 2.0 } = { 6.0, 6.0 }
-  matrix_2d_t a{ 2.0, 3.0 };
-  matrix_2d_t b{ 3.0, 2.0 };
-  matrix_2d_t ans{ 6.0, 6.0 };
+  matrix_2d_t a{ 2.0, 3.0, 0.0,
+                 2.0, 3.0, 0.0 };
+  matrix_2d_t b{ 3.0, 2.0, 0.0,
+                 3.0, 2.0, 0.0 };
+  matrix_2d_t ans{ 6.0, 6.0, 0.0,
+                   6.0, 6.0, 0.0 };
 
   auto c = a;
   c *= b;
@@ -303,7 +296,8 @@ TEST(matrix, multiply_2d) {
   ASSERT_TRUE( d == ans ) << " error in operator* with matrix";
 
   // { 2.0, 3.0 } * 2.0 = { 4.0, 6.0 }
-  ans = { 4.0, 6.0 };
+  ans = { 4.0, 6.0, 0.0,
+          4.0, 6.0, 0.0 };
   real_t val = 2.0;
 
   auto e = a;
@@ -314,17 +308,16 @@ TEST(matrix, multiply_2d) {
   ASSERT_TRUE( f == ans ) << " error in operator* with scalar";
 
   // 3.0 * { 2.0, 3.0 } = { 4.0, 6.0 }
-  ans = { 4.0, 6.0 };
+  ans = { 4.0, 6.0, 0.0,
+          4.0, 6.0, 0.0 };
 
   auto g = val * a; 
   ASSERT_TRUE( g == ans ) << " error in operator* with scalar";
  
 }
 
-#endif
-
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the multiplication
+//! \brief Test the division of a one-by-one matrix.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(matrix, divide_1d) {
 
@@ -360,18 +353,19 @@ TEST(matrix, divide_1d) {
 
 }
 
-#if 0
-
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the multiplication
+//! \brief Test the division of a two-by-three matrix.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(matrix, divide_2d) {
 
 
   // { 12.0, 12.0 } / { 3.0, 2.0 } = { 8.0, 6.0 }
-  matrix_2d_t a{ 24.0, 12.0 };
-  matrix_2d_t b{ 3.0, 2.0 };
-  matrix_2d_t ans{ 8.0, 6.0 };
+  matrix_2d_t a{ 24.0, 12.0, 1.0,
+                 24.0, 12.0, 1.0 };
+  matrix_2d_t b{ 3.0, 2.0, 1.0,
+                 3.0, 2.0, 1.0 };
+  matrix_2d_t ans{ 8.0, 6.0, 1.0,
+                   8.0, 6.0, 1.0 };
 
   auto c = a;
   c /= b;
@@ -381,7 +375,8 @@ TEST(matrix, divide_2d) {
   ASSERT_TRUE( d == ans ) << " error in operator/ with matrix";
 
   // { 24.0, 12.0 } / 2.0 = { 12.0, 6.0 }
-  ans = { 12.0, 6.0 };
+  ans = { 12.0, 6.0, 0.5, 
+          12.0, 6.0, 0.5 };
   real_t val = 2.0;
 
   auto e = a;
@@ -392,76 +387,11 @@ TEST(matrix, divide_2d) {
   ASSERT_TRUE( f == ans ) << " error in operator/ with scalar";
 
   // 48.0 / { 24.0, 12.0 } = { 2.0, 4.0 }
-  ans = { 2.0, 4.0 };
+  ans = { 2.0, 4.0, 48.0,
+          2.0, 4.0, 48.0 };
   val = 48.0;
 
   auto g = val / a; 
   ASSERT_TRUE( g == ans ) << " error in operator/ with scalar";
  
 }
-
-#endif
-
-#if 0
-
-///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the dot  operator
-///////////////////////////////////////////////////////////////////////////////
-TEST(matrix, dot) {
-  // 1d matrix dot
-  matrix_1d_t a1{1.0};
-  matrix_1d_t b1{3.0};
-  ASSERT_EQ(3.0, dot_product(a1, b1));
-
-  a1[0] = -1.0;
-  ASSERT_EQ(-3.0, dot_product(a1, b1));
-
-  // 2d matrix dot
-  matrix_2d_t a2{1.0, 1.0};
-  matrix_2d_t b2{3.0, 4.0};
-  ASSERT_EQ(7.0, dot_product(a2, b2));
-
-  a2[1] = -1.0;
-  ASSERT_EQ(-1.0, dot_product(a2, b2));
-
-  // 3d matrix dot
-  matrix_3d_t a3{1.0, 1.0, 1.0};
-  matrix_3d_t b3{3.0, 4.0, 5.0};
-  ASSERT_EQ(12.0, dot_product(a3, b3));
-
-  b3[2] = -5.0;
-  ASSERT_EQ(2.0, dot_product(a3, b3));
-
-} // TEST
-
-///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the magnitude operator
-///////////////////////////////////////////////////////////////////////////////
-TEST(matrix, magnitude) {
-
-  matrix_1d_t a{7.0};
-  ASSERT_EQ(7.0, magnitude(a));
-
-  a[0] = -5.0;
-  ASSERT_EQ(5.0, magnitude(a));
-
-  matrix_2d_t b{3.0, 4.0};
-  ASSERT_EQ(5.0, magnitude(b));
-
-  b[1] = -4.0;
-  ASSERT_EQ(5.0, magnitude(b));
-
-  matrix_3d_t c{3.0, 4.0, 5.0};
-  ASSERT_EQ(sqrt(50.0), magnitude(c));
-
-  c[2] = -5.0;
-  ASSERT_EQ(sqrt(50.0), magnitude(c));
-
-} // TEST
-
-#endif
-
-/*~------------------------------------------------------------------------~--*
- a* Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~------------------------------------------------------------------------~--*/

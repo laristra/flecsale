@@ -1,23 +1,14 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file matrix.h
- * 
- * \brief Provides a dimensioned array which functions as a matrix.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Provides a dimensioned array which functions as a matrix.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/math/multi_array.h"
 #include "ale/math/vector.h"
 
@@ -26,27 +17,25 @@ namespace math {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//!  \brief The dimensioned_array type provides a general base for defining
-//!  contiguous array types that have a specific dimension.
+//!  \brief A specialization of multi_array for two-dimensional arrays.
 //!
 //!  \tparam T The type of the array, e.g., P.O.D. type.
-//!  \tparam D The dimension of the array, i.e., the number of elements
-//!    to be stored in the array.
+//!  \tparam D1,D2 The dimensions of the matrix.
 ////////////////////////////////////////////////////////////////////////////////
 template <typename T, std::size_t D1, std::size_t D2> 
 using matrix = multi_array<T, D1, D2>;
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Compute the dot product
+//! \brief Compute the outer product of two arrays.
 //! \tparam T  The array base value type.
 //! \tparam D  The array dimension.
 //! \param[in] a  The first vector
 //! \param[in] b  The other vector
-//! \return The result of the operation
+//! \return The result of the operation is a matrix of dimension `D`.
 ////////////////////////////////////////////////////////////////////////////////
 template < 
   typename T, std::size_t D,
-  template<typename, std::size_t> typename C
+  template<typename, std::size_t> class C
 >
 auto outer_product(const C<T, D> &a, const C<T, D> &b)
 {
@@ -69,7 +58,9 @@ auto outer_product(const C<T, D> &a, const C<T, D> &b)
 //! \tparam T  The base value type.
 //! \tparam N  The matrix dimension.
 //! \param[in] mat  The matrix to invert
-//! \return The result of the operation
+//! \param[in] row,col  The matrix row and column to use.
+//! \return The result of the operation is a matrix one size smaller in each 
+//!         dimension.
 ////////////////////////////////////////////////////////////////////////////////
 template < typename T, std::size_t N >
 auto cofactor( const matrix<T, N, N> & mat, std::size_t row, std::size_t col )
@@ -103,6 +94,7 @@ auto cofactor( const matrix<T, N, N> & mat, std::size_t row, std::size_t col )
 //! \param[in] mat  The matrix to invert
 //! \return The result of the operation
 ////////////////////////////////////////////////////////////////////////////////
+//! @{
 template < typename T, std::size_t N >
 auto determinant( const matrix<T, N, N> & mat )
 {
@@ -126,14 +118,15 @@ auto determinant( const matrix<T, 1, 1> & mat )
 {
   return mat(0,0);
 }
+//! @}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Compute the inverse of a square matrix
 //! \tparam T  The base value type.
-//! \tparam D  The matrix dimension.
 //! \param[in] mat  The matrix to invert
 //! \return The result of the operation
 ////////////////////////////////////////////////////////////////////////////////
+//! @{
 template < typename T >
 auto inverse( const matrix<T, 2, 2> & mat )
 {
@@ -193,6 +186,7 @@ auto inverse( const matrix<T, 3, 3> & mat )
 }
 
 
+//! \tparam N  The matrix dimension.
 template < typename T, std::size_t N >
 auto inverse( const matrix<T, N, N> & mat )
 {
@@ -217,17 +211,21 @@ auto inverse( const matrix<T, N, N> & mat )
   
   return tmp;
 }
+//! @}
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Compute the product of a matrix times a vector
+//! \brief Compute the product of a matrix times a vector, i.e. y = Ax + y
 //! \tparam T  The base value type.
-//! \tparam D  The matrix/array dimension.
-//! \param[in] mat  The matrix
-//! \param[in] vec  The vector
+//! \tparam D1,D2  The matrix/array dimensions.
+//! \param[in] A  The matrix
+//! \param[in] x  The first vector that gets right multiplied by `A`
+//! \param[in,out] y  The second vector 
 ////////////////////////////////////////////////////////////////////////////////
+//! @{
+
 template < 
   typename T, std::size_t D1, std::size_t D2,
-  template<typename, std::size_t> typename C
+  template<typename, std::size_t> class C
 >
 void ax_plus_y( const matrix<T, D1, D2> & A, const C<T,D2> & x, C<T,D1> & y )
 {
@@ -239,7 +237,7 @@ void ax_plus_y( const matrix<T, D1, D2> & A, const C<T,D2> & x, C<T,D1> & y )
 
 template < 
   typename T, std::size_t D1, std::size_t D2,
-  template<typename, std::size_t> typename C
+  template<typename, std::size_t> class C
 >
 void matrix_vector( 
   const T & alpha, 
@@ -253,17 +251,18 @@ void matrix_vector(
       y[i] = alpha * A(i,j) * x[j] + beta * y[i];
   }
 }
+//! @}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Compute the product of a matrix times a vector
 //! \tparam T  The base value type.
-//! \tparam D  The matrix/array dimension.
-//! \param[in] mat  The matrix
-//! \param[in] vec  The vector
+//! \tparam D1,D2  The matrix/array dimensions.
+//! \param[in] lhs  The matrix
+//! \param[in] rhs  The vector
 ////////////////////////////////////////////////////////////////////////////////
 template < 
   typename T, std::size_t D1, std::size_t D2,
-  template<typename, std::size_t> typename C
+  template<typename, std::size_t> class C
 >
 auto operator*( const matrix<T, D1, D2> & lhs, const C<T,D2> & rhs )
 {
@@ -279,10 +278,12 @@ auto operator*( const matrix<T, D1, D2> & lhs, const C<T,D2> & rhs )
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Compute the product of a matrix times a matrix
 //! \tparam T  The base value type.
-//! \tparam D  The matrix/array dimension.
-//! \param[in] mat  The matrix
-//! \param[in] vec  The vector
+//! \tparam D1,D2,D3  The matrix dimensions.
+//! \param[in] A,B  The matrices that get multiplied together.
+//! \param[in,out] C  The result matrix.
 ////////////////////////////////////////////////////////////////////////////////
+//! @{
+
 template < 
   typename T, std::size_t D1, std::size_t D2, std::size_t D3
 >
@@ -317,17 +318,18 @@ auto matrix_multiply(
     }
   return C;
 }
+//! @}
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Compute the product of a matrix times a vector
+//! \brief Solve a linear system A.x = b for x.
 //! \tparam T  The base value type.
 //! \tparam D  The matrix/array dimension.
-//! \param[in] mat  The matrix
-//! \param[in] vec  The vector
+//! \param[in] A  The matrix
+//! \param[in] B  The right hand side vector
 ////////////////////////////////////////////////////////////////////////////////
 template < 
   typename T, std::size_t D,
-  template<typename, std::size_t> typename C
+  template<typename, std::size_t> class C
 >
 auto solve( const matrix<T, D, D> & A, const C<T,D> & b )
 {
@@ -341,7 +343,8 @@ auto solve( const matrix<T, D, D> & A, const C<T,D> & b )
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Compute the rotation matrix
 //! \tparam T  The base value type.
-//! \tparam D  The matrix/array dimension.
+//! \tparam D  The matrix dimension.
+//! \param[in] radians  The number of radians to rotate.
 ////////////////////////////////////////////////////////////////////////////////
 template < 
   typename T, std::size_t D,
@@ -367,13 +370,14 @@ auto rotation_matrix( const T & radians ) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Compute the rotation matrix
+//! \brief Compute the reflection matrix.
 //! \tparam T  The base value type.
-//! \tparam D  The matrix/array dimension.
+//! \tparam D  The matrix dimension.
+//! \param [in] n  The normal of the plane to reflect arround.
 ////////////////////////////////////////////////////////////////////////////////
 template < 
   typename T, std::size_t D,
-  template<typename, std::size_t> typename C
+  template<typename, std::size_t> class C
 >
 auto reflection_matrix( const C<T,D> & n ) {
 
@@ -386,13 +390,14 @@ auto reflection_matrix( const C<T,D> & n ) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Compute the rotation matrix
+//! \brief Compute the projection matrix
 //! \tparam T  The base value type.
-//! \tparam D  The matrix/array dimension.
+//! \tparam D  The matrix dimension.
+//! \param [in] n  The normal to project onto.
 ////////////////////////////////////////////////////////////////////////////////
 template < 
   typename T, std::size_t D,
-  template<typename, std::size_t> typename C
+  template<typename, std::size_t> class C
 >
 auto projection_matrix( const C<T,D> & n ) {
 
@@ -406,8 +411,3 @@ auto projection_matrix( const C<T,D> & n ) {
 
 } // namespace
 } // namespace
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

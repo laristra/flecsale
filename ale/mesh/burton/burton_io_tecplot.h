@@ -1,39 +1,27 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  // 
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
-/*!
- * \file io_exodus.h
- * \date Initial file creation: Oct 07, 2015
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief provides functionality for writing tecplot data files.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
-//! system includes
-#include <cstring>
-#include <fstream>
-
-
-#ifdef HAVE_TECIO
-#  include <TECIO.h>
-#endif
-
-//! user includes
+// user includes
 #include "flecsi/io/io_base.h"
 #include "ale/mesh/burton/burton_mesh.h"
 #include "ale/utils/errors.h"
 #include "ale/utils/string_utils.h"
 
+#ifdef HAVE_TECIO
+#  include <TECIO.h>
+#endif
+
+// system includes
+#include <cstring>
+#include <fstream>
 
 namespace ale {
 namespace mesh {
@@ -42,6 +30,7 @@ namespace mesh {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief provides base functionality for tecplot writer
+/// \tparam N   The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 struct burton_io_tecplot_base {
@@ -55,7 +44,7 @@ public:
   //! the mesh type
   using mesh_t = burton_mesh_t<N>;
 
-  //! other useful types
+  // other useful types
   using    size_t = typename mesh_t::size_t;
   using integer_t = typename mesh_t::integer_t;
   using    real_t = typename mesh_t::real_t;
@@ -65,7 +54,7 @@ public:
   using    face_t = typename mesh_t::face_t;
   using    cell_t = typename mesh_t::cell_t;
 
-  //! some tecplot typedefs
+  // some tecplot typedefs
   using tec_real_t = real_t;
 #ifdef HAVE_TECIO
   using tec_int_t = INTEGER4;
@@ -223,18 +212,22 @@ public:
     tec_int_t num_zones;
 
     //! \brief for face-zone connectivity
+    //! @{
     tec_int_t num_faces_this_zone = 0;
     tec_int_t num_face_nodes_this_zone = 0;
     std::vector<tec_int_t> face_nodes;
     std::vector<tec_int_t> face_node_counts;
     std::vector<tec_int_t> face_cell_right;
     std::vector<tec_int_t> face_cell_left;
+    //! @}
     
     //! \brief  for elememnt-zone connectivity
+    //! @{
     tec_int_t num_face_conn = 0;
     std::vector<tec_int_t> face_conn_counts;
     std::vector<tec_int_t> face_conn_elems;
     std::vector<tec_int_t> face_conn_zones;
+    //! @}
     
     //! \brief  storage for the zone-element mapping
     std::vector< 
@@ -251,11 +244,8 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \class io_tecplot_ascii_t io_tecplot.h
-/// \brief io_tecplot_ascii_t provides a derived type of io_base.h and registrations
-///   of the tecplot_ascii file extensions.
-///
-/// \tparam mesh_t Mesh to template io_base_t on.
+/// \brief This is the mesh writer based on the ASCII tecplot format.
+/// \tparam N  The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 struct burton_io_tecplot_ascii_t : 
@@ -263,7 +253,7 @@ struct burton_io_tecplot_ascii_t :
 {
 
   //============================================================================
-  //! typedefs
+  // typedefs
   //============================================================================
   using base_t = burton_io_tecplot_base<N>;
 
@@ -286,7 +276,7 @@ struct burton_io_tecplot_ascii_t :
 
 
   //============================================================================
-  //! Implementation of tecplot mesh write for burton specialization.
+  //! \brief Implementation of tecplot mesh write for burton specialization.
   //!
   //! \param[in] name Write burton mesh \e m to \e name.
   //! \param[in] m Burton mesh to write to \e name.
@@ -582,11 +572,11 @@ struct burton_io_tecplot_ascii_t :
 
     return 0;
 
-  } // io_tecplot_ascii_t::write
+  }
 
 
   //============================================================================
-  //! Implementation of tecplot mesh read for burton specialization.
+  //! \brief Implementation of tecplot mesh read for burton specialization.
   //!
   //! \param[in] name Read burton mesh \e m to \e name.
   //! \param[in] m Burton mesh to Read to \e name.
@@ -599,15 +589,12 @@ struct burton_io_tecplot_ascii_t :
     raise_implemented_error( "No tecplot read functionality has been implemented" );
   };
 
-}; // io_tecplot_ascii_t
+}; 
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \class io_tecplot_binary_t io_tecplot.h
-/// \brief io_tecplot_binary_t provides a derived type of io_base.h and registrations
-///   of the tecplot_binary file extensions.
-///
-/// \tparam mesh_t Mesh to template io_base_t on.
+/// \brief This is the mesh writer based on the binary tecplot format.
+/// \tparam N  The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template<std::size_t N>
 struct burton_io_tecplot_binary_t : 
@@ -615,7 +602,7 @@ struct burton_io_tecplot_binary_t :
 {
 
   //============================================================================
-  //! typedefs
+  // typedefs
   //============================================================================
   using base_t = burton_io_tecplot_base<N>;
 
@@ -637,7 +624,7 @@ struct burton_io_tecplot_binary_t :
   burton_io_tecplot_binary_t() = default;
 
   //============================================================================
-  //! Implementation of tecplot mesh write for burton specialization.
+  //! \brief Implementation of tecplot mesh write for burton specialization.
   //!
   //! \param[in] name Write burton mesh \e m to \e name.
   //! \param[in] m Burton mesh to write to \e name.
@@ -1017,30 +1004,30 @@ struct burton_io_tecplot_binary_t :
 
 #endif
 
-  } // io_tecplot_binary_t::write
+  }
 
-    //============================================================================
-    //! Implementation of tecplot mesh read for burton specialization.
-    //!
-    //! \param[in] name Read burton mesh \e m to \e name.
-    //! \param[in] m Burton mesh to Read to \e name.
-    //!
-    //! \return tecplot error code. 0 on success.
-    //!
-    //============================================================================
+  //============================================================================
+  //! \brief Implementation of tecplot mesh read for burton specialization.
+  //!
+  //! \param[in] name Read burton mesh \e m to \e name.
+  //! \param[in] m Burton mesh to Read to \e name.
+  //!
+  //! \return tecplot error code. 0 on success.
+  //!
+  //============================================================================
   int32_t read( const std::string &name, mesh_t &m)  override
   {
     raise_implemented_error( "No tecplot read functionality has been implemented" );
   };
 
 
-}; // io_tecplot_ascii_t
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Create an io_tecplot_ascii_t and return a pointer to the base class.
 //!
-//! \tparam mesh_t Mesh type for io_tecplot_ascii_t.
+//! \tparam N  Number of mesh dimensions.
 //!
 //! \return Pointer to io_base_t base class of io_tecplot_ascii_t.
 ////////////////////////////////////////////////////////////////////////////////
@@ -1053,7 +1040,7 @@ inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_tecplot_ascii()
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Create an io_tecplot_binary_t and return a pointer to the base class.
 //!
-//! \tparam mesh_t Mesh type for io_tecplot_binary_t.
+//! \tparam N   The number of mesh dimensions.
 //!
 //! \return Pointer to io_base_t base class of io_tecplot_binary_t.
 ////////////////////////////////////////////////////////////////////////////////
@@ -1067,6 +1054,7 @@ inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_tecplot_binary()
 ////////////////////////////////////////////////////////////////////////////////
 //! Register file extension "dat" with factory.
 ////////////////////////////////////////////////////////////////////////////////
+//! @{
 static bool burton_2d_tecplot_dat_registered =
   flecsi::io_factory_t< burton_mesh_t<2> >::instance().registerType(
     "dat", create_io_tecplot_ascii<2> );
@@ -1074,10 +1062,12 @@ static bool burton_2d_tecplot_dat_registered =
 static bool burton_3d_tecplot_dat_registered =
   flecsi::io_factory_t< burton_mesh_t<3> >::instance().registerType(
     "dat", create_io_tecplot_ascii<3> );
+//! @}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! Register file extension "plt" with factory.
 ////////////////////////////////////////////////////////////////////////////////
+//! @{
 static bool burton_2d_tecplot_plt_registered =
   flecsi::io_factory_t< burton_mesh_t<2> >::instance().registerType(
     "plt", create_io_tecplot_binary<2> );
@@ -1085,12 +1075,8 @@ static bool burton_2d_tecplot_plt_registered =
 static bool burton_3d_tecplot_plt_registered =
   flecsi::io_factory_t< burton_mesh_t<3> >::instance().registerType(
     "plt", create_io_tecplot_binary<3> );
+//! @}
 
 
 } // namespace mesh
 } // namespace ale
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

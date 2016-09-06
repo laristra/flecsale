@@ -1,27 +1,23 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file array_ref.h
- * 
- * \brief A reference array to avoid a million overloads.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief A reference array to avoid a million overloads.
+////////////////////////////////////////////////////////////////////////////////
+
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/std/type_traits.h"
 #include "ale/utils/type_traits.h"
 #include "ale/utils/errors.h"
 #include "ale/utils/template_helpers.h"
+
+// system includes
+#include <algorithm>
+#include <cassert>
 
 namespace ale {
 namespace utils {
@@ -37,50 +33,6 @@ template<class T, class U>
 inline constexpr T narrow_cast(U u) noexcept
 { return static_cast<T>(u); }
 
-////////////////////////////////////////////////////////////////////////////////    
-/// \brief A Helper to identify if this is a container
-////////////////////////////////////////////////////////////////////////////////    
-template<typename T, typename _ = void>
-struct is_container : std::false_type {};
-
-template<typename... Ts>
-struct is_container_helper {};
-
-template<typename T>
-struct is_container<
-  T,
-  std::conditional_t<
-    false,
-    is_container_helper<
-      decltype(std::declval<T>().size()),
-      decltype(std::declval<T>().data())
-    >,
-    void
-  >
-> : public std::true_type {};
-
-//! the helper expresion to get the value
-template< typename T >
-constexpr bool is_container_v = is_container<T>::value;
-
-////////////////////////////////////////////////////////////////////////////////    
-/// \brief A Helper to identify if all values are integral
-////////////////////////////////////////////////////////////////////////////////    
-template <typename... Ts>
-class are_integral : public std::integral_constant<bool, true>
-{};
-
-template <typename T, typename... Ts>
-class are_integral<T, Ts...>
-  : public std::integral_constant <
-      bool,
-      std::is_integral<T>::value && are_integral<Ts...>::value
-    >
-{};
-
-//! the helper expresion to get the value
-template< typename... Ts >
-constexpr bool are_integral_v = are_integral<Ts...>::value;
 
 
 ////////////////////////////////////////////////////////////////////////////////    
@@ -134,7 +86,7 @@ public:
   template<
     typename... Args,
     int N = sizeof...(Args),
-    std::enable_if_t< (N == IndexType::rank && detail::are_integral_v<Args...>) >* = nullptr
+    std::enable_if_t< (N == IndexType::rank && are_integral_v<Args...>) >* = nullptr
   >
   constexpr auto operator()(Args... args) noexcept
   {
@@ -211,7 +163,7 @@ public:
   //! \brief constructor with values, must be the same number as rank
   template <
     typename... Ts,
-    typename = std::enable_if_t< (sizeof...(Ts) == Rank) && detail::are_integral_v<Ts...> >
+    typename = std::enable_if_t< (sizeof...(Ts) == Rank) && are_integral_v<Ts...> >
   > 
   constexpr index_t(Ts... ts) noexcept : 
     index_{ detail::narrow_cast<value_type>( std::forward<Ts>(ts) )...} 
@@ -274,7 +226,7 @@ public:
   //! \remark this version has bounds checking
   //! \param [in] component_idx the component to return
   //! \return the index
-  constexpr reference at(size_type component_idx) noexcept 
+  constexpr reference at(size_type component_idx)
   { 
     if ( component_idx < rank )
       return index_[component_idx];
@@ -286,7 +238,7 @@ public:
   //! \remark this version has bounds checking
   //! \param [in] component_idx the component to return
   //! \return the index
-  constexpr const_reference at(size_type component_idx) const noexcept 
+  constexpr const_reference at(size_type component_idx) const
   { 
     return  component_idx < rank ? index_[component_idx] : 
       throw std::out_of_range("at() argument out of range");
@@ -2159,6 +2111,7 @@ public:
   {
     data_ = rhs.data();
     bounds_ = rhs.bounds();
+    return *this;
   }
 
   //! \brief single parameter container
@@ -2170,7 +2123,7 @@ public:
   template<
     typename Container,
     typename = typename std::enable_if_t< 
-      detail::is_container_v<Container> && (Rank == 1)
+      is_minimal_container_v<Container> && (Rank == 1)
     >
   >
   constexpr explicit strided_array_view(Container & cont) noexcept :
@@ -2187,7 +2140,7 @@ public:
   template<
     typename Container,
     typename = typename std::enable_if_t< 
-      detail::is_container_v<Container>
+      is_minimal_container_v<Container>
     >
   >
   constexpr strided_array_view(Container& cont, bounds_type bounds) noexcept :
@@ -2342,7 +2295,7 @@ public:
   //! \param [in] slice the index
   //! \return a reference to the indexed location
   template< bool Enabled = (Rank > 1), typename Ret = std::enable_if_t<Enabled, sliced_type> >
-  constexpr Ret slice( size_type idx ) const noexcept
+  constexpr Ret slice( size_type idx ) const
   { 
     // This makes at() constexpr as long as the argument is within the
     // bounds of the strided_array_view.    
@@ -2678,6 +2631,7 @@ public:
   {
     data_ = rhs.data();
     bounds_ = rhs.bounds();
+    return *this;
   }
 
   //! \brief single parameter container
@@ -2689,7 +2643,7 @@ public:
   template<
     typename Container,
     typename = typename std::enable_if_t< 
-      detail::is_container_v<Container> && (Rank == 1)
+      is_minimal_container_v<Container> && (Rank == 1)
     >
   >
   constexpr explicit array_view(Container & cont) noexcept :
@@ -2706,7 +2660,7 @@ public:
   template<
     typename Container,
     typename = typename std::enable_if_t< 
-      detail::is_container_v<Container>
+      is_minimal_container_v<Container>
     >
   >
   constexpr array_view(Container& cont, bounds_type bounds) noexcept :
@@ -2848,7 +2802,7 @@ public:
   //! \param [in] slice the index
   //! \return a reference to the indexed location
   template< bool Enabled = (Rank > 1), typename Ret = std::enable_if_t<Enabled, sliced_type> >
-  constexpr Ret slice( size_type idx ) const noexcept
+  constexpr Ret slice( size_type idx ) const
   { 
     // This makes at() constexpr as long as the argument is within the
     // bounds of the array_view.    
@@ -3212,7 +3166,7 @@ public:
   template<
     typename Container,
     typename = typename std::enable_if_t< 
-      detail::is_container_v<Container>
+      is_minimal_container_v<Container>
     >
   >
   constexpr explicit static_array_view(Container & cont) noexcept :
@@ -3665,19 +3619,17 @@ auto make_array_view( ContainerType && rhs, Dims...dims ) noexcept
 //! \return the static array view
 template< 
   std::ptrdiff_t FirstDim,
-  std::ptrdiff_t... RestDims
+  std::ptrdiff_t... RestDims,
+  typename ContainerType
 >
-auto make_array_view( auto && cont ) noexcept
+auto make_static_array_view( ContainerType && cont ) noexcept
 {
-  using container_type = decltype( cont );
-  using value_type = typename std::decay_t< decltype( std::declval<container_type>()[0] ) >;
+  using value_type = typename std::decay_t< decltype( std::declval<ContainerType>()[0] ) >;
   return static_array_view< value_type, FirstDim, RestDims... >( 
-    std::forward<container_type>(cont)
+    std::forward<ContainerType>(cont)
   );
 }
 
-
-#if 0
 
 //! \brief special deduction for arrays with derived extents
 //! \param [in] arr the array container
@@ -3694,8 +3646,6 @@ auto make_array_view( ArrayType & arr ) noexcept
   return array_view< value_type, N >( arr );
 }
 
-#else
-
 //! \brief special deduction for arrays with derived extents
 //! \param [in] arr the array 
 //! \return the static array view
@@ -3704,13 +3654,11 @@ template<
   typename ArrayType,
   typename = std::enable_if_t< std::is_array< ArrayType >::value >
 >
-auto make_array_view( ArrayType & arr ) noexcept
+auto make_static_array_view( ArrayType & arr ) noexcept
 {
   using Indices = std::make_index_sequence< std::rank<ArrayType>::value >;
   return detail::make_static_array_view( arr, Indices{} );
 }
-
-#endif    
     
 /// @}
 

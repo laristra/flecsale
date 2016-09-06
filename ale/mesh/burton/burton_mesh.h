@@ -1,44 +1,34 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  //
- *
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
-/*!
- * \file burton_mesh.h
- * \authors bergen
- * \date Initial file creation: Sep 02, 2015
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
-//! system includes
+// user includes
+#include "ale/mesh/burton/burton_mesh_topology.h"
+#include "ale/mesh/burton/burton_types.h"
+#include "ale/utils/errors.h"
+
+#include "flecsi/data/data.h"
+#include "flecsi/execution/task.h"
+
+// system includes
 #include <set>
 #include <string>
 #include <sstream>
 
-//! user includes
-#include "flecsi/data/data.h"
-#include "flecsi/execution/task.h"
-
-#include "ale/mesh/burton/burton_mesh_topology.h"
-#include "ale/mesh/burton/burton_types.h"
-#include "ale/utils/errors.h"
 
 namespace ale {
 namespace mesh {
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \class burton_mesh_t burton_mesh.h
 /// \brief A specialization of the flecsi low-level mesh topology, state and
 ///   execution models.
+/// \tparam N The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 class burton_mesh_t
@@ -49,16 +39,16 @@ public:
   // Typedefs
   //============================================================================
 
-  //! the mesh types
+  //! \brief the mesh types
   using mesh_types_t = burton_mesh_types_t<N>;
 
-  //! the mesh traits
+  //! \brief the mesh traits
   using mesh_traits_t = typename mesh_types_t::mesh_traits_t;
 
-  //! the number of dimensions
+  //! \brief the number of dimensions
   static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
 
-  //! Type for storing instance of template specialized low level mesh.
+  //! \brief Type for storing instance of template specialized low level mesh.
   using mesh_topology_t = burton_mesh_topology_t< num_dimensions >;
 
   //! a compile string type
@@ -196,7 +186,7 @@ public:
         assert(false && "Error: invalid state registration site.");
     } // switch
 
-  } // register_state_
+  }
 
   //! \brief Access state associated with \e key.
   //!
@@ -212,7 +202,7 @@ public:
   {
     return data_t::instance().template dense_accessor<T, NS>( 
       key, mesh_.runtime_id() );
-  } // access_state_
+  }
 
   //! \brief Access state registered with type \e T.
   //!
@@ -225,7 +215,7 @@ public:
   {
     return data_t::instance().template dense_accessors<T, NS>( 
       mesh_.runtime_id() );
-  } // access_type_
+  }
 
   //! \brief Access state registered with type \e T that matches predicate
   //!   function of type \e P.
@@ -243,7 +233,7 @@ public:
   {
     return data_t::instance().template dense_accessors<T, P>(
       std::forward<P>(predicate), mesh_.runtime_id() );
-  } // access_type_if
+  }
 
 
   //============================================================================
@@ -266,7 +256,7 @@ public:
     return data_t::instance().template register_global_state<T>(
       key, mesh_.runtime_id(), attachment_site_t::global, attributes
     );
-  } // register_state_
+  }
 
   //! \brief Access state associated with \e key.
   //!
@@ -281,7 +271,7 @@ public:
   decltype(auto) access_global_state_(const const_string_t && key)
   {
     return data_t::instance().template global_accessor<T, NS>(key, mesh_.runtime_id());
-  } // access_state_
+  }
 
   //! \brief Access state registered with type \e T.
   //!
@@ -293,7 +283,7 @@ public:
   decltype(auto) access_global_type_()
   {
     return data_t::instance().template global_accessors<T, NS>();
-  } // access_type_
+  }
 
   //! \brief Access state registered with type \e T that matches predicate
   //!   function of type \e P.
@@ -311,7 +301,7 @@ public:
   {
     return data_t::instance().template global_accessors<T, P>(
       std::forward<P>(predicate));
-  } // access_type_if
+  }
 
 
   //============================================================================
@@ -326,7 +316,7 @@ public:
   decltype(auto) state_attributes_(const const_string_t && key)
   {
     return data_t::instance().template meta_data<>((key)).attributes;
-  } // state_attribtutes_
+  }
 
 
   //============================================================================
@@ -336,16 +326,16 @@ public:
   //! Default constructor
   burton_mesh_t() {}
 
-  //! Assignment operator (default)
+  //! \brief Assignment operator (default)
   burton_mesh_t & operator=(const burton_mesh_t &) = default;
 
-  //! Copy constructor
+  //! \brief Copy constructor
   burton_mesh_t(burton_mesh_t &src);
 
-  //! allow move construction
+  //! \brief allow move construction
   burton_mesh_t( burton_mesh_t && ) = default;
 
-  //! move assignment
+  //! \brief move assignment
   burton_mesh_t & operator=(burton_mesh_t && other)
   {
     // store old runtime id
@@ -385,6 +375,7 @@ public:
   }
 
   //! \brief Set the time associated with the mesh
+  //! \param [in] soln_time  The solution time.
   void set_time(real_t soln_time)
   {
     access_global_state_<real_t, flecsi_internal>( "time" ) = soln_time;
@@ -392,6 +383,8 @@ public:
 
 
   //! \brief Set the time associated with the mesh
+  //! \param [in] delta_time  The solution time increment.
+  //! \return The new solution time.
   auto increment_time(real_t delta_time)
   {
     auto soln_time = access_global_state_<real_t, flecsi_internal>( "time" );
@@ -406,7 +399,9 @@ public:
     return *step;
   }
 
-  //! \brief Set the time associated with the mesh
+  //! \brief Increment the time step counter associated with the mesh
+  //! \param [in] delta  The counter increment.
+  //! \return The new counter value.
   auto increment_time_step_counter(size_t delta = 1)
   {
     auto step = access_global_state_<size_t, flecsi_internal>( "time_step" );
@@ -423,7 +418,7 @@ public:
   size_t num_vertices() const
   {
     return mesh_.template num_entities<vertex_t::dimension, vertex_t::domain>();
-  } // num_vertices
+  }
 
   //! \brief Return all vertices in the burton mesh.
   //! \return Return all vertices in the burton mesh as a sequence for use, e.g.,
@@ -431,7 +426,7 @@ public:
   auto vertices() const 
   { 
     return mesh_.template entities<vertex_t::dimension, vertex_t::domain>(); 
-  } // vertices
+  }
 
   //! \brief Return vertices associated with entity instance of type \e E.
   //!
@@ -445,7 +440,7 @@ public:
   auto vertices(E * e) const
   {
     return mesh_.template entities<vertex_t::dimension, vertex_t::domain>(e);
-  } // vertices
+  }
 
   //! \brief Return vertices for entity \e e in domain \e M.
   //!
@@ -479,7 +474,7 @@ public:
     
     auto vs = vertices();
     return vs.filter( std::forward<P>(p) );
-  } // vertices
+  }
 
   //! \brief Return ids for all vertices in the burton mesh.
   //!
@@ -487,7 +482,7 @@ public:
   auto vertex_ids() const
   {
     return mesh_.template entity_ids<vertex_t::dimension, vertex_t::domain>();
-  } // vertex_ids
+  }
 
   //! \brief Return vertex ids associated with entity instance of type \e E.
   //!
@@ -501,7 +496,7 @@ public:
   auto vertex_ids(E * e) const
   {
     return mesh_.template entity_ids<vertex_t::dimension, vertex_t::domain>(e);
-  } // vertex_ids
+  }
 
   //! \brief Return vertices for entity \e e in domain \e M.
   //!
@@ -539,14 +534,14 @@ public:
   size_t num_edges() const
   {
     return mesh_.template num_entities<edge_t::dimension, edge_t::domain>();
-  } // num_edges
+  }
 
   //! \brief Return all edges in the burton mesh.
   //! \return Return all edges in the burton mesh as a sequence for use, e.g., in
   //!   range based for loops.
   auto edges() const { 
     return mesh_.template entities<edge_t::dimension, 0>(); 
-  } // edges
+  }
 
   //! \brief Return edges for entity \e e in domain \e M.
   //!
@@ -560,7 +555,7 @@ public:
   auto edges(const flecsi::domain_entity<M, E> & e) const
   {
     return mesh_.template entities<edge_t::dimension, M, edge_t::domain>(e.entity());
-  } // edges
+  }
 
   //! \brief Return ids for all edges in the burton mesh.
   //!
@@ -568,7 +563,7 @@ public:
   auto edge_ids() const
   {
     return mesh_.template entity_ids<edge_t::dimension, edge_t::domain>();
-  } // edge_ids
+  }
 
   //! \brief Return edge ids associated with entity instance of type \e E.
   //!
@@ -581,7 +576,7 @@ public:
   auto edge_ids(E * e) const
   {
     return mesh_.template entity_ids<edge_t::dimension, edge_t::domain>(e);
-  } // edge_ids
+  }
 
   //! \brief Return boundary edges in the burton mesh.
   //! \return Return all boundary vertices in the burton mesh as a sequence for use, e.g.,
@@ -613,7 +608,7 @@ public:
   auto faces() const
   {
     return mesh_.template entities<face_t::dimension, face_t::domain>();
-  } // faces
+  }
 
   //! \brief Return all faces in the burton mesh.
   //! \return Return all faces in the burton mesh as a sequence for use, e.g.,
@@ -621,7 +616,7 @@ public:
   auto faces() // FIXME const
   {
     return mesh_.template entities<face_t::dimension, face_t::domain>();
-  } // faces
+  }
 
   //! \brief Return faces associated with entity instance of type \e E.
   //!
@@ -634,7 +629,7 @@ public:
   auto faces(E * e) const
   {
     return mesh_.template entities<face_t::dimension, face_t::domain>(e);
-  } // faces
+  }
 
   //! \brief Return faces for entity \e e in domain \e M.
   //!
@@ -648,14 +643,14 @@ public:
   auto faces(const flecsi::domain_entity<M, E> & e) const
   {
     return mesh_.template entities<face_t::dimension, M, face_t::domain>(e.entity());
-  } // faces
+  }
 
   //! \brief Return ids for all faces in the burton mesh.
   //! \return Ids for all faces in the burton mesh.
   auto face_ids() const
   {
     return mesh_.template entity_ids<face_t::dimension, face_t::domain>();
-  } // face_ids
+  }
 
   //! \brief Return face ids associated with entity instance of type \e E.
   //!
@@ -668,7 +663,7 @@ public:
   auto face_ids(E * e) const
   {
     return mesh_.template entity_ids<face_t::dimension, face_t::domain>(e);
-  } // face_ids
+  }
 
   //============================================================================
   // Cell Interface
@@ -679,7 +674,7 @@ public:
   size_t num_cells() const
   {
     return mesh_.template num_entities<cell_t::dimension, cell_t::domain>();
-  } // num_cells
+  }
 
   //! \brief Return all cells in the burton mesh.
   //!
@@ -688,7 +683,7 @@ public:
   auto cells() const
   {
     return mesh_.template entities<cell_t::dimension, cell_t::domain>();
-  } // cells
+  }
 
   //! \brief Return all cells in the burton mesh.
   //! \return Return all cells in the burton mesh as a sequence for use, e.g.,
@@ -696,7 +691,7 @@ public:
   auto cells() // FIXME const
   {
     return mesh_.template entities<cell_t::dimension, cell_t::domain>();
-  } // cells
+  }
 
   //! \brief Return cells associated with entity instance of type \e E.
   //!
@@ -709,7 +704,7 @@ public:
   auto cells(E * e) const
   {
     return mesh_.template entities<cell_t::dimension, cell_t::domain>(e);
-  } // cells
+  }
 
   //! \brief Return cells for entity \e e in domain \e M.
   //!
@@ -723,14 +718,14 @@ public:
   auto cells(const flecsi::domain_entity<M, E> & e) const
   {
     return mesh_.template entities<cell_t::dimension, M, cell_t::domain>(e.entity());
-  } // cells
+  }
 
   //! \brief Return ids for all cells in the burton mesh.
   //! \return Ids for all cells in the burton mesh.
   auto cell_ids() const
   {
     return mesh_.template entity_ids<cell_t::dimension, cell_t::domain>();
-  } // cell_ids
+  }
 
   //! \brief Return cell ids associated with entity instance of type \e E.
   //!
@@ -743,7 +738,7 @@ public:
   auto cell_ids(E * e) const
   {
     return mesh_.template entity_ids<cell_t::dimension, cell_t::domain>(e);
-  } // cell_ids
+  }
 
   //! \brief Return the number of cells in the burton mesh.
   //! \return The number of cells in the burton mesh.
@@ -754,7 +749,7 @@ public:
     std::set< cell_type_t > cell_types;
     for ( auto c : cs ) cell_types.insert( c->type() );
     return cell_types;
-  } // num_cells
+  }
 
 
   //============================================================================
@@ -766,7 +761,7 @@ public:
   size_t num_wedges() const
   {
     return mesh_.template num_entities<wedge_t::dimension, wedge_t::domain>();
-  } // num_wedges
+  }
 
   //! \brief Return all wedges in the burton mesh.
   //!
@@ -775,7 +770,7 @@ public:
   auto wedges() const
   {
     return mesh_.template entities<wedge_t::dimension, wedge_t::domain>();
-  } // wedges
+  }
 
   //! \brief Return all wedges in the burton mesh.
   //! \return Return all wedges in the burton mesh as a sequence for use, e.g.,
@@ -783,7 +778,7 @@ public:
   auto wedges() // FIXME const
   {
     return mesh_.template entities<wedge_t::dimension, wedge_t::domain>();
-  } // wedges
+  }
 
   //! \brief Return wedges associated with entity instance of type \e E.
   //!
@@ -796,7 +791,7 @@ public:
   auto wedges(E * e) const
   {
     return mesh_.template entities<wedge_t::dimension, wedge_t::domain>(e);
-  } // wedges
+  }
 
   //! \brief Return wedges for entity \e e in domain \e M.
   //!
@@ -817,7 +812,7 @@ public:
   auto wedge_ids() const
   {
     return mesh_.template entity_ids<wedge_t::dimension, wedge_t::domain>();
-  } // wedge_ids
+  }
 
   //! \brief Return wedge ids associated with entity instance of type \e E.
   //!
@@ -831,7 +826,7 @@ public:
   auto wedge_ids(E * e) const
   {
     return mesh_.template entity_ids<wedge_t::dimension, wedge_t::domain>(e);
-  } // wedge_ids
+  }
 
   //============================================================================
   // Corner Interface
@@ -842,7 +837,7 @@ public:
   size_t num_corners() const
   {
     return mesh_.template num_entities<corner_t::dimension, corner_t::domain>();
-  } // num_corners
+  }
 
   //! \brief Return all corners in the burton mesh.
   //!
@@ -851,7 +846,7 @@ public:
   auto corners() const
   {
     return mesh_.template entities<corner_t::dimension, corner_t::domain>();
-  } // corners
+  }
 
   //! \brief Return all corners in the burton mesh.
   //! \return Return all corners in the burton mesh as a sequence for use, e.g.,
@@ -859,7 +854,7 @@ public:
   auto corners() // FIXME const
   {
     return mesh_.template entities<corner_t::dimension, corner_t::domain>();
-  } // corners
+  }
 
 
   //! \brief Return corners associated with entity instance of type \e E.
@@ -873,7 +868,7 @@ public:
   auto corners(E * e) const
   {
     return mesh_.template entities<corner_t::dimension, corner_t::domain>(e);
-  } // corners
+  }
 
   //! \brief Return corners for entity \e e in domain \e M.
   //!
@@ -894,7 +889,7 @@ public:
   auto corner_ids() const
   {
     return mesh_.template entity_ids<corner_t::dimension, corner_t::domain>();
-  } // corner_ids
+  }
 
   //! \brief Return corner ids associated with entity instance of type \e E.
   //!
@@ -908,7 +903,7 @@ public:
   auto corner_ids(E * e) const
   {
     return mesh_.template entity_ids<corner_t::dimension, corner_t::domain>(e);
-  } // corner_ids
+  }
 
 
   //============================================================================
@@ -921,14 +916,14 @@ public:
   {
     auto n = access_global_state_<size_t, flecsi_internal>( "num_regions" );
     return *n;
-  } // num_cells
+  }
 
   //! \brief set the number of regions in the burton mesh.
   //! \param [in]  n  The number of regions in the burton mesh.
   void set_num_regions(size_t n)
   {
     access_global_state_<size_t, flecsi_internal>( "num_regions" ) = n;
-  } // num_cells
+  }
 
 
   //! \brief Return the number of regions in the burton mesh.
@@ -938,7 +933,7 @@ public:
   {
     for ( auto c : cells() )
       c->region() = region_ids[c.id()];
-  } // num_cells
+  }
 
   //! \brief Return all cells in the regions mesh.
   //!
@@ -964,7 +959,7 @@ public:
     auto region_cells = cs.scatter( func );
 
     return region_cells;
-  } // cells
+  }
 
   //============================================================================
   // Element Creation
@@ -983,7 +978,7 @@ public:
     >* = nullptr ) 
   {
     return create_2d_element_from_verts_<cell_t>( std::forward<V>(verts) );
-  } // create_cell
+  }
 
   //! \brief Create a cell in the burton mesh.
   //! \param[in] verts The vertices defining the cell.
@@ -1011,7 +1006,7 @@ public:
     >* = nullptr ) 
   {
     return create_3d_element_from_verts_( std::forward<V>(verts) );
-  } // create_cell
+  }
 
   //! \brief Create a cell in the burton mesh.
   //! \param[in] verts The vertices defining the cell.
@@ -1038,7 +1033,7 @@ public:
     >* = nullptr ) 
   {
     return create_3d_element_from_faces_( std::forward<F>(faces) );
-  } // create_cell
+  }
   
   //! \brief Create a cell in the burton mesh.
   //! \param[in] faces The faces defining the cell.
@@ -1105,7 +1100,7 @@ public:
       "coordinates", num_nodes, mesh_.runtime_id(), 
       attachment_site_t::vertices, flecsi::persistent
     );
-  } // init_parameters
+  }
 
   //!---------------------------------------------------------------------------
   //! \brief Initialize the burton mesh.
@@ -1209,7 +1204,7 @@ public:
       );
     *num_regions = 1;
 
-  } // init
+  }
 
 
 
@@ -1350,7 +1345,7 @@ public:
 
 
   //============================================================================
-  // Boundary conditions
+  //! \brief Install a boundary and tag the relatex entities.
   //============================================================================
   template< typename P >
   tag_t install_boundary( P && p ) 
@@ -1401,7 +1396,9 @@ public:
   }
 
   //============================================================================
-  // Boundary conditions
+  //! \brief Get the set of tagged vertices associated with a specific id
+  //! \praram [in] id  The tag to lookup.
+  //! \return The set of tagged vertices.
   //============================================================================
   const auto & tagged_vertices( tag_t id ) const noexcept
   {
@@ -1598,9 +1595,3 @@ std::ostream& operator<< (std::ostream& stream, const burton_mesh_t<M>& mesh)
 
 } // namespace mesh
 } // namespace ale
-
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

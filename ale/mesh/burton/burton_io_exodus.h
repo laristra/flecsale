@@ -1,37 +1,28 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  // 
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
-/*!
- * \file io_exodus.h
- * \date Initial file creation: Oct 07, 2015
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file 
+/// \brief Defines the functionality for the exodus writer and reader.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
-//! system includes
-#include <cstring>
+// user includes
+#include "flecsi/io/io_base.h"
+#include "ale/mesh/burton/burton_mesh.h"
+
 
 #ifdef HAVE_EXODUS
 #  include <exodusII.h>
 #endif
 
+// system includes
+#include <cstring>
+
 // exodus has a problem with regions in nfaced data
 // #define EXODUS_3D_REGION_BUGFIX
-
-//! user includes
-#include "flecsi/io/io_base.h"
-#include "ale/mesh/burton/burton_mesh.h"
 
 
 namespace ale {
@@ -40,6 +31,7 @@ namespace mesh {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief provides base functionality for exodus writer
+/// \tparam N  The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 struct burton_io_exodus_base {
@@ -53,7 +45,7 @@ public:
   //! the mesh type
   using mesh_t = burton_mesh_t<N>;
 
-  //! other useful types
+  // other useful types
   using    size_t = typename mesh_t::size_t;
   using integer_t = typename mesh_t::integer_t;
   using    real_t = typename mesh_t::real_t;
@@ -69,7 +61,10 @@ public:
 #ifdef HAVE_EXODUS
 
   //============================================================================
-  //! \brief open 
+  //! \brief open the file for reading or writing
+  //! \param [in] name  The name of the file to open.
+  //! \param [in] mode  The mode to open the file in.
+  //! \return The exodus handle for the open file.
   //============================================================================
   auto open( const std::string &name, std::ios_base::openmode mode ) 
   {
@@ -118,7 +113,7 @@ public:
 
 
   //============================================================================
-  //! \brief close the file
+  //! \brief close the file once completed reading or writing
   //============================================================================
   auto close() 
   {
@@ -128,7 +123,8 @@ public:
 
 
   //============================================================================
-  //! \brief write the coordinates for the mesh.
+  //! \brief write the coordinates of the mesh to file.
+  //! \return the status of the file
   //============================================================================
   auto write_point_coords( mesh_t & m ) 
   { 
@@ -165,7 +161,8 @@ public:
   }
 
   //============================================================================
-  //! \brief read the coordinates for the mesh.
+  //! \brief read the coordinates of the mesh from a file.
+  //! \return the status of the file
   //============================================================================
   auto read_point_coords( 
     mesh_t & m, size_t num_nodes, std::vector<vertex_t *> & vs ) 
@@ -205,7 +202,9 @@ public:
 
 
   //============================================================================
-  //! \brief write field data
+  //! \brief write field data to the file
+  //! \param [in] m  The mesh to extract field data from.
+  //! \return the status of the file
   //============================================================================
   auto write_fields( mesh_t & m ) 
   { 
@@ -435,22 +434,20 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \class io_exodus_t io_exodus.h
-/// \brief io_exodus_t provides a derived type of io_base.h and registrations
-///   of the exodus file extensions.
+/// \brief This is the general templated type for writing and reading from 
+///        exodus files.
 ///
-/// \tparam mesh_t Mesh to template io_base_t on.
+/// \tparam N  The number of mesh dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 struct burton_io_exodus_t {};
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \class io_exodus_t io_exodus.h
-/// \brief io_exodus_t provides a derived type of io_base.h and registrations
-///   of the exodus file extensions.
+/// \brief This is the two-dimensional mesh reader and writer based on the 
+///        Exodus format.
 ///
-/// \tparam mesh_t Mesh to template io_base_t on.
+/// io_base_t provides registrations of the exodus file extensions.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 struct burton_io_exodus_t<2> : 
@@ -459,12 +456,12 @@ struct burton_io_exodus_t<2> :
 
 
   //============================================================================
-  //! Default constructor
+  //! \brief Default constructor
   //============================================================================
   burton_io_exodus_t() = default;
 
   //============================================================================
-  //! Implementation of exodus mesh read for burton specialization.
+  //! \brief Implementation of exodus mesh read for burton specialization.
   //!
   //! \param[in] name Read burton mesh \e m from \e name.
   //! \param[out] m Populate burton mesh \e m with contents of \e name.
@@ -639,7 +636,7 @@ struct burton_io_exodus_t<2> :
   }
 
   //============================================================================
-  //!  Implementation of exodus mesh write for burton specialization.
+  //!  \brief Implementation of exodus mesh write for burton specialization.
   //!
   //!  \param[in] name Write burton mesh \e m to \e name.
   //!  \param[in] m Burton mesh to write to \e name.
@@ -787,11 +784,10 @@ struct burton_io_exodus_t<2> :
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \class io_exodus_t io_exodus.h
-/// \brief io_exodus_t provides a derived type of io_base.h and registrations
-///   of the exodus file extensions.
+/// \brief This is the three-dimensional mesh reader and writer based on the 
+///        Exodus format.
 ///
-/// \tparam mesh_t Mesh to template io_base_t on.
+/// io_base_t provides registrations of the exodus file extensions.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 struct burton_io_exodus_t<3> : 
@@ -800,13 +796,13 @@ struct burton_io_exodus_t<3> :
 {
 
   //============================================================================
-  //! Default constructor
+  //! \brief Default constructor
   //============================================================================
   burton_io_exodus_t() = default;
 
 
   //============================================================================
-  //! Implementation of exodus mesh read for burton specialization.
+  //! \brief Implementation of exodus mesh read for burton specialization.
   //!
   //! \param[in] name Read burton mesh \e m from \e name.
   //! \param[out] m Populate burton mesh \e m with contents of \e name.
@@ -1095,7 +1091,7 @@ struct burton_io_exodus_t<3> :
   }
 
   //============================================================================
-  //!  Implementation of exodus mesh write for burton specialization.
+  //!  \brief Implementation of exodus mesh write for burton specialization.
   //!
   //!  \param[in] name Write burton mesh \e m to \e name.
   //!  \param[in] m Burton mesh to write to \e name.
@@ -1353,9 +1349,9 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Create an io_exodus_t and return a pointer to the base class.
+//! \brief Create a burton_io_exodus_t and return a pointer to the base class.
 //!
-//! \tparam mesh_t Mesh type for io_exodus_t.
+//! \tparam N  The number of mesh dimensions.
 //!
 //! \return Pointer to io_base_t base class of io_exodus_t.
 ////////////////////////////////////////////////////////////////////////////////
@@ -1370,6 +1366,7 @@ inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_exodus()
 ////////////////////////////////////////////////////////////////////////////////
 //! Register file extension "g" with factory.
 ////////////////////////////////////////////////////////////////////////////////
+//! @{
 static bool burton_2d_exodus_g_registered =                 
   flecsi::io_factory_t< burton_mesh_t<2> >::instance().registerType(
     "g", create_io_exodus<2> );
@@ -1377,10 +1374,12 @@ static bool burton_2d_exodus_g_registered =
 static bool burton_3d_exodus_g_registered =                 
   flecsi::io_factory_t< burton_mesh_t<3> >::instance().registerType(
     "g", create_io_exodus<3> );
+//! @}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! Register file extension "exo" with factory.
 ////////////////////////////////////////////////////////////////////////////////
+//! @{
 static bool burton_2d_exodus_exo_registered =
   flecsi::io_factory_t< burton_mesh_t<2> >::instance().registerType(
     "exo", create_io_exodus<2> );
@@ -1388,11 +1387,7 @@ static bool burton_2d_exodus_exo_registered =
 static bool burton_3d_exodus_exo_registered =
   flecsi::io_factory_t< burton_mesh_t<3> >::instance().registerType(
     "exo", create_io_exodus<3> );
+//! @}
 
 } // namespace mesh
 } // namespace ale
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

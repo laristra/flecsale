@@ -1,20 +1,12 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file normal.h
- * 
- * \brief Evaluate geometric normals.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Evaluate gemetric normals.
+////////////////////////////////////////////////////////////////////////////////
+
 #pragma once
 
 
@@ -28,6 +20,7 @@ namespace geom {
 
 
 //! \brief compute normal between two points in 2d
+//! \param [in] a,b The two points that form a line to compute the normal for.
 //! \remark all arguments must be of the same type
 template< class T, class U >
 constexpr
@@ -42,6 +35,7 @@ normal( T && a, U && b )
 
 
 //! \brief compute normal between two points in 3d
+//! \param [in] a,b The two points that form a line to compute the normal for.
 //! \remark all arguments must be of the same type
 template< class T, class U >
 constexpr

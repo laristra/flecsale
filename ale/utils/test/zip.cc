@@ -1,20 +1,14 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ ale/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file zip.cc
- * 
- * \brief Tests related to the zip iterator.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Tests related to the zip iterator.
+////////////////////////////////////////////////////////////////////////////////
+
+// user includes
+#include "ale/utils/zip.h"
 
 // system includes
 #include<array>
@@ -22,9 +16,6 @@
 #include<iostream>
 #include<list>
 #include<vector>
-
-// user includes
-#include "ale/utils/zip.h"
 
 // explicitly use some stuff
 using std::cout;
@@ -80,8 +71,3 @@ TEST(zip, simple) {
   }  
 
 } // TEST
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

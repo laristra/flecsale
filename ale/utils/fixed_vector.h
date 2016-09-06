@@ -1,28 +1,22 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file fixed_vector.h
- * 
- * \brief A serialized vector.  It acts like a vector but has a fixed internal
- *        storage size.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// 
+/// \brief A serialized vector.  It acts like a vector but has a fixed internal
+///        storage size.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-//! system includes
-#include <vector>
-
-//! user includes
+// user includes
 #include "type_traits.h"
+
+// system includes
+#include <algorithm>
+#include <array>
+#include <cassert>
 
 namespace ale {
 namespace utils {

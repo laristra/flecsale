@@ -1,21 +1,16 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  //
- *
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Defines a base element type.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
 
-//! user includes
+// user includes
 #include "ale/geom/shapes/geometric_shapes.h"
 #include "ale/mesh/burton/burton_mesh_traits.h"
 #include "ale/utils/errors.h"
@@ -24,27 +19,23 @@
 namespace ale {
 namespace mesh {
 
-//! forward decares
+// forward decares
 template< std::size_t N >
 class burton_corner_t;
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_edge_t burton_entity_types.h
-//! \brief The burton_edge_t type provides an interface for managing
-//!   geometry and state associated with mesh edges.
+//! \brief This type provides the base for all the primal entities except 
+//!        for vertices.
 //!
-//! \tparam N The domain of the edge.
+//! \tparam NUM_DIMS  The total number of dimensions.
+//! \tparam DIM       The actual dimension of the entity.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t NUM_DIMS, std::size_t DIM  >
 struct burton_element_t { };
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_edge_t burton_entity_types.h
-//! \brief The burton_edge_t type provides an interface for managing
-//!   geometry and state associated with mesh edges.
-//!
-//! \tparam N The domain of the edge.
-//!
+//! \brief An interface for managing geometry and state associated with 
+//!        two-dimensional mesh edges.
 //! \remark this is a 2d edge
 ////////////////////////////////////////////////////////////////////////////////
 template<>
@@ -79,6 +70,7 @@ struct burton_element_t<2,1> :
 
   //! Type containing coordinates of the vertex.
   using point_t = typename mesh_traits_t::point_t;
+  //! The point list type
   using point_list_t = std::array< point_t, 2 >;
 
   //! Type vector type.
@@ -92,20 +84,21 @@ struct burton_element_t<2,1> :
 
   //! The boundary id type
   using tag_t = typename mesh_traits_t::tag_t;
+  //! The boundary id list type
   using tag_list_t = typename mesh_traits_t::tag_list_t;
 
   //============================================================================
   // Constructors
   //============================================================================
 
-  //! the constructor
+  // the constructor
   burton_element_t(mesh_topology_base_t & mesh) : mesh_(&mesh) {}
 
-  //! dissallow copying
+  // dissallow copying
   burton_element_t( burton_element_t & ) = delete;
   burton_element_t & operator=( burton_element_t & ) = delete;
 
-  //! dissallow moving
+  // dissallow moving
   burton_element_t( burton_element_t && ) = delete;
   burton_element_t & operator=( burton_element_t && ) = delete;
 
@@ -163,16 +156,12 @@ private:
   //! a reference to the mesh topology
   const mesh_topology_base_t * mesh_ = nullptr;
 
-}; // struct burton_edge_t
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_edge_t burton_entity_types.h
-//! \brief The burton_edge_t type provides an interface for managing
-//!   geometry and state associated with mesh edges.
-//!
-//! \tparam N The domain of the edge.
-//!
+//! \brief An interface for managing geometry and state associated with 
+//!        three-dimensional mesh edges.
 //! \remark this is a 3d edge
 ////////////////////////////////////////////////////////////////////////////////
 template<>
@@ -207,6 +196,7 @@ struct burton_element_t<3,1> :
 
   //! Type containing coordinates of the vertex.
   using point_t = typename mesh_traits_t::point_t;
+  //! The point list type.
   using point_list_t = std::array< point_t, 2 >;
 
   //! Type vector type.
@@ -220,20 +210,21 @@ struct burton_element_t<3,1> :
 
   //! The boundary id type
   using tag_t = typename mesh_traits_t::tag_t;
+  //! The boundary id list type
   using tag_list_t = typename mesh_traits_t::tag_list_t;
 
   //============================================================================
   // Constructors
   //============================================================================
 
-  //! the constructor
+  // the constructor
   burton_element_t(mesh_topology_base_t & mesh) : mesh_(&mesh) {}
 
-  //! dissallow copying
+  // dissallow copying
   burton_element_t( burton_element_t & ) = delete;
   burton_element_t & operator=( burton_element_t & ) = delete;
 
-  //! dissallow moving
+  // dissallow moving
   burton_element_t( burton_element_t && ) = delete;
   burton_element_t & operator=( burton_element_t && ) = delete;
 
@@ -278,19 +269,16 @@ private:
 }; // struct burton_edge_t
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief The burton_face_t type provides an interface for managing and
-//!   geometry and state associated with mesh faces.
-//!
-//! \tparam N The domain of the face.
+//! \brief An interface for managing geometry and state associated with 
+//!        multi-dimensional mesh edges.
+//! \tparam N The total number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 using burton_edge_t = burton_element_t<N,1>;
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_element_t burton_entity_types.h
-//! \brief The burton_element_t type provides an interelement for managing and
-//!   geometry and state associated with mesh elements.
-//!
+//! \brief An interface for managing geometry and state associated with 
+//!        two-dimensional mesh cells.
 //! \remark this is a 2d cell
 ////////////////////////////////////////////////////////////////////////////////
 template<>
@@ -327,13 +315,15 @@ struct burton_element_t<2,2>
 
   //! Type containing coordinates of the vertex.
   using point_t = typename mesh_traits_t::point_t;
+  //! The point list type.
   using point_list_t = std::vector< point_t >;
 
   //! Type vector type.
   using vector_t = typename mesh_traits_t::vector_t;
 
-  // the flecsi id type
+  //! the flecsi id type
   using id_t = flecsi::id_t;
+  //! The flecsi domain connectivity type.
   using connectivity_t = flecsi::domain_connectivity<num_dimensions>;
 
   //! the base vertex type
@@ -353,14 +343,14 @@ struct burton_element_t<2,2>
   burton_element_t(mesh_topology_base_t & mesh) : mesh_(&mesh) 
   {};
 
-  //! Destructor
+  // Destructor
   virtual ~burton_element_t() {}
 
-  //! dissallow copying
+  // dissallow copying
   burton_element_t( burton_element_t & ) = delete;
   burton_element_t & operator=( burton_element_t & ) = delete;
 
-  //! dissallow moving
+  // dissallow moving
   burton_element_t( burton_element_t && ) = delete;
   burton_element_t & operator=( burton_element_t && ) = delete;
 
@@ -386,7 +376,7 @@ struct burton_element_t<2,2>
 
   //! the area of the element
   virtual real_t volume() const
-  { area(); };
+  { return area(); };
 
   //! the minimum length in the element
   virtual real_t min_length() const;
@@ -399,7 +389,7 @@ struct burton_element_t<2,2>
 
 
   //! the element type
-  virtual geom::geometric_shapes_t type() const
+  virtual geom::shapes::geometric_shapes_t type() const
   { raise_runtime_error("you should never get here"); };
 
 
@@ -409,10 +399,11 @@ struct burton_element_t<2,2>
   //!   in e. See, e.g., burton_quadrilateral_element_t for an implementation of
   //!   this pure virtual function.
   //!
+  //! \param[in] cell  The id of the entity in question.
   //! \param[in] dim The topological dimension of the entity to create.
-  //! \param[out] e Vector to fill with ids of the vertices making the entity.
-  //! \param[in] v Vertex ids for the element.
-  //! \param[in] vertex_count The number of vertices making up the entity.
+  //! \param[in] conn The currently build connectivity of the mesh.
+  //! \param[out] entities Vector to fill with ids of the lower level entities 
+  //!                      that form this entity.
   //!
   //! \return A pair with a) the number of vertex collections making up the
   //!   entity and b) the number of vertices per collection.
@@ -428,9 +419,15 @@ struct burton_element_t<2,2>
   //!   See, e.g., burton_quadrilateral_element_t for an implementation of
   //!   this pure virtual function.
   //!
-  //! \param[in] dim The topological dimension of the entity being bound.
-  //! \param[in] ent_ids The entity ids of the entities making up the binding.
-  //! \param[out] c The collection of the ids making up the bound entity.
+  //! \param[in] from_domain  The domain index of the root entity.
+  //! \param[in] to_domain  The domain index of the sub entities.
+  //! \param[in] dim The topological dimension of the entity to create.
+  //! \param[in] cell_id  The id of the entity in question.
+  //! \param[in] primal_conn The currently built connectivity of the primal mesh.
+  //! \param[in] domain_conn The currently built connectivity of the mesh for 
+  //!                        this entities domain.
+  //! \param[out] entities Vector to fill with ids of the lower level entities 
+  //!                      that form this entity.
   //!
   //! \return A pair with a) the number of entity collections making up the
   //!   binding and b) the number of entities per collection.
@@ -464,14 +461,12 @@ private:
   //! a reference to the mesh topology
   const mesh_topology_base_t * mesh_ = nullptr;
 
-}; // class burton_element_t
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_element_t burton_entity_types.h
-//! \brief The burton_element_t type provides an interelement for managing and
-//!   geometry and state associated with mesh elements.
-//!
+//! \brief An interface for managing geometry and state associated with 
+//!        three-dimensional mesh faces.
 //! \remark this is a 3d face
 ////////////////////////////////////////////////////////////////////////////////
 template<>
@@ -508,13 +503,15 @@ struct burton_element_t<3,2>
 
   //! Type containing coordinates of the vertex.
   using point_t = typename mesh_traits_t::point_t;
+  //! The point list type.
   using point_list_t = std::vector< point_t >;
 
   //! Type vector type.
   using vector_t = typename mesh_traits_t::vector_t;
 
-  // the flecsi id type
+  //! the flecsi id type
   using id_t = flecsi::id_t;
+  //! The flecsi domain connectivity type.
   using connectivity_t = flecsi::domain_connectivity<num_dimensions>;
 
   //! the base vertex type
@@ -525,6 +522,7 @@ struct burton_element_t<3,2>
 
   //! The boundary id type
   using tag_t = typename mesh_traits_t::tag_t;
+  //! The boundary id list type.
   using tag_list_t = typename mesh_traits_t::tag_list_t;
 
   //============================================================================
@@ -585,7 +583,7 @@ struct burton_element_t<3,2>
   virtual real_t min_length() const;
 
   //! the element type
-  virtual geom::geometric_shapes_t type() const
+  virtual geom::shapes::geometric_shapes_t type() const
   { raise_runtime_error("you should never get here"); };
 
   //----------------------------------------------------------------------------
@@ -594,10 +592,11 @@ struct burton_element_t<3,2>
   //!   in e. See, e.g., burton_quadrilateral_element_t for an implementation of
   //!   this pure virtual function.
   //!
+  //! \param[in] cell  The id of the entity in question.
   //! \param[in] dim The topological dimension of the entity to create.
-  //! \param[out] e Vector to fill with ids of the vertices making the entity.
-  //! \param[in] v Vertex ids for the element.
-  //! \param[in] vertex_count The number of vertices making up the entity.
+  //! \param[in] conn The currently build connectivity of the mesh.
+  //! \param[out] entities Vector to fill with ids of the lower level entities 
+  //!                      that form this entity.
   //!
   //! \return A pair with a) the number of vertex collections making up the
   //!   entity and b) the number of vertices per collection.
@@ -613,9 +612,15 @@ struct burton_element_t<3,2>
   //!   See, e.g., burton_quadrilateral_element_t for an implementation of
   //!   this pure virtual function.
   //!
-  //! \param[in] dim The topological dimension of the entity being bound.
-  //! \param[in] ent_ids The entity ids of the entities making up the binding.
-  //! \param[out] c The collection of the ids making up the bound entity.
+  //! \param[in] from_domain  The domain index of the root entity.
+  //! \param[in] to_domain  The domain index of the sub entities.
+  //! \param[in] dim The topological dimension of the entity to create.
+  //! \param[in] cell_id  The id of the entity in question.
+  //! \param[in] primal_conn The currently built connectivity of the primal mesh.
+  //! \param[in] domain_conn The currently built connectivity of the mesh for 
+  //!                        this entities domain.
+  //! \param[out] entities Vector to fill with ids of the lower level entities 
+  //!                      that form this entity.
   //!
   //! \return A pair with a) the number of entity collections making up the
   //!   binding and b) the number of entities per collection.
@@ -652,19 +657,16 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief The burton_face_t type provides an interface for managing and
-//!   geometry and state associated with mesh faces.
-//!
-//! \tparam N The domain of the face.
+//! \brief An interface for managing geometry and state associated with 
+//!        three-dimensional mesh faces.
+//! \tparam N The total number of mesh dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 using burton_face_t = burton_element_t<N,N-1>;
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_element_t burton_entity_types.h
-//! \brief The burton_element_t type provides an interelement for managing and
-//!   geometry and state associated with mesh elements.
-//!
+//! \brief An interface for managing geometry and state associated with 
+//!        three-dimensional mesh cells.
 //! \remark this is a 3d cell
 ////////////////////////////////////////////////////////////////////////////////
 template<>
@@ -775,7 +777,7 @@ struct burton_element_t<3,3>
   size_t region() const;
 
   //! the element type
-  virtual geom::geometric_shapes_t type() const
+  virtual geom::shapes::geometric_shapes_t type() const
   { raise_runtime_error("you should never get here"); };
 
 
@@ -785,10 +787,11 @@ struct burton_element_t<3,3>
   //!   in e. See, e.g., burton_quadrilateral_element_t for an implementation of
   //!   this pure virtual function.
   //!
+  //! \param[in] cell  The id of the entity in question.
   //! \param[in] dim The topological dimension of the entity to create.
-  //! \param[out] e Vector to fill with ids of the vertices making the entity.
-  //! \param[in] v Vertex ids for the element.
-  //! \param[in] vertex_count The number of vertices making up the entity.
+  //! \param[in] conn The currently build connectivity of the mesh.
+  //! \param[out] entities Vector to fill with ids of the lower level entities 
+  //!                      that form this entity.
   //!
   //! \return A pair with a) the number of vertex collections making up the
   //!   entity and b) the number of vertices per collection.
@@ -804,9 +807,15 @@ struct burton_element_t<3,3>
   //!   See, e.g., burton_quadrilateral_element_t for an implementation of
   //!   this pure virtual function.
   //!
-  //! \param[in] dim The topological dimension of the entity being bound.
-  //! \param[in] ent_ids The entity ids of the entities making up the binding.
-  //! \param[out] c The collection of the ids making up the bound entity.
+  //! \param[in] from_domain  The domain index of the root entity.
+  //! \param[in] to_domain  The domain index of the sub entities.
+  //! \param[in] dim The topological dimension of the entity to create.
+  //! \param[in] cell_id  The id of the entity in question.
+  //! \param[in] primal_conn The currently built connectivity of the primal mesh.
+  //! \param[in] domain_conn The currently built connectivity of the mesh for 
+  //!                        this entities domain.
+  //! \param[out] entities Vector to fill with ids of the lower level entities 
+  //!                      that form this entity.
   //!
   //! \return A pair with a) the number of entity collections making up the
   //!   binding and b) the number of entities per collection.
@@ -845,19 +854,12 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief The burton_cell_t type provides an interface for managing and
-//!   geometry and state associated with mesh cells.
-//!
-//! \tparam N The domain of the cell.
+//! \brief An interface for managing geometry and state associated with 
+//!        three-dimensional mesh cells.
+//! \tparam N The total number of mesh dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 using burton_cell_t = burton_element_t<N,N>;
 
 } // namespace mesh
 } // namespace ale
-
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

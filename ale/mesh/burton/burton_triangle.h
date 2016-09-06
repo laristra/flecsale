@@ -1,25 +1,15 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  //
- *
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
-/*!
- * \file burton_entity_types.h
- * \authors bergen
- * \date Initial file creation: Nov 15, 2015
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file 
+/// \brief Provides various triangular element types.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/geom/shapes/triangle.h"
 #include "ale/mesh/burton/burton_element.h"
 
@@ -28,19 +18,13 @@ namespace ale {
 namespace mesh {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_triangle_t burton_entity_types.h
-//!
-//! \brief The burton_triangle_t type provides a derived instance of
-//!   burton_cell_t for 2D triangle cells.
+//! \brief Provides various triangular element type specializations.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 class burton_triangle_t {};
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_triangle_t burton_entity_types.h
-//!
-//! \brief The burton_triangle_t type provides a derived instance of
-//!   burton_cell_t for 2D triangle cells.
+//! \brief Provides a two-dimensional triangular element.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 class burton_triangle_t<2> : public burton_element_t<2,2>
@@ -79,8 +63,8 @@ public:
   real_t min_length() const override;
 
   //! the cell type
-  geom::geometric_shapes_t type() const override 
-  { return geom::triangle<num_dimensions>::shape; };
+  geom::shapes::geometric_shapes_t type() const override 
+  { return geom::shapes::triangle<num_dimensions>::shape; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_triangle_cell_t.
@@ -189,13 +173,10 @@ public:
   } // create_bound_entities
 
 
-}; // class burton_triangle_cell_t
+};
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \class burton_triangle_t burton_entity_types.h
-//!
-//! \brief The burton_triangle_t type provides a derived instance of
-//!   burton_cell_t for 2D triangle cells.
+//! \brief Provides a three-dimensional triangular face.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 class burton_triangle_t<3> : public burton_element_t<3,2>
@@ -237,8 +218,8 @@ public:
   real_t min_length() const override;
 
   //! the cell type
-  geom::geometric_shapes_t type() const override 
-  { return geom::triangle<num_dimensions>::shape; };
+  geom::shapes::geometric_shapes_t type() const override 
+  { return geom::shapes::triangle<num_dimensions>::shape; };
 
 
   //----------------------------------------------------------------------------
@@ -267,7 +248,7 @@ public:
     return {2, 2, 2};
   } // create_entities
 
-}; // class burton_triangle_cell_t
+};
 
 } // namespace
 } // namespace

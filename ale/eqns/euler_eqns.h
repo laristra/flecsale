@@ -1,23 +1,17 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file euler_eqns.h
- * 
- * \brief The desrciption of the euler equations.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+///
+/// \file
+/// 
+/// \brief The desrciption of the euler equations.
+///
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/math/tuple.h"
 #include "ale/math/math.h"
 #include "ale/math/vector.h"
@@ -26,7 +20,9 @@ namespace ale {
 namespace eqns {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Specialization of the euler equations
+//! \brief Specialization of the euler equations.
+//! \tparam T The real type.
+//! \tparam N The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template<typename T, size_t N>
 struct euler_eqns_t {
@@ -38,26 +34,26 @@ public:
   // Typedefs
   //============================================================================
 
-  //! \brief the size type
+  //! \brief The size type.
   using size_t = std::size_t;
 
-  // \brief the real type
+  // \brief The real type.
   using real_t = T;
 
-  //! \brief the vector_type
+  //! \brief The vector type.
   using vector_t = math::vector<real_t,N>;
 
-  //! the number of dimensions
+  //! The number of dimensions.
   static constexpr size_t dimensions = N;
 
   //============================================================================
-  // \brief The equations struct
+  //! \brief The equations struct.
   //============================================================================
   struct equations {
 
-    //! \brief  the type for holding the state data (mass, momentum, and energy)
+    //! \brief  The type for holding the state data (mass, momentum, and energy).
     //! 
-    //! tuple_t is a std::tuple with a real_t for mass, a vector_t for momentum
+    //! data_t is a std::tuple with a real_t for mass, a vector_t for momentum
     //! and a real_t for energy.  This needs to correspond to index
     //! or there may be problems
     using data_t = math::tuple<real_t,vector_t,real_t>;
@@ -77,14 +73,14 @@ public:
   };
 
   //============================================================================
-  // \brief The variables struct
+  //! \brief The variables struct.
   //============================================================================
   struct variables {
 
 
-    //! \brief  the type for holding the state data
+    //! \brief  The type for holding the state data.
     //!
-    //! This needs to correspond with index or they may be problems
+    //! This needs to correspond with index or they may be problems.
     using data_t = 
       math::tuple<real_t,vector_t,real_t,real_t,real_t,real_t>;
 
@@ -122,7 +118,7 @@ public:
 
 
   //============================================================================
-  //! \brief accessors for various quantities
+  //! \brief Accessors for various quantities.
   //!
   //! Wrapper functions are only used for accessing either independant or 
   //! derived quantities.  Modifictions of variables should access
@@ -134,8 +130,8 @@ public:
   //!   get<variables::index::density> = val
   //! is assigning a new value to density.
   //!
-  //! \param [in] u the state
-  //! \return the quantity of interest
+  //! \param [in] u The state.
+  //! \return The quantity of interest.
   //============================================================================
   static auto density( const state_data_t & u )
   { 
@@ -143,30 +139,35 @@ public:
     return get<variables::index::density>( u ); 
   }
 
+  //! \copydoc density
   static auto velocity( const state_data_t & u )
   { 
     using math::get;
     return get<variables::index::velocity>( u ); 
   }
 
+  //! \copydoc density
   static auto pressure(  const state_data_t & u )
   { 
     using math::get;
     return get<variables::index::pressure>( u ); 
   }
 
+  //! \copydoc density
   static auto internal_energy( const state_data_t & u )
   { 
     using math::get;
     return get<variables::index::internal_energy>( u ); 
   }
 
+  //! \copydoc density
   static auto sound_speed( const state_data_t & u )
   { 
     using math::get;
     return get<variables::index::sound_speed>( u ); 
   }
 
+  //! \copydoc density
   static auto total_energy( const state_data_t & u )
   { 
     using math::get;
@@ -177,9 +178,12 @@ public:
   }
 
   //============================================================================
-  //! \brief Compute the fastest moving eigenvalue
-  //! \param [in]  u   The solution state
-  //! \return the fastest moving wave speed
+  //! \brief Compute the fastest moving wavespeed, i.e. the maximum absolute 
+  //!        value.
+  //! \param [in] u     The solution state.
+  //! \param [in] norm  The normal vector aligned in the direction of interest.
+  //! \tparam V  The normal vector type.
+  //! \return The fastest moving wave speed.
   //============================================================================
   template <typename V>
   static auto fastest_wavespeed( const state_data_t & u, const V & norm )
@@ -192,9 +196,11 @@ public:
   }
 
   //============================================================================
-  //! \brief Compute the fastest moving eigenvalue
-  //! \param [in]  u   The solution state
-  //! \return the fastest moving wave speed
+  //! \brief Compute the fastest moving eigenvalues.
+  //! \param [in]  u    The solution state.
+  //! \param [in] norm  The normal vector aligned in the direction of interest.
+  //! \tparam V  The normal vector type.
+  //! \return The fastest moving wave speed.
   //============================================================================
   template <typename V>
   static auto eigenvalues( const state_data_t & u, const V & norm )
@@ -213,8 +219,10 @@ public:
 
   //============================================================================
   //! \brief Compute the fastest moving eigenvalue
-  //! \param [in]  u   The solution state
-  //! \return the fastest moving wave speed
+  //! \param [in]  u   The solution state.
+  //! \param [in] norm  The normal vector aligned in the direction of interest.
+  //! \tparam V  The normal vector type.
+  //! \return The fastest moving wave speed.
   //============================================================================
   template <typename V>
   static auto minmax_eigenvalues( const state_data_t & u, const V & norm )
@@ -228,9 +236,9 @@ public:
   }
 
   //============================================================================
-  //! \brief Computes the change in conserved quantities between two states
-  //! \param [in]  ul   The left state
-  //! \param [in]  ur   The right state
+  //! \brief Computes the change in conserved quantities between two states.
+  //! \param [in]  ul   The left state.
+  //! \param [in]  ur   The right state.
   //! \return ur - ul
   //============================================================================
   static auto solution_delta( 
@@ -258,9 +266,11 @@ public:
   }
 
   //============================================================================
-  //! \brief compute the flux in the normal direction
-  //! \param [in] normal The normal direction
-  //! \return the flux alligned with the normal direction
+  //! \brief Compute the flux in the normal direction.
+  //! \param [in]  u    The solution state.
+  //! \param [in] norm  The normal vector aligned in the direction of interest.
+  //! \tparam V  The normal vector type.
+  //! \return The flux alligned with the normal direction.
   //============================================================================
   template <typename V>
   static auto flux( const state_data_t & u, const V & norm )
@@ -292,11 +302,11 @@ public:
   }
 
   //============================================================================
-  //! \brief The flux at the wall
-  //!
-  //! \param [in] u      the solution state
-  //! \param [in] norm  the normal direction
-  //! \return the flux
+  //! \brief The flux at a wall.
+  //! \param [in] u      The solution state.
+  //! \param [in] norm   The normal direction.
+  //! \tparam V  The normal vector type.
+  //! \return The solution flux.
   //============================================================================
   template <typename V>
   static auto wall_flux( const state_data_t & u, const V & norm )
@@ -308,9 +318,10 @@ public:
 
 
   //============================================================================
-  //! \brief update the state from the pressure
-  //! \param [in,out] u   The state to update
-  //! \param [in]     eos The state to update
+  //! \brief Update the state from the pressure.
+  //! \param [in,out] u   The state to update.
+  //! \param [in]     eos The equation of state to apply.
+  //! \tparam E  The type of the equation of state.
   //============================================================================
   template <typename E>
   static void update_state_from_pressure( state_ref_t & u, const E & eos )
@@ -338,9 +349,10 @@ public:
 
 
   //============================================================================
-  //! \brief update the state from the energy
-  //! \param [in,out] u   The state to update
-  //! \param [in]     eos The state to update
+  //! \brief Update the state from the energy.
+  //! \param [in,out] u   The state to update.
+  //! \param [in]     eos The equation of state to apply.
+  //! \tparam E  The type of the equation of state.
   //============================================================================
   template <typename E>
   static void update_state_from_energy( state_ref_t & u, const E & eos )
@@ -368,9 +380,9 @@ public:
 
 
   //============================================================================
-  //! \brief apply an update from conservative fluxes
-  //! \param [in,out] u   The state to update
-  //! \param [in]     du  The conservative change in state
+  //! \brief Apply an update from conservative fluxes.
+  //! \param [in,out] u   The state to update.
+  //! \param [in]     du  The conservative change in state.
   //============================================================================
   static void update_state_from_flux( state_ref_t & u, const flux_data_t & du )
   {
@@ -409,9 +421,3 @@ public:
 } // namespace
 } // namespace
 
-
-
-/*~------------------------------------------------------------------------~--*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~------------------------------------------------------------------------~--*/

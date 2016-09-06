@@ -1,25 +1,19 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@ @@       @@@@@@@@ @@     @@ @@
- ale/ale/@@    ale/ale//@@   @@ /@@
- * /@@      /@@      /@@       //@@ @@  /@@
- * /@@@@@@@ /@@      /@@@@@@@   //@@@   /@@
- ale/ale/@@    ale////     @@/@@  /@@
- * /@@      /@@      /@@        @@ //@@ /@@
- * /@@      /@@@@@@@@/@@@@@@@@ @@  ale/@@
- * //     ale/ale/ale// //   ale// 
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+////////////////////////////////////////////////////////////////////////////////
+
+// user includes
+#include "ale/utils/tuple_visit.h"
+
 
 // system includes
 #include <cinchtest.h>
 #include <iostream>
 #include <string>
-
-// user includes
-#include "ale/utils/tuple_visit.h"
-
 
 // using declarations
 using std::cout;

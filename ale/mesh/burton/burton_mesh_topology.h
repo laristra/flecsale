@@ -1,16 +1,11 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  //
- *
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Defines the burton mesh topology from the FleCSI topology type.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
@@ -27,20 +22,22 @@ namespace mesh {
 // Expose some types
 ////////////////////////////////////////////////////////////////////////////////
 
-//! some flexi flags
+// some flexi flags
 using flecsi::flecsi_internal;
 using flecsi::flecsi_user_space;
 
 ////////////////////////////////////////////////////////////////////////////////
-//! Type for storing instance of template specialized low level mesh.
+//! \brief Type for storing instance of template specialized low level mesh.
+//! \tparam [in]  N  The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template < std::size_t N >
 using burton_mesh_topology_t = 
   flecsi::mesh_topology_t< burton_mesh_types_t<N> >;
 
 
-//! Two dimensional and three dimensional versions
+//! Two dimensional specialization of the mesh topology.
 using burton_2d_mesh_topology_t = burton_mesh_topology_t<2>; 
+//! Three dimensional specialization of the mesh topology.
 using burton_3d_mesh_topology_t = burton_mesh_topology_t<3>; 
 
 

@@ -1,34 +1,30 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file type_traits.h
- * 
- * \brief Extensions to C++11 that are part of C++14.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Extensions to C++11 that are part of C++14.
+////////////////////////////////////////////////////////////////////////////////
+
 #pragma once
 
-//! system includes
+// system includes
 #include <algorithm>
 
 namespace ale {
 namespace utils {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! Stuff not in C++
+// Stuff not in C++ stds library
 ////////////////////////////////////////////////////////////////////////////////
 
 //==============================================================================
-// perform a set intersection, but this one sorts first
+//! \brief Perform a set intersection, but this one sorts first.
+//! \param [in] first1,last1  The first range of elements to examine.
+//! \param [in] first2,last2  The second range of elements to examine.
+//! \param [in,out] d_first  Iterator past the constructed range.
+//! \return Iterator past the constructed range.
 //==============================================================================
 template<class InputIt1, class InputIt2, class OutputIt>
 OutputIt unsorted_set_intersection( InputIt1 first1, InputIt1 last1,
@@ -50,7 +46,8 @@ OutputIt unsorted_set_intersection( InputIt1 first1, InputIt1 last1,
 }
 
 //==============================================================================
-// remove unique items from a container
+//! \brief Remove unique items from a container.
+//! \param [in,out] cont  The container to modify.
 //==============================================================================
 template<class Container>
 void remove_duplicates( Container && cont )

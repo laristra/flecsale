@@ -1,18 +1,9 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  //
- *
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
 
-//! user includes
+// user includes
 #include "ale/mesh/burton/burton_mesh_topology.h"
 #include "ale/mesh/burton/burton_triangle.h"
 
@@ -28,34 +19,34 @@ using burton_3d_triangle_t = burton_triangle_t<3>;
 // 2D triangle
 ////////////////////////////////////////////////////////////////////////////////
 
-//! the centroid
+// the centroid
 burton_2d_triangle_t::point_t burton_2d_triangle_t::centroid() const
 {
   auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::triangle<num_dimensions>::centroid( 
+  return geom::shapes::triangle<num_dimensions>::centroid( 
     vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
 }
 
-//! the midpoint
+// the midpoint
 burton_2d_triangle_t::point_t burton_2d_triangle_t::midpoint() const
 {
   auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::triangle<num_dimensions>::midpoint( 
+  return geom::shapes::triangle<num_dimensions>::midpoint( 
     vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
 }
 
-//! the area of the cell
+// the area of the cell
 burton_2d_triangle_t::real_t burton_2d_triangle_t::area() const
 {
   auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::triangle<num_dimensions>::area( 
+  return geom::shapes::triangle<num_dimensions>::area( 
     vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
 }
 
-//! the minimum length in the cell
+// the minimum length in the cell
 burton_2d_triangle_t::real_t burton_2d_triangle_t::min_length() const
 {
   auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh()); 
@@ -77,43 +68,43 @@ burton_2d_triangle_t::real_t burton_2d_triangle_t::min_length() const
 // 3D triangle
 ////////////////////////////////////////////////////////////////////////////////
 
-//! the centroid
+// the centroid
 burton_3d_triangle_t::point_t burton_3d_triangle_t::centroid() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::triangle<num_dimensions>::centroid( 
+  return geom::shapes::triangle<num_dimensions>::centroid( 
     vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
 }
 
-//! the midpoint
+// the midpoint
 burton_3d_triangle_t::point_t burton_3d_triangle_t::midpoint() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::triangle<num_dimensions>::midpoint( 
+  return geom::shapes::triangle<num_dimensions>::midpoint( 
     vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
 }
 
-//! the normal
+// the normal
 burton_3d_triangle_t::vector_t burton_3d_triangle_t::normal() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::triangle<num_dimensions>::normal( 
+  return geom::shapes::triangle<num_dimensions>::normal( 
     vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
 }
 
-//! the area of the cell
+// the area of the cell
 burton_3d_triangle_t::real_t burton_3d_triangle_t::area() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::triangle<num_dimensions>::area( 
+  return geom::shapes::triangle<num_dimensions>::area( 
     vs[0]->coordinates(), vs[1]->coordinates(), vs[2]->coordinates() );
 }
 
-//! the minimum length in the cell
+// the minimum length in the cell
 burton_3d_triangle_t::real_t burton_3d_triangle_t::min_length() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 

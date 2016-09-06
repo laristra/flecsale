@@ -1,12 +1,12 @@
 #~----------------------------------------------------------------------------~#
-# Copyright (c) 2014 Los Alamos National Security, LLC
-# All rights reserved.
+# Copyright (c) 2016 Los Alamos National Laboratory, LLC
+# All rights reserved
 #~----------------------------------------------------------------------------~#
 
 set(math_HEADERS
   array.h
   constants.h
-  math.h    detail/math.h
+  math.h  detail/math_impl.h
   matrix.h
   multi_array.h
   tuple.h
@@ -20,8 +20,3 @@ cinch_add_unit(math
       test/vector.cc
       test/matrix.cc
 )
-
-#----------------------------------------------------------------------------~-#
-# Formatting options for vim.
-# vim: set tabstop=2 shiftwidth=2 expandtab :
-#----------------------------------------------------------------------------~-#

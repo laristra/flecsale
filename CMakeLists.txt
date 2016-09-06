@@ -30,8 +30,3 @@ cmake_minimum_required(VERSION 2.8)
 #------------------------------------------------------------------------------#
 
 include(${CMAKE_SOURCE_DIR}/cinch/cmake/ProjectLists.txt)
-
-#------------------------------------------------------------------------------#
-# Formatting options for emacs and vim.
-# vim: set tabstop=4 shiftwidth=4 expandtab :
-#------------------------------------------------------------------------------#

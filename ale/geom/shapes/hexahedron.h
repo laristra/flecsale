@@ -1,31 +1,23 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file hexahedron.h
- * 
- * \brief Some utility functions for hexahedrons.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Some utility functions for hexahedrons.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/geom/shapes/geometric_shapes.h"
 #include "ale/geom/shapes/polyhedron.h"
 
 namespace ale {
 namespace geom {
+namespace shapes {
 
 ////////////////////////////////////////////////////////////////////////////////
-//! the hexahedron class
+//! \brief the hexahedron class
 ////////////////////////////////////////////////////////////////////////////////
 struct hexahedron {
 
@@ -88,5 +80,6 @@ struct hexahedron {
      
 };
 
+} // namespace shapes
 } // namespace geom
 } // namespace ale

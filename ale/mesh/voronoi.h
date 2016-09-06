@@ -1,40 +1,42 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file voronoi.h
- * 
- * \brief Some functionality for generating vornoi meshes.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Some functionality for generating vornoi meshes.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
 
-//! library includes
-#ifdef HAVE_SHAPO
-#  include <shapo/Mesh2D.hxx>
-#  include <shapo/Tessellator.hxx>
-#  include <vtkPoints.h>
-#endif
+// user includes
+#include "detail/voronoi_impl.h"
 
 // uncomment this to dump shapo data
 #define DUMP_DIAGNOSTICS
 
-//! user includes
-#include "detail/voronoi.h"
-
 
 namespace ale {
 namespace mesh {
+
+//! a unique pointer type for shapo
+//! \tparam T the shapo type
+template<class T>
+using shapo_unique_ptr = 
+  std::unique_ptr<T, std::function<void(T*)> >;
+
+//! \brief Constructs a unique pointer for shapo of non-array type T
+//! \tparam T the shapo type
+//! \param [in]  args  the arguments to the constructor
+//! \return a unique_ptr
+template<class T, class... Args>
+shapo_unique_ptr<T>
+shapo_make_unique(Args&&... args) {
+  return shapo_unique_ptr<T>( new T(std::forward<Args>(args)...), 
+                              [](T* t){ t->Delete(); } );
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -55,6 +57,10 @@ T voronoi(
 {
 
 #ifdef HAVE_SHAPO
+
+
+  // the tesselator
+  using shapo::Tessellator;
 
   //----------------------------------------------------------------------------
   // shapo setup

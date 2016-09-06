@@ -1,26 +1,12 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file array.h
- * 
- * \brief Provides a dimensioned array which functions as a vector.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Provides a multi-dimensioned array which functions as a vector.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
-
-// system includes
-#include <algorithm>
-#include <array>
-#include <cassert>
 
 // user includes
 #include "ale/std/type_traits.h"
@@ -28,15 +14,29 @@
 #include "ale/utils/template_helpers.h"
 #include "ale/utils/tuple_visit.h"
 
+// system includes
+#include <algorithm>
+#include <array>
+#include <cassert>
+
 namespace ale {
 namespace math {
 
 
 
-struct row_major_ordering {
+////////////////////////////////////////////////////////////////////////////////
+/// \brief A helper struct to statically generate strides at compile time
+///        for row major matrices.
+////////////////////////////////////////////////////////////////////////////////
+class row_major_ordering {
 
+  //! \brief The size type is just a size_t.
   using size_type = std::size_t;
 
+  //! \brief Compute the stride at position `N` recursively.
+  //! \param [in] ids The array of dimensions of the matrix.
+  //! \param [in] N   The dimension of the stride to compute.
+  //! \return The strid at position `N`.
   constexpr size_type stride(const size_type * ids, const size_type & N )
   {
     if ( N > 0 )
@@ -45,12 +45,23 @@ struct row_major_ordering {
       return 1;
   }
   
+  //! \brief Main helper function to compute the strides.
+  //! \param [in] ids The array of dimensions of the matrix.
+  //! \tparam N The number of dimensions.
+  //! \tparam I The an index sequence from `0` to `N`
+  //! \return The array of strides.
   template< size_type N, size_type... I >
   constexpr std::array<size_type, N> ordering_helper( const size_type (&ids)[N], std::index_sequence<I...> ) 
   {
     return {{ stride( &ids[I], N-I-1 )... }};
   }
+
+public:
   
+  //! \brief Main calling function to compute the strides.
+  //! \param [in] ids The array of dimensions of the matrix.
+  //! \tparam N The number of dimensions.
+  //! \return The array of strides.
   template< size_type N >
   constexpr auto operator()( const size_type (&ids)[N] )    
   {
@@ -59,10 +70,19 @@ struct row_major_ordering {
   
 };
 
-struct col_major_ordering {
+////////////////////////////////////////////////////////////////////////////////
+/// \brief A helper struct to statically generate strides at compile time
+///        for column major matrices.
+////////////////////////////////////////////////////////////////////////////////
+class col_major_ordering {
 
+  //! \brief The size type is just a size_t.
   using size_type = std::size_t;
 
+  //! \brief Compute the stride at position `N` recursively.
+  //! \param [in] ids The array of dimensions of the matrix.
+  //! \param [in] N   The dimension of the stride to compute.
+  //! \return The stride at position `N`.
   constexpr size_type stride(const size_type * ids, const size_type & N )
   {
     if ( N > 0 )
@@ -71,12 +91,23 @@ struct col_major_ordering {
       return 1;
   }
   
+  //! \brief Main helper function to compute the strides.
+  //! \param [in] ids The array of dimensions of the matrix.
+  //! \tparam N The number of dimensions.
+  //! \tparam I The an index sequence from `0` to `N`
+  //! \return The array of strides.
   template< size_type N, size_type... I >
   constexpr std::array<size_type, N> ordering_helper( const size_type (&ids)[N], std::index_sequence<I...> ) 
   {
     return {{ stride( &ids[N-I-1], I )... }};
   }
   
+public:
+
+  //! \brief Main calling function to compute the strides.
+  //! \param [in] ids The array of dimensions of the matrix.
+  //! \tparam N The number of dimensions.
+  //! \return The array of strides.
   template< size_type N >
   constexpr auto operator()( const size_type (&ids)[N] )    
   {
@@ -90,8 +121,7 @@ struct col_major_ordering {
 //!  contiguous array types that have a specific dimension.
 //!
 //!  \tparam T The type of the array, e.g., P.O.D. type.
-//!  \tparam D The dimension of the array, i.e., the number of elements
-//!    to be stored in the array.
+//!  \tparam N The dimensions of the array.
 ////////////////////////////////////////////////////////////////////////////////
 template <typename T, std::size_t... N> 
 class multi_array {
@@ -102,7 +132,6 @@ public:
   // Typedefs
   //===========================================================================
 
-
   using value_type      = T;
   using reference       = T &;
   using pointer         = T *;
@@ -111,16 +140,21 @@ public:
   using size_type       = std::size_t;
   using difference_type = std::ptrdiff_t;
 
-  //! iterator support
+  //! \brief For terator support.
+  //! @{
   using iterator        = pointer;
   using const_iterator  = const_pointer;
-  //! reverse iterator support
+  //! @}
+
+  //! \brief For reverse iterator support.
+  //! @{
   using reverse_iterator       = std::reverse_iterator<iterator>;
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+  //! @}
 
-  //! size in each dimension 
+  //! \brief The number of dimensions.
   static constexpr size_type dimensions  = sizeof...(N);
-  //! the total length of storage
+  //! \brief The total length of storage.
   static constexpr size_type elements = utils::multiply(N...);
 
 private:
@@ -132,11 +166,11 @@ private:
   //! \brief The main data container, which is just a std::array.
   T elems_[ elements ];
 
-  //! \brief The individual dimensions
+  //! \brief The individual dimensions.
   static constexpr size_type dims_[ dimensions ] = {N...};
 
-  //! \brief The individual strides
-  static constexpr std::array<size_type, sizeof...(N)> strides_ = row_major_ordering{}( {N...} );
+  //! \brief The individual strides.
+  static constexpr std::array<size_type, sizeof...(N)> strides_ = row_major_ordering{}( dims_ );
 
 public:
 
@@ -144,13 +178,13 @@ public:
   // Constructors / Destructors
   //===========================================================================
 
-  //! \brief force the default constructor
+  //! \brief Force the default constructor.
   multi_array() = default;
 
-  //! \brief force the default copy constructor
+  //! \brief Force the default copy constructor.
   multi_array(const multi_array &) = default;
 
-  //!\brief fancy copy constructor with type conversion
+  //!\brief A fancy copy constructor with type conversion.
   template <typename T2>
   multi_array(const multi_array<T2,N...>& oth) 
   {
@@ -158,7 +192,7 @@ public:
   }
 
   //! \brief Constructor with one value.
-  //! \param[in] val The value to set the multi_array to
+  //! \param[in] val The value to set the multi_array to.
   template < typename T2 >
   multi_array(const T2 & val)
   { 
@@ -166,11 +200,9 @@ public:
     fill( val ); 
   }
 
-  //! \brief Constructor with initializer list
-  //! 
-  //! Initializer list is ALWAYS provided in row-major format
-  //!
-  //! \param[in] list the initializer list of values
+  //! \brief Constructor with initializer list.
+  //! Initializer list is ALWAYS provided in row-major format.
+  //! \param[in] list The initializer list of values.
   multi_array( std::initializer_list<T> list) 
   { 
     //std::cout << "multi_array (variadic constructor)\n";
@@ -184,18 +216,22 @@ public:
   // Iterators
   //===========================================================================
 
-  //! \brief return an iterator to the beginning of the multi_array
+  //! \brief Return an iterator to the beginning of the multi_array.
+  //! @{
                   iterator  begin()       { return elems_; }
   constexpr const_iterator  begin() const { return elems_; }
   constexpr const_iterator cbegin() const { return begin(); }
+  //! @}
         
-  //! \brief return an iterator to the end of the multi_array
+  //! \brief Return an iterator to the end of the multi_array.
+  //! @{
                   iterator  end()       { return elems_+elements; }
   constexpr const_iterator  end() const { return elems_+elements; }
   constexpr const_iterator cend() const { return end(); }
+  //! @}
 
-
-  //! \brief return a reverse iterator to the beginning of the aray
+  //! \brief Return a reverse iterator to the beginning of the multi_array.
+  //! @{
   reverse_iterator rbegin() 
   { return reverse_iterator(end()); }
   
@@ -204,8 +240,10 @@ public:
   
   const_reverse_iterator crbegin() const 
   { return const_reverse_iterator(end()); }
+  //! @}
 
-  //! \brief return a reverse iterator to the end of the aray
+  //! \brief Return a reverse iterator to the end of the multi_array.
+  //! @{
   reverse_iterator rend() 
   { return reverse_iterator(begin()); }
 
@@ -214,6 +252,7 @@ public:
   
   const_reverse_iterator crend() const 
   { return const_reverse_iterator(begin()); }
+  //! @}
  
 
 
@@ -222,7 +261,9 @@ public:
   //===========================================================================
 
 
-  //! \brief return the ith element ( uses 1d index only )
+  //! \brief Return the `i`th element ( uses 1d index only ).
+  //! \param [in] i  The element to access.
+  //! @{
   reference operator[](size_type i) 
   { 
     assert( i < elements && "out of range" );
@@ -234,8 +275,13 @@ public:
     assert( i < elements && "out of range" );
     return elems_[i]; 
   }
+  //! @}
 
-  //! \brief return the ith element ( allows multiple dimensions )
+  //! \brief Return a specific element ( allows multiple dimensions ).
+  //! \param [in] ids  The indices in each dimension in an array.
+  //! \tparam D The lenngth of the dimension array.
+  //! \remark Must match the number of dimensions of the multi_array.
+  //! @{
   template< size_type D >
   std::enable_if_t< D == dimensions, reference >
   operator[](const size_type (&ids)[D]) 
@@ -251,14 +297,19 @@ public:
     auto ind = element( ids );
     return elems_[ind]; 
   }
+  //! @}
 
-  //! \brief return the ith element ( allows multiple dimensions )
+  //! \brief Return a specific element ( allows multiple dimensions ).
+  //! \param [in] i  The indices in each dimension.
+  //! \remark Number of arguments must match the number of dimensions of the 
+  //!         multi_array.
+  //! @{
   template <typename... Args>
   std::enable_if_t< sizeof...(Args) == sizeof...(N), reference >
   operator()(Args... i) 
   { 
     assert_ranges( std::forward<Args>(i)... );
-    auto ind = element( std::forward<Args>(i)... );
+    auto ind = this->element( std::forward<Args>(i)... );
     return elems_[ind];
   }
 
@@ -268,12 +319,15 @@ public:
   operator()(Args... i) const
   { 
     assert_ranges( std::forward<Args>(i)... );
-    auto ind = element( std::forward<Args>(i)... );
+    auto ind = this->element( std::forward<Args>(i)... );
     return elems_[ind];
   }
+  //! @}
 
-
-  //! \brief at() with range check
+  //! \brief Access a specific element with a range check
+  //! \param [in] i  The indices in each dimension.
+  //! \remark Number of arguments must match the number of dimensions of the 
+  //!         multi_array.
   template< typename... Args >
   std::enable_if_t< sizeof...(Args) == sizeof...(N), reference >
   at(Args... i) { 
@@ -291,26 +345,31 @@ public:
     return elems_[ind];
   }
     
-  //! \brief return the first element
+  //! \brief Return the first element.
+  //! @{
   reference front() 
   { return elems_[0]; }
         
   const_reference front() const 
   { return elems_[0]; }
+  //! @}
         
-  //! \brief return the last element
+  //! \brief Return the last element.
+  //! @{
   reference back() 
   { return elems_[elements-1]; }
         
   const_reference back() const 
   {  return elems_[elements-1]; }
+  //! @}
 
-
-  //  \brief direct access to data (read-only)
+  //  \brief Direct access to data (read-only)
+  //! @{
   const T* data() const { return elems_; }
   T* data() { return elems_; }
+  //! @}
 
-  // use array as C array (direct read/write access to data)
+  // \brief use array as C array (direct read/write access to data)
   T* c_array() { return elems_; }
 
   //===========================================================================
@@ -343,13 +402,15 @@ public:
   //===========================================================================
 
 
-  //  \brief swap contents (note: linear complexity)
+  //! \brief Swap contents (note: linear complexity).
+  //! \param [in] y  The array to swap with.
   void swap (multi_array& y) {
     std::swap(elems_, y.elems_);
   }
 
 
-  //! \brief assign one value to all elements
+  //! \brief Assign one value to all elements.
+  //! \param [in] value   The value to set.
   void fill(const T& value)
   {
     std::fill_n(begin(),size(),value);
@@ -365,6 +426,8 @@ public:
     std::copy( first, last, begin() );
   }
 
+  //! \brief Replaces the contents of the container. 
+  //! \param [in] list  An initializer list to use in assignement.
   void assign( std::initializer_list<T> list ) 
   { 
     assert( list.size() == elements && "input list size mismatch" );
@@ -373,9 +436,9 @@ public:
 
   
   //===========================================================================
-  // Operators
+  //! \brief Operators
   //===========================================================================
-
+  //! @{
 
   // use std::move
   // http://stackoverflow.com/questions/11726171/numeric-vector-operator-overload-rvalue-reference-parameter
@@ -487,15 +550,20 @@ public:
     return tmp;
   }
 
+  //! @}
 
   //===========================================================================
-  // Utitilities
+  //! \brief Utitilities
   //===========================================================================
-
-
+  //! @{
+  
   //! \brief unpack an array of indices and get the element index
   //! \remark this version uses an array of indices
-  template< typename U, size_type D >
+  template< 
+    typename U, 
+    size_type D,
+    typename = typename std::enable_if_t< (D == dimensions) >
+  >
   static constexpr
   auto element( const U (&ids)[D] )
   {
@@ -507,14 +575,31 @@ public:
 
   //! \brief compute the 1d element index
   //! \remark this version uses the variadic arguments
-  template< typename... Args >
+  template< 
+    typename... Args, 
+    typename = typename std::enable_if_t< (sizeof...(Args) == dimensions && dimensions > 1) >
+  >
   static constexpr
   auto element( Args&&... ids )
   {
-    return element( {static_cast<size_type>(ids)...} );
+    size_type idx[sizeof...(ids)] = {static_cast<size_type>(ids)...};
+    return element( idx );
   }
 
-  //! \brief check range (may be private because it is static)
+  //! \brief compute the 1d element index
+  //! \remark this version is only enabled for 1d arrays
+  template< 
+    size_type D = dimensions, 
+    typename = typename std::enable_if_t< D == 1 >
+  >
+  static constexpr
+  auto element( size_type id )
+  {
+    return id;
+  }
+
+  //! \brief Make sure indices are in the range, throwing an exception on failure.
+  //! \param [in] is  The indices to check.
   template< typename... Args >
   static
   std::enable_if_t< sizeof...(Args) == sizeof...(N) >
@@ -529,6 +614,8 @@ public:
   }
 
 
+  //! \brief Make sure indices are in the range, throwing an assertion on failure.
+  //! \param [in] is  The indices to check.
   template< typename... Args >
   static
   std::enable_if_t< sizeof...(Args) == sizeof...(N) >
@@ -541,6 +628,8 @@ public:
                        std::forward_as_tuple(is...), 
                        std::forward_as_tuple(N...) );
   }
+
+  //! @}
 
 };
 
@@ -801,8 +890,3 @@ auto & operator<<(std::ostream& os, const multi_array<T,D1,D2>& a)
 
 } // namespace
 } // namespace
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

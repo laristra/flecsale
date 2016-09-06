@@ -1,24 +1,16 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file array_ref.h
- * 
- * \brief A reference array to avoid a million overloads.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief A reference array to avoid a million overloads.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
 #include <assert.h>
 #include <array>
+#include <cstddef>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -27,6 +19,7 @@
 namespace ale {
 namespace utils {
     
+////////////////////////////////////////////////////////////////////////////////
 /// An \c array_ref<T> represents an immutable array of \c size()
 /// elements of type T.  The storage for the array is *not* owned by
 /// the \c array_ref object, and clients must arrange for the backing
@@ -41,27 +34,13 @@ namespace utils {
 /// One common use for \c array_ref is when passing arguments to a
 /// routine where you want to be able to accept a variety of array
 /// types.  The usual approach here is to have the client explicitly
-/// pass in a pointer and a length, as in:
-/// \snippet array_ref_run_test.cc MyOldRoutine
-///
-/// \par
-/// Unfortunately, this leads to ugly and error-prone code at the
-/// call site:
-/// \snippet array_ref_run_test.cc MyOldRoutine calls
-///
-/// \par
-/// Instead, you can use an \c array_ref as the argument to the
-/// routine:
-/// \snippet array_ref_run_test.cc MyNewRoutine
-///
-/// \par
-/// This makes the call sites cleaner, for the most part:
-/// \snippet array_ref_run_test.cc MyNewRoutine calls
+/// pass in a pointer and a length.
 ///
 /// \todo The existing \c array_ref classes make the view const. It
 /// may be useful to extend that to allow modifications of the
 /// referenced array elements, and use \c array_ref<const T> for
 /// immutable views.
+////////////////////////////////////////////////////////////////////////////////
 template <typename T>
 class array_ref {
 
@@ -249,6 +228,8 @@ private:
         
 };
     
+
+////////////////////////////////////////////////////////////////////////////////
 /// \name deducing constructor wrappers
 /// \relates std::array_ref
 /// \xmlonly <nonmember/> \endxmlonly
@@ -256,6 +237,7 @@ private:
 /// These functions do the same thing as the constructor with the same
 /// signature. They just allow users to avoid writing the iterator
 /// type.
+////////////////////////////////////////////////////////////////////////////////
 /// @{
     
 template<typename T>

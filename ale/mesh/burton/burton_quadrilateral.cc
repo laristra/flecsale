@@ -1,18 +1,9 @@
 /*~--------------------------------------------------------------------------~*
- *  @@@@@@@@  @@           @@@@@@   @@@@@@@@ @@
- * /@@/////  /@@          @@////@@ @@////// /@@
- * /@@       /@@  @@@@@  @@    // /@@       /@@
- * /@@@@@@@  /@@ @@///@@/@@       /@@@@@@@@@/@@
- * /@@////   /@@/@@@@@@@/@@       ////////@@/@@
- * /@@       /@@/@@//// //@@    @@       /@@/@@
- * /@@       @@@//@@@@@@ //@@@@@@  @@@@@@@@ /@@
- * //       ///  //////   //////  ////////  //
- *
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~--------------------------------------------------------------------------~*/
 
-//! user includes
+// user includes
 #include "ale/mesh/burton/burton_mesh_topology.h"
 #include "ale/mesh/burton/burton_quadrilateral.h"
 
@@ -33,7 +24,7 @@ burton_2d_quad_t::point_t burton_2d_quad_t::centroid() const
 {
   auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::quadrilateral<num_dimensions>::centroid( 
+  return geom::shapes::quadrilateral<num_dimensions>::centroid( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
 }
@@ -44,7 +35,7 @@ burton_2d_quad_t::point_t burton_2d_quad_t::midpoint() const
 {
   auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::quadrilateral<num_dimensions>::midpoint( 
+  return geom::shapes::quadrilateral<num_dimensions>::midpoint( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
 }
@@ -54,7 +45,7 @@ burton_2d_quad_t::real_t burton_2d_quad_t::area() const
 {
   auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::quadrilateral<num_dimensions>::area( 
+  return geom::shapes::quadrilateral<num_dimensions>::area( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
 }
@@ -89,7 +80,7 @@ burton_3d_quad_t::point_t burton_3d_quad_t::centroid() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::quadrilateral<num_dimensions>::centroid( 
+  return geom::shapes::quadrilateral<num_dimensions>::centroid( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
 }
@@ -99,7 +90,7 @@ burton_3d_quad_t::point_t burton_3d_quad_t::midpoint() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::quadrilateral<num_dimensions>::midpoint( 
+  return geom::shapes::quadrilateral<num_dimensions>::midpoint( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
 }
@@ -110,7 +101,7 @@ burton_3d_quad_t::vector_t burton_3d_quad_t::normal() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::quadrilateral<num_dimensions>::normal( 
+  return geom::shapes::quadrilateral<num_dimensions>::normal( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
 }
@@ -120,7 +111,7 @@ burton_3d_quad_t::real_t burton_3d_quad_t::area() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::quadrilateral<num_dimensions>::area( 
+  return geom::shapes::quadrilateral<num_dimensions>::area( 
     vs[0]->coordinates(), vs[1]->coordinates(), 
     vs[2]->coordinates(), vs[3]->coordinates() );
 }

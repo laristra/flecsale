@@ -1,23 +1,17 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file flux.h
- * 
- * \brief Some general use flux functions.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+///
+/// \file
+/// 
+/// \brief Some general use flux functions.
+///
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/math/math.h" 
 
 namespace ale {
@@ -25,12 +19,14 @@ namespace eqns {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief An averaging flux function
+//! \brief An averaging flux function.
 //!
-//! \tparam E  the equations type
+//! \tparam E  The equations type.
+//! \tparam U  The state type.
+//! \tparam V  The vector type.
 //!
-//! \param [in] wl,wr  the left and right states
-//! \param [in] n      the normal direction
+//! \param [in] wl,wr  The left and right states.
+//! \param [in] n      The normal direction.
 //! \return the flux
 ////////////////////////////////////////////////////////////////////////////////
 template< typename E, typename U, typename V >
@@ -42,9 +38,11 @@ auto average_flux( const U & wl, const U & wr, const V & n) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Compute the rusanov flux function
+//! \brief Compute the rusanov flux function.
 //!
 //! \tparam E  the equations type
+//! \tparam U  the state type
+//! \tparam V  the vector type
 //!
 //! \param [in] wl,wr  the left and right states
 //! \param [in] n      the normal direction
@@ -68,9 +66,11 @@ auto rusanov_flux( const U & wl, const U & wr, const V & n) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Compute the HLLE flux function
+//! \brief Compute the HLLE flux function.
 //!
 //! \tparam E  the equations type
+//! \tparam U  the state type
+//! \tparam V  the vector type
 //!
 //! \param [in] wl,wr  the left and right states
 //! \param [in] n      the normal direction
@@ -107,9 +107,3 @@ auto hlle_flux( const U & wl, const U & wr, const V & n) {
 } // namespace
 } // namespace
 
-
-
-/*~------------------------------------------------------------------------~--*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~------------------------------------------------------------------------~--*/

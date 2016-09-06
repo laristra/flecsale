@@ -1,23 +1,14 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file polyhedron.h
- * 
- * \brief Some utility functions for polyhedrons.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Some utility functions for polyhedrons.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-//! user includes
+// user includes
 #include "ale/geom/shapes/geometric_shapes.h"
 #include "ale/geom/shapes/triangle.h"
 #include "ale/math/math.h"
@@ -25,6 +16,7 @@
 
 namespace ale {
 namespace geom {
+namespace shapes {
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief the polyhedron class
@@ -211,5 +203,6 @@ private:
 
 };
 
+} // namespace shapes
 } // namespace geom
 } // namespace ale

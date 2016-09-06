@@ -20,14 +20,14 @@ set( VORO_LIBRARIES )
 
 find_package(EXODUSII)
 
-find_package(TECIO)
+find_package(TECIO QUIET)
 
-find_package(ShaPo)
+find_package(ShaPo QUIET)
 if (ShaPo_FOUND)
   message(STATUS "Found ShaPo: ${ShaPo_DIR}")
 endif()
 
-find_package(VTK)
+find_package(VTK QUIET)
 if (VTK_FOUND)
   message(STATUS "Found VTK: ${VTK_DIR}")
 endif()
@@ -116,8 +116,3 @@ endif(ENABLE_IO)
 # ADD to ALE libraries
 #------------------------------------------------------------------------------#
 list( APPEND ALE_LIBRARIES ${IO_LIBRARIES} ${VORO_LIBRARIES} )
-
-#~---------------------------------------------------------------------------~-#
-# Formatting options for vim.
-# vim: set tabstop=2 shiftwidth=2 expandtab :
-#~---------------------------------------------------------------------------~-#

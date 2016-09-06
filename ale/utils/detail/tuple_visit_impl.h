@@ -1,30 +1,24 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file tuple_visit.h
- * 
- * \brief Loop through a list of tuples and apply a specific function.
- *
- * \remark this is the main implementation
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Loop through a list of tuples and apply a specific function.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
+// system includes
+#include <cstddef>
+#include <tuple>
+
 
 namespace ale {
 namespace utils {
 namespace detail {
 
-//! support struct to iterate over the tuple(s)
-template<size_t size>
+//! \brief support struct to iterate over the tuple(s)
+template<std::size_t size>
 struct visit_tuple_ws
 {
   template<typename Callable, typename Head, typename... Tail>
@@ -39,7 +33,7 @@ struct visit_tuple_ws
   }
 };
 
-//! stop recursion here
+//! \brief stop recursion here
 template<>
 struct visit_tuple_ws<0u>
 {

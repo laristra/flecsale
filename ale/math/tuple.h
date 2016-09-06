@@ -1,40 +1,29 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file tuple.h
- * 
- * \brief Provides a tuple type which functions as a vector.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Provides a tuple type which functions like a vector.
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-// system includes
-#include <tuple>
-
-//! user includes
+// user includes
 #include "ale/utils/tuple_for_each.h"
 #include "ale/utils/tuple_visit.h"
 #include "ale/utils/tuple_zip.h"
+
+// system includes
+#include <iostream>
+#include <tuple>
 
 namespace ale {
 namespace math {
 
 ////////////////////////////////////////////////////////////////////////////////
-//!  \brief The dimensioned_array type provides a general base for defining
-//!  contiguous array types that have a specific dimension.
+//!  \brief Provides a tuple that functions like a mathematical array.
 //!
-//!  \tparam T The type of the array, e.g., P.O.D. type.
-//!  \tparam D The dimension of the array, i.e., the number of elements
-//!    to be stored in the array.
+//!  \tparam Types  The types of the tuple, e.g., P.O.D. type.
 ////////////////////////////////////////////////////////////////////////////////
 template <typename... Types>
 using tuple = std::tuple<Types...>;
@@ -59,6 +48,7 @@ void fill( tuple<Types...> & t, const U & val )
 //! \brief Add to a tuple.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
+//! @{
 template <typename... Types>
 void plus_equal( tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
@@ -77,12 +67,13 @@ void plus_equal( tuple<Types...>& lhs, const U & rhs )
                            tup = tup + rhs;
                          } );                        
 }
-
+//! @}
 
 //! \brief Addition operator involving tuples.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
+//! @{
 template <typename... Types>
 auto operator+( const tuple<Types...>& lhs, 
                 const tuple<Types...>& rhs )
@@ -119,12 +110,13 @@ auto operator+( const U & lhs, const tuple<Types...>& rhs )
                          } );                        
   return tmp;
 }
-
+//! @}
 
 
 //! \brief Subtract a tuple.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
+//! @{
 template <typename... Types>
 void minus_equal( tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
@@ -143,12 +135,13 @@ void minus_equal( tuple<Types...>& lhs, const U & rhs )
                            tup = tup - rhs;
                          } );                        
 }
-
+//! @}
 
 //! \brief Subtraction operator involving tuples.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
+//! @{
 template <typename... Types>
 auto operator-( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
@@ -184,11 +177,12 @@ auto operator-( const U & lhs, const tuple<Types...>& rhs )
                          } );                        
   return tmp;
 }
-
+//! @}
 
 //! \brief Multiply a tuple.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
+//! @{
 template <typename... Types>
 void multiplies_equal( tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
@@ -207,12 +201,13 @@ void multiplies_equal( tuple<Types...>& lhs, const U & rhs )
                            tup = tup * rhs;
                          } );                        
 }
-
+//! @}
 
 //! \brief Multiplication operator involving tuples.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
+//! @{
 template <typename... Types>
 auto operator*( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
@@ -248,7 +243,7 @@ auto operator*( const U & lhs, const tuple<Types...>& rhs )
                          } );                        
   return tmp;
 }
-
+//! @}
 
 
 
@@ -256,6 +251,7 @@ auto operator*( const U & lhs, const tuple<Types...>& rhs )
 //! \brief Divide a tuple.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
+//! @{
 template <typename... Types>
 void divides_equal( tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
@@ -274,12 +270,13 @@ void divides_equal( tuple<Types...>& lhs, const U & rhs )
                            tup = tup / rhs;
                          } );                        
 }
-
+//! @}
 
 //! \brief Division operator involving tuples.
 //! \param[in] lhs The value on the left hand side of the operator.
 //! \param[in] rhs The value on the right hand side of the operator.
 //! \return The result of the operation.
+//! @{
 template <typename... Types>
 auto operator/( const tuple<Types...>& lhs, const tuple<Types...>& rhs )
 {
@@ -315,7 +312,7 @@ auto operator/( const U & lhs, const tuple<Types...>& rhs )
                          } );                        
   return tmp;
 }
-
+//! @}
 
 
 
@@ -338,8 +335,3 @@ auto & operator<<(std::ostream& os, const tuple<Types...>& a)
 
 } // namespace
 } // namespace
-
-/*~-------------------------------------------------------------------------~-*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

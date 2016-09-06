@@ -1,23 +1,14 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file filter_iterator.h
- * 
- * \brief a general purpose filtering iterator.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////    
+/// \file
+/// \brief a general purpose filtering iterator.
+////////////////////////////////////////////////////////////////////////////////    
 #pragma once
 
-//! user includes
+// user includes
 
 namespace ale {
 namespace utils {
@@ -151,6 +142,7 @@ public:
   }
 
   //! \brief swap two iterators
+  //! \param [in] rhs the other iterator to swap with
   void swap(filter_iterator& rhs) noexcept
   {
     std::swap(iter_, rhs.iter_);

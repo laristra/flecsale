@@ -1,20 +1,11 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file dummy.h
- * 
- * \brief A dummy part of the ale library used a template for developpers.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief A dummy part of the ale library used a template for developpers.
+////////////////////////////////////////////////////////////////////////////////
 
 
 // This is a new way of doing include guards.  You need this in every
@@ -24,10 +15,10 @@
 // Be carefull about including within include files.  Because everone
 // that includes this file will also get everything it "#includes"
 
-//! system includes could go here
+// system includes could go here
 #include <array>
 
-//! user includes could also go here ( note the path layout )
+// user includes could also go here ( note the path layout )
 //#include "ale/dummy/dummy.h"
 
 // everything in src falls within the ale namespace
@@ -65,8 +56,3 @@ class bar_t
 } // dummy namespace
 } // ale namespace
 
-
-/*~------------------------------------------------------------------------~--*
- * Formatting options for vim.
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~------------------------------------------------------------------------~--*/

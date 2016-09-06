@@ -1,30 +1,20 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file vector.cc
- * 
- * \brief Tests related to the vector class.
- *
- ******************************************************************************/
-
-// system includes
-#include <cinchtest.h>
-#include <iostream>
+///////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Tests related to the vector class.
+///////////////////////////////////////////////////////////////////////////////
 
 // user includes
 #include "ale/common/types.h"
 #include "ale/math/math.h"
 #include "ale/math/vector.h"
 
+// system includes
+#include <cinchtest.h>
+#include <iostream>
 
 // explicitly use some stuff
 using namespace ale;
@@ -38,7 +28,7 @@ using vector_3d_t = vector<real_t,3>;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the intialization
+//! \brief Test the intialization.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(vector, init) {
 
@@ -74,7 +64,7 @@ TEST(vector, init) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the addition
+//! \brief Test the addition.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(vector, addition_1d) {
 
@@ -109,7 +99,7 @@ TEST(vector, addition_1d) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the addition
+//! \brief Test the addition.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(vector, addition_2d) {
 
@@ -144,7 +134,7 @@ TEST(vector, addition_2d) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the subtraction
+//! \brief Test the subtraction.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(vector, subtraction_1d) {
 
@@ -181,7 +171,7 @@ TEST(vector, subtraction_1d) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the subtraction
+//! \brief Test the subtraction.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(vector, subtraction_2d) {
 
@@ -220,7 +210,7 @@ TEST(vector, subtraction_2d) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the multiplication
+//! \brief Test the multiplication.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(vector, multiply_1d) {
 
@@ -256,7 +246,7 @@ TEST(vector, multiply_1d) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the multiplication
+//! \brief Test the multiplication.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(vector, multiply_2d) {
 
@@ -295,7 +285,7 @@ TEST(vector, multiply_2d) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the multiplication
+//! \brief Test the multiplication.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(vector, divide_1d) {
 
@@ -332,7 +322,7 @@ TEST(vector, divide_1d) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the multiplication
+//! \brief Test the multiplication.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(vector, divide_2d) {
 
@@ -372,7 +362,7 @@ TEST(vector, divide_2d) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the dot  operator
+//! \brief Test the dot  operator.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(vector, dot) {
   // 1d vector dot
@@ -402,7 +392,7 @@ TEST(vector, dot) {
 } // TEST
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the magnitude operator
+//! \brief Test the magnitude operator.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(vector, magnitude) {
 
@@ -425,9 +415,3 @@ TEST(vector, magnitude) {
   ASSERT_EQ(sqrt(50.0), magnitude(c));
 
 } // TEST
-
-
-/*~------------------------------------------------------------------------~--*
- a* Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~------------------------------------------------------------------------~--*/

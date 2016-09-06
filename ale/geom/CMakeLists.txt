@@ -1,11 +1,11 @@
 #~----------------------------------------------------------------------------~#
-# Copyright (c) 2014 Los Alamos National Security, LLC
-# All rights reserved.
+# Copyright (c) 2016 Los Alamos National Laboratory, LLC
+# All rights reserved
 #~----------------------------------------------------------------------------~#
 
 set(geom_HEADERS
-  centroid.h    detail/centroid.h
-  area.h        detail/area.h
+  centroid.h    detail/centroid_impl.h
+  area.h        detail/area_impl.h
   normal.h
   point.h
   shapes/hexahedron.h
@@ -23,8 +23,3 @@ cinch_add_unit(geom
       shapes/test/shapes.cc
 )
 
-
-#----------------------------------------------------------------------------~-#
-# Formatting options for vim.
-# vim: set tabstop=2 shiftwidth=2 expandtab :
-#----------------------------------------------------------------------------~-#

@@ -1,21 +1,16 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file template_helpers.h
- * 
- * \brief Some helper functions for template foo magic.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Some helper functions for template foo magic.
+////////////////////////////////////////////////////////////////////////////////
+
 #pragma once
+
+// user includes 
+#include "detail/template_helpers_impl.h"
 
 // system includes
 #include <functional>
@@ -23,27 +18,10 @@
 namespace ale {
 namespace utils {
 
-
-
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief statically multiply arguments together
+//! \brief The main interface to multiply arguments together.
+//! \return The rusult of arg1*arg2*...
 ////////////////////////////////////////////////////////////////////////////////
-
-namespace detail {
-
-//! \brief return 1 for the final multiplcation
-constexpr std::size_t multiply() 
-{ return 1; }
-
-//! \brief main implementation for multiplication
-template<typename Arg, typename... Args>
-constexpr auto multiply(Arg first, Args... rest) 
-{ return first * multiply(rest...); }
-
-
-}  // namespace
-
-//! \brief the main interface
 template<typename... Args>
 constexpr auto multiply(Args... args) 
 { return detail::multiply(args...); }
@@ -51,6 +29,7 @@ constexpr auto multiply(Args... args)
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief statically fill an array with a constant value
 ////////////////////////////////////////////////////////////////////////////////
+//! @{
 
 template <std::size_t N>
 struct fill {
@@ -71,21 +50,15 @@ struct fill<1> {
 
 };
 
+//! @}
+
+
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief statically make an array with a constant value
+//! \brief This is the main interface to make_array.
+//! \param [in] val  The value to fill the array with.
+//! \tparam T The value_type of the array.
+//! \tparam N The size of the array
 ////////////////////////////////////////////////////////////////////////////////
-
-namespace detail {
-
-template <typename T, std::size_t...Is>
-constexpr std::array<T, sizeof...(Is)> make_array(T val, std::index_sequence<Is...>)
-{
-  return {(static_cast<void>(Is), val)...};
-}
-
-} // namespace 
-
-
 template <typename T, std::size_t N>
 constexpr std::array<T, N> make_array(T val)
 {
@@ -93,7 +66,8 @@ constexpr std::array<T, N> make_array(T val)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief a tie using constant references
+//! \brief A std::tie-like function using constant references.
+//! \param [in] first,rest The values of the tuple to reference.
 ////////////////////////////////////////////////////////////////////////////////
 template < typename T, typename... Ts >
 std::tuple<T&, const Ts&...> ctie( T& first, const Ts&... rest )
@@ -102,34 +76,16 @@ std::tuple<T&, const Ts&...> ctie( T& first, const Ts&... rest )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// A type traits type struct used to unpack a tuple type, and repack it using 
-// references
+//! \brief This is a helper function to unpack a tuple and create references.
+//! \remark This is the main interface
+//! \tparam T  The tuple type
 ////////////////////////////////////////////////////////////////////////////////
-
-//! \brief Unpack a tuple and create a tuple of references to each element.
-//! \tparam T  The tuple type
-//! \remark This is the empty struct
 template < typename T >
-struct reference_wrapper {};
-
-//! \brief Unpack a tuple and create a tuple of references to each element.
-//! \tparam Tuple  The tuple type
-//! \remark This is the tuple implementation
-template < template<typename...> class Tuple, typename... Args >
-struct reference_wrapper < Tuple<Args...> >
-{
-  using type = Tuple<Args&...>;
-};
-
-
-//! \brief This is a helper function to unpack a tuple and create references
-//! \tparam T  The tuple type
-template < typename T >
-using reference_wrapper_t = typename reference_wrapper<T>::type;
+using reference_wrapper_t = typename detail::reference_wrapper<T>::type;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief return an lvalue reference
+//! \brief return an lvalue reference to val.
 ////////////////////////////////////////////////////////////////////////////////
 template<typename T>
 T &as_lvalue(T &&val) {
@@ -139,9 +95,3 @@ T &as_lvalue(T &&val) {
 } // namespace
 } // namespace
 
-
-
-/*~------------------------------------------------------------------------~--*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~------------------------------------------------------------------------~--*/
