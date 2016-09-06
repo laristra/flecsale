@@ -3,5 +3,5 @@
 	url = https://github.com/losalamos/cinch.git
 [submodule "flecsi"]
 	path = flecsi
-	url = git@github.com:losalamos/flecsi.git
-  branch = flecsale
+	url = https://github.com/losalamos/flecsi.git
+ 	branch = flecsale
