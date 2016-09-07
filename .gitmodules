@@ -4,4 +4,3 @@
 [submodule "flecsi"]
 	path = flecsi
 	url = https://github.com/losalamos/flecsi.git
- 	branch = flecsale
