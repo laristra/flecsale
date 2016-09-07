@@ -1,20 +1,11 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file types.h
- * 
- * \brief Define the main types for the hydro solver.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Define the main types for the hydro solver.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
@@ -62,7 +53,7 @@ using std::endl;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief alias the flux function
-//! Change the called function to alter the flux evaluation
+//! Change the called function to alter the flux evaluation.
 ////////////////////////////////////////////////////////////////////////////////
 template< typename E, typename UL, typename UR, typename V >
 auto flux_function( UL && left_state, UR && right_state, V && norm )
@@ -74,8 +65,8 @@ auto flux_function( UL && left_state, UR && right_state, V && norm )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief alias the flux function
-//! Change the called function to alter the flux evaluation
+//! \brief alias the boundary flux function
+//! Change the called function to alter the flux evaluation.
 ////////////////////////////////////////////////////////////////////////////////
 template< typename E, typename U, typename V >
 auto boundary_flux( U && state, V && norm )

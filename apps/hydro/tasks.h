@@ -1,25 +1,19 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file tasks.h
- * 
- * \brief Simple tasks related to solving full hydro solutions.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Simple tasks related to solving full hydro solutions.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
 // hydro includes
 #include "types.h"
+
+// system includes
+#include <iomanip>
 
 namespace apps {
 namespace hydro {
@@ -55,7 +49,9 @@ int32_t initial_conditions( T & mesh, F && ics ) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task for setting initial conditions
+//! \brief The main task for updating the state using pressure.
+//!
+//! Updates the state from density and pressure and computes the new energy.
 //!
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
@@ -80,7 +76,9 @@ int32_t update_state_from_pressure( T & mesh ) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task for setting initial conditions
+//! \brief The main task for updating the state from energy.
+//!
+//! Updates the state from density and energy and computes the new pressure.
 //!
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
@@ -105,8 +103,9 @@ int32_t update_state_from_energy( T & mesh ) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to compute the time step size
+//! \brief The main task to compute the time step size.
 //!
+//! \tparam E  The equation of state object to use.
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
@@ -158,7 +157,7 @@ int32_t evaluate_time_step( T & mesh ) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to evaluate residuals
+//! \brief The main task to evaluate fluxes at each face.
 //!
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
@@ -214,7 +213,7 @@ int32_t evaluate_fluxes( T & mesh ) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to update the solution
+//! \brief The main task to update the solution in each cell.
 //!
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
@@ -271,7 +270,7 @@ int32_t apply_update( T & mesh ) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Output the solution
+//! \brief Output the solution.
 //!
 //! \param [in] mesh the mesh object
 //! \return 0 for success

@@ -1,33 +1,24 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file hydro.cc
- * 
- * \brief Simple tests related to solving full hydro solutions.
- *
- ******************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Simple tests related to solving full hydro solutions.
+///////////////////////////////////////////////////////////////////////////////
+
+// hydro incdludes
+#include "tasks.h"
+#include "types.h"
+
+// user includes
+#include <ale/mesh/factory.h>
 
 // system includes
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <utility>
-
-// user includes
-#include <ale/mesh/factory.h>
-
-// hydro incdludes
-#include "tasks.h"
-#include "types.h"
 
 // everything is in the hydro namespace
 using namespace apps::hydro;
@@ -356,9 +347,3 @@ int main(int argc, char** argv)
 
 }
 
-
-
-/*~------------------------------------------------------------------------~--*
- * Formatting options
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~------------------------------------------------------------------------~--*/

@@ -1,20 +1,11 @@
 /*~-------------------------------------------------------------------------~~*
- *     _   ______________     ___    __    ______
- *    / | / / ____/ ____/    /   |  / /   / ____/
- *   /  |/ / / __/ /  ______/ /| | / /   / __/   
- *  / /|  / /_/ / /__/_____/ ___ |/ /___/ /___   
- * /_/ |_/\____/\____/    /_/  |_/_____/_____/   
- * 
  * Copyright (c) 2016 Los Alamos National Laboratory, LLC
  * All rights reserved
  *~-------------------------------------------------------------------------~~*/
-/*!
- *
- * \file tasks.h
- * 
- * \brief Simple tasks related to solving full hydro solutions.
- *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Simple tasks related to solving full hydro solutions.
+////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
@@ -26,6 +17,9 @@
 #include <ale/utils/array_view.h>
 #include <ale/utils/filter_iterator.h>
 
+// system includes
+ #include <iomanip>
+ 
 namespace apps {
 namespace hydro {
 
