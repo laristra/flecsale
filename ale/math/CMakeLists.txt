@@ -6,7 +6,7 @@
 set(math_HEADERS
   array.h
   constants.h
-  math.h  detail/math_impl.h
+  general.h  detail/general_impl.h
   matrix.h
   multi_array.h
   tuple.h

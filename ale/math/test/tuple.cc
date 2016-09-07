@@ -7,12 +7,14 @@
 /// \brief Tests related to the vector class.
 ///////////////////////////////////////////////////////////////////////////////
 
+// test include
+#include <cinchtest.h>
+
 // user includes
 #include "ale/common/types.h"
 #include "ale/math/tuple.h"
 
 // system includes
-#include <cinchtest.h>
 #include <iostream>
 
 // explicitly use some stuff

@@ -10,7 +10,7 @@
 #pragma once
 
 // user includes
-#include "detail/math_impl.h"
+#include "detail/general_impl.h"
 
 #include "ale/std/type_traits.h"
 #include "ale/utils/errors.h"

@@ -23,7 +23,7 @@
 #include <ale/eqns/euler_eqns.h>
 #include <ale/eqns/flux.h>
 #include <ale/eos/ideal_gas.h>
-#include <ale/math/math.h>
+#include <ale/math/general.h>
 
 #include <ale/mesh/burton/burton.h>
 

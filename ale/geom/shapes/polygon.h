@@ -11,7 +11,7 @@
 // user includes
 #include "ale/geom/shapes/geometric_shapes.h"
 #include "ale/geom/shapes/triangle.h"
-#include "ale/math/math.h"
+#include "ale/math/general.h"
 
 namespace ale {
 namespace geom {

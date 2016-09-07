@@ -9,7 +9,7 @@
 
 // user includes
 #include "ale/common/types.h"
-#include "ale/math/math.h"
+#include "ale/math/general.h"
 #include "ale/math/vector.h"
 
 // system includes

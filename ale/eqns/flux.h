@@ -12,7 +12,7 @@
 #pragma once
 
 // user includes
-#include "ale/math/math.h" 
+#include "ale/math/general.h" 
 
 namespace ale {
 namespace eqns {

@@ -4,7 +4,7 @@
  *~--------------------------------------------------------------------------~*/
 
 // user includes
-#include "ale/math/math.h"
+#include "ale/math/general.h"
 #include "ale/mesh/burton/burton_mesh_topology.h"
 #include "ale/mesh/burton/burton_element.h"
 
