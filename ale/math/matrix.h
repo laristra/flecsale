@@ -12,6 +12,9 @@
 #include "ale/math/multi_array.h"
 #include "ale/math/vector.h"
 
+// system includes
+ #include <cmath>
+
 namespace ale {
 namespace math {
 
