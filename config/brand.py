@@ -10,8 +10,6 @@ brand = {
 	],
 	# header file footer
 	'2' : [
-		'Formatting options',
-      'vim: set tabstop=2 shiftwidth=2 expandtab :'
 	],
 	# source file header
 	'3' : [
@@ -20,7 +18,5 @@ brand = {
 	],
 	# source file footer
 	'4' : [
-		'Formatting options',
-      'vim: set tabstop=2 shiftwidth=2 expandtab :'
 	]
 }
