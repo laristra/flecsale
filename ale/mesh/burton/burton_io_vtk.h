@@ -376,7 +376,7 @@ inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_vtk()
 ////////////////////////////////////////////////////////////////////////////////
 //! Register file extension "vtk" with factory.
 ////////////////////////////////////////////////////////////////////////////////
-static bool burton_vtk_dat_registered =
+static bool burton_vtk_registered =
   flecsi::io_factory_t<burton_mesh_2d_t>::instance().registerType(
     "vtk", create_io_vtk );
 

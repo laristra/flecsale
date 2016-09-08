@@ -46,7 +46,7 @@ int main(int argc, char** argv)
   using vector_t = mesh_t::vector_t;
 
   // the case prefix
-  std::string prefix = "sodx2d";
+  std::string prefix = "sodx_2d";
   std::string postfix = "dat";
 
   // output frequency
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
   using vector_t = mesh_t::vector_t;
 
   // the case prefix
-  std::string prefix = "sodx3d";
+  std::string prefix = "sodx_3d";
   std::string postfix = "dat";
 
   // output frequency
@@ -188,10 +188,10 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix = "shock_box_3d";
-  std::string postfix = "plt";
+  std::string postfix = "dat";
 
   // output frequency
-  constexpr size_t output_freq = 1;
+  constexpr size_t output_freq = 100;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 40;

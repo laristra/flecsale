@@ -148,7 +148,7 @@ inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_vtu()
 ////////////////////////////////////////////////////////////////////////////////
 //! Register file extension "vtu" with factory.
 ////////////////////////////////////////////////////////////////////////////////
-static bool burton_vtu_dat_registered =
+static bool burton_vtu_registered =
   flecsi::io_factory_t<burton_mesh_2d_t>::instance().registerType(
     "vtu", create_io_vtu );
 
