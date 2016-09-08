@@ -1,6 +1,6 @@
 [submodule "cinch"]
 	path = cinch
-	url = https://github.com/losalamos/cinch.git
+	url = ../cinch.git
 [submodule "flecsi"]
 	path = flecsi
-	url = https://github.com/losalamos/flecsi.git
+	url = ../flecsi.git
