@@ -15,6 +15,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 # set some global variables
 set( ALE_LIBRARIES )
 set( ALE_DATA_DIR "${CMAKE_SOURCE_DIR}/data" )  
+set( ALE_TOOL_DIR "${CMAKE_SOURCE_DIR}/tools" )  
 
 #------------------------------------------------------------------------------#
 # If a C++14 compiler is available, then set the appropriate flags
