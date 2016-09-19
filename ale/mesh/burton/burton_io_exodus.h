@@ -34,7 +34,7 @@ namespace mesh {
 /// \tparam N  The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
-struct burton_io_exodus_base {
+class burton_io_exodus_base {
 
 public:
 
@@ -440,7 +440,7 @@ private:
 /// \tparam N  The number of mesh dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
-struct burton_io_exodus_t {};
+class burton_io_exodus_t {};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -450,10 +450,11 @@ struct burton_io_exodus_t {};
 /// io_base_t provides registrations of the exodus file extensions.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
-struct burton_io_exodus_t<2> : 
+class burton_io_exodus_t<2> : 
     public flecsi::io_base_t< burton_mesh_t<2> >, burton_io_exodus_base<2>
 {
 
+public:
 
   //============================================================================
   //! \brief Default constructor
@@ -790,10 +791,12 @@ struct burton_io_exodus_t<2> :
 /// io_base_t provides registrations of the exodus file extensions.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
-struct burton_io_exodus_t<3> : 
+class burton_io_exodus_t<3> : 
     public flecsi::io_base_t< burton_mesh_t<3> >, burton_io_exodus_base<3>
 
 {
+
+public:
 
   //============================================================================
   //! \brief Default constructor

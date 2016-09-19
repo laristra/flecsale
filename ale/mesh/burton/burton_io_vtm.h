@@ -46,7 +46,9 @@ namespace mesh {
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief This is the mesh reader and writer based on the vtm format.
 ////////////////////////////////////////////////////////////////////////////////
-struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
+class burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
+
+public:
 
   //! Default constructor
   burton_io_vtm_t() {}

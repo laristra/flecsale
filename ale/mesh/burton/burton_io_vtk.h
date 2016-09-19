@@ -46,8 +46,15 @@ namespace mesh {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief This is the mesh reader and writer based on the vtk format.
+/// \tparam N The number of mesh dimensions.
 ////////////////////////////////////////////////////////////////////////////////
-struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
+template< std::size_t N >
+class burton_io_vtk_t : public flecsi::io_base_t< burton_mesh_t<N> > {
+
+public:
+
+  //! the mesh type
+  using mesh_t = burton_mesh_t<N>;
 
   //! Default constructor
   burton_io_vtk_t() {}
@@ -67,7 +74,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
   //!
   //! \remark this uses in vtk library writer
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_2d_t &m, bool binary ) override
+  int32_t write( const std::string &name, mesh_t &m, bool binary ) override
   {
 
     std::cout << "Writing mesh to: " << name << std::endl;
@@ -100,7 +107,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
   //!
   //! \remark this uses in vtk library reader
   //============================================================================
-  int32_t read( const std::string &name, burton_mesh_2d_t &m) override
+  int32_t read( const std::string &name, mesh_t &m) override
   {
 
     std::cout << "Reading mesh from: " << name << std::endl;
@@ -113,7 +120,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     auto ug = reader->GetOutput();
     
     // convert vtk solution to a mesh
-    m = to_mesh<burton_mesh_2d_t>( ug );
+    m = to_mesh<mesh_t>( ug );
 
     return 0;
 
@@ -134,7 +141,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
   //! 
   //! \remark this uses in house vtk writer
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_2d_t &m, bool binary ) override
+  int32_t write( const std::string &name, mesh_t &m, bool binary ) override
   {
 
     std::cout << "Writing mesh to: " << name << std::endl;
@@ -146,7 +153,6 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     // alias some types
     using std::vector;
 
-    using   mesh_t = burton_mesh_2d_t;
     using   size_t = typename mesh_t::size_t;
     using   real_t = typename mesh_t::real_t;
     using integer_t= typename mesh_t::integer_t;
@@ -178,7 +184,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     assert( status == 0 && "error with open" );
   
     // Create ZONE header
-    status = writer.init( "Mesh Zone" );
+    status = writer.init( "vtk output" );
     assert( status == 0 && "error with header" );
 
     //--------------------------------------------------------------------------
@@ -207,19 +213,69 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     //----------------------------------------------------------------------------
     // ellement connectivity
     
-    vector< vector<integer_t> > elem_conn( num_elem );
+    vector< vector<vtkIdType> > elem_conn( num_elem );
     vector< vtk_writer::cell_type_t > elem_types( num_elem );
 
     // element definitions
-    for (auto c : m.cells()) {
-      auto cid = c.id();
-      auto elem_verts = m.vertices(c);
-      auto num_nodes_per_elem = elem_verts.size();
-      elem_conn[cid].resize( num_nodes_per_elem );
-      size_t vid = 0;
-      for (auto v : elem_verts) elem_conn[cid][vid++] = v.id();
-      elem_types[cid] = vtk_writer::cell_type_t::polygon;
-    } // for
+    if ( N ==2 ) {
+
+      for (auto c : m.cells()) {
+        auto cid = c.id();
+        auto elem_verts = m.vertices(c);
+        auto num_nodes_per_elem = elem_verts.size();
+        elem_conn[cid].resize( num_nodes_per_elem );
+        size_t vid = 0;
+        for (auto v : elem_verts) elem_conn[cid][vid++] = v.id();
+        elem_types[cid] = vtk_writer::cell_type_t::polygon;
+      } // for
+
+    }
+    else if ( N == 3 ) {
+
+      for (auto c : m.cells()) {
+        auto cid = c.id();
+        // get the element verts and faces
+        auto elem_verts = m.vertices(c);
+        auto elem_faces = m.faces(c);
+        auto num_elem_verts = elem_verts.size();
+        auto num_elem_faces = elem_faces.size();
+        // get the total number of vertices
+        auto tot_verts = std::accumulate( 
+          elem_faces.begin(), elem_faces.end(), static_cast<size_t>(0),
+          [&m](auto sum, auto f) { return sum + m.vertices(f).size(); }
+        );
+        // the list of faces that vtk requires contains the total number of faces
+        // AND the number of points in each face AND the point ids themselves.
+        elem_conn[cid].reserve( tot_verts + num_elem_faces + 1);
+        elem_conn[cid].emplace_back( num_elem_faces );
+        // now loop over each face and add the face data
+        for ( auto f : elem_faces ) {
+          auto face_elems = m.cells(f);
+          auto face_verts = m.vertices(f);
+          auto num_face_verts = face_verts.size();
+          // copy the face vert ids
+          vector< size_t > face_vert_ids( num_face_verts );
+          std::transform( 
+            face_verts.begin(), face_verts.end(), face_vert_ids.begin(),
+            [](auto && v) { return v.id(); } 
+          );
+          // check the direction of the vertices
+          if ( face_elems[0] != c ) 
+            std::reverse( face_vert_ids.begin(), face_vert_ids.end() );
+          // now copy them to the global array
+          elem_conn[cid].emplace_back( num_face_verts );
+          for ( auto v : face_vert_ids )
+            elem_conn[cid].emplace_back( v );
+        }
+        elem_types[cid] = vtk_writer::cell_type_t::polyhedron;
+      } // for
+
+    } 
+    else  {
+
+      raise_logic_error( "No support for N="<<N<<" dimensions" );
+
+    }
 
     status = writer.write_elements( elem_conn, elem_types.data() );
     assert( status == 0 && "error with element conn" );
@@ -334,7 +390,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
   //!
   //! \remark no read support using in house vtk writer
   //============================================================================
-  int32_t read( const std::string &name, burton_mesh_2d_t &m) override
+  int32_t read( const std::string &name, mesh_t &m) override
   {
     raise_implemented_error( "No vtk read functionality has been implemented" );
   };
@@ -353,7 +409,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
   //!
   //! FIXME: should allow for const mesh_t &
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_2d_t &m ) override
+  int32_t write( const std::string &name, mesh_t &m ) override
   {
     return write( name, m, true );
   }
@@ -367,19 +423,25 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
 //!
 //! \return Pointer to io_base_t base class of io_vtk_t.
 ////////////////////////////////////////////////////////////////////////////////
-inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_vtk()
+template< std::size_t N >
+inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_vtk()
 {
-  return new burton_io_vtk_t;
+  return new burton_io_vtk_t<N>;
 } // create_io_vtk
 
 
 ////////////////////////////////////////////////////////////////////////////////
 //! Register file extension "vtk" with factory.
 ////////////////////////////////////////////////////////////////////////////////
-static bool burton_vtk_registered =
-  flecsi::io_factory_t<burton_mesh_2d_t>::instance().registerType(
+//! @{
+static bool burton_2d_vtk_registered =
+  flecsi::io_factory_t< burton_mesh_t<2> >::instance().registerType(
     "vtk", create_io_vtk );
 
+static bool burton_3d_vtk_registered =
+  flecsi::io_factory_t< burton_mesh_t<3> >::instance().registerType(
+    "vtk", create_io_vtk );
+//! @}
 
 } // namespace mesh
 } // namespace ale

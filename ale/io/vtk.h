@@ -46,7 +46,8 @@ public :
     tetra = 10,
     hexahedron = 12,
     wedge = 13,
-    pyramid = 14
+    pyramid = 14,
+    polyhedron = 42
   };
 
   /*! *************************************************************************
@@ -136,7 +137,7 @@ public :
       else
         for (auto val : data ) 
           WriteBinarySwap<T>( file_, val );
-      
+
     }
     //--------------------------------------------------------------------------
     // ascii
@@ -146,12 +147,12 @@ public :
       for (std::size_t p=0; p<npoints; p++ ) {
         for (std::size_t d=0; d<ndims; d++ ) 
           file_ << data[cnt++] << " ";
-        file_ << std::endl;
       }
 
     }
     //--------------------------------------------------------------------------
 
+    file_ << std::endl;
 
     // check for write errors
     return !file_.good();
@@ -227,12 +228,12 @@ public :
         file_ << elem.size() << " ";
         for ( auto val : elem )
           file_ << val << " ";
-        file_ << std::endl;
       }
 
     } // binary
     //--------------------------------------------------------------------------
     
+    file_ << std::endl;
 
     // write the cell types
     file_ << "CELL_TYPES " << nelem << std::endl;
@@ -260,11 +261,12 @@ public :
 
       for ( const auto & elem : data )
         file_ << static_cast<value_type>(cell_type[cell++]) << " ";
-      file_ << std::endl;
 
     } // binary 
     //--------------------------------------------------------------------------
     
+    file_ << std::endl;
+
     // check for write errors
     return !file_.good();
   
@@ -343,12 +345,12 @@ public :
       for (std::size_t p=0; p<n; p++ ) {
         for (std::size_t d=0; d<ndims; d++ ) 
           file_ << data[cnt++] << " ";
-        file_ << std::endl;
       }
       
     } // binary   
     //--------------------------------------------------------------------------
   
+    file_ << std::endl;
     
     // check for write errors
     return !file_.good();
