@@ -1123,6 +1123,26 @@ public:
 
     // get the data instance
     data_t & data_ = data_t::instance();
+    
+    // register cell data
+    data_.template register_state<real_t, flecsi_user_space>(
+      "cell_volume", num_cells(), mesh_.runtime_id(), 
+      attachment_site_t::cells, flecsi::persistent
+    );
+    data_.template register_state<vector_t, flecsi_user_space>(
+      "cell_centroid", num_cells(), mesh_.runtime_id(), 
+      attachment_site_t::cells, flecsi::persistent
+    );
+
+    // register face data
+    data_.template register_state<real_t, flecsi_user_space>(
+      "face_area", num_faces(), mesh_.runtime_id(), 
+      attachment_site_t::faces, flecsi::persistent
+    );
+    data_.template register_state<vector_t, flecsi_user_space>(
+      "face_normal", num_faces(), mesh_.runtime_id(), 
+      attachment_site_t::faces, flecsi::persistent
+    );
 
     // register time state
     auto soln_time = 
@@ -1333,6 +1353,28 @@ public:
 
     return true;
 
+  }
+
+  //!---------------------------------------------------------------------------
+  //! \brief Compute the goemetry.
+  //!---------------------------------------------------------------------------
+  void update_geometry()
+  {
+    // compute cell parameters
+    auto cell_center = access_state_<vector_t, flecsi_user_space>( "cell_centroid" );
+    auto cell_volume = access_state_<real_t, flecsi_user_space>( "cell_volume" );
+    for ( auto c : cells() ) {
+      cell_volume[c] = c->volume();
+      cell_center[c] = c->centroid();
+    }
+
+    // compute face parameters
+    auto face_area = access_state_<real_t, flecsi_user_space>( "face_area" );
+    auto face_norm = access_state_<vector_t, flecsi_user_space>( "face_normal" );
+    for ( auto f : faces() ) {
+      face_area[f] = f->area();
+      face_norm[f] = f->normal() / face_area[f];
+    }
   }
 
 

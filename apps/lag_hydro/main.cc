@@ -365,7 +365,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 0.25, .volume = 0.1, .growth = 1.01 };
   constexpr real_t initial_time_step = 1.e-5;
   constexpr real_t final_time = 1.0;
-  constexpr size_t max_steps = 100;
+  constexpr size_t max_steps = 1e6;
 
   // the value of gamma
   constexpr real_t gamma = 1.4;
@@ -520,7 +520,8 @@ int main(int argc, char** argv)
 
 
   // now output the solution
-  apps::hydro::output(mesh, prefix, postfix, 1);
+  if ( output_freq > 0 )
+    apps::hydro::output(mesh, prefix, postfix, 1);
   
   //===========================================================================
   // Residual Evaluation
@@ -649,7 +650,8 @@ int main(int argc, char** argv)
   //===========================================================================
     
   // now output the solution
-  apps::hydro::output(mesh, prefix, postfix, 1);
+  if ( output_freq > 0 )
+    apps::hydro::output(mesh, prefix, postfix, 1);
   
   // success
   return 0;

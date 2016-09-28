@@ -215,7 +215,7 @@ int main(int argc, char** argv)
   
   // the CFL and final solution time
   constexpr real_t CFL = 0.5;
-  constexpr real_t final_time = 0.2;
+  constexpr real_t final_time = 1.0;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -251,8 +251,12 @@ int main(int argc, char** argv)
 
   // this is the mesh object
   mesh.is_valid();
-  cout << mesh;
+
+  // update the geometry
+  mesh.update_geometry();
   
+  cout << mesh;
+
   //===========================================================================
   // Field Creation
   //===========================================================================

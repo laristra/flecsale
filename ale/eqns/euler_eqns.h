@@ -133,47 +133,47 @@ public:
   //! \param [in] u The state.
   //! \return The quantity of interest.
   //============================================================================
-  static auto density( const state_data_t & u )
+  static decltype(auto) density( const state_data_t & u ) noexcept
   { 
     using math::get;
     return get<variables::index::density>( u ); 
   }
 
   //! \copydoc density
-  static auto velocity( const state_data_t & u )
+  static decltype(auto) velocity( const state_data_t & u ) noexcept
   { 
     using math::get;
     return get<variables::index::velocity>( u ); 
   }
 
   //! \copydoc density
-  static auto pressure(  const state_data_t & u )
+  static decltype(auto) pressure(  const state_data_t & u ) noexcept
   { 
     using math::get;
     return get<variables::index::pressure>( u ); 
   }
 
   //! \copydoc density
-  static auto internal_energy( const state_data_t & u )
+  static decltype(auto) internal_energy( const state_data_t & u ) noexcept
   { 
     using math::get;
     return get<variables::index::internal_energy>( u ); 
   }
 
   //! \copydoc density
-  static auto sound_speed( const state_data_t & u )
+  static decltype(auto) sound_speed( const state_data_t & u ) noexcept
   { 
     using math::get;
     return get<variables::index::sound_speed>( u ); 
   }
 
   //! \copydoc density
-  static auto total_energy( const state_data_t & u )
+  static decltype(auto) total_energy( const state_data_t & u ) noexcept
   { 
     using math::get;
     using math::dot_product;
-    auto ie = internal_energy( u );
-    auto vel = velocity( u );
+    auto & ie = internal_energy( u );
+    auto & vel = velocity( u );
     return ie + dot_product( vel, vel ) / 2;
   }
 
@@ -288,14 +288,17 @@ public:
     assert( rho > 0  );
 
     auto v_dot_n = dot_product( vel, norm );
-    auto pn = p*norm;
       
     // explicitly set the individual elements, and it is clear what is
     // being set by using static indexing instead of wrapper functions
     flux_data_t f;
     auto mass_flux = rho * v_dot_n;
+
     get<equations::index::mass    >( f ) = mass_flux;     
-    get<equations::index::momentum>( f ) = mass_flux * vel + pn;
+
+    for ( size_t i=0; i<vel.size(); i++ ) 
+      get<equations::index::momentum>( f )[i] = mass_flux * vel[i] + p*norm[i];
+
     get<equations::index::energy  >( f ) = mass_flux * (et + p/rho);
 
     return f;

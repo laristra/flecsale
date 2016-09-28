@@ -925,6 +925,8 @@ int32_t output( T & mesh,
                 size_t output_freq ) 
 {
 
+  if ( output_freq < 1 ) return 0;
+
   auto cnt = mesh.time_step_counter();
   if ( cnt % output_freq != 0 ) return 0;
 

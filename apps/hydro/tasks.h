@@ -37,10 +37,10 @@ int32_t initial_conditions( T & mesh, F && ics ) {
   auto p = access_state( mesh, "pressure",   real_t );
   auto v = access_state( mesh, "velocity", vector_t );
 
-  auto xc = access_state( mesh, "cell_centroid", real_t );
+  auto xc = access_state( mesh, "cell_centroid", vector_t );
 
   for ( auto c : mesh.cells() ) 
-    std::tie( d[c], v[c], p[c] ) = std::forward<F>(ics)( x, xc[c] );
+    std::tie( d[c], v[c], p[c] ) = std::forward<F>(ics)( xc[c] );
 
   return 0;
 }
@@ -137,10 +137,8 @@ int32_t evaluate_time_step( T & mesh ) {
     for ( auto f : mesh.faces(c) ) {
       // estimate the length scale normal to the face
       auto delta_x = volume[c] / area[f];
-      // get the unit normal
-      auto nunit = normal[f] / abs(norm);
       // compute the inverse of the time scale
-      auto dti =  E::fastest_wavespeed(u, nunit) / delta_x;
+      auto dti =  E::fastest_wavespeed(u, normal[f]) / delta_x;
       // check for the maximum value
       dt_inv = std::max( dti, dt_inv );
     } // edge
@@ -180,11 +178,8 @@ int32_t evaluate_fluxes( T & mesh ) {
   //----------------------------------------------------------------------------
   // TASK: loop over each edge and compute/store the flux
   // fluxes are stored on each edge
+  
   for ( auto f : mesh.faces() ) {
-
-    // get the normal and unit normal
-    // The normal always points away from the first cell in the list.
-    auto nunit = unit( normal[f] );
 
     // get the cell neighbors
     auto cells = mesh.cells(f);
@@ -199,11 +194,11 @@ int32_t evaluate_fluxes( T & mesh ) {
     // interior cell
     if ( num_cells == 2 ) {
       auto w_right = state( cells[1] );
-      flux[f] = flux_function<eqns_t>( w_left, w_right, nunit );
+      flux[f] = flux_function<eqns_t>( w_left, w_right, normal[f] );
     } 
     // boundary cell
     else {
-      flux[f] = boundary_flux<eqns_t>( w_left, nunit );
+      flux[f] = boundary_flux<eqns_t>( w_left, normal[f] );
     }
     
     // scale the flux by the face area
