@@ -37,12 +37,10 @@ int32_t initial_conditions( T & mesh, F && ics ) {
   auto p = access_state( mesh, "pressure",   real_t );
   auto v = access_state( mesh, "velocity", vector_t );
 
-  for ( auto c : mesh.cells() ) {
-    // get the 
-    auto x = c->centroid();
-    // now copy the state to flexi
-    std::tie( d[c], v[c], p[c] ) = std::forward<F>(ics)( x );
-  }
+  auto xc = access_state( mesh, "cell_centroid", real_t );
+
+  for ( auto c : mesh.cells() ) 
+    std::tie( d[c], v[c], p[c] ) = std::forward<F>(ics)( x, xc[c] );
 
   return 0;
 }
@@ -113,14 +111,18 @@ template< typename E, typename T >
 int32_t evaluate_time_step( T & mesh ) {
 
   // type aliases
-  using real_t = typename T::real_t;
+  using   real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
 
   // access what we need
   state_accessor<T> state( mesh );
 
   auto delta_t = access_global_state( mesh, "time_step", real_t );
-  real_t cfl = access_global_state( mesh, "cfl", real_t );
+  real_t   cfl = access_global_state( mesh, "cfl",       real_t );
  
+  auto area   = access_state( mesh, "face_area",   real_t );
+  auto normal = access_state( mesh, "face_normal", vector_t );
+  auto volume = access_state( mesh, "cell_volume", real_t );
  
   // Loop over each cell, computing the minimum time step,
   // which is also the maximum 1/dt
@@ -130,15 +132,13 @@ int32_t evaluate_time_step( T & mesh ) {
 
     // get cell properties
     auto u = state( c );
-    auto vol = c->volume();
 
     // loop over each face
     for ( auto f : mesh.faces(c) ) {
       // estimate the length scale normal to the face
-      auto delta_x = vol / f->area();
+      auto delta_x = volume[c] / area[f];
       // get the unit normal
-      auto norm = f->normal();
-      auto nunit = norm / abs(norm);
+      auto nunit = normal[f] / abs(norm);
       // compute the inverse of the time scale
       auto dti =  E::fastest_wavespeed(u, nunit) / delta_x;
       // check for the maximum value
@@ -166,12 +166,16 @@ template< typename T >
 int32_t evaluate_fluxes( T & mesh ) {
 
   // type aliases
+  using vector_t = typename T::vector_t;
   using eqns_t = eqns_t<T::num_dimensions>;
   using flux_data_t = flux_data_t<T::num_dimensions>;
 
   // access what we need
   auto flux = access_state( mesh, "flux", flux_data_t );
   state_accessor<T> state( mesh );
+
+  auto area   = access_state( mesh, "face_area",   real_t );
+  auto normal = access_state( mesh, "face_normal", vector_t );
 
   //----------------------------------------------------------------------------
   // TASK: loop over each edge and compute/store the flux
@@ -180,8 +184,7 @@ int32_t evaluate_fluxes( T & mesh ) {
 
     // get the normal and unit normal
     // The normal always points away from the first cell in the list.
-    auto norm = f->normal();
-    auto nunit = unit( norm );
+    auto nunit = unit( normal[f] );
 
     // get the cell neighbors
     auto cells = mesh.cells(f);
@@ -204,7 +207,7 @@ int32_t evaluate_fluxes( T & mesh ) {
     }
     
     // scale the flux by the face area
-    math::multiplies_equal( flux[f], f->area() );
+    math::multiplies_equal( flux[f], area[f] );
     
   } // for
   //----------------------------------------------------------------------------
@@ -229,6 +232,8 @@ int32_t apply_update( T & mesh ) {
   // access what we need
   auto flux = access_state( mesh, "flux", flux_data_t );
   state_accessor<T> state( mesh );
+  
+  auto volume = access_state( mesh, "cell_volume", real_t );
 
   // read only access
   real_t delta_t = access_global_state( mesh, "time_step", real_t );
@@ -256,7 +261,7 @@ int32_t apply_update( T & mesh ) {
     } // edge
 
     // now compute the final update
-    math::multiplies_equal( delta_u, delta_t/c->volume() );
+    math::multiplies_equal( delta_u, delta_t/volume[c] );
     
     // apply the update
     auto u = state( c );
@@ -281,6 +286,8 @@ int32_t output( T & mesh,
                 const std::string & postfix, 
                 size_t output_freq ) 
 {
+
+  if ( output_freq < 1 ) return 0;
 
   auto cnt = mesh.time_step_counter();
   if ( cnt % output_freq != 0 ) return 0;

@@ -1069,11 +1069,9 @@ public:
   //! \return Pointer to a vertex created at \e pos.
   vertex_t * create_vertex(const point_t & pos)
   {
-    auto p = access_state_<point_t, flecsi_internal>("coordinates");
-    p[num_vertices()] = pos;
-
     auto v = mesh_.template make<vertex_t>( mesh_ );
     mesh_.template add_entity<vertex_t::dimension, vertex_t::domain>(v);
+    v->coordinates() = pos;
 
     return v;
   }
@@ -1094,13 +1092,7 @@ public:
   //! \param[in] vertices The number of \e vertices to initialize the burton mesh
   //!   with.
   void init_parameters(size_t num_nodes)
-  {
-    // register coordinate state
-    data_t::instance().template register_state<point_t, flecsi_internal>(
-      "coordinates", num_nodes, mesh_.runtime_id(), 
-      attachment_site_t::vertices, flecsi::persistent
-    );
-  }
+  { }
 
   //!---------------------------------------------------------------------------
   //! \brief Initialize the burton mesh.

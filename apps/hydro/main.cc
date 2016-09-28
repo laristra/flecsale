@@ -20,6 +20,8 @@
 #include <sstream>
 #include <utility>
 
+#include <sys/time.h>
+
 // everything is in the hydro namespace
 using namespace apps::hydro;
 
@@ -28,6 +30,15 @@ using namespace apps::hydro;
 //#define SODX_3D
 //#define SHOCK_BOX_2D
 #define SHOCK_BOX_3D
+
+
+double get_wtime()
+{
+  struct timeval t;
+  gettimeofday(&t, NULL);
+  return t.tv_sec + t.tv_usec*1.e-6;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
@@ -191,7 +202,7 @@ int main(int argc, char** argv)
   std::string postfix = "dat";
 
   // output frequency
-  constexpr size_t output_freq = 100;
+  constexpr size_t output_freq = 0;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 40;
@@ -245,6 +256,8 @@ int main(int argc, char** argv)
   //===========================================================================
   // Field Creation
   //===========================================================================
+  auto tstart = get_wtime();
+
 
   // type aliases
   using eqns_t = eqns_t<mesh_t::num_dimensions>;
@@ -291,7 +304,8 @@ int main(int argc, char** argv)
 
 
   // now output the solution
-  apps::hydro::output(mesh, prefix, postfix, 1);
+  if (output_freq > 0)
+    apps::hydro::output(mesh, prefix, postfix, 1);
 
   //===========================================================================
   // Residual Evaluation
@@ -340,7 +354,11 @@ int main(int argc, char** argv)
   //===========================================================================
     
   // now output the solution
-  apps::hydro::output(mesh, prefix, postfix, 1);
+  if (output_freq > 0)
+    apps::hydro::output(mesh, prefix, postfix, 1);
+  
+  auto tdelta = get_wtime() - tstart;
+  std::cout << std::setprecision(4) << std::fixed << tdelta << std::endl;
 
   // success
   return 0;
