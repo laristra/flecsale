@@ -63,8 +63,11 @@ public:
   //! Floating point data type.
   using real_t = typename mesh_traits_t::real_t;
 
-  //! Floating point data type.
+  //! The size type.
   using size_t = typename mesh_traits_t::size_t;
+
+  //! The type used for loop indexing
+  using index_t = typename mesh_traits_t::index_t;
 
   //! Point data type.
   using point_t = typename mesh_traits_t::point_t;
@@ -1360,10 +1363,19 @@ public:
   //!---------------------------------------------------------------------------
   void update_geometry()
   {
+    // get the mesh info
+    auto cs = cells();
+    auto fs = faces();
+    auto num_cells = cs.size();
+    auto num_faces = fs.size();
+
     // compute cell parameters
     auto cell_center = access_state_<vector_t, flecsi_user_space>( "cell_centroid" );
     auto cell_volume = access_state_<real_t, flecsi_user_space>( "cell_volume" );
-    for ( auto c : cells() ) {
+
+    #pragma omp parallel for
+    for ( index_t i=0; i<num_cells; i++ ) {
+      auto c = cs[i];
       cell_volume[c] = c->volume();
       cell_center[c] = c->centroid();
     }
@@ -1371,7 +1383,10 @@ public:
     // compute face parameters
     auto face_area = access_state_<real_t, flecsi_user_space>( "face_area" );
     auto face_norm = access_state_<vector_t, flecsi_user_space>( "face_normal" );
-    for ( auto f : faces() ) {
+
+    #pragma omp parallel for
+    for ( index_t i=0; i<num_faces; i++ ) {
+      auto f = fs[i];
       face_area[f] = f->area();
       face_norm[f] = f->normal() / face_area[f];
     }

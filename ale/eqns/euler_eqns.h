@@ -280,10 +280,10 @@ public:
     using math::dot_product;
 
     // these may be independant or derived quantities
-    auto rho = density ( u );
-    auto vel = velocity( u );
-    auto p   = pressure( u );
-    auto et  = total_energy( u );
+    const auto & rho = density ( u );
+    const auto & vel = velocity( u );
+    const auto & p   = pressure( u );
+    const auto & et  = total_energy( u );
       
     assert( rho > 0  );
 
@@ -296,7 +296,7 @@ public:
 
     get<equations::index::mass    >( f ) = mass_flux;     
 
-    for ( size_t i=0; i<vel.size(); i++ ) 
+    for ( int i=0; i<vel.size(); i++ ) 
       get<equations::index::momentum>( f )[i] = mass_flux * vel[i] + p*norm[i];
 
     get<equations::index::energy  >( f ) = mass_flux * (et + p/rho);

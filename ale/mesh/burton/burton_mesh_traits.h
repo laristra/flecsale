@@ -30,6 +30,9 @@ struct burton_mesh_traits_t {
   //! the size type
   using size_t = std::size_t;
 
+  //! A type used for loop indexing.
+  using index_t = intmax_t;
+
   //! the constant string type
   using const_string_t = flecsi::const_string_t;
 

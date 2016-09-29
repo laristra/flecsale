@@ -22,6 +22,10 @@
 
 #include <sys/time.h>
 
+#ifdef _GNU_SOURCE
+#  include <fenv.h>
+#endif
+
 // everything is in the hydro namespace
 using namespace apps::hydro;
 
@@ -45,6 +49,11 @@ double get_wtime()
 ///////////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv) 
 {
+
+  // enable exceptions
+#if defined(_GNU_SOURCE) && !defined(NDEBUG)
+  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+#endif
 
   //===========================================================================
   // X-direction SOD Inputs
@@ -215,7 +224,7 @@ int main(int argc, char** argv)
   
   // the CFL and final solution time
   constexpr real_t CFL = 0.5;
-  constexpr real_t final_time = 1.0;
+  constexpr real_t final_time = 0.4;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )

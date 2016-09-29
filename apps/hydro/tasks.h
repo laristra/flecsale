@@ -29,6 +29,7 @@ template< typename T, typename F >
 int32_t initial_conditions( T & mesh, F && ics ) {
 
   // type aliases
+  using index_t = typename T::index_t;
   using real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
 
@@ -39,8 +40,14 @@ int32_t initial_conditions( T & mesh, F && ics ) {
 
   auto xc = access_state( mesh, "cell_centroid", vector_t );
 
-  for ( auto c : mesh.cells() ) 
+  auto cs = mesh.cells();
+  auto num_cells = cs.size();
+
+  #pragma omp parallel for
+  for ( index_t i=0; i<num_cells; i++ ) {
+    auto c = cs[i];
     std::tie( d[c], v[c], p[c] ) = std::forward<F>(ics)( xc[c] );
+  }
 
   return 0;
 }
@@ -58,13 +65,19 @@ template< typename T >
 int32_t update_state_from_pressure( T & mesh ) {
 
   // type aliases
+  using index_t = typename T::index_t;
   using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the collection accesor
   auto eos = access_global_state( mesh, "eos", eos_t );
   state_accessor<T> state( mesh );
 
-  for ( auto c : mesh.cells() ) {
+  auto cs = mesh.cells();
+  auto num_cells = cs.size();
+
+  #pragma omp parallel for
+  for ( index_t i=0; i<num_cells; i++ ) {
+    auto c = cs[i];
     auto u = state(c);
     eqns_t::update_state_from_pressure( u, *eos );
   }
@@ -85,13 +98,20 @@ template< typename T >
 int32_t update_state_from_energy( T & mesh ) {
 
   // type aliases
+  using index_t = typename T::index_t;
   using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the collection accesor
   auto eos = access_global_state( mesh, "eos", eos_t );
   state_accessor<T> state( mesh );
 
-  for ( auto c : mesh.cells() ) {
+  // get the cells
+  auto cs = mesh.cells();
+  auto num_cells = cs.size();
+
+  #pragma omp parallel for
+  for ( index_t i=0; i<num_cells; i++ ) {
+    auto c = cs[i];
     auto u = state(c);
     eqns_t::update_state_from_energy( u, *eos );
   }
@@ -111,6 +131,7 @@ template< typename E, typename T >
 int32_t evaluate_time_step( T & mesh ) {
 
   // type aliases
+  using  index_t = typename T::index_t;
   using   real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
 
@@ -128,15 +149,20 @@ int32_t evaluate_time_step( T & mesh ) {
   // which is also the maximum 1/dt
   real_t dt_inv(0);
 
-  for ( auto c : mesh.cells() ) {
+  // get the cells
+  auto cs = mesh.cells();
+  auto num_cells = cs.size();
+
+  #pragma omp parallel for reduction(max:dt_inv)
+  for ( index_t i=0; i<num_cells; i++ ) {
 
     // get cell properties
-    auto u = state( c );
+    auto u = state( cs[i] );
 
     // loop over each face
-    for ( auto f : mesh.faces(c) ) {
+    for ( auto f : mesh.faces(cs[i]) ) {
       // estimate the length scale normal to the face
-      auto delta_x = volume[c] / area[f];
+      auto delta_x = volume[cs[i]] / area[f];
       // compute the inverse of the time scale
       auto dti =  E::fastest_wavespeed(u, normal[f]) / delta_x;
       // check for the maximum value
@@ -164,6 +190,7 @@ template< typename T >
 int32_t evaluate_fluxes( T & mesh ) {
 
   // type aliases
+  using index_t = typename T::index_t;
   using vector_t = typename T::vector_t;
   using eqns_t = eqns_t<T::num_dimensions>;
   using flux_data_t = flux_data_t<T::num_dimensions>;
@@ -178,11 +205,18 @@ int32_t evaluate_fluxes( T & mesh ) {
   //----------------------------------------------------------------------------
   // TASK: loop over each edge and compute/store the flux
   // fluxes are stored on each edge
-  
-  for ( auto f : mesh.faces() ) {
+ 
+  // get the faces
+  auto fs = mesh.faces();
+  auto num_faces = fs.size();
+
+  //for ( auto fit = fs.begin(); fit < fs.end(); ++fit  ) {
+
+  #pragma omp parallel for
+  for ( index_t i=0; i<num_faces; i++ ) {
 
     // get the cell neighbors
-    auto cells = mesh.cells(f);
+    auto cells = mesh.cells(fs[i]);
     auto num_cells = cells.size();
 
 
@@ -194,15 +228,15 @@ int32_t evaluate_fluxes( T & mesh ) {
     // interior cell
     if ( num_cells == 2 ) {
       auto w_right = state( cells[1] );
-      flux[f] = flux_function<eqns_t>( w_left, w_right, normal[f] );
+      flux[fs[i]] = flux_function<eqns_t>( w_left, w_right, normal[fs[i]] );
     } 
     // boundary cell
     else {
-      flux[f] = boundary_flux<eqns_t>( w_left, normal[f] );
+      flux[fs[i]] = boundary_flux<eqns_t>( w_left, normal[fs[i]] );
     }
     
     // scale the flux by the face area
-    math::multiplies_equal( flux[f], area[f] );
+    math::multiplies_equal( flux[fs[i]], area[fs[i]] );
     
   } // for
   //----------------------------------------------------------------------------
@@ -220,6 +254,7 @@ template< typename T >
 int32_t apply_update( T & mesh ) {
 
   // type aliases
+  using index_t = typename T::index_t;
   using real_t = typename T::real_t;
   using flux_data_t = flux_data_t<T::num_dimensions>;
   using eqns_t = eqns_t<T::num_dimensions>;
@@ -235,20 +270,26 @@ int32_t apply_update( T & mesh ) {
  
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
-  for ( auto c : mesh.cells() ) {
+
+  // get the faces
+  auto cs = mesh.cells();
+  auto num_cells = cs.size();
+
+  #pragma omp parallel for
+  for ( index_t i=0; i<num_cells; i++ ) {
     
     flux_data_t delta_u;
     math::fill( delta_u, 0.0 );
 
     // loop over each connected edge
-    for ( auto f : mesh.faces(c) ) {
+    for ( auto f : mesh.faces(cs[i]) ) {
       
       // get the cell neighbors
       auto neigh = mesh.cells(f);
       auto num_neigh = neigh.size();
 
       // add the contribution to this cell only
-      if ( neigh[0] == c )
+      if ( neigh[0] == cs[i] )
         math::minus_equal( delta_u, flux[f] );
       else
         math::plus_equal( delta_u, flux[f] );
@@ -256,10 +297,10 @@ int32_t apply_update( T & mesh ) {
     } // edge
 
     // now compute the final update
-    math::multiplies_equal( delta_u, delta_t/volume[c] );
+    math::multiplies_equal( delta_u, delta_t/volume[cs[i]] );
     
     // apply the update
-    auto u = state( c );
+    auto u = state( cs[i] );
     eqns_t::update_state_from_flux( u, delta_u );
 
   } // for

@@ -94,11 +94,12 @@ auto hlle_flux( const U & wl, const U & wr, const V & n) {
     auto fr = E::flux( wr, n );
     auto c1 = lambda_l * lambda_r;
     auto c2 = lambda_r - lambda_l;
+    auto c2inv = 1 / c2;
     auto du = E::solution_delta( wl, wr );
     //f = ( lambda_r*fl - lambda_l*fr + c1*(ur - ul) ) / c2
-    math::multiplies_equal( fl, lambda_r/c2 );
-    math::multiplies_equal( fr, lambda_l/c2 );
-    math::multiplies_equal( du, c1/c2 );
+    math::multiplies_equal( fl, c2inv*lambda_r );
+    math::multiplies_equal( fr, c2inv*lambda_l );
+    math::multiplies_equal( du, c1*c2inv );
     return fl - fr + du;
   }
 };
