@@ -31,11 +31,11 @@ Below are some general instructions for obtaining and building FleCSALE.
 
 FleCSALE uses git submodules, so it mush be checked out recursively.  Type
 
-    $ git clone --recursive git@gitlab.lanl.gov:flecsale/flecsale.git
+    $ git clone --recursive git@github.com:flecsale/flecsale.git
     
 to clone the repository using ssh, or 
 
-    $ git clone --recursive https://gitlab.lanl.gov/flecsale/flecsale.git
+    $ git clone --recursive https://github.com/flecsale/flecsale.git
     
 to clone using https.
     
