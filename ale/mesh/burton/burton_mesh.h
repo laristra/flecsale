@@ -67,7 +67,7 @@ public:
   using size_t = typename mesh_traits_t::size_t;
 
   //! The type used for loop indexing
-  using index_t = typename mesh_traits_t::index_t;
+  using counter_t = typename mesh_traits_t::counter_t;
 
   //! Point data type.
   using point_t = typename mesh_traits_t::point_t;
@@ -1374,7 +1374,7 @@ public:
     auto cell_volume = access_state_<real_t, flecsi_user_space>( "cell_volume" );
 
     #pragma omp parallel for
-    for ( index_t i=0; i<num_cells; i++ ) {
+    for ( counter_t i=0; i<num_cells; i++ ) {
       auto c = cs[i];
       cell_volume[c] = c->volume();
       cell_center[c] = c->centroid();
@@ -1385,7 +1385,7 @@ public:
     auto face_norm = access_state_<vector_t, flecsi_user_space>( "face_normal" );
 
     #pragma omp parallel for
-    for ( index_t i=0; i<num_faces; i++ ) {
+    for ( counter_t i=0; i<num_faces; i++ ) {
       auto f = fs[i];
       face_area[f] = f->area();
       face_norm[f] = f->normal() / face_area[f];

@@ -44,27 +44,27 @@ public:
   using vector_t = math::vector<real_t,N>;
 
   //! The number of dimensions.
-  static constexpr size_t dimensions = N;
+  static constexpr size_t num_dimensions = N;
 
   //============================================================================
   //! \brief The equations struct.
   //============================================================================
   struct equations {
 
+    //! \brief the variables in the primitive state
+    enum index : size_t { 
+      mass = 0, 
+      momentum, 
+      energy = 1 + N,
+      total
+    };
+
     //! \brief  The type for holding the state data (mass, momentum, and energy).
     //! 
     //! data_t is a std::tuple with a real_t for mass, a vector_t for momentum
     //! and a real_t for energy.  This needs to correspond to index
     //! or there may be problems
-    using data_t = math::tuple<real_t,vector_t,real_t>;
-
-    //! \brief the variables in the primitive state
-    enum index : size_t { 
-      mass = 0, 
-      momentum, 
-      energy,
-      total
-    };
+    using data_t = math::array<real_t, index::total>;
 
     //! \brief the number of equations
     static constexpr size_t number(void)
@@ -133,48 +133,40 @@ public:
   //! \param [in] u The state.
   //! \return The quantity of interest.
   //============================================================================
-  static decltype(auto) density( const state_data_t & u ) noexcept
-  { 
-    using math::get;
-    return get<variables::index::density>( u ); 
-  }
+  template< typename U >
+  inline static decltype(auto) density( U && u ) noexcept
+  { return math::get<variables::index::density>( std::forward<U>(u) ); }
 
   //! \copydoc density
-  static decltype(auto) velocity( const state_data_t & u ) noexcept
-  { 
-    using math::get;
-    return get<variables::index::velocity>( u ); 
-  }
+  template< typename U >
+  inline static decltype(auto) velocity( U && u ) noexcept
+  { return math::get<variables::index::velocity>( std::forward<U>(u) ); }
 
   //! \copydoc density
-  static decltype(auto) pressure(  const state_data_t & u ) noexcept
-  { 
-    using math::get;
-    return get<variables::index::pressure>( u ); 
-  }
+  template< typename U >
+  inline static decltype(auto) pressure( U && u ) noexcept
+  { return math::get<variables::index::pressure>( std::forward<U>(u) ); }
 
   //! \copydoc density
-  static decltype(auto) internal_energy( const state_data_t & u ) noexcept
-  { 
-    using math::get;
-    return get<variables::index::internal_energy>( u ); 
-  }
+  template< typename U >
+  inline static decltype(auto) internal_energy( U && u ) noexcept
+  { return math::get<variables::index::internal_energy>( std::forward<U>(u) ); }
 
   //! \copydoc density
-  static decltype(auto) sound_speed( const state_data_t & u ) noexcept
-  { 
-    using math::get;
-    return get<variables::index::sound_speed>( u ); 
-  }
+  template< typename U >
+  inline static decltype(auto) sound_speed( U && u ) noexcept
+  { return math::get<variables::index::sound_speed>( std::forward<U>(u) ); }
 
   //! \copydoc density
-  static decltype(auto) total_energy( const state_data_t & u ) noexcept
+  template< typename U >
+  inline static decltype(auto) temperature( U && u ) noexcept
+  { return math::get<variables::index::temperature>( std::forward<U>(u) ); }
+
+  //! \copydoc density
+  static auto total_energy( const state_data_t & u ) noexcept
   { 
-    using math::get;
     using math::dot_product;
-    auto & ie = internal_energy( u );
-    auto & vel = velocity( u );
-    return ie + dot_product( vel, vel ) / 2;
+    return internal_energy(u) + dot_product( velocity(u), velocity(u) ) / 2;
   }
 
   //============================================================================
@@ -188,10 +180,8 @@ public:
   template <typename V>
   static auto fastest_wavespeed( const state_data_t & u, const V & norm )
   {
-    auto a = sound_speed( u );
-    auto v = velocity( u );
-    auto vn = math::dot_product( v, norm );
-    return a + std::abs(vn);
+    auto vn = math::dot_product( velocity(u), norm );
+    return sound_speed(u) + std::abs(vn);
 
   }
 
@@ -207,13 +197,15 @@ public:
   {
     using math::get;
 
-    auto a = sound_speed( u );
-    auto v = velocity( u );
-    auto vn = math::dot_product( v, norm );
+    auto vn = math::dot_product( velocity(u), norm );
+    
     flux_data_t eig;
-    get<equations::index::mass    >( eig ) = vn-a;
-    get<equations::index::momentum>( eig ) = vn;
-    get<equations::index::energy  >( eig ) = vn+a;
+    
+    eig[equations::index::mass] = vn - sound_speed(u);
+    for ( int i=0; i<N; ++i )  
+      eig[equations::index::momentum+i] = vn;
+    eig[equations::index::energy] = vn + sound_speed(u);
+    
     return eig;
   }
 
@@ -229,9 +221,8 @@ public:
   {
     using math::get;
 
-    auto a = sound_speed( u );
-    auto v = velocity( u );
-    auto vn = math::dot_product( v, norm );
+    auto a = sound_speed(u);
+    auto vn = math::dot_product( velocity(u), norm );
     return std::make_pair( vn-a, vn+a );
   }
 
@@ -247,19 +238,23 @@ public:
     using math::get;
 
     // get the conserved quatities
-    auto mass_l = density( ul );
-    auto mom_l  = mass_l*velocity( ul );
+    auto & mass_l = density( ul );
+    auto & vel_l  = velocity( ul );
     auto ener_l = mass_l*total_energy( ul );
 
-    auto mass_r = density( ur );
-    auto mom_r  = mass_r*velocity( ur );
+    auto & mass_r = density( ur );
+    auto & vel_r  = velocity( ur );
     auto ener_r = mass_r*total_energy( ur );
 
     // compute the change
     flux_data_t du;
-    get<equations::index::mass    >( du ) = mass_r - mass_l;
-    get<equations::index::momentum>( du ) = mom_r - mom_l;
-    get<equations::index::energy  >( du ) = ener_r - ener_l;
+
+    du[equations::index::mass] = mass_r - mass_l;
+    
+    for ( int i=0; i<N; ++i )  
+      du[equations::index::momentum+i] = mass_r*vel_r[i] - mass_l*vel_l[i];
+    
+    du[equations::index::energy] = ener_r - ener_l;
 
     return du;
 
@@ -294,12 +289,12 @@ public:
     flux_data_t f;
     auto mass_flux = rho * v_dot_n;
 
-    get<equations::index::mass    >( f ) = mass_flux;     
+    f[equations::index::mass] = mass_flux;     
 
-    for ( int i=0; i<vel.size(); i++ ) 
-      get<equations::index::momentum>( f )[i] = mass_flux * vel[i] + p*norm[i];
+    for ( int i=0; i<N; i++ ) 
+      f[equations::index::momentum+i] = mass_flux * vel[i] + p*norm[i];
 
-    get<equations::index::energy  >( f ) = mass_flux * (et + p/rho);
+    f[equations::index::energy] = mass_flux * (et + p/rho);
 
     return f;
   }
@@ -314,9 +309,14 @@ public:
   template <typename V>
   static auto wall_flux( const state_data_t & u, const V & norm )
   {
-    auto p  = pressure( u );
+    auto & p  = pressure( u );
     auto pn = p*norm;
-    return flux_data_t{ 0.0, pn, 0.0 };
+    flux_data_t f;
+    f[equations::index::mass] = 0;
+    for ( int i=0; i<N; i++ ) 
+      f[equations::index::momentum+i] = pressure(u) * norm[i];
+    f[equations::index::energy] = 0;
+    return f;
   };
 
 
@@ -338,16 +338,11 @@ public:
     assert( d > 0  );
     assert( p > 0  );
 
-
-    // can use aliases for clarity
-    auto & ie = get<variables::index::internal_energy>( u );
-    auto & t  = get<variables::index::temperature>( u );
-    auto & ss = get<variables::index::sound_speed>( u );
-
     // explicitly set the individual elements
+    auto & ie = internal_energy(u);
     ie = eos.compute_internal_energy_dp( d, p );
-    t  = eos.compute_temperature_de( d, ie );
-    ss = eos.compute_sound_speed_de( d, ie );
+    temperature(u)     = eos.compute_temperature_de( d, ie );
+    sound_speed(u)     = eos.compute_sound_speed_de( d, ie );
   }
 
 
@@ -369,16 +364,10 @@ public:
     assert( d > 0  );
     assert( ie > 0  );
 
-
-    // can use aliases for clarity
-    auto & p  = get<variables::index::pressure>( u );
-    auto & t  = get<variables::index::temperature>( u );
-    auto & ss = get<variables::index::sound_speed>( u );
-
     // explicitly set the individual elements
-    p  = eos.compute_pressure_de( d, ie );
-    t  = eos.compute_temperature_de( d, ie );
-    ss = eos.compute_sound_speed_de( d, ie );
+    pressure(u)    = eos.compute_pressure_de( d, ie );
+    temperature(u) = eos.compute_temperature_de( d, ie );
+    sound_speed(u) = eos.compute_sound_speed_de( d, ie );
   }
 
 
@@ -393,28 +382,26 @@ public:
     using math::abs;
 
     // get the conserved quatities
-    auto mass = density( u );
-    auto mom  = mass*velocity( u );
-    auto ener = mass*total_energy( u );
+    auto den0 = density(u);
+    auto mass = den0 + du[equations::index::mass];
 
-    // access independant or derived quantities 
-    mass += get<equations::index::mass    >( du );     
-    mom  += get<equations::index::momentum>( du );
-    ener += get<equations::index::energy  >( du );
+    std::array<real_t, N> mom;
+    for ( int i=0; i<N; ++i )
+      mom[i] = den0*velocity(u)[i] + du[equations::index::momentum + i];
 
-    // get aliases for clarity
-    auto & d  = get<variables::index::density>( u );
-    auto & v  = get<variables::index::velocity>( u );
-    auto & ie = get<variables::index::internal_energy>( u );
-
+    auto ener = den0*total_energy(u) + du[equations::index::energy];
+    
     // recompute solution quantities
-    d = mass;
-    v = mom / mass;
-    auto et = ener / mass;
-    ie = et - 0.5 * dot_product( v, v );
+    auto inv_mass = 1 / mass;
+    auto et = ener * inv_mass;
 
-    assert( d > 0  );
-    assert( ie > 0  );
+    density(u) = mass;
+    for ( int i=0; i<N; ++i )
+      velocity(u)[i] = mom[i] * inv_mass;
+    internal_energy(u) = et - 0.5 * dot_product( velocity(u), velocity(u) );
+
+    assert( density(u) > 0  );
+    assert( internal_energy(u) > 0  );
 
   }
 

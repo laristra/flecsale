@@ -65,12 +65,12 @@ struct hexahedron {
   {
     // broken into tets that all share the midpoint, but faster (supposedly)
     // surface is broken into tets
-    auto d20 = pt2 - pt0;
-    auto d50 = pt5 - pt0;
-    auto d61 = pt6 - pt1;
-    auto d63 = pt6 - pt3;
-    auto d64 = pt6 - pt4;
-    auto d70 = pt7 - pt0;
+    T d20{ pt2[0] - pt0[0], pt2[1] - pt0[1], pt2[2] - pt0[2] };
+    T d50{ pt5[0] - pt0[0], pt5[1] - pt0[1], pt5[2] - pt0[2] };
+    T d61{ pt6[0] - pt1[0], pt6[1] - pt1[1], pt6[2] - pt1[2] };
+    T d63{ pt6[0] - pt3[0], pt6[1] - pt3[1], pt6[2] - pt3[2] };
+    T d64{ pt6[0] - pt4[0], pt6[1] - pt4[1], pt6[2] - pt4[2] };
+    T d70{ pt7[0] - pt0[0], pt7[1] - pt0[1], pt7[2] - pt0[2] };
     auto det = 
       std::abs( triple_product( d61+d70, d63, d20 ) ) +
       std::abs( triple_product( d70, d63+d50, d64 ) ) +

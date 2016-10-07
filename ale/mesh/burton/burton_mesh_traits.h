@@ -30,8 +30,11 @@ struct burton_mesh_traits_t {
   //! the size type
   using size_t = std::size_t;
 
-  //! A type used for loop indexing.
-  using index_t = intmax_t;
+  //! The dimension of the burton mesh.
+  static constexpr size_t num_dimensions = N;
+
+  //! The number of mesh domains in the burton mesh.
+  static constexpr size_t num_domains = 2;
 
   //! the constant string type
   using const_string_t = flecsi::const_string_t;
@@ -39,11 +42,8 @@ struct burton_mesh_traits_t {
   //! the bitfield type
   using bitfield_t = flecsi::bitfield_t;
 
-  //! The dimension of the burton mesh.
-  static constexpr size_t num_dimensions = N;
-
-  //! The number of mesh domains in the burton mesh.
-  static constexpr size_t num_domains = 2;
+  //! A type used for loop indexing.
+  using counter_t = intmax_t;
 
   //! The type for floating-point values.
   using real_t = common::real_t;

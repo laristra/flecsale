@@ -211,7 +211,7 @@ int main(int argc, char** argv)
   std::string postfix = "dat";
 
   // output frequency
-  constexpr size_t output_freq = 0;
+  constexpr size_t output_freq = 100;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 40;
@@ -224,7 +224,7 @@ int main(int argc, char** argv)
   
   // the CFL and final solution time
   constexpr real_t CFL = 0.5;
-  constexpr real_t final_time = 0.4;
+  constexpr real_t final_time = 0.2;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )

@@ -29,7 +29,7 @@ template< typename T, typename F >
 int32_t initial_conditions( T & mesh, F && ics ) {
 
   // type aliases
-  using index_t = typename T::index_t;
+  using counter_t = typename T::counter_t;
   using real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
 
@@ -44,7 +44,7 @@ int32_t initial_conditions( T & mesh, F && ics ) {
   auto num_cells = cs.size();
 
   #pragma omp parallel for
-  for ( index_t i=0; i<num_cells; i++ ) {
+  for ( counter_t i=0; i<num_cells; i++ ) {
     auto c = cs[i];
     std::tie( d[c], v[c], p[c] ) = std::forward<F>(ics)( xc[c] );
   }
@@ -65,7 +65,7 @@ template< typename T >
 int32_t update_state_from_pressure( T & mesh ) {
 
   // type aliases
-  using index_t = typename T::index_t;
+  using counter_t = typename T::counter_t;
   using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the collection accesor
@@ -76,7 +76,7 @@ int32_t update_state_from_pressure( T & mesh ) {
   auto num_cells = cs.size();
 
   #pragma omp parallel for
-  for ( index_t i=0; i<num_cells; i++ ) {
+  for ( counter_t i=0; i<num_cells; i++ ) {
     auto c = cs[i];
     auto u = state(c);
     eqns_t::update_state_from_pressure( u, *eos );
@@ -98,7 +98,7 @@ template< typename T >
 int32_t update_state_from_energy( T & mesh ) {
 
   // type aliases
-  using index_t = typename T::index_t;
+  using counter_t = typename T::counter_t;
   using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the collection accesor
@@ -110,7 +110,7 @@ int32_t update_state_from_energy( T & mesh ) {
   auto num_cells = cs.size();
 
   #pragma omp parallel for
-  for ( index_t i=0; i<num_cells; i++ ) {
+  for ( counter_t i=0; i<num_cells; i++ ) {
     auto c = cs[i];
     auto u = state(c);
     eqns_t::update_state_from_energy( u, *eos );
@@ -131,7 +131,7 @@ template< typename E, typename T >
 int32_t evaluate_time_step( T & mesh ) {
 
   // type aliases
-  using  index_t = typename T::index_t;
+  using  counter_t = typename T::counter_t;
   using   real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
 
@@ -154,7 +154,7 @@ int32_t evaluate_time_step( T & mesh ) {
   auto num_cells = cs.size();
 
   #pragma omp parallel for reduction(max:dt_inv)
-  for ( index_t i=0; i<num_cells; i++ ) {
+  for ( counter_t i=0; i<num_cells; i++ ) {
 
     // get cell properties
     auto u = state( cs[i] );
@@ -165,6 +165,7 @@ int32_t evaluate_time_step( T & mesh ) {
       auto delta_x = volume[cs[i]] / area[f];
       // compute the inverse of the time scale
       auto dti =  E::fastest_wavespeed(u, normal[f]) / delta_x;
+      //std::cout << dti << " " << delta_x << std::endl;
       // check for the maximum value
       dt_inv = std::max( dti, dt_inv );
     } // edge
@@ -190,7 +191,7 @@ template< typename T >
 int32_t evaluate_fluxes( T & mesh ) {
 
   // type aliases
-  using index_t = typename T::index_t;
+  using counter_t = typename T::counter_t;
   using vector_t = typename T::vector_t;
   using eqns_t = eqns_t<T::num_dimensions>;
   using flux_data_t = flux_data_t<T::num_dimensions>;
@@ -213,10 +214,11 @@ int32_t evaluate_fluxes( T & mesh ) {
   //for ( auto fit = fs.begin(); fit < fs.end(); ++fit  ) {
 
   #pragma omp parallel for
-  for ( index_t i=0; i<num_faces; i++ ) {
+  for ( counter_t i=0; i<num_faces; i++ ) {
+    auto f = fs[i];
 
     // get the cell neighbors
-    auto cells = mesh.cells(fs[i]);
+    auto cells = mesh.cells(f);
     auto num_cells = cells.size();
 
 
@@ -228,15 +230,16 @@ int32_t evaluate_fluxes( T & mesh ) {
     // interior cell
     if ( num_cells == 2 ) {
       auto w_right = state( cells[1] );
-      flux[fs[i]] = flux_function<eqns_t>( w_left, w_right, normal[fs[i]] );
+      flux[f] = flux_function<eqns_t>( w_left, w_right, normal[f] );
     } 
     // boundary cell
     else {
-      flux[fs[i]] = boundary_flux<eqns_t>( w_left, normal[fs[i]] );
+      flux[f] = boundary_flux<eqns_t>( w_left, normal[f] );
     }
     
     // scale the flux by the face area
-    math::multiplies_equal( flux[fs[i]], area[fs[i]] );
+    flux[f] *= area[f];
+
     
   } // for
   //----------------------------------------------------------------------------
@@ -254,7 +257,7 @@ template< typename T >
 int32_t apply_update( T & mesh ) {
 
   // type aliases
-  using index_t = typename T::index_t;
+  using counter_t = typename T::counter_t;
   using real_t = typename T::real_t;
   using flux_data_t = flux_data_t<T::num_dimensions>;
   using eqns_t = eqns_t<T::num_dimensions>;
@@ -276,32 +279,46 @@ int32_t apply_update( T & mesh ) {
   auto num_cells = cs.size();
 
   #pragma omp parallel for
-  for ( index_t i=0; i<num_cells; i++ ) {
+  for ( counter_t i=0; i<num_cells; i++ ) {
     
-    flux_data_t delta_u;
-    math::fill( delta_u, 0.0 );
+    auto c = cs[i];
+    flux_data_t delta_u( 0 );
 
     // loop over each connected edge
-    for ( auto f : mesh.faces(cs[i]) ) {
+    for ( auto f : mesh.faces(c) ) {
       
       // get the cell neighbors
       auto neigh = mesh.cells(f);
       auto num_neigh = neigh.size();
 
       // add the contribution to this cell only
-      if ( neigh[0] == cs[i] )
-        math::minus_equal( delta_u, flux[f] );
+      if ( neigh[0] == c )
+        delta_u -= flux[f];
       else
-        math::plus_equal( delta_u, flux[f] );
+        delta_u += flux[f];
 
     } // edge
 
     // now compute the final update
-    math::multiplies_equal( delta_u, delta_t/volume[cs[i]] );
+    delta_u *= delta_t/volume[c];
     
+
+    // std::cout << "delta " << i << " : ";
+    // for( auto x : delta_u )
+    //   std::cout << x << " ";
+    // std::cout << std::endl;
+
     // apply the update
-    auto u = state( cs[i] );
+    auto u = state( c );
     eqns_t::update_state_from_flux( u, delta_u );
+
+    //     std::cout << "new " << i << " : ";
+    //   std::cout << math::get<0>(u) << " ";
+    // for( auto x : math::get<1>(u) )
+    //   std::cout << x << " ";
+    // std::cout << math::get<2>(u) << " ";
+    // std::cout << std::endl;
+
 
   } // for
   //----------------------------------------------------------------------------

@@ -47,6 +47,7 @@ public:
   using const_pointer   = const T *;
   using size_type       = std::size_t;
   using difference_type = std::ptrdiff_t;
+  using counter_type    = utils::select_counter_t<N>;
   
   //! \brief For iterator support.
   //! @{
@@ -94,7 +95,8 @@ public:
   template <typename T2>
   constexpr array(const array<T2,N> &rhs) noexcept
   {
-    std::copy(rhs.begin(),rhs.end(), begin());    
+    for ( counter_type i=0; i<N; ++i )
+      elems_[i] = rhs.elems_[i]; 
   }
 
   //! \brief Constructor with variadic arguments.
@@ -272,13 +274,14 @@ public:
   //  \brief swap contents (note: linear complexity)
   void swap (array& y) 
   {
-    std::swap(elems_, y.elems_);
+    for ( counter_type i=0; i<N; i++ ) std::swap(elems_[i], y.elems_[i]);    
   }
 
   //! \brief assign one value to all elements
   void fill(const T& value)
   {
-    std::fill_n(begin(),size(),value);
+    for ( counter_type i=0; i<N; i++ ) elems_[i] = value;    
+
   }
 
   //! \brief Replaces the contents of the container. 
@@ -309,26 +312,33 @@ public:
   //!\brief  assignment with no type conversion
   auto & operator= (const array<T,N>& rhs) {
     if ( this != &rhs )
-      std::copy(rhs.begin(),rhs.end(), begin());    
+      for ( counter_type i=0; i<N; i++ ) elems_[i] = rhs.elems_[i];    
     return *this;
   }
 
   //!\brief  assignment with type conversion
   template <typename T2>
   auto & operator= (const array<T2,N>& rhs) {
-    std::copy(rhs.begin(),rhs.end(), begin());    
+    for ( counter_type i=0; i<N; i++ ) elems_[i] = rhs.elems_[i];    
     return *this;
   }
 
-  
+  //! \brief assignement to constant value.
+  //! \param[in] val The constant on the right hand side of the operator.
+  //! \return A reference to the current object.
+  template <typename T2>
+  auto & operator= (const T2 & val) {
+    fill(val);
+    return *this;
+  }
+
+
   //! \brief Addition binary operator involving another array.
   //! \param[in] rhs The array on the right hand side of the operator.
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator+=(const array<T2,N> & rhs) {
-    std::transform( begin(), end(), rhs.begin(), 
-                    begin(), std::plus<>() );
-    //for ( size_type i=0; i<N; i++ ) elems_[i] += rhs.elems_[i];    
+    for ( counter_type i=0; i<N; i++ ) elems_[i] += rhs.elems_[i];    
     return *this;
   }
 
@@ -337,9 +347,7 @@ public:
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator+=(const T2 & val) {
-    std::transform( begin(), end(), begin(),
-                    [&val](auto & d) { return d + val; } );
-    //for ( size_type i=0; i<N; i++ ) elems_[i] += val;    
+    for ( counter_type i=0; i<N; i++ ) elems_[i] += val;    
     return *this;
   }
 
@@ -348,9 +356,7 @@ public:
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator-=(const array<T2,N> & rhs) {
-    std::transform( begin(), end(), rhs.begin(), 
-                    begin(), std::minus<>() );    
-    //for ( size_type i=0; i<N; i++ ) elems_[i] -= rhs.elems_[i];    
+    for ( counter_type i=0; i<N; i++ ) elems_[i] -= rhs.elems_[i];    
     return *this;
   }
 
@@ -359,9 +365,7 @@ public:
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator-=(const T2 & val) {
-    std::transform( begin(), end(), begin(),
-                    [&val](auto & d) { return d - val; } );
-    //for ( size_type i=0; i<N; i++ ) elems_[i] -= val;    
+    for ( counter_type i=0; i<N; i++ ) elems_[i] -= val;    
     return *this;
   }
 
@@ -371,9 +375,7 @@ public:
   //! \return A reference to the current object.
   template <typename T2> 
   auto & operator*=(const array<T2,N> & rhs) {
-    std::transform( begin(), end(), rhs.begin(), 
-                    begin(), std::multiplies<>() );    
-    //for ( size_type i=0; i<N; i++ ) elems_[i] *= rhs.elems_[i];    
+    for ( counter_type i=0; i<N; i++ ) elems_[i] *= rhs.elems_[i];    
     return *this;
   }
 
@@ -382,9 +384,7 @@ public:
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator*=(const T2 & val) {
-    std::transform( begin(), end(), begin(),
-                    [&val](auto & d) { return d * val; } );
-    //for ( size_type i=0; i<N; i++ ) elems_[i] *= val;    
+    for ( counter_type i=0; i<N; i++ ) elems_[i] *= val;    
     return *this;
   }
 
@@ -393,9 +393,7 @@ public:
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator/=(const array<T2,N> & rhs) {
-    std::transform( begin(), end(), rhs.begin(), 
-                    begin(), std::divides<>() );    
-    //for ( size_type i=0; i<N; i++ ) elems_[i] /= rhs.elems_[i];    
+    for ( counter_type i=0; i<N; i++ ) elems_[i] /= rhs.elems_[i];    
     return *this;
   }
 
@@ -404,9 +402,8 @@ public:
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator/=(const T2 & val) {
-    std::transform( begin(), end(), begin(),
-                    [&val](auto & d) { return d / val; } );
-    //for ( size_type i=0; i<N; i++ ) elems_[i] /= val;
+    auto inv = static_cast<T>(1) / val;
+    for ( counter_type i=0; i<N; i++ ) elems_[i] *= inv;
     return *this;
   }
 
@@ -415,7 +412,7 @@ public:
   //! \return A reference to the current object.
   auto operator-() const {
     array tmp;
-    std::transform( begin(), end(), tmp.begin(), std::negate<>() );    
+    for ( counter_type i=0; i<N; i++ ) tmp[i] = -elems_[i];
     return tmp;
   }
 
@@ -435,7 +432,10 @@ public:
 template<typename T, std::size_t N>
 bool operator==(const array<T,N>& lhs, const array<T,N>& rhs)
 {
-  return std::equal(lhs.begin(), lhs.end(), rhs.begin());
+  for ( auto i=0; i<N; i++ )
+    if ( lhs[i] != rhs[i] ) 
+      return false;
+  return true;
 }
 
 template<typename T, typename U, std::size_t N>
@@ -489,8 +489,8 @@ auto operator+( const array<T,N>& lhs,
                 const array<T,N>& rhs )
 {
   array<T,N> tmp;
-  std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
-                  tmp.begin(), std::plus<>() );    
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ ) 
+    tmp[i] = lhs[i] + rhs[i];    
   return tmp;
 }
 
@@ -506,8 +506,8 @@ operator+( const array<T,N>& lhs,
            const U& rhs )
 {
   array<T,N> tmp;
-  std::transform( lhs.begin(), lhs.end(), tmp.begin(),
-                  [&rhs](auto & e) { return e+rhs; } );
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ ) 
+    tmp[i] = lhs[i] + rhs;
   return tmp;
 }
 
@@ -517,8 +517,8 @@ operator+( const U& lhs,
            const array<T,N>& rhs )
 {
   array<T,N> tmp;
-  std::transform( rhs.begin(), rhs.end(), tmp.begin(),
-                  [&lhs](auto & e) { return lhs+e; } );
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ ) 
+    tmp[i] = lhs + rhs[i];
   return tmp;
 }
 
@@ -533,8 +533,8 @@ auto operator-( const array<T,N>& lhs,
                 const array<T,N>& rhs )
 {
   array<T,N> tmp;
-  std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
-                  tmp.begin(), std::minus<>() );    
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ ) 
+    tmp[i] = lhs[i] - rhs[i];    
   return tmp;
 }
 
@@ -550,8 +550,8 @@ operator-( const array<T,N>& lhs,
            const U& rhs )
 {
   array<T,N> tmp;
-  std::transform( lhs.begin(), lhs.end(), tmp.begin(),
-                  [&rhs](auto & e) { return e-rhs; } );
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ ) 
+    tmp[i] = lhs[i] - rhs;
   return tmp;
 }
 
@@ -561,8 +561,8 @@ operator-( const U& lhs,
            const array<T,N>& rhs )
 {
   array<T,N> tmp;
-  std::transform( rhs.begin(), rhs.end(), tmp.begin(),
-                  [&lhs](auto & e) { return lhs-e; } );
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ ) 
+    tmp[i] = lhs - rhs[i];
   return tmp;
 }
 
@@ -577,8 +577,8 @@ auto operator*( const array<T,N>& lhs,
                 const array<T,N>& rhs )
 {
   array<T,N> tmp;
-  std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
-                  tmp.begin(), std::multiplies<>() );    
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ ) 
+    tmp[i] = lhs[i] * rhs[i];    
   return tmp;
 }
 
@@ -595,8 +595,8 @@ operator*( const array<T,N>& lhs,
            const U& rhs )
 {
   array<T,N> tmp;
-  std::transform( lhs.begin(), lhs.end(), tmp.begin(),
-                  [&rhs](auto & e) { return e*rhs; } );
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ ) 
+    tmp[i] = lhs[i] * rhs;
   return tmp;
 }
 
@@ -606,8 +606,8 @@ operator*( const U & lhs,
            const array<T,N>& rhs )
 {
   array<T,N> tmp;
-  std::transform( rhs.begin(), rhs.end(), tmp.begin(),
-                  [&lhs](auto & e) { return lhs*e; } );
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ ) 
+    tmp[i] = lhs * rhs[i];
   return tmp;
 }
 
@@ -622,8 +622,8 @@ auto operator/( const array<T,N>& lhs,
                 const array<T,N>& rhs )
 {
   array<T,N> tmp;
-  std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
-                  tmp.begin(), std::divides<>() );    
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ ) 
+    tmp[i] = lhs[i] / rhs[i];    
   return tmp;
 }
 
@@ -641,8 +641,9 @@ operator/( const array<T,N>& lhs,
            const U& rhs )
 {
   array<T,N> tmp;
-  std::transform( lhs.begin(), lhs.end(), tmp.begin(),
-                  [&rhs](auto & e) { return e/rhs; } );
+  auto inv = static_cast<T>(1) / rhs;
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ ) 
+    tmp[i] = lhs[i] * inv;
   return tmp;
 }
 
@@ -652,8 +653,8 @@ operator/( const U& lhs,
            const array<T,N>& rhs )
 {
   array<T,N> tmp;
-  std::transform( rhs.begin(), rhs.end(), tmp.begin(),
-                  [&lhs](auto & e) { return lhs/e; } );
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ ) 
+    tmp[i] = lhs / rhs[i];
   return tmp;
 }
 
