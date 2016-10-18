@@ -35,6 +35,8 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
      typename T::real_t max_x,       typename T::real_t max_y ) 
 {
 
+  using counter_t = typename T::counter_t;
+
   T mesh;
 
   // the grid dimensions
@@ -58,9 +60,9 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
   auto num_vert_x = num_cells_x + 1;
   auto num_vert_y = num_cells_y + 1;
 
-  for(size_t j = 0; j < num_vert_y; ++j) {
+  for(counter_t j = 0; j < num_vert_y; ++j) {
     auto y = min_y + j*delta_y;
-    for(size_t i = 0; i < num_vert_x; ++i) {
+    for(counter_t i = 0; i < num_vert_x; ++i) {
       auto x = min_x + i*delta_x;
       auto v = mesh.create_vertex( {x, y} );
       vs.emplace_back( std::move(v) );
@@ -71,8 +73,8 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
   // define each cell
   auto index = [=](auto i, auto j) { return i + num_vert_x*j; };
   
-  for(size_t j = 0; j < num_cells_y; ++j)
-    for(size_t i = 0; i < num_cells_x; ++i) {
+  for(counter_t j = 0; j < num_cells_y; ++j)
+    for(counter_t i = 0; i < num_cells_x; ++i) {
       auto c = 
         mesh.create_cell({
               vs[ index(i  , j  ) ],
@@ -103,6 +105,8 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
      typename T::real_t max_x,       typename T::real_t max_y,       typename T::real_t max_z ) 
 {
 
+  using counter_t = typename T::counter_t;
+
   T mesh;
 
   // the grid dimensions
@@ -129,11 +133,11 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
   auto delta_y = length_y / num_cells_y;
   auto delta_z = length_z / num_cells_z;
 
-  for(size_t k = 0; k < num_vert_z; ++k) {
+  for(counter_t k = 0; k < num_vert_z; ++k) {
     auto z = min_z + k*delta_z;
-    for(size_t j = 0; j < num_vert_y; ++j) {
+    for(counter_t j = 0; j < num_vert_y; ++j) {
       auto y = min_y + j*delta_y;
-      for(size_t i = 0; i < num_vert_x; ++i) {
+      for(counter_t i = 0; i < num_vert_x; ++i) {
         auto x = min_x + i*delta_x;
         auto v = mesh.create_vertex( {x, y, z} );
         vs.emplace_back( std::move(v) );
@@ -153,9 +157,9 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
   
 
   // go over vertices counter clockwise to define cell
-  for( size_t k = 0; k < num_cells_z; ++k )
-    for( size_t j = 0; j < num_cells_y; ++j )
-      for( size_t i = 0; i < num_cells_x; ++i )
+  for( counter_t k = 0; k < num_cells_z; ++k )
+    for( counter_t j = 0; j < num_cells_y; ++j )
+      for( counter_t i = 0; i < num_cells_x; ++i )
         auto c = mesh.create_cell( 
           {
             vs[ vert_index( i  , j  , k  ) ],

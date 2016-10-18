@@ -11,6 +11,7 @@
 
 // user includes 
 #include "detail/template_helpers_impl.h"
+#include "ale/common/types.h"
 
 // system includes
 #include <functional>
@@ -26,6 +27,8 @@ namespace utils {
 template<typename... Args>
 constexpr auto multiply(Args... args) 
 { return detail::multiply(args...); }
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //!  \brief select the appropriate counter type at compile time.
@@ -48,7 +51,7 @@ struct select_counter<N,true>
 template< std::size_t N >
 struct select_counter<N,false>
 {
-  using type = intmax_t;
+  using type = common::largest_counter_t;
 };
 
 //! \brief a helper for selecting the appropriate counter

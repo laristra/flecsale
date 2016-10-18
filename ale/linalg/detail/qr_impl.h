@@ -39,7 +39,8 @@ auto get_next_col( const MatrixViewType<T, MatArgs...>&A,
                    I* p ) 
 {
   
-  // get the size type
+  // get the size and coutner types
+  using counter_type = typename MatrixViewType<T, MatArgs...>::counter_type;
   using size_type = typename MatrixViewType<T, MatArgs...>::size_type;
 
   // some matrix dimensions
@@ -51,16 +52,16 @@ auto get_next_col( const MatrixViewType<T, MatArgs...>&A,
   std::vector<T> col_norms(cols);
     
   // Compute the norms of the sub columns.
-  for(size_type j = 0; j < cols; j++) {
+  for(counter_type j = 0; j < cols; j++) {
     col_norms[j] = 0;
 
-    for(size_type i = row_pos; i < rows; i++)
+    for(counter_type i = row_pos; i < rows; i++)
       col_norms[j] += A(i,p[j])*A(i,p[j]);
   }
 
   // Find the maximum location.
   auto max = static_cast<T>(0);
-  for(size_type i = 0; i < cols; i++)
+  for(counter_type i = 0; i < cols; i++)
     if(col_norms[i] > max) {
       max = col_norms[i];
       max_loc = i;
@@ -93,7 +94,8 @@ void householder( const MatrixViewType<T, MatArgs...> &A,
                   I row_pos, I col_pos, 
                   T * result)
 {
-  // get the size type
+  // get the size and coutner types
+  using counter_type = typename MatrixViewType<T, MatArgs...>::counter_type;
   using size_type = typename MatrixViewType<T, MatArgs...>::size_type;
 
   // some matrix dimensions
@@ -102,7 +104,7 @@ void householder( const MatrixViewType<T, MatArgs...> &A,
 
   auto norm = static_cast<T>(0);
 
-  for(size_type i = row_pos; i < rows; i++)
+  for(counter_type i = row_pos; i < rows; i++)
     norm += A(i,col_pos)*A(i,col_pos);
 
   if(norm == 0) return;
@@ -111,18 +113,18 @@ void householder( const MatrixViewType<T, MatArgs...> &A,
 
   result[0] = A(row_pos,col_pos) - norm;
 
-  for(size_type i = 1; i < (rows - row_pos); i++)
+  for(counter_type i = 1; i < (rows - row_pos); i++)
     result[i] = A(i+row_pos,col_pos);
 
   norm = 0;
-  for(size_type i = 0; i < (rows - row_pos); i++)
+  for(counter_type i = 0; i < (rows - row_pos); i++)
     norm += result[i]*result[i];
 
   if(norm == 0) return;
 
   norm = std::sqrt(norm);
 
-  for(size_type i = 0; i < (rows - row_pos); i++)
+  for(counter_type i = 0; i < (rows - row_pos); i++)
     result[i] *= (1.0/norm);
 }
 
@@ -157,7 +159,8 @@ void apply_householder( const MatrixViewType<T, MatArgs...> & A,
                         I row_pos, I *p )
 {
     
-  // get the size type
+  // get the size and coutner types
+  using counter_type = typename MatrixViewType<T, MatArgs...>::counter_type;
   using size_type = typename MatrixViewType<T, MatArgs...>::size_type;
 
   // some matrix dimensions
@@ -176,31 +179,31 @@ void apply_householder( const MatrixViewType<T, MatArgs...> & A,
   auto A_cpy_view = MatrixViewType<T, MatArgs...>( A_cpy, A.bounds() );
       
   // Build the Q matrix from the Householder transform.
-  for(size_type j = 0; j < nn; j++)
-    for(size_type i = 0; i < nn; i++)
+  for(counter_type j = 0; j < nn; j++)
+    for(counter_type i = 0; i < nn; i++)
       if(i != j)
         hhmat[i+nn*j] = -2*house[j]*house[i];
       else
         hhmat[i+nn*j] = 1 - 2*house[j]*house[i];
 
   // Multiply by the Q matrix.
-  for(size_type k = 0; k < cols; k++)
-    for(size_type j = 0; j < nn; j++) {
+  for(counter_type k = 0; k < cols; k++)
+    for(counter_type j = 0; j < nn; j++) {
         
       auto temp = static_cast<T>(0);
 
-      for(size_type i = 0; i < nn; i++)
+      for(counter_type i = 0; i < nn; i++)
         temp += hhmat[i+nn*j]*A_cpy_view(i + row_pos,p[k]);
         
       A(j + row_pos,p[k]) = temp;
     }
 
   // Multiply the rhs by the Q matrix.
-  for(size_type j = 0; j < nn; j++) {
+  for(counter_type j = 0; j < nn; j++) {
         
     auto sum = static_cast<T>(0);
       
-    for(size_type i = 0; i < nn; i++)
+    for(counter_type i = 0; i < nn; i++)
       sum += hhmat[i+nn*j]*B_cpy[i + row_pos];
         
     B[j + row_pos] = sum;
@@ -237,7 +240,8 @@ void back_solve( const MatrixViewType<T, MatArgs...> & A,
   // get epsilon
   constexpr auto eps = std::numeric_limits<T>::epsilon();
 
-  // get the size type
+  // get the size and coutner types
+  using counter_type = typename MatrixViewType<T, MatArgs...>::counter_type;
   using size_type = typename MatrixViewType<T, MatArgs...>::size_type;
 
   // some matrix dimensions
@@ -250,7 +254,7 @@ void back_solve( const MatrixViewType<T, MatArgs...> & A,
   std::vector<T> B_cpy( B.begin(), B.end() );
     
   // Find the first non-zero row from the bottom and start solving from here.
-  for(size_type i = rows; i-- > 0;) {
+  for(counter_type i = rows; i-- > 0;) {
     if( std::abs(A(i,p[cols - 1])) > eps ) {
       bottom = i;
       break;
@@ -260,11 +264,11 @@ void back_solve( const MatrixViewType<T, MatArgs...> & A,
   bottom = std::min( bottom, cols-1 );
 
   // Standard back solving routine starting at the first non-zero diagonal.
-  for(size_type i = bottom+1; i-- > 0;) {
+  for(counter_type i = bottom+1; i-- > 0;) {
         
     auto sum = static_cast<T>(0);
 
-    for(size_type j = cols; j-- > i+1;) 
+    for(counter_type j = cols; j-- > i+1;) 
       // if(j > i) 
       sum += B[p[j]]*A(i,p[j]);
       

@@ -73,7 +73,7 @@ private:
   //! @{
 
   //! \brief The main data container, which is just a std::array.
-  std::array<T, length > elems_;
+  T elems_[length];
 
   //! @}
 
@@ -116,12 +116,12 @@ public:
   //! \brief Constructor with one value.
   //! \param[in] val The value to set the array to.
   template < typename T2 >
-  constexpr array(const T2 & val)  noexcept : 
+  constexpr array(const T2 & val)  noexcept 
   //elems_( utils::fill<length>::apply( static_cast<T>(val) ) )
-    elems_( utils::make_array<value_type,length>( static_cast<T>(val) ) )
+  //elems_( utils::make_array<value_type,length>( static_cast<T>(val) ) )
   { 
     //std::cout << "array (single value constructor)\n";
-    //fill( val );
+    fill( val );
   }
 
   // @}
@@ -133,15 +133,15 @@ public:
 
   //! \brief return an iterator to the beginning of the array
   //! @{
-                  iterator  begin()       { return elems_.begin(); }
-  constexpr const_iterator  begin() const { return elems_.begin(); }
+                  iterator  begin()       { return elems_; }
+  constexpr const_iterator  begin() const { return elems_; }
   constexpr const_iterator cbegin() const { return begin(); }
   //! @}
         
   //! \brief return an iterator to the end of the array
   //! @{
-                  iterator  end()       { return elems_.end(); }
-  constexpr const_iterator  end() const { return elems_.end(); }
+                  iterator  end()       { return elems_+length; }
+  constexpr const_iterator  end() const { return elems_+length; }
   constexpr const_iterator cend() const { return end(); }
 
 
@@ -312,7 +312,7 @@ public:
   //!\brief  assignment with no type conversion
   auto & operator= (const array<T,N>& rhs) {
     if ( this != &rhs )
-      for ( counter_type i=0; i<N; i++ ) elems_[i] = rhs.elems_[i];    
+      for ( size_type i=0; i<N; i++ ) elems_[i] = rhs.elems_[i];    
     return *this;
   }
 

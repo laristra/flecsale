@@ -47,6 +47,9 @@ using integer_t = int32_t;
 //! a size type
 using std::size_t;
 
+//! The largest counter type
+using largest_counter_t = intmax_t;
+
 //! the test tolerance 
 static constexpr real_t test_tolerance = TEST_TOLERANCE;
 
