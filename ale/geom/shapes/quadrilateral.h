@@ -46,10 +46,17 @@ struct quadrilateral<2> {
   //============================================================================
   //! \brief the midpoint function
   //============================================================================
-  template< typename... Args >
-  static auto midpoint( Args&&... pts ) 
-  {
-    return polygon<2>::midpoint( std::forward<Args>(pts)... );
+  template< typename T >
+  static T midpoint( 
+    const T & pt0, const T & pt1, const T & pt2, const T & pt3 
+  ) {
+    using value_type = typename T::value_type;
+    constexpr auto fourth = 
+      static_cast<value_type>(1) / static_cast<value_type>(4);
+    return { 
+      fourth * ( pt0[0] + pt1[0] + pt2[0] + pt3[  0] ),  
+      fourth * ( pt0[1] + pt1[1] + pt2[1] + pt3 [1] ),  
+    };
   }
   
   //============================================================================
@@ -113,12 +120,20 @@ struct quadrilateral<3> {
   //============================================================================
   //! \brief the midpoint function
   //============================================================================
-  template< typename... Args >
-  static auto midpoint( Args&&... pts ) 
-  {
-    return polygon<3>::midpoint( std::forward<Args>(pts)... );
+  template< typename T >
+  static T midpoint( 
+    const T & pt0, const T & pt1, const T & pt2, const T & pt3 
+  ) {
+    using value_type = typename T::value_type;
+    constexpr auto fourth = 
+      static_cast<value_type>(1) / static_cast<value_type>(4);
+    return { 
+      fourth * ( pt0[0] + pt1[0] + pt2[0] + pt3[0] ),  
+      fourth * ( pt0[1] + pt1[1] + pt2[1] + pt3[1] ), 
+      fourth * ( pt0[2] + pt1[2] + pt2[2] + pt3[2] ),      
+    };
   }
-
+  
   //============================================================================
   //! \brief the centroid function
   //============================================================================

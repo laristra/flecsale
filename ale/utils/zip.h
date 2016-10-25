@@ -76,7 +76,7 @@ decltype(auto) zip(T&&... containers)
   size_t sizes[] = { containers.size()... };
   auto first_size = sizes[1];
 #ifndef NDEBUG
-  for ( size_t i=2; i<n; i++ )
+  for ( int i=2; i<n; i++ )
     assert( first_size == sizes[i] && " size mismatch" ); 
 #endif
 
@@ -130,7 +130,7 @@ decltype(auto) zip(Types&&... args)
   // check all the sizes
   size_t sizes[] = { args.size()... };
   auto first_size = sizes[1];
-  for ( size_t i=2; i<n; i++ )
+  for ( int i=2; i<n; i++ )
     assert( first_size == sizes[i] && " size mismatch" ); 
 
   return zipper<special_decay_t<Types>...>(std::forward<Types>(args)...);

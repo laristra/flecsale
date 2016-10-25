@@ -51,7 +51,7 @@ struct select_counter<N,true>
 template< std::size_t N >
 struct select_counter<N,false>
 {
-  using type = common::largest_counter_t;
+  using type = common::counter_t;
 };
 
 //! \brief a helper for selecting the appropriate counter

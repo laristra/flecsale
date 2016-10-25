@@ -236,6 +236,30 @@ T abs(const C<T,Args...> &a)
 }
 //! @}
 
+//! \brief Compute the magnitude of the difference between two vectors
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template< 
+  typename T1, 
+  typename T2, 
+  std::size_t... N,
+  template< typename, std::size_t... > class A,
+  std::size_t Len = utils::multiply( N... )
+ >
+auto delta_magnitude(const A<T1, N...> &a, const A<T2, N...> &b) 
+{
+  decltype(a[0]*b[0]) abs = 0;
+  for( utils::select_counter_t<Len> i = 0; i<Len; ++i ) {
+    auto del = a[i] - b[i];
+    abs += del*del;
+  }
+  return std::sqrt(abs);
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
 // Elementwise min and max
 //////////////////////////////////////////////////////////////////////////////
@@ -264,7 +288,7 @@ template< template<typename...> class C, typename T, typename...Args >
 auto min(const C<T,Args...> &a, const C<T,Args...> &b) 
 {
   C<T,Args...> tmp;
-  for ( std::size_t i=0; i<a.size(); i++ )
+  for ( common::counter_t i=0; i<a.size(); i++ )
     tmp[i] = std::min( a[i], b[i] );
   return tmp;
 }
@@ -293,7 +317,7 @@ template< template<typename...> class C, typename T, typename...Args >
 auto max(const C<T,Args...> &a, const C<T,Args...> &b) 
 {
   C<T,Args...> tmp;
-  for ( std::size_t i=0; i<a.size(); i++ )
+  for ( common::counter_t i=0; i<a.size(); i++ )
     tmp[i] = std::max( a[i], b[i] );
   return tmp;
 }

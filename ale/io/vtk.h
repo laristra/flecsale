@@ -12,6 +12,7 @@
 
 // user includes
 #include "write_binary.h"
+ #include "ale/common/types.h"
 
 // system includes
 #include <typeindex>
@@ -143,8 +144,8 @@ public :
     else {
 
       std::size_t cnt = 0;
-      for (std::size_t p=0; p<npoints; p++ ) {
-        for (std::size_t d=0; d<ndims; d++ ) 
+      for (common::counter_t p=0; p<npoints; p++ ) {
+        for (int d=0; d<ndims; d++ ) 
           file_ << data[cnt++] << " ";
         file_ << std::endl;
       }
@@ -340,8 +341,8 @@ public :
       auto n = data.size() / ndims;
       std::size_t cnt = 0;
       
-      for (std::size_t p=0; p<n; p++ ) {
-        for (std::size_t d=0; d<ndims; d++ ) 
+      for (common::counter_t p=0; p<n; p++ ) {
+        for (int d=0; d<ndims; d++ ) 
           file_ << data[cnt++] << " ";
         file_ << std::endl;
       }

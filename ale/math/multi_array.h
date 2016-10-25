@@ -157,6 +157,9 @@ public:
   //! \brief The total length of storage.
   static constexpr size_type elements = utils::multiply(N...);
 
+  //! \brief A counter type
+  using counter_type = utils::select_counter_t<elements>;
+
 private:
 
   //===========================================================================
@@ -405,7 +408,7 @@ public:
   //! \brief Swap contents (note: linear complexity).
   //! \param [in] y  The array to swap with.
   void swap (multi_array& y) {
-    std::swap(elems_, y.elems_);
+    for ( counter_type i=0; i<elements; i++ ) std::swap(elems_[i], y.elems_[i]);    
   }
 
 
@@ -413,7 +416,7 @@ public:
   //! \param [in] value   The value to set.
   void fill(const T& value)
   {
-    std::fill_n(begin(),size(),value);
+    for ( counter_type i=0; i<elements; i++ ) elems_[i] = value;    
   }
 
   //! \brief Replaces the contents of the container. 
@@ -447,7 +450,15 @@ public:
   template <typename T2>
   auto & operator= (const multi_array<T2,N...>& rhs) {
     if ( this != &rhs )
-      std::copy(rhs.begin(),rhs.end(), begin());    
+      for ( counter_type i=0; i<elements; i++ ) elems_[i] = rhs.elems_[i];    
+    return *this;
+  }
+
+  //! \param[in] val The constant on the right hand side of the operator.
+  //! \return A reference to the current object.
+  template <typename T2>
+  auto & operator= (const T2 & val) {
+    fill(val);
     return *this;
   }
 
@@ -457,9 +468,7 @@ public:
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator+=(const multi_array<T2,N...> & rhs) {
-    std::transform( begin(), end(), rhs.begin(), 
-                    begin(), std::plus<>() );
-    //for ( size_type i=0; i<N; i++ ) elems_[i] += rhs.elems_[i];    
+    for ( counter_type i=0; i<elements; i++ ) elems_[i] += rhs.elems_[i];    
     return *this;
   }
 
@@ -468,9 +477,7 @@ public:
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator+=(const T2 & val) {
-    std::transform( begin(), end(), begin(),
-                    [&val](auto & d) { return d + val; } );
-    //for ( size_type i=0; i<N; i++ ) elems_[i] += val;    
+    for ( counter_type i=0; i<elements; i++ ) elems_[i] += val;    
     return *this;
   }
 
@@ -479,9 +486,7 @@ public:
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator-=(const multi_array<T2,N...> & rhs) {
-    std::transform( begin(), end(), rhs.begin(), 
-                    begin(), std::minus<>() );    
-    //for ( size_type i=0; i<N; i++ ) elems_[i] -= rhs.elems_[i];    
+    for ( counter_type i=0; i<elements; i++ ) elems_[i] -= rhs.elems_[i];    
     return *this;
   }
 
@@ -490,9 +495,7 @@ public:
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator-=(const T2 & val) {
-    std::transform( begin(), end(), begin(),
-                    [&val](auto & d) { return d - val; } );
-    //for ( size_type i=0; i<N; i++ ) elems_[i] -= val;    
+    for ( counter_type i=0; i<elements; i++ ) elems_[i] -= val;    
     return *this;
   }
 
@@ -502,9 +505,7 @@ public:
   //! \return A reference to the current object.
   template <typename T2> 
   auto & operator*=(const multi_array<T2,N...> & rhs) {
-    std::transform( begin(), end(), rhs.begin(), 
-                    begin(), std::multiplies<>() );    
-    //for ( size_type i=0; i<N; i++ ) elems_[i] *= rhs.elems_[i];    
+    for ( counter_type i=0; i<elements; i++ ) elems_[i] *= rhs.elems_[i];    
     return *this;
   }
 
@@ -513,9 +514,7 @@ public:
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator*=(const T2 & val) {
-    std::transform( begin(), end(), begin(),
-                    [&val](auto & d) { return d * val; } );
-    //for ( size_type i=0; i<N; i++ ) elems_[i] *= val;    
+    for ( counter_type i=0; i<elements; i++ ) elems_[i] *= val;    
     return *this;
   }
 
@@ -524,9 +523,7 @@ public:
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator/=(const multi_array<T2,N...> & rhs) {
-    std::transform( begin(), end(), rhs.begin(), 
-                    begin(), std::divides<>() );    
-    //for ( size_type i=0; i<N; i++ ) elems_[i] /= rhs.elems_[i];    
+    for ( counter_type i=0; i<elements; i++ ) elems_[i] /= rhs.elems_[i];    
     return *this;
   }
 
@@ -535,9 +532,8 @@ public:
   //! \return A reference to the current object.
   template <typename T2>
   auto & operator/=(const T2 & val) {
-    std::transform( begin(), end(), begin(),
-                    [&val](auto & d) { return d / val; } );
-    //for ( size_type i=0; i<N; i++ ) elems_[i] /= val;
+    auto inv = static_cast<T>(1) / val;
+    for ( counter_type i=0; i<elements; i++ ) elems_[i] *= inv;
     return *this;
   }
 
@@ -546,7 +542,7 @@ public:
   //! \return A reference to the current object.
   auto operator-() const {
     multi_array tmp;
-    std::transform( begin(), end(), tmp.begin(), std::negate<>() );    
+    for ( counter_type i=0; i<elements; i++ ) tmp[i] = -elems_[i];
     return tmp;
   }
 
@@ -657,8 +653,23 @@ constexpr std::array<std::size_t, sizeof...(N)> multi_array<T,N...> :: strides_;
 template<typename T, std::size_t... N>
 bool operator==(const multi_array<T,N...>& lhs, const multi_array<T,N...>& rhs)
 {
-  return std::equal(lhs.begin(), lhs.end(), rhs.begin());
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ )
+    if ( lhs[i] != rhs[i] ) 
+      return false;
+  return true;
 }
+
+template<typename T, typename U, std::size_t... N>
+bool operator==(const multi_array<T,N...>& lhs, const U& rhs)
+{
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ )
+    if ( lhs[i] != rhs ) 
+      return false;
+  return true;
+}
+
 
 template<typename T, std::size_t... N>
 bool operator< (const multi_array<T,N...>& x, const multi_array<T,N...>& y) {
@@ -702,8 +713,9 @@ auto operator+( const multi_array<T,N...>& lhs,
                 const multi_array<T,N...>& rhs )
 {
   multi_array<T,N...> tmp;
-  std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
-                  tmp.begin(), std::plus<>() );    
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ ) 
+    tmp[i] = lhs[i] + rhs[i];    
   return tmp;
 }
 
@@ -719,8 +731,9 @@ operator+( const multi_array<T,N...>& lhs,
            const U& rhs )
 {
   multi_array<T,N...> tmp;
-  std::transform( lhs.begin(), lhs.end(), tmp.begin(),
-                  [&rhs](auto & e) { return e+rhs; } );
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ ) 
+    tmp[i] = lhs[i] + rhs;
   return tmp;
 }
 
@@ -730,8 +743,9 @@ operator+( const U& lhs,
            const multi_array<T,N...>& rhs )
 {
   multi_array<T,N...> tmp;
-  std::transform( rhs.begin(), rhs.end(), tmp.begin(),
-                  [&lhs](auto & e) { return lhs+e; } );
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ ) 
+    tmp[i] = lhs + rhs[i];    
   return tmp;
 }
 
@@ -746,8 +760,9 @@ auto operator-( const multi_array<T,N...>& lhs,
                 const multi_array<T,N...>& rhs )
 {
   multi_array<T,N...> tmp;
-  std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
-                  tmp.begin(), std::minus<>() );    
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ ) 
+    tmp[i] = lhs[i] - rhs[i];    
   return tmp;
 }
 
@@ -763,8 +778,9 @@ operator-( const multi_array<T,N...>& lhs,
            const U& rhs )
 {
   multi_array<T,N...> tmp;
-  std::transform( lhs.begin(), lhs.end(), tmp.begin(),
-                  [&rhs](auto & e) { return e-rhs; } );
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ ) 
+    tmp[i] = lhs[i] - rhs;
   return tmp;
 }
 
@@ -774,8 +790,9 @@ operator-( const U& lhs,
            const multi_array<T,N...>& rhs )
 {
   multi_array<T,N...> tmp;
-  std::transform( rhs.begin(), rhs.end(), tmp.begin(),
-                  [&lhs](auto & e) { return lhs-e; } );
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ ) 
+    tmp[i] = lhs - rhs[i];    
   return tmp;
 }
 
@@ -790,8 +807,9 @@ auto operator*( const multi_array<T,N...>& lhs,
                 const multi_array<T,N...>& rhs )
 {
   multi_array<T,N...> tmp;
-  std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
-                  tmp.begin(), std::multiplies<>() );    
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ ) 
+    tmp[i] = lhs[i] * rhs[i];    
   return tmp;
 }
 
@@ -808,8 +826,9 @@ operator*( const multi_array<T,N...>& lhs,
            const U& rhs )
 {
   multi_array<T,N...> tmp;
-  std::transform( lhs.begin(), lhs.end(), tmp.begin(),
-                  [&rhs](auto & e) { return e*rhs; } );
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ ) 
+    tmp[i] = lhs[i] * rhs;    
   return tmp;
 }
 
@@ -819,8 +838,9 @@ operator*( const U& lhs,
            const multi_array<T,N...>& rhs )
 {
   multi_array<T,N...> tmp;
-  std::transform( rhs.begin(), rhs.end(), tmp.begin(),
-                  [&lhs](auto & e) { return lhs*e; } );
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ ) 
+    tmp[i] = lhs * rhs[i];    
   return tmp;
 }
 
@@ -835,8 +855,9 @@ auto operator/( const multi_array<T,N...>& lhs,
                 const multi_array<T,N...>& rhs )
 {
   multi_array<T,N...> tmp;
-  std::transform( lhs.begin(), lhs.end(), rhs.begin(), 
-                  tmp.begin(), std::divides<>() );    
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ ) 
+    tmp[i] = lhs[i] / rhs[i];    
   return tmp;
 }
 
@@ -854,8 +875,10 @@ operator/( const multi_array<T,N...>& lhs,
            const U& rhs )
 {
   multi_array<T,N...> tmp;
-  std::transform( lhs.begin(), lhs.end(), tmp.begin(),
-                  [&rhs](auto & e) { return e/rhs; } );
+  auto inv = static_cast<T>(1) / rhs;
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ ) 
+    tmp[i] = lhs[i] * inv;    
   return tmp;
 }
 
@@ -865,8 +888,9 @@ operator/( const U& lhs,
            const multi_array<T,N...>& rhs )
 {
   multi_array<T,N...> tmp;
-  std::transform( rhs.begin(), rhs.end(), tmp.begin(),
-                  [&lhs](auto & e) { return lhs/e; } );
+  using counter_type = typename multi_array<T,N...>::counter_type;
+  for ( counter_type i=0; i<multi_array<T,N...>::elements; i++ ) 
+    tmp[i] = lhs / rhs[i];    
   return tmp;
 }
 
@@ -879,9 +903,10 @@ operator/( const U& lhs,
 template <typename T, std::size_t D1, std::size_t D2>
 auto & operator<<(std::ostream& os, const multi_array<T,D1,D2>& a)
 {
-  for ( std::size_t j = 0; j<D2; j++ ) { 
+  using counter_type = typename multi_array<T,D1,D2>::counter_type;
+  for ( counter_type j = 0; j<D2; j++ ) { 
     os << "[";
-    for ( std::size_t i = 0; i<D1; i++ ) os << " " << a(i,j);
+    for ( counter_type i = 0; i<D1; i++ ) os << " " << a(i,j);
     os << " ]" << std::endl;
   }
   return os;

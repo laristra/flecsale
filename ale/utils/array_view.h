@@ -250,7 +250,7 @@ public:
   constexpr sliced_type shift_left() const noexcept
   {
     sliced_type idx;
-    for ( counter_type i=1; i<rank; i++ )
+    for ( int i=1; i<rank; i++ )
       idx.index_[i-1] = index_[i];
     return idx;
   }
@@ -299,7 +299,7 @@ public:
   //! \return true if lhs < rhs
   constexpr bool operator<(const index_t& rhs) const noexcept
   {
-    for (size_type i = 0; i < rank; ++i) {
+    for (counter_type i = 0; i < rank; ++i) {
       if (index_[i] < rhs.index_[i]) return true;
     }
     return false;
@@ -683,7 +683,7 @@ public:
   constexpr auto size() const noexcept
   { 
     size_type ret = 1;
-    for (counter_type i = 0; i < rank; ++i) 
+    for (int i = 0; i < rank; ++i) 
       ret *= bounds_[i];
     return ret;
   }
@@ -692,7 +692,7 @@ public:
   constexpr auto total_size() const noexcept
   { 
     size_type ret = 1;
-    for (counter_type i = 0; i < rank; ++i) 
+    for (int i = 0; i < rank; ++i) 
       ret += (bounds_[i] - 1) * strides_[i];
     return ret;
   }
@@ -702,7 +702,7 @@ public:
   //! \return true if idx is within the bounds
   constexpr bool contains(const index_type & idx) const noexcept
   {
-    for ( counter_type i=0; i<rank; i++ )
+    for ( int i=0; i<rank; i++ )
       if ( idx[i] < 0 || idx[i] >= bounds_[i] )
         return false;
     return true;
@@ -723,7 +723,7 @@ public:
   //! \param [in] idx the index to linearize
   constexpr auto linearize( const index_type & idx ) const noexcept {
     auto offset = idx[0] * strides_[0];
-    for ( counter_type i=1; i<rank; i++ ) 
+    for ( int i=1; i<rank; i++ ) 
       offset += idx[i] * strides_[i];
     return offset; 
   }
@@ -954,7 +954,7 @@ public:
   //! \return true if idx is within the bounds
   constexpr bool contains(const index_type & idx) const noexcept
   {
-    for ( counter_type i=0; i<rank; i++ )
+    for ( int i=0; i<rank; i++ )
       if ( idx[i] < 0 || idx[i] >= bounds_[i] )
         return false;
     return true;
@@ -980,7 +980,7 @@ public:
   constexpr auto linearize( const index_type & idx ) const noexcept 
   {
     auto offset = idx[0] * strides_[0];
-    for ( counter_type i=1; i<rank; i++ ) 
+    for ( int i=1; i<rank; i++ ) 
       offset += idx[i] * strides_[i];
     return offset; 
   }
@@ -1176,7 +1176,7 @@ public:
   //! \return true if idx is within the bounds
   static constexpr bool contains(const index_type & idx) noexcept
   {
-    for ( counter_type i=0; i<rank; i++ )
+    for ( int i=0; i<rank; i++ )
       if ( idx[i] < 0 || idx[i] >= bounds_[i] )
         return false;
     return true;
@@ -1202,7 +1202,7 @@ public:
   static constexpr auto linearize( const index_type & idx) noexcept
   {
     value_type res = 0;
-    for (counter_type i=0; i < rank; i++) 
+    for (int i=0; i < rank; i++) 
       res += idx[i] * strides_[i];
     return res;
   }
@@ -1361,7 +1361,7 @@ public:
   //! \brief prefix increment opeator
   constexpr bounds_iterator& operator++() noexcept
   {
-    for (counter_type i = rank; i-- > 0;) {
+    for (int i = rank; i-- > 0;) {
       if (current_[i] < bounds_[i] - 1) {
         current_[i]++;
         return *this;
@@ -1386,12 +1386,12 @@ public:
   {
     if ( current_ >= bounds_ ) {
       // if at the past-the-end, set to last element
-      for (counter_type i = 0; i < rank; ++i) {
+      for (int i = 0; i < rank; ++i) {
         current_[i] = bounds_[i] - 1;
       }
       return *this;
     }
-    for (counter_type i = rank; i-- > 0;) {
+    for (int i = rank; i-- > 0;) {
       if (current_[i] >= 1) {
         current_[i]--;
         return *this;
@@ -1435,10 +1435,10 @@ public:
     auto linear_idx = linearize(current_) + n;
     std::remove_const_t<value_type> stride = 0;
     stride[rank - 1] = 1;
-    for (counter_type i = rank - 1; i-- > 0;) {
+    for (int i = rank - 1; i-- > 0;) {
       stride[i] = stride[i + 1] * bounds_[i + 1];
     }
-    for (counter_type i = 0; i < rank; ++i) {
+    for (int i = 0; i < rank; ++i) {
       current_[i] = linear_idx / stride[i];
       linear_idx = linear_idx % stride[i];
     }
@@ -1535,7 +1535,7 @@ private:
     // Check if past-the-end
     if (idx >= bounds_) {
       res = 1;
-      for (counter_type i = rank; i-- > 0;) {
+      for (int i = rank; i-- > 0;) {
         res += (idx[i] - 1) * multiplier;
         multiplier *= bounds_[i];
       }
@@ -1543,7 +1543,7 @@ private:
     // not past the end
     else
     {
-      for (counter_type i = rank; i-- > 0;) {
+      for (int i = rank; i-- > 0;) {
         res += idx[i] * multiplier;
         multiplier *= bounds_[i];
       }
@@ -2016,7 +2016,7 @@ public:
   //! \brief the index type
   using index_type = typename bounds_type::index_type;
   //! \brief the counter type
-  using counter_type = common::largest_counter_t;
+  using counter_type = common::counter_t;
 
   //! \brief the value type
   using value_type = ValueType;
@@ -2555,7 +2555,7 @@ public:
   //! \brief the index type
   using index_type = typename bounds_type::index_type;
   //! \brief the counter type
-  using counter_type = common::largest_counter_t;
+  using counter_type = common::counter_t;
 
   //! \brief the value type
   using value_type = ValueType;

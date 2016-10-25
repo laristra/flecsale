@@ -65,7 +65,7 @@ TEST(eos, ideal_gas) {
   simple_task( update, d, p, e, ss, t );
 
   // now check
-  for ( size_t i = 0; i<n; i++ ) {
+  for ( int i = 0; i<n; i++ ) {
     std::cout <<   "d=" <<  d[i] 
               << ", p=" <<  p[i] 
               << ", e=" <<  e[i] 

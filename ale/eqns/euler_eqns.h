@@ -381,27 +381,35 @@ public:
     using math::get;
     using math::abs;
 
-    // get the conserved quatities
+    // compute the change in density and energy
     auto den0 = density(u);
     auto mass = den0 + du[equations::index::mass];
-
-    std::array<real_t, N> mom;
-    for ( int i=0; i<N; ++i )
-      mom[i] = den0*velocity(u)[i] + du[equations::index::momentum + i];
-
     auto ener = den0*total_energy(u) + du[equations::index::energy];
-    
+
     // recompute solution quantities
     auto inv_mass = 1 / mass;
-    auto et = ener * inv_mass;
+    
+    for ( int i=0; i<N; ++i ) {
+      auto mom = den0*velocity(u)[i] + du[equations::index::momentum + i];
+      velocity(u)[i] = mom * inv_mass;
+    }
+    
+    density(u) = mass;    
 
-    density(u) = mass;
-    for ( int i=0; i<N; ++i )
-      velocity(u)[i] = mom[i] * inv_mass;
-    internal_energy(u) = et - 0.5 * dot_product( velocity(u), velocity(u) );
+    internal_energy(u) = 
+      ener*inv_mass - 0.5 * dot_product( velocity(u), velocity(u) );
 
-    assert( density(u) > 0  );
-    assert( internal_energy(u) > 0  );
+    if ( internal_energy(u) < 0 )
+      raise_runtime_error( 
+        "Negative internal energy encountered, " << internal_energy(u) << "." 
+        << std::endl << "Current state = " << u << "."
+      );
+
+    if ( density(u) < 0 )
+      raise_runtime_error( 
+        "Negative density encountered, " << density(u) << "." 
+        << std::endl << "Current state = " << u << "."
+      );
 
   }
 

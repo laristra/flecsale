@@ -43,7 +43,7 @@ struct burton_mesh_traits_t {
   using bitfield_t = flecsi::bitfield_t;
 
   //! A type used for loop indexing.
-  using counter_t = intmax_t;
+  using counter_t = long long;
 
   //! The type for floating-point values.
   using real_t = common::real_t;

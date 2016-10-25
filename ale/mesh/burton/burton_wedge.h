@@ -109,6 +109,27 @@ public:
   vector_t facet_normal_left() const;
   //! \copydoc facet_normal_left
   vector_t facet_normal_right() const;
+  
+  //! \brief The "left" orientation of the facet normal.
+  //! \return The facet normal vector.
+  static vector_t facet_normal_left(
+    const point_t & v, //!< [in] The associated vertex coordinate
+    const point_t & e, //!< [in] The associated edge midpoint
+    const point_t &    //!< [in] The associated face midpoint (not used in 2d)
+  ) {
+    return { v[1] - e[1], e[0] - v[0] };
+  }
+
+  //! \brief The "right" orientation of the facet normal.
+  //! \return The facet normal vector.
+  static vector_t facet_normal_right(
+    const point_t & v, //!< [in] The associated vertex coordinate
+    const point_t & e, //!< [in] The associated edge midpoint
+    const point_t &    //!< [in] The associated face midpoint (not used in 2d)
+  ) {
+    return { e[1] - v[1], v[0] - e[0] };
+  }
+  
 
   //! \brief Get the cell facet centroid
   //! \return Cell facet centroid.
@@ -215,6 +236,26 @@ public:
   vector_t facet_normal_left() const;
   //! \copydoc facet_normal_left
   vector_t facet_normal_right() const;
+
+  //! \brief The "left" orientation of the facet normal.
+  //! \return The facet normal vector.
+  static vector_t facet_normal_left(
+    const point_t & v, //!< [in] The associated vertex coordinate
+    const point_t & e, //!< [in] The associated edge midpoint
+    const point_t & f  //!< [in] The associated face midpoint
+  ) {
+    return geom::shapes::triangle<num_dimensions>::normal( v, e, f );
+  }
+
+  //! \brief The "right" orientation of the facet normal.
+  //! \return The facet normal vector.
+  static vector_t facet_normal_right(
+    const point_t & v, //!< [in] The associated vertex coordinate
+    const point_t & e, //!< [in] The associated edge midpoint
+    const point_t & f  //!< [in] The associated face midpoint
+  ) {
+    return geom::shapes::triangle<num_dimensions>::normal( v, f, e );
+  }
 
   //! \brief Get the cell facet centroid
   //! \return Cell facet centroid.

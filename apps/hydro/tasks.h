@@ -155,14 +155,15 @@ int32_t evaluate_time_step( T & mesh ) {
 
   #pragma omp parallel for reduction(max:dt_inv)
   for ( counter_t i=0; i<num_cells; i++ ) {
+    auto c = cs[i];
 
     // get cell properties
-    auto u = state( cs[i] );
+    auto u = state( c );
 
     // loop over each face
-    for ( auto f : mesh.faces(cs[i]) ) {
+    for ( auto f : mesh.faces(c) ) {
       // estimate the length scale normal to the face
-      auto delta_x = volume[cs[i]] / area[f];
+      auto delta_x = volume[c] / area[f];
       // compute the inverse of the time scale
       auto dti =  E::fastest_wavespeed(u, normal[f]) / delta_x;
       //std::cout << dti << " " << delta_x << std::endl;
@@ -274,7 +275,6 @@ int32_t apply_update( T & mesh ) {
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
 
-  // get the faces
   auto cs = mesh.cells();
   auto num_cells = cs.size();
 

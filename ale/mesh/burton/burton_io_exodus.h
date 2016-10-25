@@ -47,6 +47,7 @@ public:
 
   // other useful types
   using    size_t = typename mesh_t::size_t;
+  using counter_t = typename mesh_t::counter_t;
   using integer_t = typename mesh_t::integer_t;
   using    real_t = typename mesh_t::real_t;
   using   point_t = typename mesh_t::point_t;
@@ -139,7 +140,7 @@ public:
     // copy the coordinates
     for (auto v : m.vertices()) {
       auto & coords = v->coordinates();
-      for ( auto i=0; i<num_dims; i++ ) 
+      for ( int i=0; i<num_dims; i++ ) 
         coord[ i*num_nodes + v.id() ] = coords[i];
     } // for
 
@@ -185,10 +186,10 @@ public:
     assert(status == 0);
 
     // put nodes into mesh
-    for (size_t i = 0; i < num_nodes; ++i) {
+    for (counter_t i = 0; i < num_nodes; ++i) {
       // convert the point
       point_t p;
-      for ( auto d=0; d<num_dims; d++ ) 
+      for ( int d=0; d<num_dims; d++ ) 
         p[d] = static_cast<real_t>( coord[ d*num_nodes + i ] );
       // now create it
       auto v = m.create_vertex( p );
@@ -367,7 +368,7 @@ public:
     // element field data
 
     // loop over element blocks, writing the filtered element data
-    for ( auto iblk=0; iblk<num_elem_blk; iblk++ ) {
+    for ( int iblk=0; iblk<num_elem_blk; iblk++ ) {
 
       // stats for this block
       auto elem_blk_id = iblk+1;
@@ -515,7 +516,7 @@ struct burton_io_exodus_t<2> :
     region_ids.reserve( num_elem );
 
     // read each block
-    for ( auto iblk=0; iblk<exopar.num_elem_blk; iblk++ ) {
+    for ( int iblk=0; iblk<exopar.num_elem_blk; iblk++ ) {
 
       auto elem_blk_id = blockids[iblk];
 
@@ -557,12 +558,12 @@ struct burton_io_exodus_t<2> :
         
         // create cells in mesh
         size_t base = 0;
-        for (size_t e = 0; e < num_elem_this_blk; ++e) {
+        for (counter_t e = 0; e < num_elem_this_blk; ++e) {
           elem_vs.clear();
           // get the number of nodes
           num_nodes_per_elem = elem_node_counts[e];
           // copy local vertices into vector ( exodus uses 1 indexed arrays )
-          for ( auto v=0;  v<num_nodes_per_elem; v++ )
+          for ( int v=0;  v<num_nodes_per_elem; v++ )
             elem_vs.emplace_back( vs[ elem_nodes[base+v] - 1 ] );
           // create acual cell
           auto c = m.create_cell( elem_vs );
@@ -585,12 +586,12 @@ struct burton_io_exodus_t<2> :
         elem_vs.reserve( num_nodes_per_elem );
         
         // create cells in mesh
-        for (size_t e = 0; e < num_elem_this_blk; ++e) {
+        for (counter_t e = 0; e < num_elem_this_blk; ++e) {
           elem_vs.clear();
           // base offset into elt_conn
           auto b = e*num_nodes_per_elem;
           // copy local vertices into vector ( exodus uses 1 indexed arrays )
-          for ( auto v=0;  v<num_nodes_per_elem; v++ )
+          for ( int v=0;  v<num_nodes_per_elem; v++ )
             elem_vs.emplace_back( vs[ elt_conn[b+v]-1 ] );
           // create acual cell
           auto c = m.create_cell( elem_vs );          
@@ -601,7 +602,7 @@ struct burton_io_exodus_t<2> :
 
 
       // set element regions
-      for ( auto e = 0; e < num_elem_this_blk; e++ )
+      for ( counter_t e = 0; e < num_elem_this_blk; e++ )
         region_ids.emplace_back( iblk );
       
     }
@@ -696,7 +697,7 @@ struct burton_io_exodus_t<2> :
 
 
     // loop over element blocks
-    for ( auto iblk=0; iblk<num_elem_blk; iblk++ ) {
+    for ( int iblk=0; iblk<num_elem_blk; iblk++ ) {
 
       // set the block header
       auto elem_blk_id = iblk+1;
@@ -858,7 +859,7 @@ struct burton_io_exodus_t<3> :
     std::vector<face_t *> faces;
 
     // read each block
-    for ( auto iblk=0; iblk<num_face_blk; iblk++ ) {
+    for ( int iblk=0; iblk<num_face_blk; iblk++ ) {
 
       auto face_blk_id = face_block_ids[iblk];
 
@@ -901,7 +902,7 @@ struct burton_io_exodus_t<3> :
       face_vs.reserve( face_node_counts[0] );
         
       // create faces in mesh
-      for (size_t e=0, base=0; e < num_face_this_blk; ++e) {
+      for (counter_t e=0, base=0; e < num_face_this_blk; ++e) {
         face_vs.clear();
         // get the number of nodes
         num_nodes_per_face = face_node_counts[e];
@@ -934,7 +935,7 @@ struct burton_io_exodus_t<3> :
       face_owner( faces.size(), std::make_pair(nullptr, nullptr)  );
 
     // read each block
-    for ( auto iblk=0; iblk<num_elem_blk; iblk++ ) {
+    for ( int iblk=0; iblk<num_elem_blk; iblk++ ) {
 
       auto elem_blk_id = elem_block_ids[iblk];
 
@@ -982,13 +983,13 @@ struct burton_io_exodus_t<3> :
         elem_fs_ids.reserve( elem_face_counts[0] );
         
         // create cells in mesh
-        for (size_t e=0, base=0; e < num_elem_this_blk; ++e) {
+        for (counter_t e=0, base=0; e < num_elem_this_blk; ++e) {
           // reset storage
           elem_fs.clear();
           // get the number of faces
           num_faces_per_elem = elem_face_counts[e];
           // copy local vertices into vector ( exodus uses 1 indexed arrays )
-          for ( auto v=0;  v<num_faces_per_elem; v++ ) {
+          for ( int v=0;  v<num_faces_per_elem; v++ ) {
             auto id = elem_faces[base+v] - 1;            
             elem_fs.emplace_back( faces[ id ] );
             elem_fs_ids.emplace_back( id );
@@ -1023,12 +1024,12 @@ struct burton_io_exodus_t<3> :
         elem_vs.reserve( num_nodes_per_elem );
         
         // create cells in mesh
-        for (size_t e = 0; e < num_elem_this_blk; ++e) {
+        for (counter_t e = 0; e < num_elem_this_blk; ++e) {
           elem_vs.clear();
           // base offset into elt_conn
           auto b = e*num_nodes_per_elem;
           // copy local vertices into vector ( exodus uses 1 indexed arrays )
-          for ( auto v=0;  v<num_nodes_per_elem; v++ ) 
+          for ( int v=0;  v<num_nodes_per_elem; v++ ) 
             elem_vs.emplace_back( vertices[ elt_conn[b+v]-1 ] );
           // create acual cell
           auto c = m.create_cell( elem_vs );          
@@ -1233,7 +1234,7 @@ struct burton_io_exodus_t<3> :
     auto region_cells = m.regions();
 
     // loop over element blocks
-    for ( auto iblk=0; iblk<num_elem_blk; iblk++ ) {
+    for ( int iblk=0; iblk<num_elem_blk; iblk++ ) {
 
       // set the block header
       auto elem_blk_id = iblk+1;

@@ -28,6 +28,8 @@ public:
  
   //! \brief the mesh index type
   using size_t   = typename mesh_t::size_t;
+  //! \brief the counter type
+  using counter_t= typename mesh_t::counter_t;
  //! \brief the mesh float type
   using real_t   = typename mesh_t::real_t;
   //! \brief the mesh int type

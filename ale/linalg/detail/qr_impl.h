@@ -32,11 +32,12 @@ template<
   template <typename, std::ptrdiff_t...> class MatrixViewType,
   typename T, 
   typename I,
+  typename J,
   std::ptrdiff_t...MatArgs
 >
 auto get_next_col( const MatrixViewType<T, MatArgs...>&A, 
                    I row_pos,
-                   I* p ) 
+                   J* p ) 
 {
   
   // get the size and coutner types
@@ -81,6 +82,7 @@ auto get_next_col( const MatrixViewType<T, MatArgs...>&A,
 ///
 /// \tparam T  The value type.
 /// \tparam I  The index type.
+/// \tparam J  The index type.
 /// \tparam MatrixViewType  The type of the matrix view.
 /// \tparam MatArgs  The deduced arguments of the matrix view.
 ///////////////////////////////////////////////////////////////////
@@ -88,10 +90,11 @@ template<
   template <typename, std::ptrdiff_t...> class MatrixViewType,
   typename T, 
   typename I,
+  typename J,
   std::ptrdiff_t...MatArgs
 >
 void householder( const MatrixViewType<T, MatArgs...> &A,
-                  I row_pos, I col_pos, 
+                  I row_pos, J col_pos, 
                   T * result)
 {
   // get the size and coutner types
@@ -140,6 +143,7 @@ void householder( const MatrixViewType<T, MatArgs...> &A,
 ///
 /// \tparam T  The value type.
 /// \tparam I  The index type.
+/// \tparam J  The index array type.
 /// \tparam MatrixViewType  The type of the matrix view.
 /// \tparam VectorViewType  The type of the vector view.
 /// \tparam MatArgs,VecArgs  The deduced arguments of the matrix 
@@ -150,13 +154,14 @@ template<
   template <typename, std::ptrdiff_t...> class VectorViewType,
   typename T, 
   typename I,
+  typename J,
   std::ptrdiff_t...MatArgs,
   std::ptrdiff_t...VecArgs
 >
 void apply_householder( const MatrixViewType<T, MatArgs...> & A,
                         const VectorViewType<T, VecArgs...> & B, 
                         T * house, 
-                        I row_pos, I *p )
+                        I row_pos, J *p )
 {
     
   // get the size and coutner types

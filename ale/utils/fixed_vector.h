@@ -12,6 +12,7 @@
 
 // user includes
 #include "type_traits.h"
+#include "template_helpers.h"
 
 // system includes
 #include <algorithm>
@@ -339,7 +340,7 @@ public:
   void resize( size_type count, const value_type& value )
   {
     assert( count <= capacity() );
-    for ( size_type i=length_; i<count; i++ )
+    for ( utils::select_counter_t<N> i=length_; i<count; i++ )
       data_[i] = value;
     length_ = count;
   }

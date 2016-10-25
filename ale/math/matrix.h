@@ -40,8 +40,9 @@ template <
   typename T, std::size_t D,
   template<typename, std::size_t> class C
 >
-auto outer_product(const C<T, D> &a, const C<T, D> &b)
-{
+auto outer_product(
+  const C<T, D> &a, const C<T, D> &b
+) {
   using counter_t = utils::select_counter_t< D >;
 
   matrix<T,D,D> tmp;
@@ -57,6 +58,39 @@ auto outer_product(const C<T, D> &a, const C<T, D> &b)
 
   return tmp;
 }
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the outer product of two arrays.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \param[in] fact  A multiplying factor
+//! \return The result of the operation is a matrix of dimension `D`.
+//! \remark This version modifies a matrix in place.
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename T, 
+  typename U,
+  std::size_t D,
+  template<typename, std::size_t> class C
+>
+void outer_product(
+  const C<T, D> &a, const C<T, D> &b, matrix<T,D,D> &c, const U & fact
+) {
+  using counter_t = utils::select_counter_t< D >;
+  
+  // the result is symmetric, so use the iterator to make sure we are always
+  // looping in favorable order
+  
+  // this order does not matter
+  for ( counter_t i = 0; i<D; i++ )
+    for ( counter_t j = 0; j<D; j++ )
+      c[ i*D + j ] += fact * a[i] * b[j];
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Compute the cofactor of a square matrix

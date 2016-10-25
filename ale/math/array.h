@@ -309,13 +309,6 @@ public:
   // use std::move
   // http://stackoverflow.com/questions/11726171/numeric-vector-operator-overload-rvalue-reference-parameter
 
-  //!\brief  assignment with no type conversion
-  auto & operator= (const array<T,N>& rhs) {
-    if ( this != &rhs )
-      for ( size_type i=0; i<N; i++ ) elems_[i] = rhs.elems_[i];    
-    return *this;
-  }
-
   //!\brief  assignment with type conversion
   template <typename T2>
   auto & operator= (const array<T2,N>& rhs) {
@@ -432,7 +425,7 @@ public:
 template<typename T, std::size_t N>
 bool operator==(const array<T,N>& lhs, const array<T,N>& rhs)
 {
-  for ( auto i=0; i<N; i++ )
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ )
     if ( lhs[i] != rhs[i] ) 
       return false;
   return true;
@@ -441,7 +434,7 @@ bool operator==(const array<T,N>& lhs, const array<T,N>& rhs)
 template<typename T, typename U, std::size_t N>
 bool operator==(const array<T,N>& lhs, const U& rhs)
 {
-  for ( auto i=0; i<N; i++ )
+  for ( typename array<T,N>::counter_type i=0; i<N; i++ )
     if ( lhs[i] != rhs ) 
       return false;
   return true;
@@ -672,6 +665,7 @@ auto & operator<<(std::ostream& os, const array<T,N>& a)
   os << " )";
   return os;
 }
+
 
 } // namespace
 } // namespace

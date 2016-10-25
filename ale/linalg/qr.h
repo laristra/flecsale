@@ -50,8 +50,9 @@ void qr (
   static_assert( A.rank() == 2, "System matrix must have rank 2" );
   static_assert( B.rank() == 1, "Right-hand-side vector must have rank 1" );
 
-  // get the size type
-  using size_type = typename MatrixViewType<T,MatArgs...>::size_type;
+  // get the size and coutner types
+  using counter_type = typename MatrixViewType<T, MatArgs...>::counter_type;
+  using size_type = typename MatrixViewType<T, MatArgs...>::size_type;
 
   // the dimensions
   auto rows = A.template extent<0>();
@@ -73,7 +74,7 @@ void qr (
   std::iota( jpvt.begin(), jpvt.end(), static_cast<size_type>(0) );
   
   // Apply rotators to make R and Q'*b 
-  for(size_type i = 0; i < cols; i++) {
+  for(counter_type i = 0; i < cols; i++) {
 
     // work[0:cols)   -> col_norms
     auto max_loc = detail::get_next_col(A, i, jpvt.data());
