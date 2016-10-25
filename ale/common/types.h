@@ -47,6 +47,9 @@ using integer_t = int32_t;
 //! a size type
 using std::size_t;
 
+//! a counter type
+using counter_t = long long;
+
 //! the test tolerance 
 static constexpr real_t test_tolerance = TEST_TOLERANCE;
 

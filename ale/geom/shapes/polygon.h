@@ -410,9 +410,8 @@ private:
    
     auto tmp_vol = triangle<3>::area( v1, v2, vm );
     auto tmp_cx  = triangle<3>::centroid( v1, v2, vm );
-    tmp_cx *= tmp_vol;
     vol += tmp_vol;
-    cx  += tmp_cx;
+    for ( int d=0; d<3; ++d ) cx[d] += tmp_vol * tmp_cx[d];
     centroid_( vol, 
                cx, 
                vm,
@@ -551,9 +550,8 @@ public:
     for ( auto pn = first; pn!=last; ++pn ) {
       auto tmp_a  = triangle<3>::area( (*po), (*pn), xm );
       auto tmp_cx = triangle<3>::centroid( (*po), (*pn), xm );
-      tmp_cx *= tmp_a;
       a += tmp_a;
-      cx += tmp_cx;
+      for ( int d=0; d<3; ++d ) cx[d] += tmp_a * tmp_cx[d];
       po = pn;
     }
     cx /= a;

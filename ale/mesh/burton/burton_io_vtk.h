@@ -196,8 +196,8 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     for (auto v : m.vertices()) {
       const auto & coord = v->coordinates();
       auto base = 3*v.id();
-      for ( auto i=0; i<num_dims; i++ ) vals[ base + i ] = coord[i];
-      for ( auto i=num_dims; i<3; i++ ) vals[ base + i ] = 0.0;
+      for ( int i=0; i<num_dims; i++ ) vals[ base + i ] = coord[i];
+      for ( int i=num_dims; i<3; i++ ) vals[ base + i ] = 0.0;
     } // for
 
     // write the coordinates to the file
@@ -259,7 +259,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
       auto label = validate_string( vf.label() );
       for(auto v: m.vertices()) {
         const auto & vec = vf[v];
-        for ( auto i=0; i<num_dims; i++ ) 
+        for ( int i=0; i<num_dims; i++ ) 
           vals[ num_dims*v.id() + i ] = vec[i];
       } // for
       status = writer.write_field( label.c_str(), vals, num_dims );
@@ -304,7 +304,7 @@ struct burton_io_vtk_t : public flecsi::io_base_t<burton_mesh_2d_t> {
       auto label = validate_string( vf.label() );
       for(auto c: m.cells()) {
         const auto & vec = vf[c];
-        for ( auto i=0; i<num_dims; i++ ) 
+        for ( int i=0; i<num_dims; i++ ) 
           vals[ num_dims*c.id() + i ] = vec[i];
       } // for
       status = writer.write_field( label.c_str(), vals, num_dims );

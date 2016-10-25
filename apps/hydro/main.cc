@@ -13,12 +13,17 @@
 
 // user includes
 #include <ale/mesh/factory.h>
+#include <ale/utils/time_utils.h>
 
 // system includes
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <utility>
+
+#ifdef _GNU_SOURCE
+#  include <fenv.h>
+#endif
 
 // everything is in the hydro namespace
 using namespace apps::hydro;
@@ -29,11 +34,17 @@ using namespace apps::hydro;
 //#define SHOCK_BOX_2D
 #define SHOCK_BOX_3D
 
+
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
 ///////////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv) 
 {
+
+  // enable exceptions
+#if defined(_GNU_SOURCE) && !defined(NDEBUG)
+  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+#endif
 
   //===========================================================================
   // X-direction SOD Inputs
@@ -62,6 +73,7 @@ int main(int argc, char** argv)
   // the CFL and final solution time
   constexpr real_t CFL = 1.0;
   constexpr real_t final_time = 0.2;
+  constexpr size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -110,6 +122,7 @@ int main(int argc, char** argv)
   // the CFL and final solution time
   constexpr real_t CFL = 1.0;
   constexpr real_t final_time = 0.2;
+  constexpr size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -157,6 +170,7 @@ int main(int argc, char** argv)
   // the CFL and final solution time
   constexpr real_t CFL = 0.5;
   constexpr real_t final_time = 0.2;
+  constexpr size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -203,8 +217,9 @@ int main(int argc, char** argv)
   constexpr real_t length_z = 1.0;
   
   // the CFL and final solution time
-  constexpr real_t CFL = 0.5;
+  constexpr real_t CFL = 1/3.;
   constexpr real_t final_time = 0.2;
+  constexpr size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -240,11 +255,16 @@ int main(int argc, char** argv)
 
   // this is the mesh object
   mesh.is_valid();
-  cout << mesh;
   
+  cout << mesh;
+
   //===========================================================================
   // Field Creation
   //===========================================================================
+
+  // start the timer
+  auto tstart = utils::get_wall_time();
+
 
   // type aliases
   using eqns_t = eqns_t<mesh_t::num_dimensions>;
@@ -291,7 +311,8 @@ int main(int argc, char** argv)
 
 
   // now output the solution
-  apps::hydro::output(mesh, prefix, postfix, 1);
+  if (output_freq > 0)
+    apps::hydro::output(mesh, prefix, postfix, 1);
 
   //===========================================================================
   // Residual Evaluation
@@ -301,7 +322,11 @@ int main(int argc, char** argv)
   auto soln_time = mesh.time();
   auto time_cnt  = mesh.time_step_counter();
 
-  do {   
+  // a counter for this session
+  size_t num_steps = 0; 
+
+  for ( ; (num_steps < max_steps && soln_time < final_time); ++num_steps ) 
+  {   
 
     // compute the time step
     apps::hydro::evaluate_time_step<eqns_t>( mesh );
@@ -312,7 +337,7 @@ int main(int argc, char** argv)
 
     cout << "step =  " << std::setw(4) << time_cnt+1
          << std::setprecision(2)
-         << ", time = " << std::scientific << soln_time
+         << ", time = " << std::scientific << soln_time + (*time_step)
          << ", dt = " << std::scientific << *time_step
          << std::endl;
 
@@ -332,15 +357,24 @@ int main(int argc, char** argv)
     // now output the solution
     apps::hydro::output(mesh, prefix, postfix, output_freq);
 
-  } while ( soln_time < final_time );
-
+  }
 
   //===========================================================================
   // Post-process
   //===========================================================================
     
   // now output the solution
-  apps::hydro::output(mesh, prefix, postfix, 1);
+  if ( (output_freq > 0) && (time_cnt%output_freq != 0) )
+    apps::hydro::output(mesh, prefix, postfix, 1);
+
+  cout << "Final solution time is " 
+       << std::scientific << std::setprecision(2) << soln_time
+       << " after " << num_steps << " steps." << std::endl;
+
+  
+  auto tdelta = utils::get_wall_time() - tstart;
+  std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
+            << tdelta << "s." << std::endl;
 
   // success
   return 0;

@@ -13,6 +13,7 @@
 
 // user includes
 #include <ale/mesh/factory.h>
+#include <ale/utils/time_utils.h>
 
 // system includes
 #include <iomanip>
@@ -349,7 +350,7 @@ int main(int argc, char** argv)
   std::string postfix = "dat";
 
   // output frequency
-  constexpr size_t output_freq = 10;
+  constexpr size_t output_freq = 10000;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 20;
@@ -465,6 +466,9 @@ int main(int argc, char** argv)
   // Field Creation
   //===========================================================================
 
+  // start the timer
+  auto tstart = utils::get_wall_time();
+
   // type aliases
   using matrix_t = matrix_t< mesh_t::num_dimensions >;
   using flux_data_t = flux_data_t< mesh_t::num_dimensions >;
@@ -472,7 +476,6 @@ int main(int argc, char** argv)
   // create some field data.  Fields are registered as struct of arrays.
   // this allows us to access the data in different patterns.
   register_state(mesh, "cell_mass",     cells,   real_t, persistent);
-  register_state(mesh, "cell_volume",   cells,   real_t, persistent);
   register_state(mesh, "cell_pressure", cells,   real_t, persistent);
   register_state(mesh, "cell_velocity", cells, vector_t, persistent);
 
@@ -485,11 +488,9 @@ int main(int argc, char** argv)
   register_state(mesh, "cell_velocity_0", cells, vector_t, temporary);
   register_state(mesh, "cell_internal_energy_0", cells, real_t, temporary);
 
-  register_state(mesh, "node_velocity",    vertices, vector_t, persistent);
-  register_state(mesh, "node_coordinates", vertices, vector_t, temporary);
-  register_state(mesh, "node_matrix", vertices, matrix_t, temporary);
-  register_state(mesh, "node_rhs",    vertices, vector_t, temporary);
-
+  register_state(mesh, "node_coordinates_0", vertices, vector_t, temporary);
+  register_state(mesh, "node_velocity", vertices, vector_t, persistent);
+  
   register_state(mesh, "corner_matrix", corners, matrix_t, temporary);
   register_state(mesh, "corner_normal", corners, vector_t, temporary);
 
@@ -520,7 +521,8 @@ int main(int argc, char** argv)
 
 
   // now output the solution
-  apps::hydro::output(mesh, prefix, postfix, 1);
+  if ( output_freq > 0 )
+    apps::hydro::output(mesh, prefix, postfix, 1);
   
   //===========================================================================
   // Residual Evaluation
@@ -531,11 +533,11 @@ int main(int argc, char** argv)
   auto soln_time = mesh.time();
   auto time_cnt  = mesh.time_step_counter();
 
-  for ( 
-    size_t steps = 0; 
-    (steps < max_steps && soln_time < final_time); 
-    steps++ 
-  ) {   
+  // a counter for this session
+  size_t num_steps = 0; 
+
+  for ( ; (num_steps < max_steps && soln_time < final_time); ++num_steps ) 
+  {   
 
     //--------------------------------------------------------------------------
     // Begin Time step
@@ -566,7 +568,8 @@ int main(int argc, char** argv)
     //--------------------------------------------------------------------------
 
     // compute the time step
-    apps::hydro::evaluate_time_step( mesh );
+    std::string limit_string;
+    apps::hydro::evaluate_time_step( mesh, limit_string );
     
     // access the computed time step and make sure its not too large
     auto time_step = access_global_state( mesh, "time_step", real_t );   
@@ -574,10 +577,11 @@ int main(int argc, char** argv)
 
     auto ss = cout.precision();
     cout.setf( std::ios::scientific );
-    cout.precision(2);
-    cout << "step =  " << std::setw(4) << time_cnt+1
-         << ", time = " << soln_time
+    cout.precision(6);
+    cout << "step = " << time_cnt+1
+         << ", time = " << soln_time + (*time_step)
          << ", dt = " << *time_step
+         << ", limit = " << limit_string
          << std::endl;
     cout.unsetf( std::ios::scientific );
     cout.precision(ss);
@@ -649,7 +653,17 @@ int main(int argc, char** argv)
   //===========================================================================
     
   // now output the solution
-  apps::hydro::output(mesh, prefix, postfix, 1);
+  if ( (output_freq > 0) && (time_cnt%output_freq != 0) )
+    apps::hydro::output(mesh, prefix, postfix, 1);
+
+  cout << "Final solution time is " 
+       << std::scientific << std::setprecision(6) << soln_time
+       << " after " << num_steps << " steps." << std::endl;
+
+  
+  auto tdelta = utils::get_wall_time() - tstart;
+  std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
+            << tdelta << "s." << std::endl;
   
   // success
   return 0;

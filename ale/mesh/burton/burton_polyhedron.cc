@@ -19,7 +19,6 @@ namespace mesh {
 burton_polyhedron_t::point_t burton_polyhedron_t::centroid() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   auto fs = msh->template entities<  face_t::dimension,   face_t::domain>(this);
   geom::shapes::polyhedron<point_t> poly;     
   for ( auto f : fs ) {
@@ -42,7 +41,6 @@ burton_polyhedron_t::point_t burton_polyhedron_t::midpoint() const
 burton_polyhedron_t::real_t burton_polyhedron_t::volume() const
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
   auto fs = msh->template entities<  face_t::dimension,   face_t::domain>(this);
   geom::shapes::polyhedron<point_t> poly;     
   for ( auto f : fs ) 

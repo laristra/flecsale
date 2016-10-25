@@ -318,6 +318,7 @@ mesh_t transfer_mesh( const Tessellator & tess )
   using std::swap;
   using std::pair;
 
+  using counter_t= typename mesh_t::counter_t;
   using size_t   = typename mesh_t::size_t;
   using real_t   = typename mesh_t::real_t;
   using point_t  = typename mesh_t::point_t;
@@ -357,12 +358,12 @@ mesh_t transfer_mesh( const Tessellator & tess )
   points->GetPoint(0, max_point.data() );
 
   // now copy the points
-  for( size_t p=0; p<num_points; p++ ) {
+  for( counter_t p=0; p<num_points; ++p ) {
     // get the point
     auto x = points->GetPoint(p);
     // copy to new array
     point_t point;
-    for ( auto dim = 0; dim < num_dims; dim++ ) {
+    for ( int dim = 0; dim < num_dims; dim++ ) {
       point[dim] = x[dim];
       min_point[dim] = std::min( x[dim], min_point[dim] );
       max_point[dim] = std::max( x[dim], max_point[dim] );
@@ -396,7 +397,7 @@ mesh_t transfer_mesh( const Tessellator & tess )
   zone_points.reserve( num_dims*num_dims );
 
   // now create the cells
-  for( size_t z=0; z<num_zones; z++ ) {
+  for( counter_t z=0; z<num_zones; z++ ) {
     // clear the points array
     zone_points.clear();
     // get the number of cells

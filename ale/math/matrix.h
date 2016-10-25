@@ -40,8 +40,11 @@ template <
   typename T, std::size_t D,
   template<typename, std::size_t> class C
 >
-auto outer_product(const C<T, D> &a, const C<T, D> &b)
-{
+auto outer_product(
+  const C<T, D> &a, const C<T, D> &b
+) {
+  using counter_t = utils::select_counter_t< D >;
+
   matrix<T,D,D> tmp;
   
   // the result is symmetric, so use the iterator to make sure we are always
@@ -49,12 +52,45 @@ auto outer_product(const C<T, D> &a, const C<T, D> &b)
   auto it = tmp.begin();
   
   // this order does not matter
-  for ( std::size_t i = 0; i<D; i++ )
-    for ( std::size_t j = 0; j<D; j++ )
+  for ( counter_t i = 0; i<D; i++ )
+    for ( counter_t j = 0; j<D; j++ )
       *it++ = a[i] * b[j];
 
   return tmp;
 }
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Compute the outer product of two arrays.
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \param[in] fact  A multiplying factor
+//! \return The result of the operation is a matrix of dimension `D`.
+//! \remark This version modifies a matrix in place.
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  typename T, 
+  typename U,
+  std::size_t D,
+  template<typename, std::size_t> class C
+>
+void outer_product(
+  const C<T, D> &a, const C<T, D> &b, matrix<T,D,D> &c, const U & fact
+) {
+  using counter_t = utils::select_counter_t< D >;
+  
+  // the result is symmetric, so use the iterator to make sure we are always
+  // looping in favorable order
+  
+  // this order does not matter
+  for ( counter_t i = 0; i<D; i++ )
+    for ( counter_t j = 0; j<D; j++ )
+      c[ i*D + j ] += fact * a[i] * b[j];
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Compute the cofactor of a square matrix
@@ -68,15 +104,18 @@ auto outer_product(const C<T, D> &a, const C<T, D> &b)
 template < typename T, std::size_t N >
 auto cofactor( const matrix<T, N, N> & mat, std::size_t row, std::size_t col )
 {
+
+  using counter_t = utils::select_counter_t< N >;
+
   matrix<T,N-1,N-1> tmp;
 
   // indicate which col and row is being copied to dest
   size_t col_cnt=0, row_cnt=0;
  
-  for (size_t i = 0; i < N; i++ ) {
+  for (counter_t i = 0; i < N; i++ ) {
     if ( i != row ) {
       col_cnt = 0;
-      for(int j = 0; j < N; j++ ) {
+      for( counter_t j = 0; j < N; j++ ) {
         // when j is not the element
         if ( j != col ) {
           tmp(row_cnt,col_cnt) = mat(i,j);
@@ -102,10 +141,12 @@ template < typename T, std::size_t N >
 auto determinant( const matrix<T, N, N> & mat )
 {
 
+  using counter_t = utils::select_counter_t< N >;
+
   // the determinant value
   T det = 0;
  
-  for(int i = 0; i < N; i++ )
+  for(counter_t i = 0; i < N; i++ )
   {
     // get minor of element (0,i)
     auto minor = cofactor( mat, 0, i);
@@ -193,6 +234,9 @@ auto inverse( const matrix<T, 3, 3> & mat )
 template < typename T, std::size_t N >
 auto inverse( const matrix<T, N, N> & mat )
 {
+
+  using counter_t = utils::select_counter_t< N >;
+
   matrix<T,N,N> tmp;
 
   // get the determinant of a
@@ -201,8 +245,8 @@ auto inverse( const matrix<T, N, N> & mat )
   auto inv_det = 1 / det;
 
   
-  for(size_t j=0;j<N; j++) {
-    for(size_t i=0; i<N; i++) {
+  for(counter_t j=0;j<N; j++) {
+    for(counter_t i=0; i<N; i++) {
       // get the co-factor (matrix) of A(j,i)
       auto minor = cofactor(mat,j,i);
       // compute the result
@@ -232,8 +276,8 @@ template <
 >
 void ax_plus_y( const matrix<T, D1, D2> & A, const C<T,D2> & x, C<T,D1> & y )
 {
-  for ( std::size_t i = 0; i<D1; i++ ) {
-    for ( std::size_t j = 0; j<D2; j++ )
+  for ( utils::select_counter_t<D1> i = 0; i<D1; i++ ) {
+    for ( utils::select_counter_t<D2> j = 0; j<D2; j++ )
       y[i] += A(i,j) * x[j];
   }
 }
@@ -249,8 +293,8 @@ void matrix_vector(
   const T & beta,
   C<T,D1> & y )
 {
-  for ( std::size_t i = 0; i<D1; i++ ) {
-    for ( std::size_t j = 0; j<D2; j++ )
+  for ( utils::select_counter_t<D1> i = 0; i<D1; i++ ) {
+    for ( utils::select_counter_t<D2>  j = 0; j<D2; j++ )
       y[i] = alpha * A(i,j) * x[j] + beta * y[i];
   }
 }
@@ -270,9 +314,9 @@ template <
 auto operator*( const matrix<T, D1, D2> & lhs, const C<T,D2> & rhs )
 {
   C<T,D1> tmp;
-  for ( std::size_t i = 0; i<D1; i++ ) {
+  for ( utils::select_counter_t<D1> i = 0; i<D1; i++ ) {
     tmp[i] = 0;
-    for ( std::size_t j = 0; j<D2; j++ )
+    for ( utils::select_counter_t<D2> j = 0; j<D2; j++ )
       tmp[i] += lhs(i,j) * rhs[j];
   }
   return tmp;
@@ -295,10 +339,10 @@ void matrix_multiply(
   const matrix<T, D2, D3> & B,
   matrix<T, D1, D3> & C )
 {
-  for ( std::size_t i = 0; i < D1; i++ )
-    for ( std::size_t j = 0; j < D3; j++) {
+  for ( utils::select_counter_t<D1> i = 0; i < D1; i++ )
+    for ( utils::select_counter_t<D3> j = 0; j < D3; j++) {
       T sum = 0;
-      for ( std::size_t k = 0; k < D2; k++) 
+      for ( utils::select_counter_t<D2> k = 0; k < D2; k++) 
         sum += A(i,k)*B(k,j);
       C(i,j) += sum;
     }
@@ -312,10 +356,10 @@ auto matrix_multiply(
   const matrix<T, D2, D3> & B )
 {
   matrix<T, D1, D3> C(0);
-  for ( std::size_t i = 0; i < D1; i++ )
-    for ( std::size_t j = 0; j < D3; j++) {
+  for ( utils::select_counter_t<D1> i = 0; i < D1; i++ )
+    for ( utils::select_counter_t<D3> j = 0; j < D3; j++) {
       T sum = 0;
-      for ( std::size_t k = 0; k < D2; k++) 
+      for ( utils::select_counter_t<D2> k = 0; k < D2; k++) 
         sum += A(i,k)*B(k,j);
       C(i,j) += sum;
     }
@@ -362,7 +406,7 @@ auto rotation_matrix( const T & radians ) {
   // create a rotation matrix
   matrix< T, D, D > rot;
 
-  for ( auto i=0; i<D; i++ ) rot(i, i) = 1;
+  for ( utils::select_counter_t<D> i=0; i<D; i++ ) rot(i, i) = 1;
 
   rot(0, 0) = cos;
   rot(0, 1) = -sin;
@@ -387,7 +431,7 @@ auto reflection_matrix( const C<T,D> & n ) {
   // create a rotation matrix
   auto mat = outer_product( n, n );
   mat = - 2*mat;
-  for ( auto i=0; i<D; i++ ) mat(i, i) += 1;
+  for ( utils::select_counter_t<D> i=0; i<D; i++ ) mat(i, i) += 1;
 
   return mat;
 }
@@ -407,7 +451,7 @@ auto projection_matrix( const C<T,D> & n ) {
   // create a rotation matrix
   auto mat = outer_product( n, n );
   mat = - mat;
-  for ( auto i=0; i<D; i++ ) mat(i, i) += 1;
+  for ( utils::select_counter_t<D> i=0; i<D; i++ ) mat(i, i) += 1;
 
   return mat;
 }

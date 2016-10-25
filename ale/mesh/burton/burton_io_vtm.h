@@ -97,7 +97,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     // the class documentation for more information.
     auto mb = vtkSmartPointer<vtkMultiBlockDataSet>::New();
     
-    for ( size_t iblk=0; iblk<num_regions; iblk++ ) {
+    for ( int iblk=0; iblk<num_regions; iblk++ ) {
 
       // creat unstructured grid
       auto ug = vtkSmartPointer<vtkUnstructuredGrid>::New();
@@ -316,6 +316,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     using vector_t = typename mesh_t::vector_t;
     using  point_t = typename mesh_t::point_t;
     using vertex_t = typename mesh_t::vertex_t;
+    using counter_t= typename mesh_t::counter_t;
 
     constexpr auto test_tolerance = common::test_tolerance;
 
@@ -381,7 +382,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
       auto num_points_this_block = points_this_block->GetNumberOfPoints();
 
       // create points
-      for (size_t i = 0; i < num_points_this_block; ++i) {
+      for (counter_t i = 0; i < num_points_this_block; ++i) {
         vtkRealType x[3] = {0, 0, 0};
         points_this_block->GetPoint( i, x );
         point_t p = { static_cast<real_t>(x[0]), 
@@ -428,7 +429,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
     vs.reserve( num_unique_points );
 
     // create the mesh vertices
-    for (size_t i = 0; i < num_unique_points; ++i) {
+    for (counter_t i = 0; i < num_unique_points; ++i) {
       auto v = m.create_vertex( ps[i] );
       vs.emplace_back( std::move(v) );
     } // for
@@ -474,7 +475,7 @@ struct burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
         elem_vs.clear();
         elem_vs.reserve( npts );
         // loop over each local point
-        for ( size_t v=0;  v<npts; v++ ) {
+        for ( counter_t v=0;  v<npts; v++ ) {
           //--------------------------------------------------------------------
           // find the closest point
           auto it = std::find_if( vs.begin(), vs.end(),

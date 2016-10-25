@@ -94,12 +94,14 @@ public:
 
   //! \brief Get the coordinates at a vertex from the state handle.
   //! \return coordinates of vertex.
-  const point_t & coordinates() const;
+  const point_t & coordinates() const noexcept
+  { return coordinates_; }
 
   //! \brief Get the coordinates at a vertex from the state handle.
   //! \return coordinates of vertex.
   //! \remark this is the non const version
-  point_t & coordinates();
+  point_t & coordinates() noexcept
+  { return coordinates_; }
 
   //! return true if this is on a boundary
   bool is_boundary() const;
@@ -126,6 +128,10 @@ private:
   
   //! a reference to the mesh topology
   const mesh_topology_base_t * mesh_ = nullptr;
+
+  //! the coordinates of the vertex
+  point_t coordinates_;
+
 
 };
 
@@ -196,12 +202,14 @@ public:
 
   //! \brief Get the coordinates at a vertex from the state handle.
   //! \return coordinates of vertex.
-  const point_t & coordinates() const;
+  const point_t & coordinates() const noexcept
+  { return coordinates_; }
 
   //! \brief Get the coordinates at a vertex from the state handle.
   //! \return coordinates of vertex.
   //! \remark this is the non const version
-  point_t & coordinates();
+  point_t & coordinates() noexcept
+  { return coordinates_; }
 
   //! return true if this is on a boundary
   bool is_boundary() const;
@@ -227,6 +235,9 @@ private:
   
   //! a reference to the mesh topology
   const mesh_topology_base_t * mesh_ = nullptr;
+  
+  //! the coordinates of the vertex
+  point_t coordinates_;
 
 }; // class burton_vertex_t
 

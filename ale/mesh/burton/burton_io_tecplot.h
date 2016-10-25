@@ -46,6 +46,7 @@ public:
 
   // other useful types
   using    size_t = typename mesh_t::size_t;
+  using counter_t = typename mesh_t::counter_t;
   using integer_t = typename mesh_t::integer_t;
   using    real_t = typename mesh_t::real_t;
   using   point_t = typename mesh_t::point_t;
@@ -98,7 +99,7 @@ public:
       assert( sum == m.cells().size() );
 
       // create a region map
-      for ( size_t i=0; i<num_zones; i++ )
+      for ( counter_t i=0; i<num_zones; i++ )
         region_map[ region_list[i] ] = i;
     }
       
@@ -434,7 +435,7 @@ struct burton_io_tecplot_ascii_t :
     // Loop over Regions
     //--------------------------------------------------------------------------
   
-    for ( size_t izn=0; izn<num_zones; izn++ ) {
+    for ( int izn=0; izn<num_zones; izn++ ) {
 
       // get the elements in this block
       const auto & elem_this_zone = region_cells[izn];
@@ -812,7 +813,7 @@ struct burton_io_tecplot_binary_t :
     // Loop over Regions
     //--------------------------------------------------------------------------
   
-    for ( size_t izn=0; izn<num_zones; izn++ ) {
+    for ( counter_t izn=0; izn<num_zones; izn++ ) {
 
       // get the elements in this block
       const auto & elem_this_zone = region_cells[izn];

@@ -16,6 +16,7 @@ set(utils_HEADERS
   static_for.h
   tasks.h
   template_helpers.h detail/template_helpers_impl.h
+  time_utils.h
   tuple_for_each.h   detail/tuple_for_each_impl.h
   tuple_visit.h      detail/tuple_visit_impl.h
   tuple_zip.h        detail/tuple_zip_impl.h

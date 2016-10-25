@@ -11,9 +11,11 @@
 
 // user includes 
 #include "detail/template_helpers_impl.h"
+#include "ale/common/types.h"
 
 // system includes
 #include <functional>
+#include <limits>
 
 namespace ale {
 namespace utils {
@@ -25,6 +27,37 @@ namespace utils {
 template<typename... Args>
 constexpr auto multiply(Args... args) 
 { return detail::multiply(args...); }
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+//!  \brief select the appropriate counter type at compile time.
+//!
+//!  \tparam N The maximum dimension to be indexed.
+////////////////////////////////////////////////////////////////////////////////
+template< std::size_t N, bool >
+struct select_counter;
+
+//! \copydoc select_counter
+//! \remark this version gets instantiated for 32bit indexing
+template< std::size_t N >
+struct select_counter<N,true> 
+{
+  using type = int;
+};
+
+//! \copydoc select_counter
+//! \remark this version gets instantiated for large numbers
+template< std::size_t N >
+struct select_counter<N,false>
+{
+  using type = common::counter_t;
+};
+
+//! \brief a helper for selecting the appropriate counter
+template< std::size_t N >
+using select_counter_t = 
+  typename select_counter<N, (N < std::numeric_limits<int>::max()) >::type;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief statically fill an array with a constant value

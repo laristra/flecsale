@@ -16,7 +16,6 @@
 #include "ale/mesh/factory.h"
 
 // some general using statements
-using std::size_t;
 using std::vector;
 
 
@@ -33,6 +32,10 @@ public:
   //! \brief the mesh type
   using mesh_t = mesh_3d_t;
 
+  //! \brief the size type
+  using size_t= typename mesh_t::size_t;
+  //! \brief the counter type
+  using counter_t= typename mesh_t::counter_t;
   //! \brief the mesh float type
   using real_t   = typename mesh_t::real_t;
   //! \brief the mesh int type

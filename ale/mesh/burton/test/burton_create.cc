@@ -33,17 +33,17 @@ TEST_F( burton_create, minimal ) {
   // create vertices
   vector<vertex_t*> vs( num_vert );
 
-  for( size_t k = 0; k < num_vert_z; ++k )
-    for( size_t j = 0; j < num_vert_y; ++j )
-      for( size_t i = 0; i < num_vert_x; ++i )
+  for( counter_t k = 0; k < num_vert_z; ++k )
+    for( counter_t j = 0; j < num_vert_y; ++j )
+      for( counter_t i = 0; i < num_vert_x; ++i )
       {
         auto v = mesh.create_vertex({ i, j, k });
         vs[ vert_index(i,j,k) ] =  v;
       }
   // create the cell
-  for( size_t k = 0; k < num_cells_z; ++k )
-    for( size_t j = 0; j < num_cells_y; ++j )
-      for( size_t i = 0; i < num_cells_x; ++i )
+  for( counter_t k = 0; k < num_cells_z; ++k )
+    for( counter_t j = 0; j < num_cells_y; ++j )
+      for( counter_t i = 0; i < num_cells_x; ++i )
         auto c = mesh.create_cell( 
           {
             vs[ vert_index( i  , j  , k  ) ],
@@ -80,18 +80,18 @@ TEST_F( burton_create, points ) {
   // create vertices
   vector<vertex_t*> vs( num_vert );
 
-  for( size_t k = 0; k < num_vert_z; ++k )
-    for( size_t j = 0; j < num_vert_y; ++j )
-      for( size_t i = 0; i < num_vert_x; ++i )
+  for( counter_t k = 0; k < num_vert_z; ++k )
+    for( counter_t j = 0; j < num_vert_y; ++j )
+      for( counter_t i = 0; i < num_vert_x; ++i )
       {
         auto v = mesh.create_vertex({ i, j, k });
         vs[ vert_index(i,j,k) ] =  v;
       }
 
   // create faces
-  for( size_t k = 0; k < num_vert_z; ++k ) 
-    for( size_t j = 0; j < num_vert_y; ++j ) 
-      for( size_t i = 0; i < num_vert_x; ++i ) {
+  for( counter_t k = 0; k < num_vert_z; ++k ) 
+    for( counter_t j = 0; j < num_vert_y; ++j ) 
+      for( counter_t i = 0; i < num_vert_x; ++i ) {
 
         // x plane
         if ( j < num_cells_y && k < num_cells_z )
@@ -126,9 +126,9 @@ TEST_F( burton_create, points ) {
       }
     
   // create the cell
-  for( size_t k = 0; k < num_cells_z; ++k )
-    for( size_t j = 0; j < num_cells_y; ++j )
-      for( size_t i = 0; i < num_cells_x; ++i )
+  for( counter_t k = 0; k < num_cells_z; ++k )
+    for( counter_t j = 0; j < num_cells_y; ++j )
+      for( counter_t i = 0; i < num_cells_x; ++i )
         auto c = mesh.create_cell( 
           {
             vs[ vert_index( i  , j  , k  ) ],
@@ -166,9 +166,9 @@ TEST_F( burton_create, faces ) {
   // create vertices
   vector<vertex_t*> vs( num_vert );
 
-  for( size_t k = 0; k < num_vert_z; ++k )
-    for( size_t j = 0; j < num_vert_y; ++j )
-      for( size_t i = 0; i < num_vert_x; ++i )
+  for( counter_t k = 0; k < num_vert_z; ++k )
+    for( counter_t j = 0; j < num_vert_y; ++j )
+      for( counter_t i = 0; i < num_vert_x; ++i )
       {
         auto v = mesh.create_vertex({ i, j, k });
         vs[ vert_index(i,j,k) ] =  v;
@@ -180,9 +180,9 @@ TEST_F( burton_create, faces ) {
   vector<face_t*> fs_z( num_face_z, nullptr );
 
   // create x-direction faces
-  for( size_t k = 0; k < num_cells_z; ++k )
-    for( size_t j = 0; j < num_cells_y; ++j ) 
-      for( size_t i = 0; i < num_vert_x; ++i ) {
+  for( counter_t k = 0; k < num_cells_z; ++k )
+    for( counter_t j = 0; j < num_cells_y; ++j ) 
+      for( counter_t i = 0; i < num_vert_x; ++i ) {
 
         auto f = mesh.create_face( 
             {
@@ -196,9 +196,9 @@ TEST_F( burton_create, faces ) {
       }
 
   // create y-direction faces
-  for( size_t k = 0; k < num_cells_z; ++k )
-    for( size_t j = 0; j < num_vert_y; ++j ) 
-      for( size_t i = 0; i < num_cells_x; ++i ) {
+  for( counter_t k = 0; k < num_cells_z; ++k )
+    for( counter_t j = 0; j < num_vert_y; ++j ) 
+      for( counter_t i = 0; i < num_cells_x; ++i ) {
 
         auto f = mesh.create_face( 
             {
@@ -212,9 +212,9 @@ TEST_F( burton_create, faces ) {
       }
 
   // create z-direction faces
-  for( size_t k = 0; k < num_vert_z; ++k )
-    for( size_t j = 0; j < num_cells_y; ++j ) 
-      for( size_t i = 0; i < num_cells_x; ++i ) {
+  for( counter_t k = 0; k < num_vert_z; ++k )
+    for( counter_t j = 0; j < num_cells_y; ++j ) 
+      for( counter_t i = 0; i < num_cells_x; ++i ) {
 
         auto f = mesh.create_face( 
             {
@@ -228,9 +228,9 @@ TEST_F( burton_create, faces ) {
       }
 
   // create the cells
-  for( size_t k = 0; k < num_cells_z; ++k )
-    for( size_t j = 0; j < num_cells_y; ++j )
-      for( size_t i = 0; i < num_cells_x; ++i ) 
+  for( counter_t k = 0; k < num_cells_z; ++k )
+    for( counter_t j = 0; j < num_cells_y; ++j )
+      for( counter_t i = 0; i < num_cells_x; ++i ) 
 
         auto c = mesh.create_cell( 
           {

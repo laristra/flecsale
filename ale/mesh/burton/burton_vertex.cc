@@ -17,48 +17,6 @@ using burton_3d_vertex_t = burton_vertex_t<3>;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Get the coordinates at a vertex from the state handle.
-////////////////////////////////////////////////////////////////////////////////
-const burton_2d_vertex_t::point_t & burton_2d_vertex_t::coordinates() const
-{
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
-  const auto c = data_t::instance().template dense_accessor<point_t, flecsi_internal>(
-    "coordinates", mesh->runtime_id() );
-  return c[mesh_entity_base_t<num_domains>::template id<0>()];
-} // coordinates
-
-const burton_3d_vertex_t::point_t & burton_3d_vertex_t::coordinates() const
-{
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  const auto c = data_t::instance().template dense_accessor<point_t, flecsi_internal>(
-    "coordinates", mesh->runtime_id() );
-  return c[mesh_entity_base_t<num_domains>::template id<0>()];
-} // coordinates
-
-////////////////////////////////////////////////////////////////////////////////
-// Get the coordinates at a vertex from the state handle.
-////////////////////////////////////////////////////////////////////////////////
-burton_2d_vertex_t::point_t & burton_2d_vertex_t::coordinates()
-{
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
-  auto c = data_t::instance().template dense_accessor<point_t, flecsi_internal>(
-    "coordinates", mesh->runtime_id() );
-  return c[mesh_entity_base_t<num_domains>::template id<0>()];
-} // coordinates
-
-burton_3d_vertex_t::point_t & burton_3d_vertex_t::coordinates()
-{
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto c = data_t::instance().template dense_accessor<point_t, flecsi_internal>(
-    "coordinates", mesh->runtime_id() );
-  return c[mesh_entity_base_t<num_domains>::template id<0>()];
-} // coordinates
-
-////////////////////////////////////////////////////////////////////////////////
 // is this a boundary
 ////////////////////////////////////////////////////////////////////////////////
 bool burton_2d_vertex_t::is_boundary() const

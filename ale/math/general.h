@@ -14,6 +14,7 @@
 
 #include "ale/std/type_traits.h"
 #include "ale/utils/errors.h"
+#include "ale/utils/template_helpers.h"
 #include "ale/utils/type_traits.h"
 
 // system includes
@@ -169,13 +170,17 @@ auto dot_product( InputIt1 first1, InputIt1 last1, InputIt2 first2 )
 
 template< 
   typename T, std::size_t... N,
-  template< typename, std::size_t... > class A
+  template< typename, std::size_t... > class A,
+  std::size_t Len = utils::multiply( N... )
  >
 T dot_product(const A<T, N...> &a, const A<T, N...> &b) 
 {
-  auto dot = dot_product( a.begin(), a.end(), b.begin() );
+  T dot = 0;
+  for( utils::select_counter_t<Len> i = 0; i<Len; ++i )
+    dot += a[i]*b[i];
   return dot;
 }
+
 
 template< template<typename...> class C, typename T, typename...Args >
 T dot_product(const C<T,Args...> &a, const C<T,Args...> &b) 
@@ -204,11 +209,15 @@ T magnitude(const C<T,Args...> &a)
 
 template< 
   typename T, std::size_t... N,
-  template< typename, std::size_t... > class A
+  template< typename, std::size_t... > class A,
+  std::size_t Len = utils::multiply( N... )
  >
 T magnitude(const A<T, N...> &a) 
 {
-  return std::sqrt( dot_product(a,a) );
+  T abs = 0;
+  for( utils::select_counter_t<Len> i = 0; i<Len; ++i )
+    abs += a[i]*a[i];
+  return std::sqrt(abs);
 }
 
 template< 
@@ -217,15 +226,39 @@ template<
  >
 T abs(const A<T, N...> &a) 
 {
-  return std::sqrt( dot_product(a,a) );
+  return magnitude(a);
 }
 
 template< template<typename...> class C, typename T, typename...Args >
 T abs(const C<T,Args...> &a) 
 {
-  return std::sqrt( dot_product(a,a) );
+  return magnitude(a);
 }
 //! @}
+
+//! \brief Compute the magnitude of the difference between two vectors
+//! \tparam T  The array base value type.
+//! \tparam D  The array dimension.
+//! \param[in] a  The first vector
+//! \param[in] b  The other vector
+//! \return The result of the operation
+template< 
+  typename T1, 
+  typename T2, 
+  std::size_t... N,
+  template< typename, std::size_t... > class A,
+  std::size_t Len = utils::multiply( N... )
+ >
+auto delta_magnitude(const A<T1, N...> &a, const A<T2, N...> &b) 
+{
+  decltype(a[0]*b[0]) abs = 0;
+  for( utils::select_counter_t<Len> i = 0; i<Len; ++i ) {
+    auto del = a[i] - b[i];
+    abs += del*del;
+  }
+  return std::sqrt(abs);
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Elementwise min and max
@@ -240,12 +273,13 @@ T abs(const C<T,Args...> &a)
 //! @{
 template< 
   typename T, std::size_t... N,
-  template< typename, std::size_t... > class A
+  template< typename, std::size_t... > class A,
+  std::size_t Len = utils::multiply( N... )
  >
 auto min(const A<T, N...> &a, const A<T, N...> &b) 
 {
   A<T, N...> tmp;
-  for ( auto i=0; i<tmp.size(); i++ )
+  for( utils::select_counter_t<Len> i = 0; i<Len; ++i )
     tmp[i] = std::min( a[i], b[i] );
   return tmp;
 }
@@ -254,7 +288,7 @@ template< template<typename...> class C, typename T, typename...Args >
 auto min(const C<T,Args...> &a, const C<T,Args...> &b) 
 {
   C<T,Args...> tmp;
-  for ( auto i=0; i<a.size(); i++ )
+  for ( common::counter_t i=0; i<a.size(); i++ )
     tmp[i] = std::min( a[i], b[i] );
   return tmp;
 }
@@ -268,12 +302,13 @@ auto min(const C<T,Args...> &a, const C<T,Args...> &b)
 //! \return The result of the operation
 template< 
   typename T, std::size_t... N,
-  template< typename, std::size_t... > class A
+  template< typename, std::size_t... > class A,
+  std::size_t Len = utils::multiply( N... )
  >
 auto max(const A<T, N...> &a, const A<T, N...> &b) 
 {
   A<T, N...> tmp;
-  for ( auto i=0; i<tmp.size(); i++ )
+  for( utils::select_counter_t<Len> i = 0; i<Len; ++i )
     tmp[i] = std::max( a[i], b[i] );
   return tmp;
 }
@@ -282,7 +317,7 @@ template< template<typename...> class C, typename T, typename...Args >
 auto max(const C<T,Args...> &a, const C<T,Args...> &b) 
 {
   C<T,Args...> tmp;
-  for ( auto i=0; i<a.size(); i++ )
+  for ( common::counter_t i=0; i<a.size(); i++ )
     tmp[i] = std::max( a[i], b[i] );
   return tmp;
 }

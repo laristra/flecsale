@@ -278,6 +278,7 @@ static auto to_mesh( vtkUnstructuredGrid* ug )
   using vector_t = typename M::vector_t;
   using  point_t = typename M::point_t;
   using vertex_t = typename M::vertex_t;
+  using counter_t= typename M::counter_t;
 
   //----------------------------------------------------------------------------
   // setup
@@ -304,7 +305,7 @@ static auto to_mesh( vtkUnstructuredGrid* ug )
   vector<vertex_t *> vs;
   vs.reserve( num_vertices );
 
-  for (size_t i = 0; i < num_vertices; ++i) {
+  for (counter  _t i = 0; i < num_vertices; ++i) {
     vtkRealType x[3] = {0, 0, 0};
     points->GetPoint( i, x );
     point_t p = { static_cast<real_t>(x[0]), 
@@ -341,8 +342,6 @@ static auto to_mesh( vtkUnstructuredGrid* ug )
   //----------------------------------------------------------------------------
   // Finish up
   //----------------------------------------------------------------------------
-
-  m.init();
 
   return m;
 

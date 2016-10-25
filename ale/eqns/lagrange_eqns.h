@@ -57,20 +57,20 @@ public:
   //============================================================================
   struct equations {
 
+    //! \brief the variables in the primitive state
+    enum index : size_t { 
+      mass = 0, 
+      momentum, 
+      energy = 1 + N,
+      total
+    };
+
     //! \brief  The type for holding the state data (mass, momentum, and energy).
     //! 
     //! data_t is a std::tuple with a real_t for mass, a vector_t for momentum
     //! and a real_t for energy.  This needs to correspond to index
     //! or there may be problems
-    using data_t = math::tuple<real_t,vector_t,real_t>;
-
-    //! \brief the variables in the primitive state
-    enum index : size_t { 
-      mass = 0, 
-      momentum, 
-      energy,
-      total
-    };
+    using data_t = math::array<real_t, index::total>;
 
     //! \brief the number of equations
     static constexpr size_t number(void)
@@ -135,9 +135,6 @@ public:
 
   //! \brief  the type for holding the state data (mass, momentum, and energy)
   using flux_data_t = typename equations::data_t;
-  //! \brief  the type for holding refernces to flux data
-  using flux_ref_t = utils::reference_wrapper_t< flux_data_t >;
-
 
 
   //============================================================================
@@ -149,59 +146,66 @@ public:
   //! clear exactly what variable is being set.  Does 
   //!   set_density(val) 
   //! set density explicitly? Or does it really set temperature and pressure?
-  //! But it is clear that
+  //! But it is clear thatstd::forward<U>(u)
   //!   get<variables::index::density> = val
   //! is assigning a new value to density.
   //!
   //! \param [in] u the state
   //! \return the quantity of interest
   //============================================================================
-  static auto volume( const state_data_t & u )
+  template< typename U >
+  inline static decltype(auto) volume( U && u )
   { 
-    using math::get;
-    return get<variables::index::volume>( u ); 
+    return math::get<variables::index::volume>( std::forward<U>(u) ); 
   }
 
   //! \copydoc volume
-  static auto mass( const state_data_t & u )
+  template< typename U >
+  inline static decltype(auto) mass( U && u )
   { 
-    using math::get;
-    return get<variables::index::mass>( u ); 
+    return math::get<variables::index::mass>( u ); 
   }
 
   //! \copydoc volume
-  static auto velocity( const state_data_t & u )
+  template< typename U >
+  inline static decltype(auto) velocity( U && u )
   { 
-    using math::get;
-    return get<variables::index::velocity>( u ); 
+    return math::get<variables::index::velocity>( u ); 
   }
 
   //! \copydoc volume
-  static auto pressure(  const state_data_t & u )
+  template< typename U >
+  inline static decltype(auto) pressure( U && u )
   { 
-    using math::get;
-    return get<variables::index::pressure>( u ); 
+    return math::get<variables::index::pressure>( u ); 
   }
 
   //! \copydoc volume
-  static auto density( const state_data_t & u )
+  template< typename U >
+  inline static decltype(auto) density( U && u )
   { 
-    using math::get;
-    return get<variables::index::density>( u ); 
+    return math::get<variables::index::density>( u ); 
   }
 
   //! \copydoc volume
-  static auto internal_energy( const state_data_t & u )
+  template< typename U >
+  inline static decltype(auto) internal_energy( U && u )
   { 
-    using math::get;
-    return get<variables::index::internal_energy>( u ); 
+    return math::get<variables::index::internal_energy>( u ); 
   }
 
   //! \copydoc volume
-  static auto sound_speed( const state_data_t & u )
+  template< typename U >
+  inline static decltype(auto) sound_speed( U && u )
   { 
-    using math::get;
-    return get<variables::index::sound_speed>( u ); 
+    return math::get<variables::index::sound_speed>( u ); 
+  }
+
+  //! \copydoc volume
+  template< typename U >
+  inline static decltype(auto) temperature( U && u )
+  { 
+    return math::get<variables::index::temperature>( u ); 
   }
 
   //! \copydoc volume
@@ -223,7 +227,7 @@ public:
   static auto impedance_multiplier( const state_data_t & u )
   { 
     // FIXME
-    return 2.4 / 2;
+    return 1.2; // 2.4 / 2;
   }
 
   //============================================================================
@@ -247,10 +251,10 @@ public:
     assert( p > 0  );
 
     // can use aliases for clarity
-    auto & d  = get<variables::index::density>( u );
-    auto & ie = get<variables::index::internal_energy>( u );
-    auto & t  = get<variables::index::temperature>( u );
-    auto & ss = get<variables::index::sound_speed>( u );
+    auto & d  = density( u );
+    auto & ie = internal_energy( u );
+    auto & t  = temperature( u );
+    auto & ss = sound_speed( u );
 
     // explicitly set the individual elements
     d  = m / v;
@@ -280,9 +284,9 @@ public:
     assert( ie > 0  );
 
     // can use aliases for clarity
-    auto & p  = get<variables::index::pressure>( u );
-    auto & t  = get<variables::index::temperature>( u );
-    auto & ss = get<variables::index::sound_speed>( u );
+    auto & p  = pressure( u );
+    auto & t  = temperature( u );
+    auto & ss = sound_speed( u );
 
     // explicitly set the individual elements
     p  = eos.compute_pressure_de( d, ie );
@@ -297,48 +301,35 @@ public:
   //! \param [in,out] u   The state to update.
   //! \param [in]     du  The conservative change in state.
   //============================================================================
-  static void update_state_from_flux( state_ref_t & u, const flux_data_t & du )
-  {
+  static void update_state_from_flux( 
+    state_ref_t & u, const flux_data_t & du, 
+    const real_t & fact = 1.0
+  ) {
     using math::get;
 
     // get the conserved quatities
     auto   m   = mass( u );
-    auto & vel = get<variables::index::velocity>( u );
-    auto & ie  = get<variables::index::internal_energy>( u );
+    auto & vel = velocity( u );
+    auto & ie  = internal_energy( u );
 
     // get the changes
-    auto delta_u  = get<equations::index::momentum>( du ) / m;
-    auto delta_et = get<equations::index::energy>( du ) / m;
-
-#if 0
+    auto inv_mass = 1 / m;    
     
-    // store the old velocity
-    auto vel0 = vel;
-    
-    // update velocity
-    vel += delta_u;
-
-    // average the velocity
-    vel0 = ( vel0 + vel ) / 2;
-
-    // compute internal energy
-    ie += delta_et - dot_product( vel0, delta_u );
-
-#else
-
     // update total energy
-    auto et = total_energy(u) + delta_et;
+    auto et = total_energy(u) + fact * inv_mass * du[equations::index::energy];
 
     // update velocity
-    vel += delta_u;
+    for ( int i=0; i<N; ++i )
+      vel[i] += fact * inv_mass * du[equations::index::momentum + i];
 
     // compute new internal
     ie = et - dot_product( vel, vel ) / 2;
 
-
-#endif
-
-    assert( ie > 0  );
+    if ( internal_energy(u) < 0 )
+      raise_runtime_error( 
+        "Negative internal energy encountered, " << internal_energy(u) << "." 
+        << std::endl << "Current state = " << u << "."
+      );
 
   }
 
@@ -353,21 +344,38 @@ public:
   {
     using math::get;
 
-    // get the conserved quatities
-    auto   m   = mass( u );
-
-    // get aliases for clarity
-    auto & vol = get<variables::index::volume>( u );
-    auto & d = get<variables::index::density>( u );
-
     // recompute solution quantities
-    vol = new_vol;
-    d = m / vol;
+    volume(u) = new_vol;
+    density(u) = mass(u) / new_vol;
 
-    assert( d > 0  );
+    if ( density(u) < 0 )
+      raise_runtime_error( 
+        "Negative density encountered, " << density(u) << "." 
+        << std::endl << "Current state = " << u << "."
+      );
 
   }
 
+
+  //============================================================================
+  //! \brief Update the volume, and consequentially the density assuming mass
+  //!        remains constant..
+  //============================================================================
+  static void compute_update( 
+    const vector_t & u,      //!< [in] the point velocity
+    const vector_t & force,  //!< [in] the force at the point
+    const vector_t & n,      //!< [in] the normal direction to apply the force
+    flux_data_t & dudt       //!< [in,out] the residual to update
+  ) {
+
+      // add contribution
+      for ( int d=0; d<N; ++d ) {
+        dudt[equations::index::mass] += n[d] * u[d];
+        dudt[equations::index::energy] -= force[d] * u[d];
+        dudt[equations::index::momentum + d] -= force[d];
+      }
+
+  }
 
   //============================================================================
   //! \brief Return the volumetric rate of change from the residuals.
@@ -375,8 +383,7 @@ public:
   //============================================================================
   static auto volumetric_rate_of_change( const flux_data_t & dudt )
   {
-    using math::get;
-    return get<equations::index::mass>( dudt );
+    return dudt[equations::index::mass];
   }
 
 };
