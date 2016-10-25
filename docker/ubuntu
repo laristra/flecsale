@@ -18,7 +18,7 @@ RUN apt-get -q update -y
 RUN apt-get -qq install -y make cmake cmake-data git g++-6 gfortran-6 doxygen
 
 RUN if [ ! ${MINIMAL} ]; then \
-  apt-get -qq install -y libscotch-dev libexodusii-dev liblapacke-dev flex \
+  apt-get -qq install -y libscotch-dev libexodusii-dev liblapacke-dev flex; \
 fi
 
 
