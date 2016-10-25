@@ -51,7 +51,7 @@ WORKDIR build
 RUN export CC=gcc-6
 RUN export CXX=g++-6 
 
-RUN [ "${BUILD_TYPE,,}" = "debug" ] && export CXXFLAGS="-Werror"
+RUN if [ "${BUILD_TYPE,,}" = "debug" ]; then export CXXFLAGS="-Werror"; fi
 
 RUN cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
           -DENABLE_UNIT_TESTS=ON \
