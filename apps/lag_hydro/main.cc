@@ -50,7 +50,7 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix = "sodx_1d";
-  std::string postfix = "dat";
+  std::string postfix = "vtk";
 
   // output frequency
   constexpr size_t output_freq = 1;
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix = "sody_2d";
-  std::string postfix = "dat";
+  std::string postfix = "vtk";
 
   // output frequency
   constexpr size_t output_freq = 1;
@@ -156,7 +156,7 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix = "sodxy_2d";
-  std::string postfix = "dat";
+  std::string postfix = "vtk";
 
   // output frequency
   constexpr size_t output_freq = 1;
@@ -225,7 +225,7 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix = "sodx_3d";
-  std::string postfix = "dat";
+  std::string postfix = "vtk";
 
   // output frequency
   constexpr size_t output_freq = 1;
@@ -347,7 +347,7 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix  = "sedov_3d";
-  std::string postfix = "dat";
+  std::string postfix = "vtk";
 
   // output frequency
   constexpr size_t output_freq = 10000;

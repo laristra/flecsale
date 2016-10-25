@@ -217,7 +217,7 @@ public:
   decltype(auto) access_type_()
   {
     return data_t::instance().template dense_accessors<T, NS>( 
-      mesh_.runtime_id() );
+      mesh_.runtime_id(), /* sorted */ true );
   }
 
   //! \brief Access state registered with type \e T that matches predicate
@@ -235,7 +235,7 @@ public:
   decltype(auto) access_type_if_(P && predicate)
   {
     return data_t::instance().template dense_accessors<T, P>(
-      std::forward<P>(predicate), mesh_.runtime_id() );
+      std::forward<P>(predicate), mesh_.runtime_id(), /* sorted */ true );
   }
 
 

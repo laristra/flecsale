@@ -32,6 +32,14 @@ if (VTK_FOUND)
 endif()
 
 
+# find python for running regression tests
+FIND_PACKAGE (PythonInterp REQUIRED)
+IF (PYTHONINTERP_FOUND)
+   MESSAGE (STATUS "Found PythonInterp: ${PYTHON_EXECUTABLE}")
+ELSE (PYTHONINTERP_FOUND)
+   MESSAGE (FATAL "Did not find python. Python is needed to run regression tests.")
+ENDIF ()
+
 #------------------------------------------------------------------------------#
 # Enable shapo
 #------------------------------------------------------------------------------#
