@@ -27,8 +27,8 @@ USER flecsale
 
 WORKDIR /tmp
 RUN if [ ${COVERAGE}  ]; then \
-  apt-get -qq install -y python-pip \
-  pip install --user codecov \
+  apt-get -qq install -y python-pip; \
+  pip install --user codecov; \
 fi
 
 RUN git clone --recursive https://github.com/losalamos/flecsale.git
@@ -38,10 +38,10 @@ RUN git fetch --tags
 RUN if [ ${TRAVIS} = true ]; then \
       if [ ${TRAVIS_PULL_REQUEST} != false ]; then \
         git fetch "git://github.com/${TRAVIS_REPO_SLUG}" +refs/pull/"${TRAVIS_PULL_REQUEST}"/merge: ;\
-	git checkout FETCH_HEAD; \
+	      git checkout FETCH_HEAD; \
       else \
         git fetch --depth=10 "git://github.com/${TRAVIS_REPO_SLUG}" "${TRAVIS_BRANCH}"; \
-	git checkout "${TRAVIS_COMMIT}"; \
+	      git checkout "${TRAVIS_COMMIT}"; \
       fi; \
       git submodule update; \
     fi
