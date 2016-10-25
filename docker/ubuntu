@@ -36,22 +36,22 @@ RUN git clone --recursive https://github.com/losalamos/flecsale.git
 WORKDIR flecsale
 RUN git fetch --tags
 RUN if [ ${TRAVIS} = true ]; then \
-      if [ ${TRAVIS_PULL_REQUEST} != false ]; then \
-        git fetch "git://github.com/${TRAVIS_REPO_SLUG}" +refs/pull/"${TRAVIS_PULL_REQUEST}"/merge: ;\
-	      git checkout FETCH_HEAD; \
-      else \
-        git fetch --depth=10 "git://github.com/${TRAVIS_REPO_SLUG}" "${TRAVIS_BRANCH}"; \
-	      git checkout "${TRAVIS_COMMIT}"; \
-      fi; \
-      git submodule update; \
-    fi
+  if [ ${TRAVIS_PULL_REQUEST} != false ]; then \
+    git fetch "git://github.com/${TRAVIS_REPO_SLUG}" +refs/pull/"${TRAVIS_PULL_REQUEST}"/merge: ;\
+    git checkout FETCH_HEAD; \
+  else \
+    git fetch --depth=10 "git://github.com/${TRAVIS_REPO_SLUG}" "${TRAVIS_BRANCH}"; \
+	  git checkout "${TRAVIS_COMMIT}"; \
+  fi; \
+  git submodule update; \
+fi
 RUN mkdir build
 
 WORKDIR build
 RUN export CC=gcc-6
 RUN export CXX=g++-6 
 
-RUN [ "${BUILD_TYPE,,}" -eq "debug" ] && export CXXFLAGS="-Werror"
+RUN [ "${BUILD_TYPE,,}" = "debug" ] && export CXXFLAGS="-Werror"
 
 RUN cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
           -DENABLE_UNIT_TESTS=ON \
