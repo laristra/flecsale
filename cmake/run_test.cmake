@@ -24,8 +24,10 @@ endif()
 file(REMOVE ${output_test})
 
 # run the test
+separate_arguments( test_cmd ) 
+
 execute_process(
-   COMMAND ${test_cmd} ${test_args}
+   COMMAND ${test_cmd}
    #OUTPUT_FILE log
    RESULT_VARIABLE test_not_successful
 )

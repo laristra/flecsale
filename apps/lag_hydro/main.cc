@@ -347,7 +347,7 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix  = "sedov_3d";
-  std::string postfix = "vtk";
+  std::string postfix = "dat";
 
   // output frequency
   constexpr size_t output_freq = 10000;
@@ -366,7 +366,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 0.25, .volume = 0.1, .growth = 1.01 };
   constexpr real_t initial_time_step = 1.e-5;
   constexpr real_t final_time = 1.0;
-  constexpr size_t max_steps = 1e6;
+  constexpr size_t max_steps = 50;
 
   // the value of gamma
   constexpr real_t gamma = 1.4;
