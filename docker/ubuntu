@@ -60,7 +60,7 @@ fi
 RUN echo $CC
 RUN echo \$CC
 
-RUN echo $CXXFLAGS && cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+RUN echo "$CXXFLAGS" && cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DENABLE_UNIT_TESTS=ON \
 	        -DENABLE_DOXYGEN=ON \
           ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} ..
