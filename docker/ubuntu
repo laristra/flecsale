@@ -51,10 +51,9 @@ WORKDIR build
 RUN export CC=gcc-6
 RUN export CXX=g++-6 
 
-RUN echo "my $(echo $BUILD_TYPE | tr '[:upper:]' '[:lower:]')"
-RUN export BUILD_TYPE=$(echo $BUILD_TYPE | tr '[:upper:]' '[:lower:]')
-RUN echo "my $BUILD_TYPE"
-RUN if [ ${BUILD_TYPE,,} = debug ]; then export CXXFLAGS="-Werror"; fi
+RUN if [ $(echo $BUILD_TYPE | tr '[:upper:]' '[:lower:]') = debug ]; then \
+  export CXXFLAGS="-Werror"; \
+fi
 
 RUN cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
           -DENABLE_UNIT_TESTS=ON \
