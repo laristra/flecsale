@@ -64,7 +64,7 @@ RUN cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
 
 RUN make VERBOSE=1
 RUN make test
-RUN make doxygen
+RUN make doxygen flecsi.doxygen
 RUN cd .. && if [ ${COVERAGE} ]; then $HOME/.local/bin/codecov; fi && cd -
 RUN make install DESTDIR=${PWD}
 USER root
