@@ -55,7 +55,7 @@ RUN if [ $(echo $BUILD_TYPE | tr '[:upper:]' '[:lower:]') = debug ]; then \
   export CXXFLAGS="-Werror"; \
 fi
 
-RUN cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+RUN cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DENABLE_UNIT_TESTS=ON \
 	        -DENABLE_DOXYGEN=ON \
           ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} ..
