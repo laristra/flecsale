@@ -31,16 +31,16 @@ class FailObject(object):
         self.failure = False
 
     def fail(self, brief):
-        print ">>>> ", brief
+        print( ">>>> " + brief )
         self.failure = True
 
 
     def exit(self):
         if (self.failure):
-            print "FAILURE"
+            print( "FAILURE" )
             sys.exit(1)
         else:
-            print "SUCCESS"
+            print( "SUCCESS" )
             sys.exit(0)
 
 ################################################################################
@@ -95,44 +95,44 @@ def compareStrings(f, options, expLine, actLine, lineNum):
     try:
         exp = numSplit(expLine)
         act = numSplit(actLine)
-    except ValueError, e:
+    except ValueError as e:
 
         if options.checkText:
 
             if (expLine != actLine):
                 if options.verbosity:
-                    print "-" * 16 
-                    print "##%-8d<==%s" % (lineNum, expLine) 
-                    print "##%-8d==>%s" % (lineNum, actLine)
-                    print "@ Text lines do not match!"
-                    print "-" * 16 
+                    print( "-" * 16 ) 
+                    print( "##%-8d<==%s" % (lineNum, expLine) )
+                    print( "##%-8d==>%s" % (lineNum, actLine) )
+                    print( "@ Text lines do not match!" )
+                    print( "-" * 16 )
                 f.fail( "Text did not match in line %d" % lineNum )
             else:
                 if options.verbosity > VERBOSE:
-                    print "-" * 16 
-                    print "##%-8d<==%s" % (lineNum, expLine) 
-                    print "##%-8d==>%s" % (lineNum, actLine)
-                    print "@ Text lines match"
-                    print "-" * 16 
+                    print( "-" * 16 ) 
+                    print( "##%-8d<==%s" % (lineNum, expLine) )
+                    print( "##%-8d==>%s" % (lineNum, actLine) )
+                    print( "@ Text lines match" )
+                    print( "-" * 16 )
         
         else:
             if options.verbosity > VERBOSE:
-                print "-" * 16 
-                print "##%-8d<==%s" % (lineNum, expLine) 
-                print "##%-8d==>%s" % (lineNum, actLine)
-                print "@ Ignoring text lines"
-                print "-" * 16 
+                print( "-" * 16 ) 
+                print( "##%-8d<==%s" % (lineNum, expLine) )
+                print( "##%-8d==>%s" % (lineNum, actLine) )
+                print( "@ Ignoring text lines" )
+                print( "-" * 16 )
             
         return
 
     ### check the ranges
     if len(exp) != len(act):
         if options.verbosity:
-            print "-" * 16 
-            print "##%-8d<==%s" % (lineNum, expLine) 
-            print "##%-8d==>%s" % (lineNum, actLine)
-            print "@ Number of columns doesn't match!"
-            print "-" * 16 
+            print( "-" * 16 )
+            print( "##%-8d<==%s" % (lineNum, expLine) )
+            print( "##%-8d==>%s" % (lineNum, actLine) )
+            print( "@ Number of columns doesn't match!" )
+            print( "-" * 16 )
         f.fail( "Wrong number of columns in line %d" % lineNum )
         return
 
@@ -144,20 +144,20 @@ def compareStrings(f, options, expLine, actLine, lineNum):
 
         # for very verbose, always print errors
         if options.verbosity > VERBOSE:
-            print "-" * 16 
-            print "##%-8d#:%-4d<==%15.8e" % (lineNum, col+1, expVal) 
-            print "##%-8d#:%-4d==>%15.8e" % (lineNum, col+1, actVal)
-            print "@ Absolute error = %15.8e, Relative error = %15.8e" % (abs_err, rel_err)
-            print "-" * 16 
+            print( "-" * 16 )
+            print( "##%-8d#:%-4d<==%15.8e" % (lineNum, col+1, expVal) )
+            print( "##%-8d#:%-4d==>%15.8e" % (lineNum, col+1, actVal) )
+            print( "@ Absolute error = %15.8e, Relative error = %15.8e" % (abs_err, rel_err) )
+            print( "-" * 16 ) 
 
         # ERROR
         if not isEquiv:
             if options.verbosity == VERBOSE:
-                print "-" * 16 
-                print "##%-8d#:%-4d<==%15.8e" % (lineNum, col+1, expVal) 
-                print "##%-8d#:%-4d==>%15.8e" % (lineNum, col+1, actVal)
-                print "@ Absolute error = %15.8e, Relative error = %15.8e" % (abs_err, rel_err)
-                print "-" * 16 
+                print( "-" * 16 ) 
+                print( "##%-8d#:%-4d<==%15.8e" % (lineNum, col+1, expVal) )
+                print( "##%-8d#:%-4d==>%15.8e" % (lineNum, col+1, actVal) )
+                print( "@ Absolute error = %15.8e, Relative error = %15.8e" % (abs_err, rel_err) )
+                print( "-" * 16 ) 
             f.fail( "Non-equivalence in line %d, column %d" % (lineNum, col) )
     return
 
@@ -180,11 +180,11 @@ def run(expectedFileName, actualFileName, options):
 
         if options.verbosity > VERY_VERBOSE:
             print 
-            print "=" * 16
-            print "Checking line %8d" % (lineNum)
-            print "##%-8d<==%s" % (lineNum, expLine) 
-            print "##%-8d==>%s" % (lineNum, actLine)
-            print "=" * 16
+            print ( "=" * 16 )
+            print ( "Checking line %8d" % (lineNum) )
+            print ( "##%-8d<==%s" % (lineNum, expLine) ) 
+            print ( "##%-8d==>%s" % (lineNum, actLine) )
+            print ( "=" * 16 )
             print 
 
         ## check that the files haven't ended,

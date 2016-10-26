@@ -33,7 +33,7 @@ endif()
 
 
 # find python for running regression tests
-FIND_PACKAGE (PythonInterp REQUIRED)
+FIND_PACKAGE (PythonInterp 3 REQUIRED)
 IF (PYTHONINTERP_FOUND)
    MESSAGE (STATUS "Found PythonInterp: ${PYTHON_EXECUTABLE}")
 ELSE (PYTHONINTERP_FOUND)
