@@ -38,7 +38,7 @@ RUN if [ ${COVERAGE}  ]; then \
 fi 
 
 # clone the repository
-RUN git clone --recursive https://github.com/losalamos/flecsi.git
+RUN git clone --recursive https://github.com/losalamos/flecsale.git
 
 WORKDIR flecsale
 RUN git fetch --tags

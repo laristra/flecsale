@@ -8,21 +8,21 @@ services:
 env:
   matrix:
     - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Debug   MINIMAL=ON   
-    # - DOCKERFILE=ubuntu COMPILER=gnu BUILD_TYPE=Debug   MINIMAL=ON 
-    # - DOCKERFILE=ubuntu COMPILER=gnu BUILD_TYPE=Release MINIMAL=ON 
-    # - DOCKERFILE=ubuntu COMPILER=gnu BUILD_TYPE=Debug
-    # - DOCKERFILE=ubuntu COMPILER=gnu BUILD_TYPE=Release
-    # - DOCKERFILE=ubuntu COMPILER=clang BUILD_TYPE=Debug   MINIMAL=ON 
-    # - DOCKERFILE=ubuntu COMPILER=clang BUILD_TYPE=Release MINIMAL=ON 
-    # - DOCKERFILE=ubuntu COMPILER=clang BUILD_TYPE=Debug
-    # - DOCKERFILE=ubuntu COMPILER=clang BUILD_TYPE=Release
-    # - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Debug   MINIMAL=ON 
-    # - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Release MINIMAL=ON 
-    # - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Debug
-    # - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Release
-    # - DOCKERFILE=fedora COMPILER=clang BUILD_TYPE=Debug   MINIMAL=ON 
-    # - DOCKERFILE=fedora COMPILER=clang BUILD_TYPE=Release MINIMAL=ON 
-    # - DOCKERFILE=fedora COMPILER=clang BUILD_TYPE=Debug
+    - DOCKERFILE=ubuntu COMPILER=gnu BUILD_TYPE=Debug   MINIMAL=ON 
+    - DOCKERFILE=ubuntu COMPILER=gnu BUILD_TYPE=Release MINIMAL=ON 
+    - DOCKERFILE=ubuntu COMPILER=gnu BUILD_TYPE=Debug
+    - DOCKERFILE=ubuntu COMPILER=gnu BUILD_TYPE=Release
+    - DOCKERFILE=ubuntu COMPILER=clang BUILD_TYPE=Debug   MINIMAL=ON 
+    - DOCKERFILE=ubuntu COMPILER=clang BUILD_TYPE=Release MINIMAL=ON 
+    - DOCKERFILE=ubuntu COMPILER=clang BUILD_TYPE=Debug
+    - DOCKERFILE=ubuntu COMPILER=clang BUILD_TYPE=Release
+    - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Debug   MINIMAL=ON 
+    - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Release MINIMAL=ON 
+    - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Debug
+    - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Release
+    - DOCKERFILE=fedora COMPILER=clang BUILD_TYPE=Debug   MINIMAL=ON 
+    - DOCKERFILE=fedora COMPILER=clang BUILD_TYPE=Release MINIMAL=ON 
+    - DOCKERFILE=fedora COMPILER=clang BUILD_TYPE=Debug
     - DOCKERFILE=fedora COMPILER=clang BUILD_TYPE=Release
 
 script:
