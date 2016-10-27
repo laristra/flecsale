@@ -7,18 +7,23 @@ services:
 
 env:
   matrix:
-    - DOCKERFILE=ubuntu MINIMAL=ON COMPILER=gnu BUILD_TYPE=Debug
-#    - DOCKERFILE=ubuntu MPI=ON   RUNTIME=mpi          DOCKERHUB=true
-#    - DOCKERFILE=ubuntu MPI=ON   RUNTIME=mpi          WERROR=yes
-#    - DOCKERFILE=ubuntu MPI=OFF  RUNTIME=serial       DOCKERHUB=true
-#    - DOCKERFILE=ubuntu MPI=OFF  RUNTIME=serial       WERROR=yes
-#    - DOCKERFILE=ubuntu MPI=OFF  COVERAGE=ON RUNTIME=serial
-#    - DOCKERFILE=fedora MINIMAL=ON MPI=OFF RUNTIME=serial
-#    - DOCKERFILE=fedora MPI=ON  RUNTIME=mpi           DOCKERHUB=true
-#    - DOCKERFILE=fedora MPI=ON  RUNTIME=mpi           WERROR=yes
-#    - DOCKERFILE=fedora MPI=OFF RUNTIME=serial        DOCKERHUB=true
-#    - DOCKERFILE=fedora MPI=OFF RUNTIME=serial        WERROR=yes
-#    - DOCKERFILE=fedora MPI=OFF RUNTIME=serial COVERAGE=ON
+    - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Debug   MINIMAL=ON   
+    # - DOCKERFILE=ubuntu COMPILER=gnu BUILD_TYPE=Debug   MINIMAL=ON 
+    # - DOCKERFILE=ubuntu COMPILER=gnu BUILD_TYPE=Release MINIMAL=ON 
+    # - DOCKERFILE=ubuntu COMPILER=gnu BUILD_TYPE=Debug
+    # - DOCKERFILE=ubuntu COMPILER=gnu BUILD_TYPE=Release
+    # - DOCKERFILE=ubuntu COMPILER=clang BUILD_TYPE=Debug   MINIMAL=ON 
+    # - DOCKERFILE=ubuntu COMPILER=clang BUILD_TYPE=Release MINIMAL=ON 
+    # - DOCKERFILE=ubuntu COMPILER=clang BUILD_TYPE=Debug
+    # - DOCKERFILE=ubuntu COMPILER=clang BUILD_TYPE=Release
+    # - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Debug   MINIMAL=ON 
+    # - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Release MINIMAL=ON 
+    # - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Debug
+    # - DOCKERFILE=fedora COMPILER=gnu BUILD_TYPE=Release
+    # - DOCKERFILE=fedora COMPILER=clang BUILD_TYPE=Debug   MINIMAL=ON 
+    # - DOCKERFILE=fedora COMPILER=clang BUILD_TYPE=Release MINIMAL=ON 
+    # - DOCKERFILE=fedora COMPILER=clang BUILD_TYPE=Debug
+    - DOCKERFILE=fedora COMPILER=clang BUILD_TYPE=Release
 
 script:
  - docker build --build-arg MINIMAL=${MINIMAL} 
