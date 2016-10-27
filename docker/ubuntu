@@ -24,7 +24,7 @@ fi
 
 RUN case $(echo $COMPILER | tr '[:upper:]' '[:lower:]') in \
   gnu) apt-get -qq install -y g++-6 gfortran-6;; \
-  clang) apt-get -qq install -y g++ clang gfortran-6;; \
+  clang) apt-get -qq install -y libstdc++-dev clang gfortran-6;; \
   *) echo "Compiler suite '$COMPILER' is unknown"; exit 1;; \
 esac
 
