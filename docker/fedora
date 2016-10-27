@@ -22,7 +22,7 @@ fi
 RUN echo $COMPILER
 RUN case $(echo $COMPILER | tr '[:upper:]' '[:lower:]') in \
   gnu) dnf install -y -q gcc-c++ gcc-gfortran;; \
-  clang) dnf install -y -q stdc++-devel clang gcc-gfortran;; \
+  clang) dnf install -y -q gcc-c++ clang gcc-gfortran;; \
   *) echo "Compiler suite '$COMPILER' is unknown"; exit 1;; \
 esac
 
