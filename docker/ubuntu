@@ -84,7 +84,7 @@ cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} ..
 
 RUN make VERBOSE=1
-ctest -VR shock_box
+RUN ctest -VR shock_box
 RUN make test
 RUN make doxygen flecsi.doxygen
 RUN cd .. && if [ ${COVERAGE} ]; then $HOME/.local/bin/codecov; fi && cd -
