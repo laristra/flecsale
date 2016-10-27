@@ -63,11 +63,11 @@ WORKDIR build
 RUN \
 case $(echo $BUILD_TYPE | tr '[:upper:]' '[:lower:]') in \
   gnu) \
-    export CC=gcc-6 \
+    export CC=gcc-6; \
     export CXX=g++-6 \
     ;; \
   clang) \
-    export CC=clang \
+    export CC=clang; \
     export CXX=clang++ \
     ;; \    
 esac; \
