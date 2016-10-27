@@ -58,8 +58,10 @@ fi
 RUN mkdir build
 WORKDIR build
 
-# select the compiler
-RUN case $(echo $BUILD_TYPE | tr '[:upper:]' '[:lower:]') in \
+
+# run cmake
+RUN \
+case $(echo $BUILD_TYPE | tr '[:upper:]' '[:lower:]') in \
   gnu) \
     export CC=gcc-6 \
     export CXX=g++-6 \
@@ -68,15 +70,11 @@ RUN case $(echo $BUILD_TYPE | tr '[:upper:]' '[:lower:]') in \
     export CC=clang \
     export CXX=clang++ \
     ;; \    
-esac
-
-# add extra debug flags
-RUN if [ $(echo $BUILD_TYPE | tr '[:upper:]' '[:lower:]') = debug ]; then \
+esac; \
+if [ $(echo $BUILD_TYPE | tr '[:upper:]' '[:lower:]') = debug ]; then \
   export CXXFLAGS="-Werror"; \
-fi
-
-# run cmake
-RUN cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+fi; \
+cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DENABLE_UNIT_TESTS=ON \
 	        -DENABLE_DOXYGEN=ON \
           ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} ..
