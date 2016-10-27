@@ -72,7 +72,7 @@ case $(echo $COMPILER | tr '[:upper:]' '[:lower:]') in \
     export CXX=clang++ \
     ;; \    
   *) \
-    echo "Compiler suite '$COMPILER"' is unknown; \
+    echo "Compiler suite '$COMPILER' is unknown; \
     exit 1;; \
 esac; \
 if [ $(echo $BUILD_TYPE | tr '[:upper:]' '[:lower:]') = debug ]; then \
