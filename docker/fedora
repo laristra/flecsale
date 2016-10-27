@@ -13,15 +13,16 @@ ARG TRAVIS_COMMIT
 ARG COVERAGE
 
 # update and install necessary packages
-RUN dnf install -y -q make cmake git doxygen graphviz
+RUN dnf install -y -q make cmake git doxygen graphviz texlive-epspdf
 
 RUN if [ ! ${MINIMAL} ]; then \
   dnf install -y -q lapack-devel metis-devel scotch-devel lapack-devel flex; \
 fi
 
+RUN echo $COMPILER
 RUN case $(echo $COMPILER | tr '[:upper:]' '[:lower:]') in \
   gnu) dnf install -y -q gcc-c++ gcc-gfortran;; \
-  clang) dnf install -y -q clang;; \
+  clang) dnf install -y -q stdc++-devel clang gcc-gfortran;; \
   *) echo "Compiler suite '$COMPILER' is unknown"; exit 1;; \
 esac
 
