@@ -53,6 +53,10 @@ RUN if [ ${TRAVIS} = true ]; then \
   git submodule update; \
 fi
 
+# make a build directory
+RUN mkdir build
+WORKDIR build
+
 # run cmake
 RUN \
 case $(echo $COMPILER | tr '[:upper:]' '[:lower:]') in \
