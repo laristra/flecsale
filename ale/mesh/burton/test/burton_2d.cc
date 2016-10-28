@@ -175,6 +175,30 @@ TEST_F(burton_2d, mesh) {
 
   } // for
 
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "For each wedge:" << endl;
+
+  for(auto w : mesh_.wedges()) {
+    CINCH_CAPTURE() << "^^^^^^^^Wedge id: " << w.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Corners:" << endl;
+    for(auto c: mesh_.corners(w)) 
+      CINCH_CAPTURE() << "    ++++ corner id: " << c.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Cells:" << endl;
+    for(auto cl: mesh_.cells(w)) 
+      CINCH_CAPTURE() << "    ++++ cell id: " << cl.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Edges:" << endl;
+    for(auto e: mesh_.edges(w)) 
+      CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Vertices:" << endl;
+    for(auto v: mesh_.vertices(w)) 
+      CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
+
+  } // for
+
   std::string outfile = output_prefix()+".blessed";
   CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 

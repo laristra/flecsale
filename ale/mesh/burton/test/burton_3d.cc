@@ -102,6 +102,10 @@ TEST_F(burton_3d, mesh) {
     for(auto c: mesh_.cells(v))
       CINCH_CAPTURE() << "    ++++ cell id: " << c.id() << endl;
 
+    CINCH_CAPTURE() << "    ----Faces:" << endl;
+    for(auto f: mesh_.faces(v))
+      CINCH_CAPTURE() << "    ++++ face id: " << f.id() << endl;
+
     CINCH_CAPTURE() << "    ----Edges:" << endl;
     for(auto e: mesh_.edges(v))
       CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
@@ -121,8 +125,36 @@ TEST_F(burton_3d, mesh) {
     for(auto c : mesh_.cells(e))
       CINCH_CAPTURE() << "    ++++ cell id: " << c.id() << endl;
 
+    CINCH_CAPTURE() << "    ----Faces:" << endl;
+    for(auto f: mesh_.faces(e))
+      CINCH_CAPTURE() << "    ++++ face id: " << f.id() << endl;
+
     CINCH_CAPTURE() << "    ----Vertices:" << endl;
     for(auto v : mesh_.vertices(e))
+      CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
+
+  } // for
+
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "For each face:" << endl;
+
+  for(auto f : mesh_.faces()) {
+    CINCH_CAPTURE() << "^^^^^^^^Face id: " << f.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Corners:" << endl;
+    for(auto cnr : mesh_.corners(f))
+      CINCH_CAPTURE() << "    ++++ corner id: " << cnr.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Cells:" << endl;
+    for(auto c: mesh_.cells(f))
+      CINCH_CAPTURE() << "    ++++ cell id: " << c.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Edges:" << endl;
+    for(auto e : mesh_.edges(f))
+      CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Vertices:" << endl;
+    for(auto v : mesh_.vertices(f))
       CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
 
   } // for
@@ -136,6 +168,10 @@ TEST_F(burton_3d, mesh) {
     CINCH_CAPTURE() << "    ----Corners:" << endl;
     for(auto cnr : mesh_.corners(c))
       CINCH_CAPTURE() << "    ++++ corner id: " << cnr.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Faces:" << endl;
+    for(auto f: mesh_.faces(c))
+      CINCH_CAPTURE() << "    ++++ face id: " << f.id() << endl;
 
     CINCH_CAPTURE() << "    ----Edges:" << endl;
     for(auto e : mesh_.edges(c))
@@ -162,12 +198,44 @@ TEST_F(burton_3d, mesh) {
     for(auto cl: mesh_.cells(c)) 
       CINCH_CAPTURE() << "    ++++ cell id: " << cl.id() << endl;
 
+    CINCH_CAPTURE() << "    ----Faces:" << endl;
+    for(auto f: mesh_.faces(c))
+      CINCH_CAPTURE() << "    ++++ face id: " << f.id() << endl;
+
     CINCH_CAPTURE() << "    ----Edges:" << endl;
     for(auto e: mesh_.edges(c)) 
       CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
 
     CINCH_CAPTURE() << "    ----Vertices:" << endl;
     for(auto v: mesh_.vertices(c)) 
+      CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
+
+  } // for
+
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "For each wedge:" << endl;
+
+  for(auto w : mesh_.wedges()) {
+    CINCH_CAPTURE() << "^^^^^^^^Wedge id: " << w.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Corners:" << endl;
+    for(auto c: mesh_.corners(w)) 
+      CINCH_CAPTURE() << "    ++++ corner id: " << c.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Cells:" << endl;
+    for(auto cl: mesh_.cells(w)) 
+      CINCH_CAPTURE() << "    ++++ cell id: " << cl.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Faces:" << endl;
+    for(auto f: mesh_.faces(w))
+      CINCH_CAPTURE() << "    ++++ face id: " << f.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Edges:" << endl;
+    for(auto e: mesh_.edges(w)) 
+      CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Vertices:" << endl;
+    for(auto v: mesh_.vertices(w)) 
       CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
 
   } // for

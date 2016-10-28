@@ -78,6 +78,9 @@ cinch_add_unit(mesh
       burton/test/burton_3d.dump.blessed
       burton/test/burton_3d.mesh.blessed
       burton/test/burton_3d.geometry.blessed
+      burton/test/burton_create.faces.blessed
+      burton/test/burton_create.minimal.blessed
+      burton/test/burton_create.points.blessed
       ${DATA_DIR}/meshes/2d/mixed/mixed.g
       ${DATA_DIR}/meshes/2d/mixed/mixed.exo
       ${DATA_DIR}/meshes/2d/mixed/mixed.vtu
