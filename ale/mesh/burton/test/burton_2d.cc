@@ -28,7 +28,6 @@ TEST_F(burton_2d, dump) {
 
   mesh_.dump( CINCH_CAPTURE() );
 
-  cout << CINCH_DUMP() << endl;
   std::string outfile = output_prefix()+".blessed";
   CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 }
@@ -90,6 +89,10 @@ TEST_F(burton_2d, mesh) {
     for(auto c: mesh_.corners(v))
       CINCH_CAPTURE() << "    ++++ corner id: " << c.id() << endl;
 
+    CINCH_CAPTURE() << "    ----Wedges:" << endl;
+    for(auto w: mesh_.wedges(v))
+      CINCH_CAPTURE() << "    ++++ wedge id: " << w.id() << endl;
+
     CINCH_CAPTURE() << "    ----Cells:" << endl;
     for(auto c: mesh_.cells(v))
       CINCH_CAPTURE() << "    ++++ cell id: " << c.id() << endl;
@@ -108,6 +111,10 @@ TEST_F(burton_2d, mesh) {
     CINCH_CAPTURE() << "    ----Corners:" << endl;
     for(auto cnr : mesh_.corners(e))
       CINCH_CAPTURE() << "    ++++ corner id: " << cnr.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Wedges:" << endl;
+    for(auto w: mesh_.wedges(e))
+      CINCH_CAPTURE() << "    ++++ wedge id: " << w.id() << endl;
 
     CINCH_CAPTURE() << "    ----Cells:" << endl;
     for(auto c : mesh_.cells(e))
@@ -128,6 +135,10 @@ TEST_F(burton_2d, mesh) {
     CINCH_CAPTURE() << "    ----Corners:" << endl;
     for(auto cnr : mesh_.corners(c))
       CINCH_CAPTURE() << "    ++++ corner id: " << cnr.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Wedges:" << endl;
+    for(auto w: mesh_.wedges(c))
+      CINCH_CAPTURE() << "    ++++ wedge id: " << w.id() << endl;
 
     CINCH_CAPTURE() << "    ----Edges:" << endl;
     for(auto e : mesh_.edges(c))
@@ -164,7 +175,6 @@ TEST_F(burton_2d, mesh) {
 
   } // for
 
-  cout << CINCH_DUMP() << endl;
   std::string outfile = output_prefix()+".blessed";
   CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 
@@ -245,7 +255,6 @@ TEST_F(burton_2d, geometry) {
     ASSERT_NEAR( 0, sum[1], test_tolerance );
   } // for
 
-  cout << CINCH_DUMP() << endl;
   std::string outfile = output_prefix()+".blessed";
   CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 
@@ -555,7 +564,6 @@ TEST_F(burton_2d, copy) {
       << " with coordinates " << v->coordinates() << std::endl;
   } // for
 
-  cout << CINCH_DUMP() << endl;
   std::string outfile = output_prefix()+".blessed";
   CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 
