@@ -626,10 +626,10 @@ int32_t apply_update( T & mesh, real_t coef ) {
   auto cell_state = cell_state_accessor<T>( mesh );
 
   // read only access
-  real_t delta_t = access_global_state( mesh, "time_step", real_t );
+  const auto delta_t = access_global_state( mesh, "time_step", real_t );
 
   // the time step factor
-  auto fact = coef * delta_t;
+  auto fact = coef * (*delta_t);
 
   real_t mass(0);
   vector_t mom(0);
@@ -704,10 +704,10 @@ int32_t move_mesh( T & mesh, real_t coef ) {
   auto vel = access_state( mesh, "node_velocity", vector_t );
 
   // read only access
-  real_t delta_t = access_global_state( mesh, "time_step", real_t );
+  const auto delta_t = access_global_state( mesh, "time_step", real_t );
 
   // the time step factor
-  auto fact = coef * delta_t;
+  auto fact = coef * (*delta_t);
  
   // Loop over each cell, scattering the fluxes to the cell
   auto vs = mesh.vertices();

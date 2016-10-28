@@ -327,7 +327,7 @@ auto & operator<<(std::ostream& os, const tuple<Types...>& a)
 {
   os << "{";
   utils::tuple_for_each( a, 
-                          [](auto & tup) { std::cout << " [ " << tup << " ]"; } );
+                          [&os](auto & tup) { os << " [ " << tup << " ]"; } );
   os << " }";
   return os;
 }

@@ -287,8 +287,7 @@ int main(int argc, char** argv)
 
   // register the time step and set a cfl
   register_global_state( mesh, "time_step", real_t );
-  register_global_state( mesh, "cfl", real_t ) = CFL;
-  
+  register_global_state( mesh, "cfl", real_t ) = CFL;  
 
   // register state a global eos
   register_global_state( mesh, "eos", eos_t ) = eos;

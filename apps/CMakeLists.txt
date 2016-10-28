@@ -7,7 +7,7 @@ include(ProcessorCount)
 
 
 # the command to run to compare outputs
-set (TEST_COMMAND "${PYTHON_EXECUTABLE} ${ALE_TOOL_DIR}/numdiff.py --absolute ${TEST_TOLERANCE}")
+set (TEST_COMMAND "${PYTHON_EXECUTABLE} ${ALE_TOOL_DIR}/numdiff.py --verbose --absolute ${TEST_TOLERANCE}")
 
 
 #-------------------------------------------------------------------------------

@@ -139,7 +139,7 @@ int32_t evaluate_time_step( T & mesh ) {
   state_accessor<T> state( mesh );
 
   auto delta_t = access_global_state( mesh, "time_step", real_t );
-  real_t   cfl = access_global_state( mesh, "cfl",       real_t );
+  const auto cfl = access_global_state( mesh, "cfl", real_t );
  
   auto area   = access_state( mesh, "face_area",   real_t );
   auto normal = access_state( mesh, "face_normal", vector_t );
@@ -176,7 +176,7 @@ int32_t evaluate_time_step( T & mesh ) {
   assert( dt_inv > 0 && "infinite delta t" );
 
   // invert dt and apply cfl
-  delta_t = cfl / dt_inv;
+  delta_t = static_cast<real_t>(cfl) / dt_inv;
 
   return 0;
 
@@ -270,7 +270,7 @@ int32_t apply_update( T & mesh ) {
   auto volume = access_state( mesh, "cell_volume", real_t );
 
   // read only access
-  real_t delta_t = access_global_state( mesh, "time_step", real_t );
+  const auto delta_t = access_global_state( mesh, "time_step", real_t );
  
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
@@ -300,7 +300,7 @@ int32_t apply_update( T & mesh ) {
     } // edge
 
     // now compute the final update
-    delta_u *= delta_t/volume[c];
+    delta_u *= static_cast<real_t>(delta_t)/volume[c];
     
 
     // std::cout << "delta " << i << " : ";
