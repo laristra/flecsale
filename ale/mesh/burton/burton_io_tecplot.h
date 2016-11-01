@@ -71,7 +71,9 @@ public:
   };
 
   //============================================================================
-  //! A mapping object utility for tecplot zones
+  //! \brief A mapping object utility for tecplot zones
+  //! \remark "Regions" are FleCSALE's terminology for groups of cells
+  //!         whereas "zones" are Tecplot's terminology. 
   //============================================================================
   struct tec_zone_map_t {
 
@@ -89,8 +91,9 @@ public:
 
       // determine a local cell zone ordering
       for ( auto c : m.cells() ) {
+        auto cell_id = c.id();
         auto reg_id = c->region();
-        elem_zone_map[reg_id][c] = local_elem_id[reg_id]++;
+        elem_zone_map[reg_id][cell_id] = local_elem_id[reg_id]++;
       }
 
       // check the sums
@@ -171,13 +174,13 @@ public:
         auto left_region = region_map[ left_cell->region() ];
         // left cell is local
         if ( left_region == this_region )
-          face_cell_left[f] = elem_zone_map[ this_region ].at( left_cell ) + 1;
+          face_cell_left[f] = elem_zone_map[ this_region ].at( left_cell.id() ) + 1;
         // left cell is on another zone
         else {
           face_cell_left[f] = - (++num_face_conn);
           face_conn_counts.emplace_back( 1 );
           face_conn_elems.emplace_back( 
-            elem_zone_map[ left_region ].at( left_cell ) + 1 );
+            elem_zone_map[ left_region ].at( left_cell.id() ) + 1 );
           face_conn_zones.emplace_back( left_region + 1 );
         }         
         // boundary faces don't have right cell
@@ -186,13 +189,13 @@ public:
           auto right_region = region_map[ right_cell->region() ];
           // right cell is local
           if ( right_region == this_region ) 
-            face_cell_right[f] = elem_zone_map[ this_region ].at( right_cell ) + 1;
+            face_cell_right[f] = elem_zone_map[ this_region ].at( right_cell.id() ) + 1;
           // right cell is on another zone
           else {
             face_cell_right[f] = - (++num_face_conn);
             face_conn_counts.emplace_back( 1 );
             face_conn_elems.emplace_back( 
-              elem_zone_map[ right_region ].at( right_cell ) + 1 );
+              elem_zone_map[ right_region ].at( right_cell.id() ) + 1 );
             face_conn_zones.emplace_back( right_region + 1 );
           }
         }
@@ -212,7 +215,7 @@ public:
     //! \brief number of zones
     tec_int_t num_zones;
 
-    //! \brief for face-zone connectivity
+    //! \brief for face-to-element connectivity
     //! @{
     tec_int_t num_faces_this_zone = 0;
     tec_int_t num_face_nodes_this_zone = 0;
@@ -222,7 +225,7 @@ public:
     std::vector<tec_int_t> face_cell_left;
     //! @}
     
-    //! \brief  for elememnt-zone connectivity
+    //! \brief  for element/zone face connectivity
     //! @{
     tec_int_t num_face_conn = 0;
     std::vector<tec_int_t> face_conn_counts;
@@ -230,12 +233,12 @@ public:
     std::vector<tec_int_t> face_conn_zones;
     //! @}
     
-    //! \brief  storage for the zone-element mapping
+    //! \brief  storage for the zone-to-element mapping
     std::vector< 
-      std::map< cell_t*, size_t > 
+      std::map< size_t, size_t > 
     > elem_zone_map;
 
-    //! \brief  storage for the region-zone mapping
+    //! \brief  storage for the region-to-zone mapping
     std::vector< size_t > region_map;
         
   };
