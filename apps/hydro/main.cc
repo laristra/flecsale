@@ -208,9 +208,9 @@ int main(int argc, char** argv)
   constexpr size_t output_freq = 100;
 
   // the grid dimensions
-  constexpr size_t num_cells_x = 40;
-  constexpr size_t num_cells_y = 40;
-  constexpr size_t num_cells_z = 40;
+  constexpr size_t num_cells_x = 10;
+  constexpr size_t num_cells_y = 10;
+  constexpr size_t num_cells_z = 10;
 
   constexpr real_t length_x = 1.0;
   constexpr real_t length_y = 1.0;

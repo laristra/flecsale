@@ -116,18 +116,21 @@ public:
       // this region id
       auto this_region = zone_id;
 
+      // all the faces of the mesh
+      auto faces = mesh.faces();
+
       // count how many faces there are in this block
       num_faces_this_zone = 0;
       for ( auto c : elem_this_zone ) 
         num_faces_this_zone += mesh.faces(c).size();
       
       // create a face map
-      std::vector< face_t* > faces_this_zone; 
+      std::vector< size_t > faces_this_zone; 
       faces_this_zone.reserve( num_faces_this_zone );
       
       for ( auto c : elem_this_zone ) 
         for ( auto f : mesh.faces( c ) )
-          faces_this_zone.emplace_back( f );
+          faces_this_zone.emplace_back( f.id() );
       
       // sort, then delete duplicate entries
       std::sort( faces_this_zone.begin(), faces_this_zone.end() );
@@ -138,9 +141,11 @@ public:
       num_faces_this_zone = faces_this_zone.size();
 
       // count total face nodes
+
       num_face_nodes_this_zone = 0;
-      for ( auto f : faces_this_zone ) 
-          num_face_nodes_this_zone += mesh.vertices(f).size();
+      for ( auto face_id : faces_this_zone ) 
+          num_face_nodes_this_zone += 
+            mesh.vertices( faces[face_id] ).size();
       
       // face definitions
       face_nodes.resize( num_face_nodes_this_zone );
@@ -155,16 +160,16 @@ public:
 
       size_t f = 0, i = 0;
       num_face_conn = 0;
-      for (auto face : faces_this_zone) {
+      for (auto face_id : faces_this_zone) {
         // get the list of vertices
-        auto points = mesh.vertices(face);
+        auto points = mesh.vertices(faces[face_id]);
         // the nodes of each face
         for (auto vert : points)
           face_nodes[i++] = vert.id() + 1; // 1-based ids      
         // the counts
         face_node_counts[f] = points.size();
         // the cells of each face (1-based ids)
-        auto cells = mesh.cells( face );
+        auto cells = mesh.cells( faces[face_id] );
         assert( cells.size() > 0 && "cell has no edges");
         // initialize cells to no connections
         face_cell_left [f] = 0;
