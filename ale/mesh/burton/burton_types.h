@@ -338,6 +338,8 @@ struct burton_mesh_types_t<3> {
     default:
       raise_logic_error("invalid domain");
     }
+    // should never get here
+    return nullptr;
   }
 
 };

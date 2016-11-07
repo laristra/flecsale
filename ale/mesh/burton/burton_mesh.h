@@ -149,46 +149,45 @@ public:
             key, num_vertices(), mesh_.runtime_id(), 
             attachment_site_t::vertices, attributes 
           );
-        break;
       case attachment_site_t::edges:
         return 
           data_.template register_state<T>(
             key, num_edges(), mesh_.runtime_id(), 
             attachment_site_t::edges, attributes
           );
-        break;
       case attachment_site_t::faces:
         return 
           data_.template register_state<T>(
             key, num_faces(), mesh_.runtime_id(), 
             attachment_site_t::faces, attributes 
           );
-        break;
       case attachment_site_t::cells:
         return 
           data_.template register_state<T>(
             key, num_cells(), mesh_.runtime_id(), 
             attachment_site_t::cells, attributes 
           );
-        break;
       case attachment_site_t::corners:
         return
           data_.template register_state<T>(
             key, num_corners(), mesh_.runtime_id(), 
             attachment_site_t::corners, attributes
           );
-        break;
       case attachment_site_t::wedges:
         return 
           data_.template register_state<T>(
             key, num_wedges(), mesh_.runtime_id(), 
             attachment_site_t::wedges, attributes
           );
-        break;
       default:
-        assert(false && "Error: invalid state registration site.");
+        raise_runtime_error( "Error: invalid state registration site." );
     } // switch
-
+    // should never get here
+    return 
+      data_.template register_state<T>(
+        key, 0, mesh_.runtime_id(), 
+        attachment_site_t::vertices, attributes 
+      );
   }
 
   //! \brief Access state associated with \e key.

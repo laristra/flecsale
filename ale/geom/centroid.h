@@ -11,6 +11,7 @@
 
 // user includes
 #include "ale/std/type_traits.h"
+#include "ale/utils/errors.h"
 #include "ale/utils/type_traits.h"
 #include "detail/centroid_impl.h"
 
@@ -88,8 +89,10 @@ auto centroid( const V<T, Args...> & points )
   auto dim = points[0].size();
   if ( dim == 2 )
     return centroid_2d( points );
-  else
-    assert( false && "unsuported dimemsion" );
+  else {
+    raise_implemented_error( "unsuported dimemsion" );
+    return points[0]; // should never get here
+  }
 }
 
 
