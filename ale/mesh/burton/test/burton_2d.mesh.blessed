@@ -86,6 +86,9 @@ For each vertex:
 ^^^^^^^^Vertex id: 0
     ----Corners:
     ++++ corner id: 0
+    ----Wedges:
+    ++++ wedge id: 0
+    ++++ wedge id: 1
     ----Cells:
     ++++ cell id: 0
     ----Edges:
@@ -95,6 +98,11 @@ For each vertex:
     ----Corners:
     ++++ corner id: 1
     ++++ corner id: 4
+    ----Wedges:
+    ++++ wedge id: 2
+    ++++ wedge id: 3
+    ++++ wedge id: 8
+    ++++ wedge id: 9
     ----Cells:
     ++++ cell id: 0
     ++++ cell id: 1
@@ -105,6 +113,9 @@ For each vertex:
 ^^^^^^^^Vertex id: 2
     ----Corners:
     ++++ corner id: 5
+    ----Wedges:
+    ++++ wedge id: 10
+    ++++ wedge id: 11
     ----Cells:
     ++++ cell id: 1
     ----Edges:
@@ -114,6 +125,11 @@ For each vertex:
     ----Corners:
     ++++ corner id: 3
     ++++ corner id: 8
+    ----Wedges:
+    ++++ wedge id: 6
+    ++++ wedge id: 7
+    ++++ wedge id: 16
+    ++++ wedge id: 17
     ----Cells:
     ++++ cell id: 0
     ++++ cell id: 2
@@ -127,6 +143,15 @@ For each vertex:
     ++++ corner id: 7
     ++++ corner id: 9
     ++++ corner id: 12
+    ----Wedges:
+    ++++ wedge id: 4
+    ++++ wedge id: 5
+    ++++ wedge id: 14
+    ++++ wedge id: 15
+    ++++ wedge id: 18
+    ++++ wedge id: 19
+    ++++ wedge id: 24
+    ++++ wedge id: 25
     ----Cells:
     ++++ cell id: 0
     ++++ cell id: 1
@@ -141,6 +166,11 @@ For each vertex:
     ----Corners:
     ++++ corner id: 6
     ++++ corner id: 13
+    ----Wedges:
+    ++++ wedge id: 12
+    ++++ wedge id: 13
+    ++++ wedge id: 26
+    ++++ wedge id: 27
     ----Cells:
     ++++ cell id: 1
     ++++ cell id: 3
@@ -151,6 +181,9 @@ For each vertex:
 ^^^^^^^^Vertex id: 6
     ----Corners:
     ++++ corner id: 11
+    ----Wedges:
+    ++++ wedge id: 22
+    ++++ wedge id: 23
     ----Cells:
     ++++ cell id: 2
     ----Edges:
@@ -160,6 +193,11 @@ For each vertex:
     ----Corners:
     ++++ corner id: 10
     ++++ corner id: 15
+    ----Wedges:
+    ++++ wedge id: 20
+    ++++ wedge id: 21
+    ++++ wedge id: 30
+    ++++ wedge id: 31
     ----Cells:
     ++++ cell id: 2
     ++++ cell id: 3
@@ -170,6 +208,9 @@ For each vertex:
 ^^^^^^^^Vertex id: 8
     ----Corners:
     ++++ corner id: 14
+    ----Wedges:
+    ++++ wedge id: 28
+    ++++ wedge id: 29
     ----Cells:
     ++++ cell id: 3
     ----Edges:
@@ -181,6 +222,9 @@ For each edge:
     ----Corners:
     ++++ corner id: 0
     ++++ corner id: 1
+    ----Wedges:
+    ++++ wedge id: 0
+    ++++ wedge id: 3
     ----Cells:
     ++++ cell id: 0
     ----Vertices:
@@ -192,6 +236,11 @@ For each edge:
     ++++ corner id: 2
     ++++ corner id: 4
     ++++ corner id: 7
+    ----Wedges:
+    ++++ wedge id: 2
+    ++++ wedge id: 5
+    ++++ wedge id: 9
+    ++++ wedge id: 14
     ----Cells:
     ++++ cell id: 0
     ++++ cell id: 1
@@ -204,6 +253,11 @@ For each edge:
     ++++ corner id: 3
     ++++ corner id: 8
     ++++ corner id: 9
+    ----Wedges:
+    ++++ wedge id: 4
+    ++++ wedge id: 7
+    ++++ wedge id: 16
+    ++++ wedge id: 19
     ----Cells:
     ++++ cell id: 0
     ++++ cell id: 2
@@ -214,6 +268,9 @@ For each edge:
     ----Corners:
     ++++ corner id: 0
     ++++ corner id: 3
+    ----Wedges:
+    ++++ wedge id: 1
+    ++++ wedge id: 6
     ----Cells:
     ++++ cell id: 0
     ----Vertices:
@@ -223,6 +280,9 @@ For each edge:
     ----Corners:
     ++++ corner id: 4
     ++++ corner id: 5
+    ----Wedges:
+    ++++ wedge id: 8
+    ++++ wedge id: 11
     ----Cells:
     ++++ cell id: 1
     ----Vertices:
@@ -232,6 +292,9 @@ For each edge:
     ----Corners:
     ++++ corner id: 5
     ++++ corner id: 6
+    ----Wedges:
+    ++++ wedge id: 10
+    ++++ wedge id: 13
     ----Cells:
     ++++ cell id: 1
     ----Vertices:
@@ -243,6 +306,11 @@ For each edge:
     ++++ corner id: 7
     ++++ corner id: 12
     ++++ corner id: 13
+    ----Wedges:
+    ++++ wedge id: 12
+    ++++ wedge id: 15
+    ++++ wedge id: 24
+    ++++ wedge id: 27
     ----Cells:
     ++++ cell id: 1
     ++++ cell id: 3
@@ -255,6 +323,11 @@ For each edge:
     ++++ corner id: 10
     ++++ corner id: 12
     ++++ corner id: 15
+    ----Wedges:
+    ++++ wedge id: 18
+    ++++ wedge id: 21
+    ++++ wedge id: 25
+    ++++ wedge id: 30
     ----Cells:
     ++++ cell id: 2
     ++++ cell id: 3
@@ -265,6 +338,9 @@ For each edge:
     ----Corners:
     ++++ corner id: 10
     ++++ corner id: 11
+    ----Wedges:
+    ++++ wedge id: 20
+    ++++ wedge id: 23
     ----Cells:
     ++++ cell id: 2
     ----Vertices:
@@ -274,6 +350,9 @@ For each edge:
     ----Corners:
     ++++ corner id: 8
     ++++ corner id: 11
+    ----Wedges:
+    ++++ wedge id: 17
+    ++++ wedge id: 22
     ----Cells:
     ++++ cell id: 2
     ----Vertices:
@@ -283,6 +362,9 @@ For each edge:
     ----Corners:
     ++++ corner id: 13
     ++++ corner id: 14
+    ----Wedges:
+    ++++ wedge id: 26
+    ++++ wedge id: 29
     ----Cells:
     ++++ cell id: 3
     ----Vertices:
@@ -292,6 +374,9 @@ For each edge:
     ----Corners:
     ++++ corner id: 14
     ++++ corner id: 15
+    ----Wedges:
+    ++++ wedge id: 28
+    ++++ wedge id: 31
     ----Cells:
     ++++ cell id: 3
     ----Vertices:
@@ -305,6 +390,15 @@ For each cell:
     ++++ corner id: 1
     ++++ corner id: 2
     ++++ corner id: 3
+    ----Wedges:
+    ++++ wedge id: 0
+    ++++ wedge id: 1
+    ++++ wedge id: 2
+    ++++ wedge id: 3
+    ++++ wedge id: 4
+    ++++ wedge id: 5
+    ++++ wedge id: 6
+    ++++ wedge id: 7
     ----Edges:
     ++++ edge id: 0
     ++++ edge id: 1
@@ -321,6 +415,15 @@ For each cell:
     ++++ corner id: 5
     ++++ corner id: 6
     ++++ corner id: 7
+    ----Wedges:
+    ++++ wedge id: 8
+    ++++ wedge id: 9
+    ++++ wedge id: 10
+    ++++ wedge id: 11
+    ++++ wedge id: 12
+    ++++ wedge id: 13
+    ++++ wedge id: 14
+    ++++ wedge id: 15
     ----Edges:
     ++++ edge id: 4
     ++++ edge id: 5
@@ -337,6 +440,15 @@ For each cell:
     ++++ corner id: 9
     ++++ corner id: 10
     ++++ corner id: 11
+    ----Wedges:
+    ++++ wedge id: 16
+    ++++ wedge id: 17
+    ++++ wedge id: 18
+    ++++ wedge id: 19
+    ++++ wedge id: 20
+    ++++ wedge id: 21
+    ++++ wedge id: 22
+    ++++ wedge id: 23
     ----Edges:
     ++++ edge id: 2
     ++++ edge id: 7
@@ -353,6 +465,15 @@ For each cell:
     ++++ corner id: 13
     ++++ corner id: 14
     ++++ corner id: 15
+    ----Wedges:
+    ++++ wedge id: 24
+    ++++ wedge id: 25
+    ++++ wedge id: 26
+    ++++ wedge id: 27
+    ++++ wedge id: 28
+    ++++ wedge id: 29
+    ++++ wedge id: 30
+    ++++ wedge id: 31
     ----Edges:
     ++++ edge id: 6
     ++++ edge id: 10
@@ -538,6 +659,296 @@ For each corner:
     ++++ cell id: 3
     ----Edges:
     ++++ edge id: 7
+    ++++ edge id: 11
+    ----Vertices:
+    ++++ vertex id: 7
+================================================================================
+For each wedge:
+^^^^^^^^Wedge id: 0
+    ----Corners:
+    ++++ corner id: 0
+    ----Cells:
+    ++++ cell id: 0
+    ----Edges:
+    ++++ edge id: 0
+    ----Vertices:
+    ++++ vertex id: 0
+^^^^^^^^Wedge id: 1
+    ----Corners:
+    ++++ corner id: 0
+    ----Cells:
+    ++++ cell id: 0
+    ----Edges:
+    ++++ edge id: 3
+    ----Vertices:
+    ++++ vertex id: 0
+^^^^^^^^Wedge id: 2
+    ----Corners:
+    ++++ corner id: 1
+    ----Cells:
+    ++++ cell id: 0
+    ----Edges:
+    ++++ edge id: 1
+    ----Vertices:
+    ++++ vertex id: 1
+^^^^^^^^Wedge id: 3
+    ----Corners:
+    ++++ corner id: 1
+    ----Cells:
+    ++++ cell id: 0
+    ----Edges:
+    ++++ edge id: 0
+    ----Vertices:
+    ++++ vertex id: 1
+^^^^^^^^Wedge id: 4
+    ----Corners:
+    ++++ corner id: 2
+    ----Cells:
+    ++++ cell id: 0
+    ----Edges:
+    ++++ edge id: 2
+    ----Vertices:
+    ++++ vertex id: 4
+^^^^^^^^Wedge id: 5
+    ----Corners:
+    ++++ corner id: 2
+    ----Cells:
+    ++++ cell id: 0
+    ----Edges:
+    ++++ edge id: 1
+    ----Vertices:
+    ++++ vertex id: 4
+^^^^^^^^Wedge id: 6
+    ----Corners:
+    ++++ corner id: 3
+    ----Cells:
+    ++++ cell id: 0
+    ----Edges:
+    ++++ edge id: 3
+    ----Vertices:
+    ++++ vertex id: 3
+^^^^^^^^Wedge id: 7
+    ----Corners:
+    ++++ corner id: 3
+    ----Cells:
+    ++++ cell id: 0
+    ----Edges:
+    ++++ edge id: 2
+    ----Vertices:
+    ++++ vertex id: 3
+^^^^^^^^Wedge id: 8
+    ----Corners:
+    ++++ corner id: 4
+    ----Cells:
+    ++++ cell id: 1
+    ----Edges:
+    ++++ edge id: 4
+    ----Vertices:
+    ++++ vertex id: 1
+^^^^^^^^Wedge id: 9
+    ----Corners:
+    ++++ corner id: 4
+    ----Cells:
+    ++++ cell id: 1
+    ----Edges:
+    ++++ edge id: 1
+    ----Vertices:
+    ++++ vertex id: 1
+^^^^^^^^Wedge id: 10
+    ----Corners:
+    ++++ corner id: 5
+    ----Cells:
+    ++++ cell id: 1
+    ----Edges:
+    ++++ edge id: 5
+    ----Vertices:
+    ++++ vertex id: 2
+^^^^^^^^Wedge id: 11
+    ----Corners:
+    ++++ corner id: 5
+    ----Cells:
+    ++++ cell id: 1
+    ----Edges:
+    ++++ edge id: 4
+    ----Vertices:
+    ++++ vertex id: 2
+^^^^^^^^Wedge id: 12
+    ----Corners:
+    ++++ corner id: 6
+    ----Cells:
+    ++++ cell id: 1
+    ----Edges:
+    ++++ edge id: 6
+    ----Vertices:
+    ++++ vertex id: 5
+^^^^^^^^Wedge id: 13
+    ----Corners:
+    ++++ corner id: 6
+    ----Cells:
+    ++++ cell id: 1
+    ----Edges:
+    ++++ edge id: 5
+    ----Vertices:
+    ++++ vertex id: 5
+^^^^^^^^Wedge id: 14
+    ----Corners:
+    ++++ corner id: 7
+    ----Cells:
+    ++++ cell id: 1
+    ----Edges:
+    ++++ edge id: 1
+    ----Vertices:
+    ++++ vertex id: 4
+^^^^^^^^Wedge id: 15
+    ----Corners:
+    ++++ corner id: 7
+    ----Cells:
+    ++++ cell id: 1
+    ----Edges:
+    ++++ edge id: 6
+    ----Vertices:
+    ++++ vertex id: 4
+^^^^^^^^Wedge id: 16
+    ----Corners:
+    ++++ corner id: 8
+    ----Cells:
+    ++++ cell id: 2
+    ----Edges:
+    ++++ edge id: 2
+    ----Vertices:
+    ++++ vertex id: 3
+^^^^^^^^Wedge id: 17
+    ----Corners:
+    ++++ corner id: 8
+    ----Cells:
+    ++++ cell id: 2
+    ----Edges:
+    ++++ edge id: 9
+    ----Vertices:
+    ++++ vertex id: 3
+^^^^^^^^Wedge id: 18
+    ----Corners:
+    ++++ corner id: 9
+    ----Cells:
+    ++++ cell id: 2
+    ----Edges:
+    ++++ edge id: 7
+    ----Vertices:
+    ++++ vertex id: 4
+^^^^^^^^Wedge id: 19
+    ----Corners:
+    ++++ corner id: 9
+    ----Cells:
+    ++++ cell id: 2
+    ----Edges:
+    ++++ edge id: 2
+    ----Vertices:
+    ++++ vertex id: 4
+^^^^^^^^Wedge id: 20
+    ----Corners:
+    ++++ corner id: 10
+    ----Cells:
+    ++++ cell id: 2
+    ----Edges:
+    ++++ edge id: 8
+    ----Vertices:
+    ++++ vertex id: 7
+^^^^^^^^Wedge id: 21
+    ----Corners:
+    ++++ corner id: 10
+    ----Cells:
+    ++++ cell id: 2
+    ----Edges:
+    ++++ edge id: 7
+    ----Vertices:
+    ++++ vertex id: 7
+^^^^^^^^Wedge id: 22
+    ----Corners:
+    ++++ corner id: 11
+    ----Cells:
+    ++++ cell id: 2
+    ----Edges:
+    ++++ edge id: 9
+    ----Vertices:
+    ++++ vertex id: 6
+^^^^^^^^Wedge id: 23
+    ----Corners:
+    ++++ corner id: 11
+    ----Cells:
+    ++++ cell id: 2
+    ----Edges:
+    ++++ edge id: 8
+    ----Vertices:
+    ++++ vertex id: 6
+^^^^^^^^Wedge id: 24
+    ----Corners:
+    ++++ corner id: 12
+    ----Cells:
+    ++++ cell id: 3
+    ----Edges:
+    ++++ edge id: 6
+    ----Vertices:
+    ++++ vertex id: 4
+^^^^^^^^Wedge id: 25
+    ----Corners:
+    ++++ corner id: 12
+    ----Cells:
+    ++++ cell id: 3
+    ----Edges:
+    ++++ edge id: 7
+    ----Vertices:
+    ++++ vertex id: 4
+^^^^^^^^Wedge id: 26
+    ----Corners:
+    ++++ corner id: 13
+    ----Cells:
+    ++++ cell id: 3
+    ----Edges:
+    ++++ edge id: 10
+    ----Vertices:
+    ++++ vertex id: 5
+^^^^^^^^Wedge id: 27
+    ----Corners:
+    ++++ corner id: 13
+    ----Cells:
+    ++++ cell id: 3
+    ----Edges:
+    ++++ edge id: 6
+    ----Vertices:
+    ++++ vertex id: 5
+^^^^^^^^Wedge id: 28
+    ----Corners:
+    ++++ corner id: 14
+    ----Cells:
+    ++++ cell id: 3
+    ----Edges:
+    ++++ edge id: 11
+    ----Vertices:
+    ++++ vertex id: 8
+^^^^^^^^Wedge id: 29
+    ----Corners:
+    ++++ corner id: 14
+    ----Cells:
+    ++++ cell id: 3
+    ----Edges:
+    ++++ edge id: 10
+    ----Vertices:
+    ++++ vertex id: 8
+^^^^^^^^Wedge id: 30
+    ----Corners:
+    ++++ corner id: 15
+    ----Cells:
+    ++++ cell id: 3
+    ----Edges:
+    ++++ edge id: 7
+    ----Vertices:
+    ++++ vertex id: 7
+^^^^^^^^Wedge id: 31
+    ----Corners:
+    ++++ corner id: 15
+    ----Cells:
+    ++++ cell id: 3
+    ----Edges:
     ++++ edge id: 11
     ----Vertices:
     ++++ vertex id: 7

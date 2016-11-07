@@ -21,8 +21,10 @@
 // system includes
 #include <cstring>
 
-// exodus has a problem with regions in nfaced data
-// #define EXODUS_3D_REGION_BUGFIX
+// Paraview has a problem with regions in nfaced data.  Uncomment the next
+// line, or compile with -dPARAVIEW_EXODUS_3D_REGION_BUGFIX to outout exodus
+// files with only one region.
+// #define PARAVIEW_EXODUS_3D_REGION_BUGFIX
 
 
 namespace ale {
@@ -1054,7 +1056,7 @@ public:
     // final mesh setup
     m.init();
 
-#ifndef EXODUS_3D_REGION_BUGFIX
+#ifndef PARAVIEW_EXODUS_3D_REGION_BUGFIX
 
     // override the region ids
     m.set_regions( region_ids.data() );

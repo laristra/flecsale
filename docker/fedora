@@ -82,8 +82,7 @@ cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} ..
 
 RUN make VERBOSE=1
-RUN ctest -V -R shock_box
-RUN make test
+RUN ctest -V
 RUN make doxygen flecsi.doxygen
 RUN cd .. && if [ ${COVERAGE} ]; then $HOME/.local/bin/codecov; fi && cd -
 RUN make install DESTDIR=${PWD}

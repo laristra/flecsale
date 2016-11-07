@@ -27,7 +27,6 @@ TEST_F(burton_3d, dump) {
 
   mesh_.dump( CINCH_CAPTURE() );
 
-  cout << CINCH_DUMP() << endl;
   std::string outfile = output_prefix()+".blessed";
   CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 }
@@ -78,7 +77,6 @@ TEST_F(burton_3d, mesh) {
     CINCH_CAPTURE() << "----------- corner id: " << c.id() << endl;
   } // for
 
-
   CINCH_CAPTURE() << separator;
   CINCH_CAPTURE() << "Wedges in mesh:" << endl;
 
@@ -86,7 +84,162 @@ TEST_F(burton_3d, mesh) {
     CINCH_CAPTURE() << "----------- wedge id: " << w.id() << endl;
   } // for
 
-  cout << CINCH_DUMP() << endl;
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "For each vertex:" << endl;
+
+  for(auto v: mesh_.vertices()) {
+    CINCH_CAPTURE() << "^^^^^^^^Vertex id: " << v.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Corners:" << endl;
+    for(auto c: mesh_.corners(v))
+      CINCH_CAPTURE() << "    ++++ corner id: " << c.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Wedges:" << endl;
+    for(auto w: mesh_.wedges(v))
+      CINCH_CAPTURE() << "    ++++ wedge id: " << w.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Cells:" << endl;
+    for(auto c: mesh_.cells(v))
+      CINCH_CAPTURE() << "    ++++ cell id: " << c.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Faces:" << endl;
+    for(auto f: mesh_.faces(v))
+      CINCH_CAPTURE() << "    ++++ face id: " << f.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Edges:" << endl;
+    for(auto e: mesh_.edges(v))
+      CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
+  } // for
+
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "For each edge:" << endl;
+
+  for(auto e : mesh_.edges()) {
+    CINCH_CAPTURE() << "^^^^^^^^Edge id: " << e.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Corners:" << endl;
+    for(auto cnr : mesh_.corners(e))
+      CINCH_CAPTURE() << "    ++++ corner id: " << cnr.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Cells:" << endl;
+    for(auto c : mesh_.cells(e))
+      CINCH_CAPTURE() << "    ++++ cell id: " << c.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Faces:" << endl;
+    for(auto f: mesh_.faces(e))
+      CINCH_CAPTURE() << "    ++++ face id: " << f.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Vertices:" << endl;
+    for(auto v : mesh_.vertices(e))
+      CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
+
+  } // for
+
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "For each face:" << endl;
+
+  for(auto f : mesh_.faces()) {
+    CINCH_CAPTURE() << "^^^^^^^^Face id: " << f.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Corners:" << endl;
+    for(auto cnr : mesh_.corners(f))
+      CINCH_CAPTURE() << "    ++++ corner id: " << cnr.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Cells:" << endl;
+    for(auto c: mesh_.cells(f))
+      CINCH_CAPTURE() << "    ++++ cell id: " << c.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Edges:" << endl;
+    for(auto e : mesh_.edges(f))
+      CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Vertices:" << endl;
+    for(auto v : mesh_.vertices(f))
+      CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
+
+  } // for
+
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "For each cell:" << endl;
+
+  for(auto c : mesh_.cells()) {
+    CINCH_CAPTURE() << "^^^^^^^^Cell id: " << c.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Corners:" << endl;
+    for(auto cnr : mesh_.corners(c))
+      CINCH_CAPTURE() << "    ++++ corner id: " << cnr.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Faces:" << endl;
+    for(auto f: mesh_.faces(c))
+      CINCH_CAPTURE() << "    ++++ face id: " << f.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Edges:" << endl;
+    for(auto e : mesh_.edges(c))
+      CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Vertices:" << endl;
+    for(auto v : mesh_.vertices(c))
+      CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
+
+  } // for
+
+
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "For each corner:" << endl;
+
+  for(auto c : mesh_.corners()) {
+    CINCH_CAPTURE() << "^^^^^^^^Corner id: " << c.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Wedges:" << endl;
+    for(auto w: mesh_.wedges(c)) 
+      CINCH_CAPTURE() << "    ++++ wedge id: " << w.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Cells:" << endl;
+    for(auto cl: mesh_.cells(c)) 
+      CINCH_CAPTURE() << "    ++++ cell id: " << cl.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Faces:" << endl;
+    for(auto f: mesh_.faces(c))
+      CINCH_CAPTURE() << "    ++++ face id: " << f.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Edges:" << endl;
+    for(auto e: mesh_.edges(c)) 
+      CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Vertices:" << endl;
+    for(auto v: mesh_.vertices(c)) 
+      CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
+
+  } // for
+
+  CINCH_CAPTURE() << separator;
+  CINCH_CAPTURE() << "For each wedge:" << endl;
+
+  for(auto w : mesh_.wedges()) {
+    CINCH_CAPTURE() << "^^^^^^^^Wedge id: " << w.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Corners:" << endl;
+    for(auto c: mesh_.corners(w)) 
+      CINCH_CAPTURE() << "    ++++ corner id: " << c.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Cells:" << endl;
+    for(auto cl: mesh_.cells(w)) 
+      CINCH_CAPTURE() << "    ++++ cell id: " << cl.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Faces:" << endl;
+    for(auto f: mesh_.faces(w))
+      CINCH_CAPTURE() << "    ++++ face id: " << f.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Edges:" << endl;
+    for(auto e: mesh_.edges(w)) 
+      CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
+
+    CINCH_CAPTURE() << "    ----Vertices:" << endl;
+    for(auto v: mesh_.vertices(w)) 
+      CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
+
+  } // for
+
   std::string outfile = output_prefix()+".blessed";
   CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 
@@ -154,7 +307,6 @@ TEST_F(burton_3d, geometry) {
 
   } // for
 
-  cout << CINCH_DUMP() << endl;
   std::string outfile = output_prefix()+".blessed";
   CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 

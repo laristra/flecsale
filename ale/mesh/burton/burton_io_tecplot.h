@@ -71,7 +71,9 @@ public:
   };
 
   //============================================================================
-  //! A mapping object utility for tecplot zones
+  //! \brief A mapping object utility for tecplot zones
+  //! \remark "Regions" are FleCSALE's terminology for groups of cells
+  //!         whereas "zones" are Tecplot's terminology. 
   //============================================================================
   struct tec_zone_map_t {
 
@@ -89,8 +91,9 @@ public:
 
       // determine a local cell zone ordering
       for ( auto c : m.cells() ) {
+        auto cell_id = c.id();
         auto reg_id = c->region();
-        elem_zone_map[reg_id][c] = local_elem_id[reg_id]++;
+        elem_zone_map[reg_id][cell_id] = local_elem_id[reg_id]++;
       }
 
       // check the sums
@@ -113,18 +116,21 @@ public:
       // this region id
       auto this_region = zone_id;
 
+      // all the faces of the mesh
+      auto faces = mesh.faces();
+
       // count how many faces there are in this block
       num_faces_this_zone = 0;
       for ( auto c : elem_this_zone ) 
         num_faces_this_zone += mesh.faces(c).size();
       
       // create a face map
-      std::vector< face_t* > faces_this_zone; 
+      std::vector< size_t > faces_this_zone; 
       faces_this_zone.reserve( num_faces_this_zone );
       
       for ( auto c : elem_this_zone ) 
         for ( auto f : mesh.faces( c ) )
-          faces_this_zone.emplace_back( f );
+          faces_this_zone.emplace_back( f.id() );
       
       // sort, then delete duplicate entries
       std::sort( faces_this_zone.begin(), faces_this_zone.end() );
@@ -135,9 +141,11 @@ public:
       num_faces_this_zone = faces_this_zone.size();
 
       // count total face nodes
+
       num_face_nodes_this_zone = 0;
-      for ( auto f : faces_this_zone ) 
-          num_face_nodes_this_zone += mesh.vertices(f).size();
+      for ( auto face_id : faces_this_zone ) 
+          num_face_nodes_this_zone += 
+            mesh.vertices( faces[face_id] ).size();
       
       // face definitions
       face_nodes.resize( num_face_nodes_this_zone );
@@ -152,16 +160,16 @@ public:
 
       size_t f = 0, i = 0;
       num_face_conn = 0;
-      for (auto face : faces_this_zone) {
+      for (auto face_id : faces_this_zone) {
         // get the list of vertices
-        auto points = mesh.vertices(face);
+        auto points = mesh.vertices(faces[face_id]);
         // the nodes of each face
         for (auto vert : points)
           face_nodes[i++] = vert.id() + 1; // 1-based ids      
         // the counts
         face_node_counts[f] = points.size();
         // the cells of each face (1-based ids)
-        auto cells = mesh.cells( face );
+        auto cells = mesh.cells( faces[face_id] );
         assert( cells.size() > 0 && "cell has no edges");
         // initialize cells to no connections
         face_cell_left [f] = 0;
@@ -171,13 +179,13 @@ public:
         auto left_region = region_map[ left_cell->region() ];
         // left cell is local
         if ( left_region == this_region )
-          face_cell_left[f] = elem_zone_map[ this_region ].at( left_cell ) + 1;
+          face_cell_left[f] = elem_zone_map[ this_region ].at( left_cell.id() ) + 1;
         // left cell is on another zone
         else {
           face_cell_left[f] = - (++num_face_conn);
           face_conn_counts.emplace_back( 1 );
           face_conn_elems.emplace_back( 
-            elem_zone_map[ left_region ].at( left_cell ) + 1 );
+            elem_zone_map[ left_region ].at( left_cell.id() ) + 1 );
           face_conn_zones.emplace_back( left_region + 1 );
         }         
         // boundary faces don't have right cell
@@ -186,13 +194,13 @@ public:
           auto right_region = region_map[ right_cell->region() ];
           // right cell is local
           if ( right_region == this_region ) 
-            face_cell_right[f] = elem_zone_map[ this_region ].at( right_cell ) + 1;
+            face_cell_right[f] = elem_zone_map[ this_region ].at( right_cell.id() ) + 1;
           // right cell is on another zone
           else {
             face_cell_right[f] = - (++num_face_conn);
             face_conn_counts.emplace_back( 1 );
             face_conn_elems.emplace_back( 
-              elem_zone_map[ right_region ].at( right_cell ) + 1 );
+              elem_zone_map[ right_region ].at( right_cell.id() ) + 1 );
             face_conn_zones.emplace_back( right_region + 1 );
           }
         }
@@ -212,7 +220,7 @@ public:
     //! \brief number of zones
     tec_int_t num_zones;
 
-    //! \brief for face-zone connectivity
+    //! \brief for face-to-element connectivity
     //! @{
     tec_int_t num_faces_this_zone = 0;
     tec_int_t num_face_nodes_this_zone = 0;
@@ -222,7 +230,7 @@ public:
     std::vector<tec_int_t> face_cell_left;
     //! @}
     
-    //! \brief  for elememnt-zone connectivity
+    //! \brief  for element/zone face connectivity
     //! @{
     tec_int_t num_face_conn = 0;
     std::vector<tec_int_t> face_conn_counts;
@@ -230,12 +238,12 @@ public:
     std::vector<tec_int_t> face_conn_zones;
     //! @}
     
-    //! \brief  storage for the zone-element mapping
+    //! \brief  storage for the zone-to-element mapping
     std::vector< 
-      std::map< cell_t*, size_t > 
+      std::map< size_t, size_t > 
     > elem_zone_map;
 
-    //! \brief  storage for the region-zone mapping
+    //! \brief  storage for the region-to-zone mapping
     std::vector< size_t > region_map;
         
   };

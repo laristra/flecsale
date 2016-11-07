@@ -10,6 +10,14 @@ target_link_libraries( hydro ${ALE_LIBRARIES} )
 create_regression_test( 
 	NAME shock_box 
 	COMMAND $<TARGET_FILE:hydro> 
-	COMPARE shock_box_3d0000048.dat 
-	STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_3d0000048.dat.std 
+	COMPARE shock_box_3d0000011.dat 
+	STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_3d0000011.dat.std 
+)
+
+create_regression_test( 
+	NAME shock_box 
+	COMMAND $<TARGET_FILE:hydro> 
+	THREADS 4
+	COMPARE shock_box_3d0000011.dat 
+	STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_3d0000011.dat.std 
 )
