@@ -15,7 +15,7 @@ create_regression_test(
 )
 
 create_regression_test( 
-	NAME shock_box 
+	NAME shock_box_omp4 
 	COMMAND $<TARGET_FILE:hydro> 
 	THREADS 4
 	COMPARE shock_box_3d0000011.dat 
