@@ -16,7 +16,7 @@ ARG COVERAGE
 RUN dnf install -y -q make cmake git doxygen graphviz texlive-epspdf
 
 RUN if [ ! ${MINIMAL} ]; then \
-  dnf install -y -q lapack-devel metis-devel scotch-devel lapack-devel flex; \
+  dnf install -y -q exodusii exodusii-devel metis-devel scotch-devel lapack-devel flex; \
 fi
 
 RUN echo $COMPILER
