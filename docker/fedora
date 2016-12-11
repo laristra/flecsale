@@ -19,7 +19,6 @@ RUN if [ ! ${MINIMAL} ]; then \
   dnf install -y -q exodusii exodusii-devel metis-devel scotch-devel lapack-devel flex; \
 fi
 
-RUN echo $COMPILER
 RUN case $(echo $COMPILER | tr '[:upper:]' '[:lower:]') in \
   gnu) dnf install -y -q gcc-c++ gcc-gfortran;; \
   clang) dnf install -y -q gcc-c++ clang gcc-gfortran;; \
@@ -40,6 +39,9 @@ fi
 
 # clone the repository
 RUN git clone --recursive https://github.com/losalamos/flecsale.git
+
+# need cereal too for flecsi
+RUN git clone git@github.com:USCiLab/cereal.git
 
 WORKDIR flecsale
 RUN git fetch --tags
@@ -79,7 +81,9 @@ fi; \
 cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DENABLE_UNIT_TESTS=ON \
           -DENABLE_DOXYGEN=ON \
-          ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} ..
+          ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} \
+          -DCereal_INCLUDE_DIR=../../cereal/include/ \
+          ..
 
 RUN make VERBOSE=1
 RUN ctest -V

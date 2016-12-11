@@ -42,6 +42,9 @@ fi
 # clone the repository
 RUN git clone --recursive https://github.com/losalamos/flecsale.git
 
+# need cereal too for flecsi
+RUN git clone git@github.com:USCiLab/cereal.git
+
 WORKDIR flecsale
 RUN git fetch --tags
 RUN if [ ${TRAVIS} = true ]; then \
@@ -50,7 +53,7 @@ RUN if [ ${TRAVIS} = true ]; then \
     git checkout FETCH_HEAD; \
   else \
     git fetch --depth=10 "git://github.com/${TRAVIS_REPO_SLUG}" "${TRAVIS_BRANCH}"; \
-	  git checkout "${TRAVIS_COMMIT}"; \
+    git checkout "${TRAVIS_COMMIT}"; \
   fi; \
   git submodule update; \
 fi
@@ -58,7 +61,6 @@ fi
 # make a build directory
 RUN mkdir build
 WORKDIR build
-
 
 # run cmake
 RUN \
@@ -80,8 +82,10 @@ if [ $(echo $BUILD_TYPE | tr '[:upper:]' '[:lower:]') = debug ]; then \
 fi; \
 cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DENABLE_UNIT_TESTS=ON \
-	        -DENABLE_DOXYGEN=ON \
-          ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} ..
+          -DENABLE_DOXYGEN=ON \
+          ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} \
+          -DCereal_INCLUDE_DIR=../../cereal/include/ \
+          ..
 
 RUN make VERBOSE=1
 RUN ctest -V
