@@ -212,7 +212,7 @@ TEST_F(burton_io, write_plt_3d) {
 #endif // HAVE_TECIO
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief test writing an exodus file
+//! \brief test writing a vtk file
 ////////////////////////////////////////////////////////////////////////////////
 TEST_F(burton_io, write_vtk_2d) {
   mesh_2d_t m;
@@ -234,6 +234,28 @@ TEST_F(burton_io, write_vtk_2d) {
   ASSERT_FALSE(write_mesh(name, m, true));
 } // TEST_F
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief test writing a vtk file
+////////////////////////////////////////////////////////////////////////////////
+TEST_F(burton_io, write_vtk_3d) {
+  mesh_3d_t m;
+  // read mesh written by above test
+  string name("box-tet.g");
+  ASSERT_FALSE(read_mesh(name, m));
+  // check the mesh
+  EXPECT_TRUE( m.is_valid(false) );
+  // create state data on b
+  create_data(m);
+  // write the mesh in default format
+  name = output_prefix()+"-default.vtk";
+  ASSERT_FALSE(write_mesh(name, m));
+  // write the mesh in ascii
+  name = output_prefix()+"-ascii.vtk";
+  ASSERT_FALSE(write_mesh(name, m, false));
+  // write it again in binary
+  name = output_prefix()+"-binary.vtk";
+  ASSERT_FALSE(write_mesh(name, m, true));
+} // TEST_F
 
 #endif // HAVE_EXODUS
 
