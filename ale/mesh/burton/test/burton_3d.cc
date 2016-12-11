@@ -347,7 +347,7 @@ TEST_F(burton_3d, normals) {
         ASSERT_EQ( 1, mesh_.vertices( *wg ).size() );
         ASSERT_EQ( 1, mesh_.corners( *wg ).size() );
         auto fc = mesh_.faces(*wg).front();
-        auto n = wg->facet_normal_right();
+        auto n = (*wg)->facet_normal_right();
         auto fx = fc->centroid();
         auto cx = cl->centroid();
         auto delta = fx - cx;
@@ -362,7 +362,7 @@ TEST_F(burton_3d, normals) {
         ASSERT_EQ( 1, mesh_.vertices( *wg ).size() );
         ASSERT_EQ( 1, mesh_.corners( *wg ).size() );
         auto fc = mesh_.faces(*wg).front();
-        auto n = wg->facet_normal_left();
+        auto n = (*wg)->facet_normal_left();
         auto fx = fc->centroid();
         auto cx = cl->centroid();
         auto delta = fx - cx;
@@ -386,7 +386,7 @@ TEST_F(burton_3d, normals) {
       {
         auto cl = mesh_.cells(*wg).front();
         auto fc = mesh_.faces(*wg).front();
-        auto n = wg->facet_normal_right();
+        auto n = (*wg)->facet_normal_right();
         auto fx = fc->centroid();
         auto cx = cl->centroid();
         auto delta = fx - cx;
@@ -398,7 +398,7 @@ TEST_F(burton_3d, normals) {
       {
         auto cl = mesh_.cells(*wg).front();
         auto fc = mesh_.faces(*wg).front();
-        auto n = wg->facet_normal_left();
+        auto n = (*wg)->facet_normal_left();
         auto fx = fc->centroid();
         auto cx = cl->centroid();
         auto delta = fx - cx;

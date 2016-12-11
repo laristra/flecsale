@@ -272,25 +272,35 @@ int main(int argc, char** argv)
 
   // create some field data.  Fields are registered as struct of arrays.
   // this allows us to access the data in different patterns.
-  register_state(mesh, "density",      cells,   real_t, persistent);
-  register_state(mesh, "pressure",     cells,   real_t, persistent);
-  register_state(mesh, "velocity",     cells, vector_t, persistent);
+  register_data(mesh, hydro,  density,   real_t, dense, 1, cells);
+  register_data(mesh, hydro, pressure,   real_t, dense, 1, cells);
+  register_data(mesh, hydro, velocity, vector_t, dense, 1, cells);
 
-  register_state(mesh, "internal_energy", cells, real_t, persistent);
-  register_state(mesh, "temperature",     cells, real_t, persistent);
-  register_state(mesh, "sound_speed",     cells, real_t, persistent);
+  register_data(mesh, hydro, internal_energy, real_t, dense, 1, cells);
+  register_data(mesh, hydro,     temperature, real_t, dense, 1, cells);
+  register_data(mesh, hydro,     sound_speed, real_t, dense, 1, cells);
 
+  // set these variables as persistent for plotting
+  get_accessor(mesh, hydro,  density,   real_t, dense, 0).attributes().set(persistent);
+  get_accessor(mesh, hydro, pressure,   real_t, dense, 0).attributes().set(persistent);
+  get_accessor(mesh, hydro, velocity, vector_t, dense, 0).attributes().set(persistent);
+
+  get_accessor(mesh, hydro, internal_energy, real_t, dense, 0).attributes().set(persistent);
+  get_accessor(mesh, hydro,     temperature, real_t, dense, 0).attributes().set(persistent);
+  get_accessor(mesh, hydro,     sound_speed, real_t, dense, 0).attributes().set(persistent);
 
   // compute the fluxes.  here I am regestering a struct as the stored data
   // type since I will only ever be accesissing all the data at once.
-  register_state(mesh, "flux", faces, flux_data_t, temporary);
+  register_data(mesh, hydro, flux, flux_data_t, dense, 1, faces);
 
   // register the time step and set a cfl
-  register_global_state( mesh, "time_step", real_t );
-  register_global_state( mesh, "cfl", real_t ) = CFL;  
+  register_data( mesh, hydro, time_step, real_t, global, 1 );
+  register_data( mesh, hydro, cfl, real_t, global, 1 );
+  *get_accessor( mesh, hydro, cfl, real_t, global, 0) = CFL;  
 
   // register state a global eos
-  register_global_state( mesh, "eos", eos_t ) = eos;
+  register_data( mesh, hydro, eos, eos_t, global, 1 );
+  *get_accessor( mesh, hydro, eos, eos_t, global, 0 ) = eos;
 
   //===========================================================================
   // Initial conditions
@@ -321,6 +331,9 @@ int main(int argc, char** argv)
   auto soln_time = mesh.time();
   auto time_cnt  = mesh.time_step_counter();
 
+  // get an accessor for the time step
+  auto time_step = get_accessor( mesh, hydro, time_step, real_t, global, 0 );   
+
   // a counter for this session
   size_t num_steps = 0; 
 
@@ -331,8 +344,7 @@ int main(int argc, char** argv)
     apps::hydro::evaluate_time_step<eqns_t>( mesh );
     
     // access the computed time step and make sure its not too large
-    auto time_step = access_global_state( mesh, "time_step", real_t );   
-    time_step = std::min( *time_step, final_time - soln_time );       
+    *time_step = std::min( *time_step, final_time - soln_time );       
 
     cout << "step =  " << std::setw(4) << time_cnt+1
          << std::setprecision(2)

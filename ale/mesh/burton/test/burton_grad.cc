@@ -35,12 +35,12 @@ TEST_F(burton_2d, gradients) {
 
 
   // setup a cell centered and vertex-based field
-  register_state(mesh_, "pressure", vertices,   real_t, persistent);
-  register_state(mesh_, "velocity",    cells, vector_t, persistent);
+  register_data(mesh_, hydro, pressure, real_t, dense, 1, vertices);
+  register_data(mesh_, hydro, velocity, vector_t, dense, 1, cells);
 
   // access the state arrays
-  auto pressure = access_state(mesh_, "pressure",   real_t);
-  auto velocity = access_state(mesh_, "velocity", vector_t);
+  auto pressure = get_accessor(mesh_, hydro, pressure,   real_t, dense, 0);
+  auto velocity = get_accessor(mesh_, hydro, velocity, vector_t, dense, 0);
 
   // loop over vertices and assign the field value
   for ( auto v : mesh_.vertices() ) {
@@ -60,7 +60,8 @@ TEST_F(burton_2d, gradients) {
 
 
   // get constant accessors to the pressure
-  const auto const_pressure = access_state(mesh_, "pressure",   real_t);
+  const auto const_pressure = 
+    get_accessor(mesh_, hydro, pressure, real_t, dense, 0);
 
   // loop over vertices and compute the gradient
   for ( auto v0 : mesh_.vertices() ) {
@@ -79,7 +80,7 @@ TEST_F(burton_2d, gradients) {
     // loop over each edge connected to v0
     for ( auto e : mesh_.edges(v0) ) {
       // get the edge points and select the other point
-      auto points = mesh_.vertices(e).to_vec();
+      auto points = mesh_.vertices(e);
       auto v1 = ( points[0] == v0 ? points[1] : points[0] );
       // get the state and coordinates
       auto u1 = const_pressure[v1];
@@ -113,7 +114,8 @@ TEST_F(burton_2d, gradients) {
 
 
   // get constant accessors to the pressure
-  const auto const_velocity = access_state(mesh_, "velocity", vector_t);
+  const auto const_velocity = 
+    get_accessor(mesh_, hydro, velocity, vector_t, dense, 0);
 
   // loop over vertices and compute the gradient
   for ( auto c0 : mesh_.cells() ) {

@@ -12,9 +12,9 @@ set(mesh_HEADERS
   burton/burton_io_vtm.h
   burton/burton_io_vtu.h
 
+  burton/burton_config.h
   burton/burton_mesh.h
   burton/burton_mesh_topology.h
-  burton/burton_mesh_traits.h
   burton/burton_types.h
 
   burton/burton_corner.h

@@ -11,20 +11,11 @@
 
 // user incldues
 #include "ale/mesh/burton/burton_types.h"
-#include "flecsi/mesh/mesh_types.h"
+#include "flecsi/topology/mesh_types.h"
 
 
 namespace ale {
 namespace mesh {
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Expose some types
-////////////////////////////////////////////////////////////////////////////////
-
-// some flexi flags
-using flecsi::flecsi_internal;
-using flecsi::flecsi_user_space;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Type for storing instance of template specialized low level mesh.
@@ -32,7 +23,7 @@ using flecsi::flecsi_user_space;
 ////////////////////////////////////////////////////////////////////////////////
 template < std::size_t N >
 using burton_mesh_topology_t = 
-  flecsi::mesh_topology_t< burton_mesh_types_t<N> >;
+  flecsi::topology::mesh_topology_t< burton_types_t<N> >;
 
 
 //! Two dimensional specialization of the mesh topology.

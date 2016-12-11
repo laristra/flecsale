@@ -21,7 +21,6 @@ using burton_3d_wedge_t = burton_wedge_t<3>;
 ////////////////////////////////////////////////////////////////////////////////
 burton_2d_wedge_t::vector_t burton_2d_wedge_t::facet_normal_left() const
 {
-  using flecsi::mesh_entity_base_t;
   auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
   auto vs = msh->template entities<vertex_t::dimension, domain, vertex_t::domain>(this);
   auto es = msh->template entities<edge_t::dimension, domain, edge_t::domain>(this);
@@ -34,7 +33,6 @@ burton_2d_wedge_t::vector_t burton_2d_wedge_t::facet_normal_left() const
 
 burton_2d_wedge_t::vector_t burton_2d_wedge_t::facet_normal_right() const
 {
-  using flecsi::mesh_entity_base_t;
   auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
   auto vs = msh->template entities<vertex_t::dimension, domain, vertex_t::domain>(this);
   auto es = msh->template entities<edge_t::dimension, domain, edge_t::domain>(this);
@@ -55,7 +53,6 @@ bool burton_2d_wedge_t::is_boundary() const
 
 burton_2d_wedge_t::point_t burton_2d_wedge_t::facet_centroid() const
 {
-  using flecsi::mesh_entity_base_t;
   auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
   auto vs = msh->template entities<vertex_t::dimension, domain, vertex_t::domain>(this);
   auto es = msh->template entities<edge_t::dimension, domain, edge_t::domain>(this);
@@ -76,7 +73,6 @@ burton_2d_wedge_t::point_t burton_2d_wedge_t::facet_midpoint() const
 ////////////////////////////////////////////////////////////////////////////////
 burton_3d_wedge_t::vector_t burton_3d_wedge_t::facet_normal_left() const
 {
-  using flecsi::mesh_entity_base_t;
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
   auto vs = msh->template entities<vertex_t::dimension, domain, vertex_t::domain>(this);
   auto es = msh->template entities<edge_t::dimension, domain, edge_t::domain>(this);
@@ -92,7 +88,6 @@ burton_3d_wedge_t::vector_t burton_3d_wedge_t::facet_normal_left() const
 
 burton_3d_wedge_t::vector_t burton_3d_wedge_t::facet_normal_right() const
 {
-  using flecsi::mesh_entity_base_t;
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
   auto vs = msh->template entities<vertex_t::dimension, domain, vertex_t::domain>(this);
   auto es = msh->template entities<edge_t::dimension, domain, edge_t::domain>(this);
@@ -117,7 +112,6 @@ bool burton_3d_wedge_t::is_boundary() const
 
 burton_3d_wedge_t::point_t burton_3d_wedge_t::facet_centroid() const
 {
-  using flecsi::mesh_entity_base_t;
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
   auto vs = msh->template entities<vertex_t::dimension, domain, vertex_t::domain>(this);
   auto es = msh->template entities<edge_t::dimension, domain, edge_t::domain>(this);
@@ -133,7 +127,6 @@ burton_3d_wedge_t::point_t burton_3d_wedge_t::facet_centroid() const
 
 burton_3d_wedge_t::point_t burton_3d_wedge_t::facet_midpoint() const
 {
-  using flecsi::mesh_entity_base_t;
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
   auto vs = msh->template entities<vertex_t::dimension, domain, vertex_t::domain>(this);
   auto es = msh->template entities<edge_t::dimension, domain, edge_t::domain>(this);

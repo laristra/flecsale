@@ -58,10 +58,10 @@ burton_2d_quad_t::real_t burton_2d_quad_t::min_length() const
   auto es = msh->template entities<edge_t::dimension, edge_t::domain>(this);
   // check the edges first
   auto eit = es.begin();
-  auto min_length = eit->length();
+  auto min_length = (*eit)->length();
   std::for_each( ++eit, es.end(), [&](auto && e) 
                  { 
-                   min_length = std::min( e->length(), min_length );
+                   min_length = std::min( (*e)->length(), min_length );
                  });
   // now check the diagonal
   min_length = std::min( abs( vs[0]->coordinates() - vs[2]->coordinates() ), min_length );
@@ -124,10 +124,10 @@ burton_3d_quad_t::real_t burton_3d_quad_t::min_length() const
   auto es = msh->template entities<edge_t::dimension, edge_t::domain>(this);
   // check the edges first
   auto eit = es.begin();
-  auto min_length = eit->length();
+  auto min_length = (*eit)->length();
   std::for_each( ++eit, es.end(), [&](auto && e) 
                  { 
-                   min_length = std::min( e->length(), min_length );
+                   min_length = std::min( (*e)->length(), min_length );
                  });
   // now check the diagonal
   min_length = std::min( abs( vs[0]->coordinates() - vs[2]->coordinates() ), min_length );

@@ -350,23 +350,28 @@ TEST_F(burton_2d, accessors) {
   cout << "accessors" << endl;
   cout << separator;
 
-  register_state(mesh_, "pressure", cells, real_t, persistent);
-  register_state(mesh_, "density", cells, real_t);
-  register_state(mesh_, "total energy", cells, real_t, persistent);
-  register_state(mesh_, "velocity", vertices, vector_t, persistent);
-  register_state(mesh_, "H", edges, vector_t);
-  register_state(mesh_, "point_not_persistent", vertices, point_t);
-  register_state(mesh_, "point_is_persistent", vertices, point_t, persistent);
+  register_data(mesh_, hydro, pressure, real_t, dense, 1, cells);
+  register_data(mesh_, hydro, density, real_t, dense, 1, cells);
+  register_data(mesh_, hydro, total_energy, real_t, dense, 1, cells);
+  register_data(mesh_, hydro, velocity, vector_t, dense, 1, vertices);
+  register_data(mesh_, hydro, H, vector_t, dense, 1, edges);
+  register_data(mesh_, hydro, point_not_persistent, point_t, dense, 1, vertices);
+  register_data(mesh_, hydro, point_is_persistent, point_t, dense, 1, vertices);
+
+  get_accessor(mesh_, hydro, pressure, real_t, dense, 0).attributes().set( persistent );
+  get_accessor(mesh_, hydro, total_energy, real_t, dense, 0).attributes().set( persistent );
+  get_accessor(mesh_, hydro, velocity, vector_t, dense, 0).attributes().set( persistent );
+  get_accessor(mesh_, hydro, point_is_persistent, point_t, dense, 0).attributes().set( persistent );
 
   struct data_t {
     double x, y;
   };  
-  register_global_state(mesh_, "const", data_t);
+  register_data(mesh_, hydro, const, data_t, global, 1);
 
   cout << "Accessing state with type real_t" << endl;
 
   std::vector<std::string> labels;
-  auto vr = access_type(mesh_, real_t);
+  auto vr = get_accessors(mesh_, hydro, real_t, dense, 0);
   for(auto v: vr) {
     std::cout << v.label() << std::endl;
     labels.push_back(v.label());
@@ -376,13 +381,13 @@ TEST_F(burton_2d, accessors) {
     != labels.end());
   ASSERT_TRUE(std::find(labels.begin(), labels.end(), "density")
     != labels.end());
-  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "total energy")
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "total_energy")
     != labels.end());
   labels.clear();
 
   cout << "Accessing state with type data_t" << endl;
 
-  auto vd = access_type(mesh_, data_t);
+  auto vd = get_accessors(mesh_, hydro, data_t, global, 0);
   for(auto v: vd) {
     labels.push_back(v.label());
   } // for
@@ -392,7 +397,7 @@ TEST_F(burton_2d, accessors) {
 
   cout << "Accessing state with type real_t at cells" << endl;
 
-  auto va = access_type_if(mesh_, real_t, is_at(mesh_,cells));
+  auto va = get_accessors(mesh_, hydro, real_t, dense, 0, is_at(cells));
   for(auto v: va) {
     labels.push_back(v.label());
   } // for
@@ -400,27 +405,27 @@ TEST_F(burton_2d, accessors) {
     != labels.end());
   ASSERT_TRUE(std::find(labels.begin(), labels.end(), "density")
     != labels.end());
-  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "total energy")
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "total_energy")
     != labels.end());
   labels.clear();
 
   cout << "Accessing persistent state with type real_t at cells"
     << endl;
 
-  auto vp = access_type_if(mesh_, real_t, is_persistent_at(mesh_,cells));
+  auto vp = get_accessors(mesh_, hydro, real_t, dense, 0, has_attribute_at(persistent, cells));
 
   for(auto v: vp) {
     labels.push_back(v.label());
   } // for
   ASSERT_TRUE(std::find(labels.begin(), labels.end(), "pressure")
     != labels.end());
-  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "total energy")
+  ASSERT_TRUE(std::find(labels.begin(), labels.end(), "total_energy")
     != labels.end());
   labels.clear();
 
   cout << "Accessing state with type vector_t at vertices" << endl;
 
-  auto vv = access_type_if(mesh_, vector_t, is_at(mesh_,vertices));
+  auto vv = get_accessors(mesh_, hydro, vector_t, dense, 0, is_at(vertices));
   for(auto v: vv) {
     labels.push_back(v.label());
   } // for
@@ -431,7 +436,7 @@ TEST_F(burton_2d, accessors) {
   cout
     << "Accessing persistent state with type vector_t at vertices" << endl;
 
-  auto vpv = access_type_if(mesh_, vector_t, is_persistent_at(mesh_,vertices));
+  auto vpv = get_accessors(mesh_, hydro, vector_t, dense, 0, has_attribute_at(persistent, vertices));
   for(auto v: vpv) {
     labels.push_back(v.label());
   } // for
@@ -441,7 +446,7 @@ TEST_F(burton_2d, accessors) {
 
   cout << "Accessing state with type vector_t at edges" << endl;
 
-  auto ve = access_type_if(mesh_, vector_t, is_at(mesh_,edges));
+  auto ve = get_accessors(mesh_, hydro, vector_t, dense, 0, is_at(edges));
   for(auto v: ve) {
     labels.push_back(v.label());
   } // for
@@ -451,7 +456,7 @@ TEST_F(burton_2d, accessors) {
 
   cout << "Accessing state with type point_t at vertices" << endl;
 
-  auto pv = access_type_if(mesh_, point_t, is_at(mesh_,vertices));
+  auto pv = get_accessors(mesh_, hydro, point_t, dense, 0, is_at(vertices));
   for(auto v: pv) {
     labels.push_back(v.label());
   } // for
@@ -464,7 +469,7 @@ TEST_F(burton_2d, accessors) {
   cout << "Accessing persistent state with type point_t at vertices"
             << endl;
 
-  auto ppv = access_type_if(mesh_, point_t, is_persistent_at(mesh_,vertices));
+  auto ppv = get_accessors(mesh_, hydro, point_t, dense, 0, has_attribute_at(persistent,vertices));
   for(auto v: ppv) {
     labels.push_back(v.label());
   } // for
@@ -486,23 +491,26 @@ TEST_F(burton_2d, state) {
   cout << "state" << endl;
   cout << separator;
 
-  register_state(mesh_, "pressure", cells, real_t, persistent);
-  register_state(mesh_, "velocity", vertices, vector_t, persistent);
-  register_state(mesh_, "H", edges, vector_t);
-  register_state(mesh_, "cornerdata", corners, integer_t);
-  register_state(mesh_, "wedgedata", wedges, bool);
+  register_data(mesh_, hydro, pressure, real_t, dense, 1, cells);
+  register_data(mesh_, hydro, velocity, vector_t, dense, 1, vertices);
+  register_data(mesh_, hydro, H, vector_t, dense, 1, edges);
+  register_data(mesh_, hydro, cornerdata, integer_t, dense, 1, corners);
+  register_data(mesh_, hydro, wedgedata, bool, dense, 1, wedges);
+
+  get_accessor(mesh_, hydro, pressure, real_t, dense, 0).attributes().set(persistent);
+  get_accessor(mesh_, hydro, velocity, vector_t, dense, 0).attributes().set(persistent);
 
   struct data_t {
     int x, y;
   };  
-  register_global_state(mesh_, "const", data_t);
+  register_data(mesh_, hydro, const, data_t, global, 1);
 
 
-  auto p = access_state(mesh_, "pressure", real_t);
-  auto velocity = access_state(mesh_, "velocity", vector_t);
-  auto H = access_state(mesh_, "H", vector_t);
-  auto cd = access_state(mesh_, "cornerdata", integer_t);
-  auto wd = access_state(mesh_, "wedgedata", bool);
+  auto p = get_accessor(mesh_, hydro, pressure, real_t, dense, 0);
+  auto velocity = get_accessor(mesh_, hydro, velocity, vector_t, dense, 0);
+  auto H = get_accessor(mesh_, hydro, H, vector_t, dense, 0);
+  auto cd = get_accessor(mesh_, hydro, cornerdata, integer_t, dense, 0);
+  auto wd = get_accessor(mesh_, hydro, wedgedata, bool, dense, 0);
 
   // cells
   ASSERT_EQ(4, mesh_.num_cells());
@@ -564,8 +572,8 @@ TEST_F(burton_2d, state) {
   } // for
 
   // test global data
-  auto cnst = access_global_state(mesh_, "const", data_t);
-  cnst = { 1, 2 };
+  auto cnst = get_accessor(mesh_, hydro, const, data_t, global, 0);
+  *cnst = { 1, 2 };
   ASSERT_EQ(1, cnst->x);  ASSERT_EQ(1, (*cnst).x);
   ASSERT_EQ(2, cnst->y);  ASSERT_EQ(2, (*cnst).y);
 

@@ -19,7 +19,7 @@ using burton_3d_edge_t = burton_element_t<3,1>;
 using burton_3d_face_t = burton_element_t<3,2>;
 using burton_3d_cell_t = burton_element_t<3,3>;
 
-// some type aliases
+using flecsi::topology::mesh_entity_base_t;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +82,6 @@ burton_2d_edge_t::vector_t burton_2d_edge_t::normal() const
 //! is this a boundary
 bool burton_2d_edge_t::is_boundary() const
 {
-  using flecsi::mesh_entity_base_t;
   auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
   auto cs = mesh->template entities<burton_2d_cell_t::dimension, burton_2d_cell_t::domain>(this);
   return (cs.size() == 1);
@@ -91,22 +90,14 @@ bool burton_2d_edge_t::is_boundary() const
 //! tag a boundary
 void burton_2d_edge_t::tag(const burton_2d_edge_t::tag_t & tag)
 {
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
-  auto flag =
-    data_t::instance().template dense_accessor<tag_list_t, flecsi_internal>(
-      "face_tags", mesh->runtime_id() );
-  flag[mesh_entity_base_t<num_domains>::template id<0>()].push_back( tag );
+  auto flags = get_accessor(*mesh_, mesh, face_tags, tag_list_t, dense, 0);
+  flags[mesh_entity_base_t<num_domains>::template id<0>()].push_back( tag );
 }
 
 //! get boundary tags
 const burton_2d_edge_t::tag_list_t & burton_2d_edge_t::tags() const
 {
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
-  auto flags =
-    data_t::instance().template dense_accessor<tag_list_t, flecsi_internal>(
-      "face_tags", mesh->runtime_id() );
+  auto flags = get_accessor(*mesh_, mesh, face_tags, tag_list_t, dense, 0);
   return flags[mesh_entity_base_t<num_domains>::template id<0>()];
 }
 
@@ -148,31 +139,19 @@ burton_3d_edge_t::real_t  burton_3d_edge_t::length() const
 
 bool burton_3d_edge_t::is_boundary() const
 {
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto flag =
-    data_t::instance().template dense_accessor<bitfield_t, flecsi_internal>(
-      "edge_flags", mesh->runtime_id() );
-  return flag[mesh_entity_base_t<num_domains>::template id<0>()].bitset( mesh_traits_t::bits::boundary );
+  auto flags = get_accessor(*mesh_, mesh, edge_flags, bitfield_t, dense, 0);
+  return flags[mesh_entity_base_t<num_domains>::template id<0>()].bitset( config_t::bits::boundary );
 }
 
 void burton_3d_edge_t::tag(const burton_3d_edge_t::tag_t & tag)
 {
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto flag =
-    data_t::instance().template dense_accessor<tag_list_t, flecsi_internal>(
-      "edge_tags", mesh->runtime_id() );
-  flag[mesh_entity_base_t<num_domains>::template id<0>()].push_back( tag );
+  auto flags = get_accessor(*mesh_, mesh, edge_tags, tag_list_t, dense, 0);
+  flags[mesh_entity_base_t<num_domains>::template id<0>()].push_back( tag );
 }
 
 const burton_3d_edge_t::tag_list_t & burton_3d_edge_t::tags() const
 {
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto flags =
-    data_t::instance().template dense_accessor<tag_list_t, flecsi_internal>(
-      "edge_tags", mesh->runtime_id() );
+  auto flags = get_accessor(*mesh_, mesh, edge_tags, tag_list_t, dense, 0);
   return flags[mesh_entity_base_t<num_domains>::template id<0>()];
 }
 
@@ -219,23 +198,15 @@ burton_2d_cell_t::real_t burton_2d_cell_t::min_length() const
 // get the region id
 burton_2d_cell_t::size_t & burton_2d_cell_t::region()
 {
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
-  auto cell_regions =
-    data_t::instance().template dense_accessor<size_t, flecsi_internal>(
-      "cell_region", mesh->runtime_id() );
-  return cell_regions[mesh_entity_base_t<num_domains>::template id<0>()];
+  auto regions = get_accessor(*mesh_, mesh, cell_region, size_t, dense, 0);
+  return regions[mesh_entity_base_t<num_domains>::template id<0>()];
 }
 
 // get the region id
 burton_2d_cell_t::size_t burton_2d_cell_t::region() const
 {
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
-  auto cell_regions =
-    data_t::instance().template dense_accessor<size_t, flecsi_internal>(
-      "cell_region", mesh->runtime_id() );
-  return cell_regions[mesh_entity_base_t<num_domains>::template id<0>()];
+  auto regions = get_accessor(*mesh_, mesh, cell_region, size_t, dense, 0);
+  return regions[mesh_entity_base_t<num_domains>::template id<0>()];
 }
 
 
@@ -291,7 +262,6 @@ burton_3d_face_t::real_t burton_3d_face_t::min_length() const
 //! is this a boundary
 bool burton_3d_face_t::is_boundary() const
 {
-  using flecsi::mesh_entity_base_t;
   auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
   auto cs = mesh->template entities<burton_3d_cell_t::dimension, burton_3d_cell_t::domain>(this);
   return (cs.size() == 1);
@@ -299,21 +269,13 @@ bool burton_3d_face_t::is_boundary() const
 
 void burton_3d_face_t::tag(const burton_3d_face_t::tag_t & tag)
 {
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto flag =
-    data_t::instance().template dense_accessor<tag_list_t, flecsi_internal>(
-      "face_tags", mesh->runtime_id() );
-  flag[mesh_entity_base_t<num_domains>::template id<0>()].push_back( tag );
+  auto flags = get_accessor(*mesh_, mesh, face_tags, tag_list_t, dense, 0);
+  flags[mesh_entity_base_t<num_domains>::template id<0>()].push_back( tag );
 }
 
 const burton_3d_face_t::tag_list_t & burton_3d_face_t::tags() const
 {
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto flags =
-    data_t::instance().template dense_accessor<tag_list_t, flecsi_internal>(
-      "face_tags", mesh->runtime_id() );
+  auto flags = get_accessor(*mesh_, mesh, face_tags, tag_list_t, dense, 0);
   return flags[mesh_entity_base_t<num_domains>::template id<0>()];
 }
 
@@ -361,23 +323,15 @@ burton_3d_cell_t::real_t burton_3d_cell_t::min_length() const
 // get the region id
 burton_3d_cell_t::size_t & burton_3d_cell_t::region()
 {
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto cell_regions =
-    data_t::instance().template dense_accessor<size_t, flecsi_internal>(
-      "cell_region", mesh->runtime_id() );
-  return cell_regions[mesh_entity_base_t<num_domains>::template id<0>()];
+  auto regions = get_accessor(*mesh_, mesh, cell_region, size_t, dense, 0);
+  return regions[mesh_entity_base_t<num_domains>::template id<0>()];
 }
 
 // get the region id
 burton_3d_cell_t::size_t burton_3d_cell_t::region() const
 {
-  using flecsi::mesh_entity_base_t;
-  auto mesh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto cell_regions =
-    data_t::instance().template dense_accessor<size_t, flecsi_internal>(
-      "cell_region", mesh->runtime_id() );
-  return cell_regions[mesh_entity_base_t<num_domains>::template id<0>()];
+  auto regions = get_accessor(*mesh_, mesh, cell_region, size_t, dense, 0);
+  return regions[mesh_entity_base_t<num_domains>::template id<0>()];
 }
 
 } // namespace

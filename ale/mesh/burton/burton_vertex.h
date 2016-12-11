@@ -11,9 +11,9 @@
 
 // user includes
 #include "ale/geom/shapes/geometric_shapes.h"
-#include "ale/mesh/burton/burton_mesh_traits.h"
+#include "ale/mesh/burton/burton_config.h"
 #include "ale/utils/errors.h"
-#include "flecsi/mesh/mesh_types.h"
+#include "flecsi/topology/mesh_types.h"
 
 
 namespace ale {
@@ -34,8 +34,8 @@ class burton_vertex_t {};
 //! \remark This is a two dimensional specialization.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
-class burton_vertex_t<2> : 
-    public flecsi::mesh_entity_t<0, burton_mesh_traits_t<2>::num_domains>
+class burton_vertex_t<2> : public 
+  flecsi::topology::mesh_entity_t<0, burton_config_t<2>::num_domains>
 {
 public:
 
@@ -44,33 +44,30 @@ public:
   //============================================================================
 
   //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::mesh_topology_base_t;
+  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
  
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<2>;
+  using config_t = burton_config_t<2>;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_domains = mesh_traits_t::num_domains;
+  static constexpr auto num_domains = config_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
+  static constexpr auto num_dimensions = config_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;
 
-  //! Handle for accessing state at vertex.
-  using data_t = typename mesh_traits_t::data_t;
-
   //! Type containing coordinates of the vertex.
-  using point_t = typename mesh_traits_t::point_t;
+  using point_t = typename config_t::point_t;
 
   //! The bitfield.
-  using bitfield_t = typename mesh_traits_t::bitfield_t;
+  using bitfield_t = typename config_t::bitfield_t;
 
   //! The boundary id type
-  using tag_t = typename mesh_traits_t::tag_t;
+  using tag_t = typename config_t::tag_t;
   //! The boundary id list type
-  using tag_list_t = typename mesh_traits_t::tag_list_t;
+  using tag_list_t = typename config_t::tag_list_t;
 
   //============================================================================
   // Constructors
@@ -127,7 +124,7 @@ public:
 private:
   
   //! a reference to the mesh topology
-  const mesh_topology_base_t * mesh_ = nullptr;
+  mesh_topology_base_t * mesh_ = nullptr;
 
   //! the coordinates of the vertex
   point_t coordinates_;
@@ -143,7 +140,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 class burton_vertex_t<3> : 
-    public flecsi::mesh_entity_t<0, burton_mesh_traits_t<2>::num_domains>
+    public flecsi::topology::mesh_entity_t<0, burton_config_t<2>::num_domains>
 {
 public:
 
@@ -152,33 +149,30 @@ public:
   //============================================================================
 
   //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::mesh_topology_base_t;
+  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
  
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<3>;
+  using config_t = burton_config_t<3>;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_domains = mesh_traits_t::num_domains;
+  static constexpr auto num_domains = config_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
+  static constexpr auto num_dimensions = config_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;
 
-  //! Handle for accessing state at vertex.
-  using data_t = typename mesh_traits_t::data_t;
-
   //! Type containing coordinates of the vertex.
-  using point_t = typename mesh_traits_t::point_t;
+  using point_t = typename config_t::point_t;
 
   //! The bitfield.
-  using bitfield_t = typename mesh_traits_t::bitfield_t;
+  using bitfield_t = typename config_t::bitfield_t;
 
   //! The boundary id type
-  using tag_t = typename mesh_traits_t::tag_t;
+  using tag_t = typename config_t::tag_t;
   //! The boundary id list type.
-  using tag_list_t = typename mesh_traits_t::tag_list_t;
+  using tag_list_t = typename config_t::tag_list_t;
 
   //============================================================================
   // Constructors
@@ -234,7 +228,7 @@ public:
 private:
   
   //! a reference to the mesh topology
-  const mesh_topology_base_t * mesh_ = nullptr;
+  mesh_topology_base_t * mesh_ = nullptr;
   
   //! the coordinates of the vertex
   point_t coordinates_;

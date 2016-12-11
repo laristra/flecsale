@@ -40,7 +40,7 @@ class burton_wedge_t {};
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 class burton_wedge_t<2>
-  : public flecsi::mesh_entity_t<1, burton_mesh_traits_t<2>::num_domains>
+  : public flecsi::topology::mesh_entity_t<1, burton_config_t<2>::num_domains>
 {
 public:
 
@@ -49,28 +49,25 @@ public:
   //============================================================================
 
   //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::mesh_topology_base_t;
+  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
  
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<2>;
+  using config_t = burton_config_t<2>;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_domains = mesh_traits_t::num_domains;
+  static constexpr auto num_domains = config_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
+  static constexpr auto num_dimensions = config_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 1;
 
-  //! Handle for accessing state at vertex.
-  using data_t = typename mesh_traits_t::data_t;
-
   //! Physics vector type.
-  using vector_t = typename mesh_traits_t::vector_t;
+  using vector_t = typename config_t::vector_t;
 
   //! Coordinate point type.
-  using point_t = typename mesh_traits_t::point_t;
+  using point_t = typename config_t::point_t;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
@@ -157,7 +154,7 @@ public:
  private:
 
   //! a reference to the mesh topology
-  const mesh_topology_base_t * mesh_ = nullptr;
+  mesh_topology_base_t * mesh_ = nullptr;
 
 };
 
@@ -168,7 +165,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 class burton_wedge_t<3>
-  : public flecsi::mesh_entity_t<1, burton_mesh_traits_t<3>::num_domains>
+  : public flecsi::topology::mesh_entity_t<1, burton_config_t<3>::num_domains>
 {
 public:
 
@@ -177,28 +174,25 @@ public:
   //============================================================================
 
   //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::mesh_topology_base_t;
+  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
  
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<3>;
+  using config_t = burton_config_t<3>;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_domains = mesh_traits_t::num_domains;
+  static constexpr auto num_domains = config_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
+  static constexpr auto num_dimensions = config_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 1;
 
-  //! Handle for accessing state at vertex.
-  using data_t = typename mesh_traits_t::data_t;
-
   //! Physics vector type.
-  using vector_t = typename mesh_traits_t::vector_t;
+  using vector_t = typename config_t::vector_t;
 
   //! Coordinate point type.
-  using point_t = typename mesh_traits_t::point_t;
+  using point_t = typename config_t::point_t;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
@@ -283,7 +277,7 @@ public:
  private:
 
   //! a reference to the mesh topology
-  const mesh_topology_base_t * mesh_ = nullptr;
+  mesh_topology_base_t * mesh_ = nullptr;
 
 }; // struct burton_wedge_t
 
