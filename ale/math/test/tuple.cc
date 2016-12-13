@@ -28,12 +28,25 @@ using tuple_1d_t = tuple<real_t>;
 using tuple_2d_t = tuple<real_t,real_t>;
 using std_tuple_2d = std::tuple<real_t,real_t>;
 
+// Clang 3.7 with GCC 6 fails on one dimensional tuples.
 
+// Test for GCC >= 3.7.0 
+#if defined(__clang__) && \
+  ( __clang_major__ < 3 || \
+    ( __clang_major__ == 3 && \
+      (__clang_minor__ < 7 || \
+        ( __clang_minor__ == 7 && __clang_clang__ <= 0 ) ) ) )
+  // nothing
+#else
+#  define HAS_1D_TUPLE
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the intialization.
 ///////////////////////////////////////////////////////////////////////////////
 TEST(tuple, init) {
+
+#ifdef HAS_1D_TUPLE
 
   // { 1.0 }
   tuple_1d_t ans_1d{ 1.0 };
@@ -46,6 +59,8 @@ TEST(tuple, init) {
   fill( a2, 6.0 );
   ASSERT_TRUE( a5 == ans_1d );
   ASSERT_TRUE( a6 == ans_1d );
+
+#endif
 
   // { 1.0, 2.0 }
   tuple_2d_t ans_2d{ 1.0, 2.0 };
@@ -63,6 +78,8 @@ TEST(tuple, init) {
   //tuple_2d_t b7{ 1.0 };    ASSERT_TRUE( b7 == ans_2d );
   //tuple_2d_t b8 = {1.0};   ASSERT_TRUE( b8 == 1.0 );
 }
+
+#ifdef HAS_1D_TUPLE
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the addition of a tuple with one value.
@@ -98,7 +115,7 @@ TEST(tuple, addition_1d) {
 
 }
 
-
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the addition of a tuple with two values.
@@ -133,6 +150,8 @@ TEST(tuple, addition_2d) {
   ASSERT_TRUE( g == ans ) << " error in operator+ with scalar";
  
 }
+
+#ifdef HAS_1D_TUPLE
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the subtraction of a tuple with one value.
@@ -170,6 +189,7 @@ TEST(tuple, subtraction_1d) {
 
 }
 
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the subtraction of a tuple with two values.
@@ -208,6 +228,7 @@ TEST(tuple, subtraction_2d) {
 
 }
 
+#ifdef HAS_1D_TUPLE
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the multiplication of a tuple with one value.
@@ -244,6 +265,8 @@ TEST(tuple, multiply_1d) {
   ASSERT_TRUE( g == ans ) << " error in operator* with scalar";
 
 }
+
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the multiplication of a tuple with two values.
@@ -282,6 +305,7 @@ TEST(tuple, multiply_2d) {
  
 }
 
+#ifdef HAS_1D_TUPLE
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the division of a tuple with one value.
@@ -319,6 +343,8 @@ TEST(tuple, divide_1d) {
   ASSERT_TRUE( g == ans ) << " error in operator/ with scalar";
 
 }
+
+#endif 
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the division of a tuple with two values.
