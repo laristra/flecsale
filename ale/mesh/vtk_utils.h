@@ -125,7 +125,9 @@ static auto write_fields_to_vtk( M & m, vtkUnstructuredGrid* ug )
   auto pd = ug->GetPointData();
 
   // real scalars persistent at vertices
-  auto rspav = access_type_if(m, real_t, is_persistent_at(m,vertices));
+  auto rspav = get_accessors_all(
+    m, real_t, dense, 0, has_attribute_at(persistent,vertices)
+  );
   for(auto sf: rspav) {
     auto label = validate_string( sf.label() );      
     auto vals = vtkSmartPointer< typename vtk_array_t<real_t>::type >::New();
@@ -136,7 +138,9 @@ static auto write_fields_to_vtk( M & m, vtkUnstructuredGrid* ug )
   } // for
 
   // int scalars persistent at vertices
-  auto ispav = access_type_if(m, integer_t, is_persistent_at(m,vertices));
+  auto ispav = get_accessors_all(
+    m, integer_t, dense, 0, has_attribute_at(persistent,vertices)
+  );
   for(auto sf: ispav) {
     auto label = validate_string( sf.label() );
     auto vals = vtkSmartPointer< typename vtk_array_t<integer_t>::type >::New();
@@ -147,8 +151,9 @@ static auto write_fields_to_vtk( M & m, vtkUnstructuredGrid* ug )
   } // for
 
   // real vectors persistent at vertices
-
-  auto rvpav = access_type_if(m, vector_t, is_persistent_at(m,vertices));
+  auto rvpav = get_accessors_all(
+    m, vector_t, dense, 0, has_attribute_at(persistent,vertices)
+  );
   for(auto vf: rvpav) {
     auto label = validate_string( vf.label() );
     auto vals = vtkSmartPointer< typename vtk_array_t<real_t>::type >::New();
@@ -172,7 +177,9 @@ static auto write_fields_to_vtk( M & m, vtkUnstructuredGrid* ug )
 
 
   // real scalars persistent at cells
-  auto rspac = access_type_if(m, real_t, is_persistent_at(m,cells));
+  auto rspac = get_accessors_all(
+    m, real_t, dense, 0, has_attribute_at(persistent,cells)
+  );
   for(auto sf: rspac) {
     auto label = validate_string( sf.label() );      
     auto vals = vtkSmartPointer< typename vtk_array_t<real_t>::type >::New();
@@ -183,7 +190,9 @@ static auto write_fields_to_vtk( M & m, vtkUnstructuredGrid* ug )
   } // for
 
   // int scalars persistent at cells
-  auto ispac = access_type_if(m, integer_t, is_persistent_at(m,cells));
+  auto ispac = get_accessors_all(
+    m, integer_t, dense, 0, has_attribute_at(persistent,cells)
+  );
   for(auto sf: ispac) {
     auto label = validate_string( sf.label() );
     auto vals = vtkSmartPointer< typename vtk_array_t<integer_t>::type >::New();
@@ -194,7 +203,9 @@ static auto write_fields_to_vtk( M & m, vtkUnstructuredGrid* ug )
   } // for
     
   // real vectors persistent at cells
-  auto rvpac = access_type_if(m, vector_t, is_persistent_at(m,cells));
+  auto rvpac = get_accessors_all(
+    m, vector_t, dense, 0, has_attribute_at(persistent,cells)
+  );
   for(auto vf: rvpac) {
     auto label = validate_string( vf.label() );
     auto vals = vtkSmartPointer< typename vtk_array_t<real_t>::type >::New();
@@ -506,7 +517,7 @@ to_mesh( vtkUnstructuredGrid* ug )
   vector<vertex_t *> vs;
   vs.reserve( num_vertices );
 
-  for (counter  _t i = 0; i < num_vertices; ++i) {
+  for (counter_t i = 0; i < num_vertices; ++i) {
     vtkRealType x[3] = {0, 0, 0};
     points->GetPoint( i, x );
     point_t p = { static_cast<real_t>(x[0]), 
