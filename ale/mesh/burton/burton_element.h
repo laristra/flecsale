@@ -12,9 +12,9 @@
 
 // user includes
 #include "ale/geom/shapes/geometric_shapes.h"
-#include "ale/mesh/burton/burton_mesh_traits.h"
+#include "ale/mesh/burton/burton_config.h"
 #include "ale/utils/errors.h"
-#include "flecsi/mesh/mesh_types.h"
+#include "flecsi/topology/mesh_types.h"
 
 namespace ale {
 namespace mesh {
@@ -40,7 +40,7 @@ struct burton_element_t { };
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 struct burton_element_t<2,1> :
-    public flecsi::mesh_entity_t<1, burton_mesh_traits_t<2>::num_domains>
+    public flecsi::topology::mesh_entity_t<1, burton_config_t<2>::num_domains>
 {
 
   //============================================================================
@@ -48,44 +48,41 @@ struct burton_element_t<2,1> :
   //============================================================================
 
   //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::mesh_topology_base_t;
+  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
  
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<2>;
+  using config_t = burton_config_t<2>;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_domains = mesh_traits_t::num_domains;
+  static constexpr auto num_domains = config_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
+  static constexpr auto num_dimensions = config_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;
 
-  //! Handle for accessing state at vertex.
-  using data_t = typename mesh_traits_t::data_t;
-
   //! Type of floating point.
-  using real_t = typename mesh_traits_t::real_t;
+  using real_t = typename config_t::real_t;
 
   //! Type containing coordinates of the vertex.
-  using point_t = typename mesh_traits_t::point_t;
+  using point_t = typename config_t::point_t;
   //! The point list type
   using point_list_t = std::array< point_t, 2 >;
 
   //! Type vector type.
-  using vector_t = typename mesh_traits_t::vector_t;
+  using vector_t = typename config_t::vector_t;
 
   //! The bitfield.
-  using bitfield_t = typename mesh_traits_t::bitfield_t;
+  using bitfield_t = typename config_t::bitfield_t;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
 
   //! The boundary id type
-  using tag_t = typename mesh_traits_t::tag_t;
+  using tag_t = typename config_t::tag_t;
   //! The boundary id list type
-  using tag_list_t = typename mesh_traits_t::tag_list_t;
+  using tag_list_t = typename config_t::tag_list_t;
 
   //============================================================================
   // Constructors
@@ -154,7 +151,7 @@ struct burton_element_t<2,1> :
 private:
   
   //! a reference to the mesh topology
-  const mesh_topology_base_t * mesh_ = nullptr;
+  mesh_topology_base_t * mesh_ = nullptr;
 
 };
 
@@ -166,7 +163,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 struct burton_element_t<3,1> :
-    public flecsi::mesh_entity_t<1, burton_mesh_traits_t<3>::num_domains>
+    public flecsi::topology::mesh_entity_t<1, burton_config_t<3>::num_domains>
 {
 
   //============================================================================
@@ -174,44 +171,41 @@ struct burton_element_t<3,1> :
   //============================================================================
 
   //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::mesh_topology_base_t;
+  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
  
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<3>;
+  using config_t = burton_config_t<3>;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_domains = mesh_traits_t::num_domains;
+  static constexpr auto num_domains = config_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
+  static constexpr auto num_dimensions = config_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;
 
-  //! Handle for accessing state at vertex.
-  using data_t = typename mesh_traits_t::data_t;
-
   //! Type of floating point.
-  using real_t = typename mesh_traits_t::real_t;
+  using real_t = typename config_t::real_t;
 
   //! Type containing coordinates of the vertex.
-  using point_t = typename mesh_traits_t::point_t;
+  using point_t = typename config_t::point_t;
   //! The point list type.
   using point_list_t = std::array< point_t, 2 >;
 
   //! Type vector type.
-  using vector_t = typename mesh_traits_t::vector_t;
+  using vector_t = typename config_t::vector_t;
 
   //! a bitfield type
-  using bitfield_t = typename mesh_traits_t::bitfield_t;
+  using bitfield_t = typename config_t::bitfield_t;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
 
   //! The boundary id type
-  using tag_t = typename mesh_traits_t::tag_t;
+  using tag_t = typename config_t::tag_t;
   //! The boundary id list type
-  using tag_list_t = typename mesh_traits_t::tag_list_t;
+  using tag_list_t = typename config_t::tag_list_t;
 
   //============================================================================
   // Constructors
@@ -264,7 +258,7 @@ struct burton_element_t<3,1> :
 private:
   
   //! a reference to the mesh topology
-  const mesh_topology_base_t * mesh_ = nullptr;
+  mesh_topology_base_t * mesh_ = nullptr;
 
 }; // struct burton_edge_t
 
@@ -283,48 +277,46 @@ using burton_edge_t = burton_element_t<N,1>;
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 struct burton_element_t<2,2>
-  : public flecsi::mesh_entity_t<2, burton_mesh_traits_t<2>::num_domains>
+  : public flecsi::topology::mesh_entity_t<2, burton_config_t<2>::num_domains>
 {
   //============================================================================
   // Typedefs
   //============================================================================
 
   //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::mesh_topology_base_t;
+  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
  
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<2>;
+  using config_t = burton_config_t<2>;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_domains = mesh_traits_t::num_domains;
+  static constexpr auto num_domains = config_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
+  static constexpr auto num_dimensions = config_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;
 
-  //! Handle for accessing state at vertex.
-  using data_t = typename mesh_traits_t::data_t;
+  //! Type of floating point.
+  using real_t = typename config_t::real_t;
 
   //! Type of floating point.
-  using real_t = typename mesh_traits_t::real_t;
-
-  //! Type of floating point.
-  using size_t = typename mesh_traits_t::size_t;
+  using size_t = typename config_t::size_t;
 
   //! Type containing coordinates of the vertex.
-  using point_t = typename mesh_traits_t::point_t;
+  using point_t = typename config_t::point_t;
   //! The point list type.
   using point_list_t = std::vector< point_t >;
 
   //! Type vector type.
-  using vector_t = typename mesh_traits_t::vector_t;
+  using vector_t = typename config_t::vector_t;
 
   //! the flecsi id type
   using id_t = flecsi::id_t;
+
   //! The flecsi domain connectivity type.
-  using connectivity_t = flecsi::domain_connectivity<num_dimensions>;
+  using connectivity_t = flecsi::topology::domain_connectivity<num_dimensions>;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
@@ -459,7 +451,7 @@ struct burton_element_t<2,2>
 private:
   
   //! a reference to the mesh topology
-  const mesh_topology_base_t * mesh_ = nullptr;
+  mesh_topology_base_t * mesh_ = nullptr;
 
 };
 
@@ -471,48 +463,46 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 struct burton_element_t<3,2>
-  : public flecsi::mesh_entity_t<2, burton_mesh_traits_t<3>::num_domains>
+  : public flecsi::topology::mesh_entity_t<2, burton_config_t<3>::num_domains>
 {
   //============================================================================
   // Typedefs
   //============================================================================
 
   //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::mesh_topology_base_t;
+  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
  
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<3>;
+  using config_t = burton_config_t<3>;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_domains = mesh_traits_t::num_domains;
+  static constexpr auto num_domains = config_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
+  static constexpr auto num_dimensions = config_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;
 
-  //! Handle for accessing state at vertex.
-  using data_t = typename mesh_traits_t::data_t;
+  //! Type of floating point.
+  using real_t = typename config_t::real_t;
 
   //! Type of floating point.
-  using real_t = typename mesh_traits_t::real_t;
-
-  //! Type of floating point.
-  using size_t = typename mesh_traits_t::size_t;
+  using size_t = typename config_t::size_t;
 
   //! Type containing coordinates of the vertex.
-  using point_t = typename mesh_traits_t::point_t;
+  using point_t = typename config_t::point_t;
   //! The point list type.
   using point_list_t = std::vector< point_t >;
 
   //! Type vector type.
-  using vector_t = typename mesh_traits_t::vector_t;
+  using vector_t = typename config_t::vector_t;
 
   //! the flecsi id type
   using id_t = flecsi::id_t;
+
   //! The flecsi domain connectivity type.
-  using connectivity_t = flecsi::domain_connectivity<num_dimensions>;
+  using connectivity_t = flecsi::topology::domain_connectivity<num_dimensions>;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
@@ -521,9 +511,9 @@ struct burton_element_t<3,2>
   using edge_t = burton_edge_t<num_dimensions>;
 
   //! The boundary id type
-  using tag_t = typename mesh_traits_t::tag_t;
+  using tag_t = typename config_t::tag_t;
   //! The boundary id list type.
-  using tag_list_t = typename mesh_traits_t::tag_list_t;
+  using tag_list_t = typename config_t::tag_list_t;
 
   //============================================================================
   // Constructors
@@ -651,7 +641,7 @@ struct burton_element_t<3,2>
 private:
   
   //! a reference to the mesh topology
-  const mesh_topology_base_t * mesh_ = nullptr;
+  mesh_topology_base_t * mesh_ = nullptr;
 
 }; // class burton_element_t
 
@@ -671,46 +661,45 @@ using burton_face_t = burton_element_t<N,N-1>;
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 struct burton_element_t<3,3>
-  : public flecsi::mesh_entity_t<3, burton_mesh_traits_t<3>::num_domains>
+  : public flecsi::topology::mesh_entity_t<3, burton_config_t<3>::num_domains>
 {
   //============================================================================
   // Typedefs
   //============================================================================
 
   //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::mesh_topology_base_t;
+  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
  
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<3>;
+  using config_t = burton_config_t<3>;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_domains = mesh_traits_t::num_domains;
+  static constexpr auto num_domains = config_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
+  static constexpr auto num_dimensions = config_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 0;
 
-  //! Handle for accessing state at vertex.
-  using data_t = typename mesh_traits_t::data_t;
+  //! Type of floating point.
+  using real_t = typename config_t::real_t;
 
   //! Type of floating point.
-  using real_t = typename mesh_traits_t::real_t;
-
-  //! Type of floating point.
-  using size_t = typename mesh_traits_t::size_t;
+  using size_t = typename config_t::size_t;
 
   //! Type containing coordinates of the vertex.
-  using point_t = typename mesh_traits_t::point_t;
+  using point_t = typename config_t::point_t;
   using point_list_t = std::vector< point_t >;
 
   //! Type vector type.
-  using vector_t = typename mesh_traits_t::vector_t;
+  using vector_t = typename config_t::vector_t;
 
   // the flecsi id type
   using id_t = flecsi::id_t;
-  using connectivity_t = flecsi::domain_connectivity<num_dimensions>;
+
+  //! The flecsi domain connectivity type.
+  using connectivity_t = flecsi::topology::domain_connectivity<num_dimensions>;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
@@ -847,7 +836,7 @@ struct burton_element_t<3,3>
 private:
   
   //! a reference to the mesh topology
-  const mesh_topology_base_t * mesh_ = nullptr;
+  mesh_topology_base_t * mesh_ = nullptr;
 
 }; // class burton_element_t
 

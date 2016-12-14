@@ -346,15 +346,22 @@ struct burton_io_tecplot_ascii_t :
     // nodal field data
     //----------------------------------------------------------------------------
 
-    int num_nf = 0; // number of nodal fields
+    // number of nodal fields
+    int num_nf = 0;
     // real scalars persistent at vertices
-    auto rspav = access_type_if(m, real_t, is_persistent_at(m,vertices));
+    auto rspav = get_accessors_all(
+      m, real_t, dense, 0, has_attribute_at(persistent,vertices)
+    );
     num_nf += rspav.size();
     // int scalars persistent at vertices
-    auto ispav = access_type_if(m, integer_t, is_persistent_at(m,vertices));
+    auto ispav = get_accessors_all(
+      m, integer_t, dense, 0, has_attribute_at(persistent,vertices)
+    );
     num_nf += ispav.size();
     // real vectors persistent at vertices
-    auto rvpav = access_type_if(m, vector_t, is_persistent_at(m,vertices));
+    auto rvpav = get_accessors_all(
+      m, vector_t, dense, 0, has_attribute_at(persistent,vertices)
+    );
     num_nf += num_dims*rvpav.size();
 
     // fill node variable names array
@@ -379,15 +386,22 @@ struct burton_io_tecplot_ascii_t :
     // element field data
     //----------------------------------------------------------------------------
 
-    int num_ef = 0; // number of element fields
+    // number of element fields
+    int num_ef = 0;
     // real scalars persistent at cells
-    auto rspac = access_type_if(m, real_t, is_persistent_at(m,cells));
+    auto rspac = get_accessors_all(
+      m, real_t, dense, 0, has_attribute_at(persistent,cells)
+    );
     num_ef += rspac.size();
     // int scalars persistent at cells
-    auto ispac = access_type_if(m, integer_t, is_persistent_at(m,cells));
+    auto ispac = get_accessors_all(
+      m, integer_t, dense, 0, has_attribute_at(persistent,cells)
+    );
     num_ef += ispac.size();
     // real vectors persistent at cells
-    auto rvpac = access_type_if(m, vector_t, is_persistent_at(m,cells));
+    auto rvpac = get_accessors_all(
+      m, vector_t, dense, 0, has_attribute_at(persistent,cells)
+    );
     num_ef += num_dims*rvpac.size();
 
 
@@ -601,6 +615,7 @@ struct burton_io_tecplot_ascii_t :
 }; 
 
 
+
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief This is the mesh writer based on the binary tecplot format.
 /// \tparam N  The number of dimensions.
@@ -624,6 +639,7 @@ struct burton_io_tecplot_binary_t :
   using typename base_t::real_t;
   using typename base_t::integer_t;
   using typename base_t::vector_t;
+  using typename base_t::counter_t;
 
   using typename base_t::mesh_t;
   
@@ -713,11 +729,17 @@ struct burton_io_tecplot_binary_t :
     // nodal field data
 
     // real scalars persistent at vertices
-    auto rspav = access_type_if(m, real_t, is_persistent_at(m,vertices));
+    auto rspav = get_accessors_all(
+      m, real_t, dense, 0, has_attribute_at(persistent,vertices)
+    );
     // int scalars persistent at vertices
-    auto ispav = access_type_if(m, integer_t, is_persistent_at(m,vertices));
+    auto ispav = get_accessors_all(
+      m, integer_t, dense, 0, has_attribute_at(persistent,vertices)
+    );
     // real vectors persistent at vertices
-    auto rvpav = access_type_if(m, vector_t, is_persistent_at(m,vertices));
+    auto rvpav = get_accessors_all(
+      m, vector_t, dense, 0, has_attribute_at(persistent,vertices)
+    );
 
     // fill node variable names array
     for(auto sf: rspav) {
@@ -725,7 +747,7 @@ struct burton_io_tecplot_binary_t :
       variables.emplace_back( make_pair( label, tec_var_location_t::node ) );
     }
     for(auto sf: ispav) {
-      auto label = validate_string( sf.label() );      
+      auto label = validate_string( sf.label() );
       variables.emplace_back( make_pair( label, tec_var_location_t::node ) );
     }
     for(auto vf: rvpav) {
@@ -741,11 +763,17 @@ struct burton_io_tecplot_binary_t :
     // element field data
 
     // real scalars persistent at cells
-    auto rspac = access_type_if(m, real_t, is_persistent_at(m,cells));
+    auto rspac = get_accessors_all(
+      m, real_t, dense, 0, has_attribute_at(persistent,cells)
+    );
     // int scalars persistent at cells
-    auto ispac = access_type_if(m, integer_t, is_persistent_at(m,cells));
+    auto ispac = get_accessors_all(
+      m, integer_t, dense, 0, has_attribute_at(persistent,cells)
+    );
     // real vectors persistent at cells
-    auto rvpac = access_type_if(m, vector_t, is_persistent_at(m,cells));
+    auto rvpac = get_accessors_all(
+      m, vector_t, dense, 0, has_attribute_at(persistent,cells)
+    );
 
 
     // fill element variable names array

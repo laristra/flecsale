@@ -290,7 +290,9 @@ public:
     vector<integer_t> ivals( num_nodes );
 
     // real scalars persistent at vertices
-    auto rspav = access_type_if(m, real_t, is_persistent_at(m,vertices));
+    auto rspav = get_accessors_all(
+      m, real_t, dense, 0, has_attribute_at(persistent,vertices)
+    );
     for(auto sf: rspav) {
       auto label = validate_string( sf.label() );
       for(auto v: m.vertices()) vals[v.id()] = sf[v];
@@ -299,7 +301,9 @@ public:
     } // for
 
     // int scalars persistent at vertices
-    auto ispav = access_type_if(m, integer_t, is_persistent_at(m,vertices));
+    auto ispav = get_accessors_all(
+      m, integer_t, dense, 0, has_attribute_at(persistent,vertices)
+    );
     for(auto sf: ispav) {
       auto label = validate_string( sf.label() );
       for(auto v: m.vertices()) ivals[v.id()] = sf[v];
@@ -310,7 +314,9 @@ public:
     vals.resize( num_nodes * num_dims );
 
     // real vectors persistent at vertices
-    auto rvpav = access_type_if(m, vector_t, is_persistent_at(m,vertices));
+    auto rvpav = get_accessors_all(
+      m, vector_t, dense, 0, has_attribute_at(persistent,vertices)
+    );
     for(auto vf: rvpav) {
       auto label = validate_string( vf.label() );
       for(auto v: m.vertices()) {
@@ -335,7 +341,9 @@ public:
     // element field data
 
     // real scalars persistent at cells
-    auto rspac = access_type_if(m, real_t, is_persistent_at(m,cells));
+    auto rspac = get_accessors_all(
+      m, real_t, dense, 0, has_attribute_at(persistent,cells)
+    );
     for(auto sf: rspac) {
       auto label = validate_string( sf.label() );
       for(auto c: m.cells()) vals[c.id()] = sf[c];
@@ -344,7 +352,9 @@ public:
     } // for
 
     // int scalars persistent at cells
-    auto ispac = access_type_if(m, integer_t, is_persistent_at(m,cells));
+    auto ispac = get_accessors_all(
+      m, integer_t, dense, 0, has_attribute_at(persistent,cells)
+    );
     for(auto sf: ispac) {
       auto label = validate_string( sf.label() );
       for(auto c: m.cells()) ivals[c.id()] = sf[c];
@@ -355,7 +365,9 @@ public:
     vals.resize( num_elem * num_dims );
 
     // real vectors persistent at cells
-    auto rvpac = access_type_if(m, vector_t, is_persistent_at(m,cells));
+    auto rvpac = get_accessors_all(
+      m, vector_t, dense, 0, has_attribute_at(persistent,cells)
+    );
     for(auto vf: rvpac) {
       auto label = validate_string( vf.label() );
       for(auto c: m.cells()) {

@@ -475,32 +475,47 @@ int main(int argc, char** argv)
 
   // create some field data.  Fields are registered as struct of arrays.
   // this allows us to access the data in different patterns.
-  register_state(mesh, "cell_mass",     cells,   real_t, persistent);
-  register_state(mesh, "cell_pressure", cells,   real_t, persistent);
-  register_state(mesh, "cell_velocity", cells, vector_t, persistent);
+  register_data(mesh, hydro, cell_mass,       real_t, dense, 1, cells);
+  register_data(mesh, hydro, cell_pressure,   real_t, dense, 1, cells);
+  register_data(mesh, hydro, cell_velocity, vector_t, dense, 2, cells);
 
-  register_state(mesh, "cell_density",         cells, real_t, persistent);
-  register_state(mesh, "cell_internal_energy", cells, real_t, persistent);
-  register_state(mesh, "cell_temperature",     cells, real_t, persistent);
-  register_state(mesh, "cell_sound_speed",     cells, real_t, persistent);
+  register_data(mesh, hydro, cell_density,         real_t, dense, 1, cells);
+  register_data(mesh, hydro, cell_internal_energy, real_t, dense, 2, cells);
+  register_data(mesh, hydro, cell_temperature,     real_t, dense, 1, cells);
+  register_data(mesh, hydro, cell_sound_speed,     real_t, dense, 1, cells);
 
-  register_state(mesh, "cell_residual", cells, flux_data_t, temporary);
-  register_state(mesh, "cell_velocity_0", cells, vector_t, temporary);
-  register_state(mesh, "cell_internal_energy_0", cells, real_t, temporary);
+  register_data(mesh, hydro, cell_residual, flux_data_t, dense, 1, cells);
 
-  register_state(mesh, "node_coordinates_0", vertices, vector_t, temporary);
-  register_state(mesh, "node_velocity", vertices, vector_t, persistent);
+  register_data(mesh, hydro, node_coordinates, vector_t, dense, 1, vertices);
+  register_data(mesh, hydro, node_velocity, vector_t, dense, 1, vertices);
   
-  register_state(mesh, "corner_matrix", corners, matrix_t, temporary);
-  register_state(mesh, "corner_normal", corners, vector_t, temporary);
+  register_data(mesh, hydro, corner_matrix, matrix_t, dense, 1, corners);
+  register_data(mesh, hydro, corner_normal, vector_t, dense, 1, corners);
 
   // register the time step and set a cfl
-  register_global_state( mesh, "time_step", real_t ) = initial_time_step;
-  register_global_state( mesh, "cfl", time_constants_t ) = CFL;
+  register_data( mesh, hydro, time_step, real_t, global, 1 );
+  register_data( mesh, hydro, cfl, time_constants_t, global, 1 );
   
+  *get_accessor( mesh, hydro, time_step, real_t, global, 0 ) = initial_time_step;
+  *get_accessor( mesh, hydro, cfl, time_constants_t, global, 0 ) = CFL;
+
 
   // register state a global eos
-  register_global_state( mesh, "eos", eos_t ) = eos;
+  register_data( mesh, hydro, eos, eos_t, global, 1 );
+  *get_accessor( mesh, hydro, eos, eos_t, global, 0 ) = eos;
+
+  // set the persistent variables, i.e. the ones that will be plotted
+  get_accessor(mesh, hydro, cell_mass,       real_t, dense, 0).attributes().set(persistent);
+  get_accessor(mesh, hydro, cell_pressure,   real_t, dense, 0).attributes().set(persistent);
+  get_accessor(mesh, hydro, cell_velocity, vector_t, dense, 0).attributes().set(persistent);
+
+  get_accessor(mesh, hydro, cell_density,         real_t, dense, 0).attributes().set(persistent);
+  get_accessor(mesh, hydro, cell_internal_energy, real_t, dense, 0).attributes().set(persistent);
+  get_accessor(mesh, hydro, cell_temperature,     real_t, dense, 0).attributes().set(persistent);
+  get_accessor(mesh, hydro, cell_sound_speed,     real_t, dense, 0).attributes().set(persistent);
+
+  get_accessor(mesh, hydro, node_velocity, vector_t, dense, 0).attributes().set(persistent);
+  
 
   //===========================================================================
   // Initial conditions
@@ -532,6 +547,9 @@ int main(int argc, char** argv)
   // get the current time
   auto soln_time = mesh.time();
   auto time_cnt  = mesh.time_step_counter();
+
+  // get the time step accessor
+  auto time_step = get_accessor( mesh, hydro, time_step, real_t, global, 0 );   
 
   // a counter for this session
   size_t num_steps = 0; 
@@ -572,8 +590,7 @@ int main(int argc, char** argv)
     apps::hydro::evaluate_time_step( mesh, limit_string );
     
     // access the computed time step and make sure its not too large
-    auto time_step = access_global_state( mesh, "time_step", real_t );   
-    time_step = std::min( *time_step, final_time - soln_time );       
+    *time_step = std::min( *time_step, final_time - soln_time );       
 
     auto ss = cout.precision();
     cout.setf( std::ios::scientific );

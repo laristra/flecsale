@@ -29,13 +29,17 @@ void create_data(M & mesh )
   using vector_t = typename M::vector_t;
 
   // register
-  register_state(mesh, "pressure", cells, real_t, persistent);
-  register_state(mesh, "region", cells, integer_t, persistent);
-  register_state(mesh, "velocity", vertices, vector_t, persistent);
+  register_data(mesh, hydro, pressure, real_t, dense, 1, cells);
+  register_data(mesh, hydro, region, integer_t, dense, 1, cells);
+  register_data(mesh, hydro, velocity, vector_t, dense, 1, vertices);
   // access
-  auto p = access_state(mesh, "pressure", real_t);
-  auto r = access_state(mesh, "region", integer_t);
-  auto velocity = access_state(mesh, "velocity", vector_t);
+  auto p = get_accessor(mesh, hydro, pressure, real_t, dense, 0);
+  auto r = get_accessor(mesh, hydro, region, integer_t, dense, 0);
+  auto velocity = get_accessor(mesh, hydro, velocity, vector_t, dense, 0);
+  // set attributes
+  p.attributes().set(persistent);
+  r.attributes().set(persistent);
+  velocity.attributes().set(persistent);
   // initialize
   for(auto c: mesh.cells()) {
     p[c] = c.id();

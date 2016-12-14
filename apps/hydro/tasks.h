@@ -34,11 +34,11 @@ int32_t initial_conditions( T & mesh, F && ics ) {
   using vector_t = typename T::vector_t;
 
   // get the collection accesor
-  auto d = access_state( mesh, "density",    real_t );
-  auto p = access_state( mesh, "pressure",   real_t );
-  auto v = access_state( mesh, "velocity", vector_t );
+  auto d = get_accessor( mesh, hydro, density,    real_t, dense, 0 );
+  auto p = get_accessor( mesh, hydro, pressure,   real_t, dense, 0 );
+  auto v = get_accessor( mesh, hydro, velocity, vector_t, dense, 0 );
 
-  auto xc = access_state( mesh, "cell_centroid", vector_t );
+  auto xc = get_accessor( mesh, mesh, cell_centroid, vector_t, dense, 0 );
 
   auto cs = mesh.cells();
   auto num_cells = cs.size();
@@ -69,7 +69,7 @@ int32_t update_state_from_pressure( T & mesh ) {
   using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the collection accesor
-  auto eos = access_global_state( mesh, "eos", eos_t );
+  auto eos = get_accessor( mesh, hydro, eos, eos_t, global, 0 );
   state_accessor<T> state( mesh );
 
   auto cs = mesh.cells();
@@ -102,7 +102,7 @@ int32_t update_state_from_energy( T & mesh ) {
   using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the collection accesor
-  auto eos = access_global_state( mesh, "eos", eos_t );
+  auto eos = get_accessor( mesh, hydro, eos, eos_t, global, 0 );
   state_accessor<T> state( mesh );
 
   // get the cells
@@ -138,12 +138,12 @@ int32_t evaluate_time_step( T & mesh ) {
   // access what we need
   state_accessor<T> state( mesh );
 
-  auto delta_t = access_global_state( mesh, "time_step", real_t );
-  const auto cfl = access_global_state( mesh, "cfl", real_t );
+  auto delta_t = get_accessor( mesh, hydro, time_step, real_t, global, 0 );
+  const auto cfl = get_accessor( mesh, hydro, cfl, real_t, global, 0 );
  
-  auto area   = access_state( mesh, "face_area",   real_t );
-  auto normal = access_state( mesh, "face_normal", vector_t );
-  auto volume = access_state( mesh, "cell_volume", real_t );
+  auto area   = get_accessor( mesh, mesh, face_area, real_t, dense, 0 );
+  auto normal = get_accessor( mesh, mesh, face_normal, vector_t, dense, 0 );
+  auto volume = get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 );
  
   // Loop over each cell, computing the minimum time step,
   // which is also the maximum 1/dt
@@ -166,7 +166,7 @@ int32_t evaluate_time_step( T & mesh ) {
       auto delta_x = volume[c] / area[f];
       // compute the inverse of the time scale
       auto dti =  E::fastest_wavespeed(u, normal[f]) / delta_x;
-      //std::cout << dti << " " << delta_x << std::endl;
+      // std::cout << dti << " " << delta_x << std::endl;
       // check for the maximum value
       dt_inv = std::max( dti, dt_inv );
     } // edge
@@ -176,7 +176,7 @@ int32_t evaluate_time_step( T & mesh ) {
   assert( dt_inv > 0 && "infinite delta t" );
 
   // invert dt and apply cfl
-  delta_t = static_cast<real_t>(cfl) / dt_inv;
+  *delta_t = static_cast<real_t>(cfl) / dt_inv;
 
   return 0;
 
@@ -198,11 +198,11 @@ int32_t evaluate_fluxes( T & mesh ) {
   using flux_data_t = flux_data_t<T::num_dimensions>;
 
   // access what we need
-  auto flux = access_state( mesh, "flux", flux_data_t );
+  auto flux = get_accessor( mesh, hydro, flux, flux_data_t, dense, 0 );
   state_accessor<T> state( mesh );
 
-  auto area   = access_state( mesh, "face_area",   real_t );
-  auto normal = access_state( mesh, "face_normal", vector_t );
+  auto area   = get_accessor( mesh, mesh, face_area, real_t, dense, 0 );
+  auto normal = get_accessor( mesh, mesh, face_normal, vector_t, dense, 0 );
 
   //----------------------------------------------------------------------------
   // TASK: loop over each edge and compute/store the flux
@@ -241,6 +241,7 @@ int32_t evaluate_fluxes( T & mesh ) {
     // scale the flux by the face area
     flux[f] *= area[f];
 
+    // std::cout << flux[f] << std::endl;
     
   } // for
   //----------------------------------------------------------------------------
@@ -264,14 +265,14 @@ int32_t apply_update( T & mesh ) {
   using eqns_t = eqns_t<T::num_dimensions>;
 
   // access what we need
-  auto flux = access_state( mesh, "flux", flux_data_t );
+  auto flux = get_accessor( mesh, hydro, flux, flux_data_t, dense, 0 );
   state_accessor<T> state( mesh );
   
-  auto volume = access_state( mesh, "cell_volume", real_t );
+  auto volume = get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 );
 
   // read only access
-  const auto delta_t = access_global_state( mesh, "time_step", real_t );
- 
+  const auto delta_t = get_accessor( mesh, hydro, time_step, real_t, global, 0 );
+
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
 
@@ -301,23 +302,10 @@ int32_t apply_update( T & mesh ) {
 
     // now compute the final update
     delta_u *= static_cast<real_t>(delta_t)/volume[c];
-    
-
-    // std::cout << "delta " << i << " : ";
-    // for( auto x : delta_u )
-    //   std::cout << x << " ";
-    // std::cout << std::endl;
 
     // apply the update
     auto u = state( c );
     eqns_t::update_state_from_flux( u, delta_u );
-
-    //     std::cout << "new " << i << " : ";
-    //   std::cout << math::get<0>(u) << " ";
-    // for( auto x : math::get<1>(u) )
-    //   std::cout << x << " ";
-    // std::cout << math::get<2>(u) << " ";
-    // std::cout << std::endl;
 
 
   } // for

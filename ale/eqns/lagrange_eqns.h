@@ -209,25 +209,29 @@ public:
   }
 
   //! \copydoc volume
-  static auto total_energy( const state_data_t & u )
+  template<typename U>
+  static auto total_energy( U && u )
   { 
     using math::abs;
-    auto ie = internal_energy( u );
-    auto vel = velocity( u );
+    auto ie = internal_energy( std::forward<U>(u) );
+    auto & vel = velocity( std::forward<U>(u) );
     return ie + dot_product( vel, vel ) / 2;
   }
 
   //! \copydoc volume
-  static auto impedance( const state_data_t & u )
+  template<typename U>
+  static auto impedance( U && u )
   { 
-    return density(u) * sound_speed(u);
+    return density(std::forward<U>(u)) * sound_speed(std::forward<U>(u));
   }
 
   //! \copydoc volume
-  static auto impedance_multiplier( const state_data_t & u )
+  template<typename U>
+  static auto impedance_multiplier( U && u )
   { 
     // FIXME
-    return 1.2; // 2.4 / 2;
+    auto gamma = impedance( std::forward<U>(u) ); // 2.4 / 2;
+    return 0.5 * (gamma + 1);
   }
 
   //============================================================================
@@ -236,25 +240,25 @@ public:
   //! \param [in]     eos The equation of state object to apply.
   //! \tparam E  The EOS object type.
   //============================================================================
-  template <typename E>
-  static void update_state_from_pressure( state_ref_t & u, const E & eos )
+  template <typename U, typename E>
+  static void update_state_from_pressure( U && u, const E & eos )
   {
     using math::get;
 
     // access independant or derived quantities 
-    auto m = mass( u );
-    auto v = volume( u );
-    auto p = pressure( u );
+    auto m = mass( std::forward<U>(u) );
+    auto v = volume( std::forward<U>(u) );
+    auto p = pressure( std::forward<U>(u) );
       
     assert( m > 0  );
     assert( v > 0  );
     assert( p > 0  );
 
     // can use aliases for clarity
-    auto & d  = density( u );
-    auto & ie = internal_energy( u );
-    auto & t  = temperature( u );
-    auto & ss = sound_speed( u );
+    auto & d  = density( std::forward<U>(u) );
+    auto & ie = internal_energy( std::forward<U>(u) );
+    auto & t  = temperature( std::forward<U>(u) );
+    auto & ss = sound_speed( std::forward<U>(u) );
 
     // explicitly set the individual elements
     d  = m / v;
@@ -271,22 +275,22 @@ public:
   //! \param [in]     eos The equation of state object to apply.
   //! \tparam E  The EOS object type.
   //============================================================================
-  template <typename E>
-  static void update_state_from_energy( state_ref_t & u, const E & eos )
+  template <typename U, typename E>
+  static void update_state_from_energy( U && u, const E & eos )
   {
     using math::get;
 
     // access independant or derived quantities 
-    auto d = density( u );
-    auto ie = internal_energy( u );
+    auto d = density( std::forward<U>(u) );
+    auto ie = internal_energy( std::forward<U>(u) );
       
     assert( d > 0  );
     assert( ie > 0  );
 
     // can use aliases for clarity
-    auto & p  = pressure( u );
-    auto & t  = temperature( u );
-    auto & ss = sound_speed( u );
+    auto & p  = pressure( std::forward<U>(u) );
+    auto & t  = temperature( std::forward<U>(u) );
+    auto & ss = sound_speed( std::forward<U>(u) );
 
     // explicitly set the individual elements
     p  = eos.compute_pressure_de( d, ie );
@@ -301,26 +305,29 @@ public:
   //! \param [in,out] u   The state to update.
   //! \param [in]     du  The conservative change in state.
   //============================================================================
+  template< typename U, typename F >
   static void update_state_from_flux( 
-    state_ref_t & u, const flux_data_t & du, 
+    U && u, F && du, 
     const real_t & fact = 1.0
   ) {
     using math::get;
 
     // get the conserved quatities
-    auto   m   = mass( u );
-    auto & vel = velocity( u );
-    auto & ie  = internal_energy( u );
+    auto   m   = mass( std::forward<U>(u) );
+    auto & vel = velocity( std::forward<U>(u) );
+    auto & ie  = internal_energy( std::forward<U>(u) );
 
     // get the changes
     auto inv_mass = 1 / m;    
     
     // update total energy
-    auto et = total_energy(u) + fact * inv_mass * du[equations::index::energy];
+    auto et = total_energy(std::forward<U>(u)) + 
+              fact * inv_mass * std::forward<F>(du)[equations::index::energy];
 
     // update velocity
     for ( int i=0; i<N; ++i )
-      vel[i] += fact * inv_mass * du[equations::index::momentum + i];
+      vel[i] += fact * inv_mass * 
+                std::forward<F>(du)[equations::index::momentum + i];
 
     // compute new internal
     ie = et - dot_product( vel, vel ) / 2;
@@ -340,15 +347,16 @@ public:
   //! \param [in,out] u   The state to update.
   //! \param [in]     du  The conservative change in state.
   //============================================================================
-  static void update_volume( state_ref_t & u, real_t new_vol )
+  template< typename U >
+  static void update_volume( U && u, real_t new_vol )
   {
     using math::get;
 
     // recompute solution quantities
-    volume(u) = new_vol;
-    density(u) = mass(u) / new_vol;
+    volume(std::forward<U>(u)) = new_vol;
+    density(std::forward<U>(u)) = mass(std::forward<U>(u)) / new_vol;
 
-    if ( density(u) < 0 )
+    if ( density(std::forward<U>(u)) < 0 )
       raise_runtime_error( 
         "Negative density encountered, " << density(u) << "." 
         << std::endl << "Current state = " << u << "."
@@ -361,18 +369,19 @@ public:
   //! \brief Update the volume, and consequentially the density assuming mass
   //!        remains constant..
   //============================================================================
+  template< typename U >
   static void compute_update( 
     const vector_t & u,      //!< [in] the point velocity
     const vector_t & force,  //!< [in] the force at the point
     const vector_t & n,      //!< [in] the normal direction to apply the force
-    flux_data_t & dudt       //!< [in,out] the residual to update
+    U && dudt                //!< [in,out] the residual to update
   ) {
 
       // add contribution
       for ( int d=0; d<N; ++d ) {
-        dudt[equations::index::mass] += n[d] * u[d];
-        dudt[equations::index::energy] -= force[d] * u[d];
-        dudt[equations::index::momentum + d] -= force[d];
+        std::forward<U>(dudt)[equations::index::mass] += n[d] * u[d];
+        std::forward<U>(dudt)[equations::index::energy] -= force[d] * u[d];
+        std::forward<U>(dudt)[equations::index::momentum + d] -= force[d];
       }
 
   }
@@ -381,9 +390,10 @@ public:
   //! \brief Return the volumetric rate of change from the residuals.
   //! \param [in]     du  The conservative change in state.
   //============================================================================
-  static auto volumetric_rate_of_change( const flux_data_t & dudt )
+  template< typename U >
+  static auto volumetric_rate_of_change( U && dudt )
   {
-    return dudt[equations::index::mass];
+    return std::forward<U>(dudt)[equations::index::mass];
   }
 
 };

@@ -31,7 +31,7 @@ class burton_wedge_t;
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 class burton_corner_t
-  : public flecsi::mesh_entity_t<0, burton_mesh_traits_t<N>::num_domains>
+  : public flecsi::topology::mesh_entity_t<0, burton_config_t<N>::num_domains>
 {
 public:
 
@@ -40,31 +40,28 @@ public:
   //============================================================================
 
   //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::mesh_topology_base_t;
+  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
  
   //! the mesh traits
-  using mesh_traits_t = burton_mesh_traits_t<N>;
+  using config_t = burton_config_t<N>;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_domains = mesh_traits_t::num_domains;
+  static constexpr auto num_domains = config_t::num_domains;
 
   //! Number of domains in the burton mesh.
-  static constexpr auto num_dimensions = mesh_traits_t::num_dimensions;
+  static constexpr auto num_dimensions = config_t::num_dimensions;
 
   //! The domain of the entity
   static constexpr auto domain = 1;
 
-  //! Handle for accessing state at vertex.
-  using data_t = typename mesh_traits_t::data_t;
-
   //! Type of floating point.
-  using real_t = typename mesh_traits_t::real_t;
+  using real_t = typename config_t::real_t;
 
   //! Type containing coordinates of a vertex.
-  using point_t = typename mesh_traits_t::point_t;
+  using point_t = typename config_t::point_t;
 
   //! Type vector type.
-  using vector_t = typename mesh_traits_t::vector_t;
+  using vector_t = typename config_t::vector_t;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;

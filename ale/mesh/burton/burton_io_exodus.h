@@ -245,13 +245,19 @@ public:
     int num_nf = 0;
 
     // real scalars persistent at vertices
-    auto rspav = access_type_if(m, real_t, is_persistent_at(m,vertices));
+    auto rspav = get_accessors_all(
+      m, real_t, dense, 0, has_attribute_at(persistent,vertices)
+    );
     num_nf += rspav.size();
     // int scalars persistent at vertices
-    auto ispav = access_type_if(m, integer_t, is_persistent_at(m,vertices));
+    auto ispav = get_accessors_all(
+      m, integer_t, dense, 0, has_attribute_at(persistent,vertices)
+    );
     num_nf += ispav.size();
     // real vectors persistent at vertices
-    auto rvpav = access_type_if(m, vector_t, is_persistent_at(m,vertices));
+    auto rvpav = get_accessors_all(
+      m, vector_t, dense, 0, has_attribute_at(persistent,vertices)
+    );
     num_nf += num_dims*rvpav.size();
 
     // variable extension for vectors
@@ -325,18 +331,23 @@ public:
     // element field data headers
 
     // number of element fields
-    int num_ef = 0; 
+    int num_ef = 0;
 
     // real scalars persistent at cells
-    auto rspac = access_type_if(m, real_t, is_persistent_at(m,cells));
+    auto rspac = get_accessors_all(
+      m, real_t, dense, 0, has_attribute_at(persistent,cells)
+    );
     num_ef += rspac.size();
     // int scalars persistent at cells
-    auto ispac = access_type_if(m, integer_t, is_persistent_at(m,cells));
+    auto ispac = get_accessors_all(
+      m, integer_t, dense, 0, has_attribute_at(persistent,cells)
+    );
     num_ef += ispac.size();
     // real vectors persistent at cells
-    auto rvpac = access_type_if(m, vector_t, is_persistent_at(m,cells));
+    auto rvpac = get_accessors_all(
+      m, vector_t, dense, 0, has_attribute_at(persistent,cells)
+    );
     num_ef += num_dims*rvpac.size();
-
 
     // put the number of element fields
     if(num_ef > 0) {

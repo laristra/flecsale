@@ -160,7 +160,9 @@ public:
       auto rvals = vtk_array_t<real_t>::type::New();
       rvals->SetNumberOfValues( num_vertices );
       
-      auto rspav = access_type_if(m, real_t, is_persistent_at(m,vertices));
+      auto rspav = get_accessors_all(
+        m, real_t, dense, 0, has_attribute_at(persistent,vertices)
+      );
       for(auto sf: rspav) {
         auto label = validate_string( sf.label() );      
         rvals->SetName( label.c_str() );
@@ -175,7 +177,9 @@ public:
       auto ivals = vtk_array_t<integer_t>::type::New();
       ivals->SetNumberOfValues( num_vertices );
 
-      auto ispav = access_type_if(m, integer_t, is_persistent_at(m,vertices));
+      auto ispav = get_accessors_all(
+        m, integer_t, dense, 0, has_attribute_at(persistent,vertices)
+      );
       for(auto sf: ispav) {
         auto label = validate_string( sf.label() );
         ivals->SetName( label.c_str() );
@@ -191,7 +195,9 @@ public:
       vvals->SetNumberOfComponents( 3 ); // always 3d
       vvals->SetNumberOfTuples( num_vertices );
 
-      auto rvpav = access_type_if(m, vector_t, is_persistent_at(m,vertices));
+      auto rvpav = get_accessors_all(
+        m, vector_t, dense, 0, has_attribute_at(persistent,vertices)
+      );
       for(auto vf: rvpav) {
         auto label = validate_string( vf.label() );
         vvals->SetName( label.c_str() );
@@ -218,7 +224,9 @@ public:
       rvals = vtk_array_t<real_t>::type::New();
       rvals->SetNumberOfValues( num_cells_this_block );
 
-      auto rspac = access_type_if(m, real_t, is_persistent_at(m,cells));
+      auto rspac = get_accessors_all(
+        m, real_t, dense, 0, has_attribute_at(persistent,cells)
+      );
       for(auto sf: rspac) {
         auto label = validate_string( sf.label() );      
         rvals->SetName( label.c_str() );
@@ -233,7 +241,9 @@ public:
       ivals = vtk_array_t<integer_t>::type::New();
       ivals->SetNumberOfValues( num_cells_this_block );
 
-      auto ispac = access_type_if(m, integer_t, is_persistent_at(m,cells));
+      auto ispac = get_accessors_all(
+        m, integer_t, dense, 0, has_attribute_at(persistent,cells)
+      );
       for(auto sf: ispac) {
         auto label = validate_string( sf.label() );
         ivals->SetName( label.c_str() );
@@ -249,7 +259,9 @@ public:
       vvals->SetNumberOfComponents( 3 ); // always 3d
       vvals->SetNumberOfTuples( num_cells_this_block );
 
-      auto rvpac = access_type_if(m, vector_t, is_persistent_at(m,cells));
+      auto rvpac = get_accessors_all(
+        m, vector_t, dense, 0, has_attribute_at(persistent,cells)
+      );
       for(auto vf: rvpac) {
         auto label = validate_string( vf.label() );
         vvals->SetName( label.c_str() );
