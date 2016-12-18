@@ -65,13 +65,13 @@ endif()
 # Add subprojects
 #------------------------------------------------------------------------------#
 
-find_package(FLECSI QUIET)
-if(NOT FLECSI_FOUND)
+find_package(FleCSI QUIET)
+if(NOT FleCSI_FOUND)
   cinch_add_subproject("flecsi")
   list( APPEND ALE_LIBRARIES flecsi )
 else()
-  include_directories(${FLECSI_INCLUDE_DIRS})
-  list( APPEND ALE_LIBRARIES ${FLECSI_LIBRARIES})
+  include_directories(${FleCSI_INCLUDE_DIRS})
+  list( APPEND ALE_LIBRARIES ${FleCSI_LIBRARIES})
 endif()
 
 #------------------------------------------------------------------------------#
