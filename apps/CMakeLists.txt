@@ -5,6 +5,8 @@
 
 include(regression) 
 
+add_definitions( -DFLECSI_RUNTIME_MODEL_serial )
+
 add_subdirectory( hydro )
 add_subdirectory( maire_hydro )
 
