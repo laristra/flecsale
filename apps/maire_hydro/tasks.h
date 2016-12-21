@@ -149,7 +149,6 @@ int32_t evaluate_time_step( T & mesh, std::string & limit_string )
 
   // access what we need
   auto sound_speed = get_accessor( mesh, hydro, cell_sound_speed, real_t, dense, 0 );
-  auto vertex_vel = get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
 
   auto dudt = get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
   auto cell_volume = get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 );
@@ -279,11 +278,13 @@ int32_t evaluate_corner_coef( T & mesh ) {
   
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
+  auto vertex_velocity = get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
   auto Mpc = get_accessor( mesh, hydro, corner_matrix, matrix_t, dense, 0 );
   auto npc = get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
   auto wedge_facet_normal = get_accessor( mesh, mesh, wedge_facet_normal, vector_t, dense, 0 );
   auto wedge_facet_area = get_accessor( mesh, mesh, wedge_facet_area, real_t, dense, 0 );
 
+  auto eos = get_accessor( mesh, hydro, eos, eos_t, global, 0 );
 
   //----------------------------------------------------------------------------
   // build corner matrices
@@ -305,14 +306,25 @@ int32_t evaluate_corner_coef( T & mesh ) {
 
     // get the cell state (there is only one)
     auto state = cell_state(cl);
-    // the cell quantities
+    // the corner quantities ( equal to the cell quantities for 1st order )
     const auto & dc = eqns_t::density( state );
     const auto & uc = eqns_t::velocity( state );
     const auto & ac = eqns_t::sound_speed( state );
+    const auto & Gc = eqns_t::impedance_multiplier( state, *eos );
+    // the vertex velocity
+    const auto & uv = vertex_velocity[vt];
+
+    // for estimating the impedances
+    auto delta_u = uv - uc;
     
-    // estimate impedances
-    auto zc = dc * ( ac /* + Gc * math::delta_magnitude(uv, uc) */ );
-      
+    // Estimate the impedance.  This is Burton's form but it also seems to
+    // kill the timestep in 3d.
+    // auto delta_velocity = math::delta_magnitude( uv, uc );
+    // auto zc = dc * ( ac + Gc * delta_velocity );
+
+    // The true impedance
+    auto zc = dc * ac;
+    
     // iterate over the wedges in pairs
     auto ws = mesh.wedges(cn);
     for ( auto w : ws ) 
@@ -320,6 +332,9 @@ int32_t evaluate_corner_coef( T & mesh ) {
       // get the first wedge normal
       const auto & n = wedge_facet_normal[w];
       const auto & l = wedge_facet_area[w];
+      // Estimate the impedance.  This is Maires original form, but it seems
+      // to kill the timestep in 3d.
+      // auto zc = dc * ( ac + Gc * std::abs(dot_product(delta_u, n)) );
       // the final matrix
       // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
       math::outer_product( n, n, Mpc[cn], zc*l );
@@ -356,7 +371,7 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
   
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
-  auto vertex_vel = get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
+  auto vertex_velocity = get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
   auto Mpc = get_accessor( mesh, hydro, corner_matrix, matrix_t, dense, 0 );
   auto npc = get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
 
@@ -419,7 +434,7 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
           return boundary_map.at(id)->has_prescribed_velocity();
         } );
       if ( vel_bc != point_tags.end() ) {
-        vertex_vel[vt] = boundary_map.at(*vel_bc)->velocity( vt->coordinates(), soln_time );
+        vertex_velocity[vt] = boundary_map.at(*vel_bc)->velocity( vt->coordinates(), soln_time );
         continue;
       }
 
@@ -463,7 +478,7 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
       //
       // no additional symmetry constraints
       if ( symmetry_normals.empty() ) {
-        vertex_vel[vt]  = math::solve( Mp, rhs );
+        vertex_velocity[vt]  = math::solve( Mp, rhs );
       }
       // add symmetry constraints and grow the system
       else {
@@ -502,7 +517,7 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
         ale::linalg::qr( A_view, b_view );
         // copy the results back
         for ( int d=0; d<num_dims; ++d )
-          vertex_vel[vt][d] = b_view[d];
+          vertex_velocity[vt][d] = b_view[d];
 
       } // end has symmetry
       
@@ -514,7 +529,7 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
     // now solve for point velocity
     else {
       
-      vertex_vel[vt] = math::solve( Mp, rhs );
+      vertex_velocity[vt] = math::solve( Mp, rhs );
 
     } // internal point
 
@@ -610,7 +625,7 @@ int32_t evaluate_forces( T & mesh ) {
 //!   \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t apply_update( T & mesh, real_t coef ) {
+int32_t apply_update( T & mesh, real_t coef, bool first_time ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -674,10 +689,27 @@ int32_t apply_update( T & mesh, real_t coef ) {
   //----------------------------------------------------------------------------
 
 #ifndef NDEBUG
+  std::stringstream mom_str;
+  mom_str.setf( std::ios::scientific );
+
+  for ( const auto & mx : mom )
+    mom_str << std::setprecision(2) << std::setw(9) << mx << " ";
+
   auto ss = cout.precision();
   cout.setf( std::ios::scientific );
-  cout.precision(8);
-  cout << "Sums: mass = " << mass << ", momentum = " << mom << ", energy = " << ener << endl;
+
+  if ( first_time ) {
+    cout << std::string(60, '-') << endl;
+    cout << "| " << std::setw(10) << "Mass:"
+         << " | " << std::setw(29) << "Momentum:"
+         << " | " << std::setw(11) << "Energy:"
+         << " |" << std::endl;
+  }
+  cout << "| " << std::setprecision(3) << std::setw(10) << mass
+       << " | " << std::setw(28) << mom_str.str()
+       << "| " << std::setprecision(4)  << std::setw(11) << ener
+       << " |" << std::endl;
+
   cout.unsetf( std::ios::scientific );
   cout.precision(ss);
 #endif
@@ -886,7 +918,9 @@ int32_t output( T & mesh,
   ss << std::setw( 7 ) << std::setfill( '0' ) << cnt++;
   ss << "."+postfix;
   
+  cout << endl;
   mesh::write_mesh( ss.str(), mesh );
+  cout << endl;
   
   return 0;
 }

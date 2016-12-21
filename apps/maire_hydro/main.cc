@@ -16,10 +16,15 @@
 #include <ale/utils/time_utils.h>
 
 // system includes
+#include <getopt.h>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <utility>
+
+#ifdef _GNU_SOURCE
+#  include <fenv.h>
+#endif
 
 // everything is in the hydro namespace
 using namespace apps::hydro;
@@ -38,6 +43,12 @@ using namespace apps::hydro;
 int main(int argc, char** argv) 
 {
 
+  // enable exceptions
+#if defined(_GNU_SOURCE) && !defined(NDEBUG)
+  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+#endif
+
+
   //===========================================================================
   // SOD-X Inputs
   //===========================================================================
@@ -53,7 +64,7 @@ int main(int argc, char** argv)
   std::string postfix = "vtk";
 
   // output frequency
-  constexpr size_t output_freq = 1;
+  size_t output_freq = 1;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 100;
@@ -67,7 +78,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 1.0, .volume = 1.0, .growth = 1.e3 };
   constexpr real_t final_time = 0.2;
   constexpr real_t initial_time_step = 1.0;
-  constexpr size_t max_steps = 1e6;
+  size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -90,6 +101,40 @@ int main(int argc, char** argv)
 
   // this is the mesh object
   auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, length_x, length_y );
+
+  // the boundary mapper
+  boundary_map_t< mesh_t::num_dimensions > boundaries;
+
+  // create a single boundary right now
+  auto bc_type = boundary_condition_t< mesh_t::num_dimensions >();
+  
+  // install each boundary
+  // -  both +ve and -ve side boundaries can be installed at once since 
+  //    they will never overlap
+
+  // x-boundaries
+  auto bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[0] == -0.5*length_x || fx[0] == 0.5*length_x );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
+  // y-boundaries
+  bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[1] == -0.5*length_y || fx[1] == 0.5*length_y );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
+
   
   //===========================================================================
   // SOD-Y Inputs
@@ -106,7 +151,7 @@ int main(int argc, char** argv)
   std::string postfix = "vtk";
 
   // output frequency
-  constexpr size_t output_freq = 1;
+  size_t output_freq = 1;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 10;
@@ -120,7 +165,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 1.0, .volume = 1.0, .growth = 1.e3 };
   constexpr real_t final_time = 0.2;
   constexpr real_t initial_time_step = 1.0;
-  constexpr size_t max_steps = 1e6;
+  size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -144,6 +189,39 @@ int main(int argc, char** argv)
   // this is the mesh object
   auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, length_x, length_y );
 
+  // the boundary mapper
+  boundary_map_t< mesh_t::num_dimensions > boundaries;
+
+  // create a single boundary right now
+  auto bc_type = boundary_condition_t< mesh_t::num_dimensions >();
+  
+  // install each boundary
+  // -  both +ve and -ve side boundaries can be installed at once since 
+  //    they will never overlap
+
+  // x-boundaries
+  auto bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[0] == -0.5*length_x || fx[0] == 0.5*length_x );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
+  // y-boundaries
+  bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[1] == -0.5*length_y || fx[1] == 0.5*length_y );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
+
   //===========================================================================
   // SOD-XY Inputs
   //===========================================================================
@@ -159,7 +237,7 @@ int main(int argc, char** argv)
   std::string postfix = "vtk";
 
   // output frequency
-  constexpr size_t output_freq = 1;
+  size_t output_freq = 1;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 100;
@@ -173,7 +251,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 1.0, .volume = 1.0, .growth = 1.e3 };
   constexpr real_t final_time = 0.2;
   constexpr real_t initial_time_step = 1.0;
-  constexpr size_t max_steps = 1e6;
+  size_t max_steps = 1e6;
 
   // rotate by 45 degrees
   constexpr real_t degrees = 45;
@@ -210,6 +288,41 @@ int main(int argc, char** argv)
 
   // this is the mesh object
   auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, length_x, length_y );
+
+  // the boundary mapper
+  boundary_map_t< mesh_t::num_dimensions > boundaries;
+
+  // create a single boundary right now
+  auto bc_type = boundary_condition_t< mesh_t::num_dimensions >();
+  
+  // install each boundary
+  // -  both +ve and -ve side boundaries can be installed at once since 
+  //    they will never overlap
+
+  // x-boundaries
+  auto bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[0] == -0.5*length_x || fx[0] == 0.5*length_x );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
+  // y-boundaries
+  bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[1] == -0.5*length_y || fx[1] == 0.5*length_y );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
+
+  // now rotate the mesh
   mesh::rotate( mesh, degrees );
 
 
@@ -228,7 +341,7 @@ int main(int argc, char** argv)
   std::string postfix = "vtk";
 
   // output frequency
-  constexpr size_t output_freq = 1;
+  size_t output_freq = 1;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 100;
@@ -244,7 +357,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 1.0, .volume = 1.0, .growth = 1.e3 };
   constexpr real_t final_time = 0.2;
   constexpr real_t initial_time_step = 1.0;
-  constexpr size_t max_steps = 1e6;
+  size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -270,6 +383,49 @@ int main(int argc, char** argv)
     num_cells_x, num_cells_y, num_cells_z,
     length_x, length_y, length_z );
 
+  // the boundary mapper
+  boundary_map_t< mesh_t::num_dimensions > boundaries;
+
+  // create a single boundary right now
+  auto bc_type = boundary_condition_t< mesh_t::num_dimensions >();
+  
+  // install each boundary
+  // -  both +ve and -ve side boundaries can be installed at once since 
+  //    they will never overlap
+
+  // x-boundaries
+  auto bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[0] == -0.5*length_x || fx[0] == 0.5*length_x );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
+  // y-boundaries
+  bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[1] == -0.5*length_y || fx[1] == 0.5*length_y );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
+  // z-boundaries
+  bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[2] == -0.5*length_z || fx[2] == 0.5*length_z );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
 
   //===========================================================================
   // SEDOV Inputs
@@ -286,7 +442,7 @@ int main(int argc, char** argv)
   std::string postfix = "vtk";
 
   // output frequency
-  constexpr size_t output_freq = 100;
+  size_t output_freq = 100;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 30;
@@ -300,7 +456,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 0.25, .volume = 0.1, .growth = 1.01 };
   constexpr real_t initial_time_step = 1.e-5;
   constexpr real_t final_time = 1.0;
-  constexpr size_t max_steps = 1e6;
+  size_t max_steps = 1e6;
 
   // the value of gamma
   constexpr real_t gamma = 1.4;
@@ -333,7 +489,43 @@ int main(int argc, char** argv)
   eos_t eos(  gamma, /* cv */ 1.0 ); 
 
   // this is the mesh object
-  auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, 0.0, 0.0, length_x, length_y );
+  auto mesh = mesh::box<mesh_t>( 
+    num_cells_x, num_cells_y, 0.0, 0.0, length_x, length_y 
+  );
+
+  // the boundary mapper
+  boundary_map_t< mesh_t::num_dimensions > boundaries;
+
+  // create a single boundary right now
+  auto bc_type = boundary_condition_t< mesh_t::num_dimensions >();
+  
+  // install each boundary
+  // -  both +ve and -ve side boundaries can be installed at once since 
+  //    they will never overlap
+
+  // x-boundaries
+  auto bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[0] == 0.0 || fx[0] == length_x );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
+  // y-boundaries
+  bc_key = mesh.install_boundary( 
+    [](auto f) { 
+      if ( f->is_boundary() ) {
+        const auto & fx = f->midpoint();
+        return ( fx[1] == 0.0 || fx[1] == length_y );
+      }
+      return false; 
+    } 
+  );
+  boundaries.emplace( bc_key, &bc_type );
+
 
   //===========================================================================
   // SEDOV Inputs
@@ -347,10 +539,10 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix  = "sedov_3d";
-  std::string postfix = "dat";
+  std::string postfix = "vtk";
 
   // output frequency
-  constexpr size_t output_freq = 10000;
+  size_t output_freq = 10;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 20;
@@ -366,7 +558,7 @@ int main(int argc, char** argv)
     CFL = { .accoustic = 0.25, .volume = 0.1, .growth = 1.01 };
   constexpr real_t initial_time_step = 1.e-5;
   constexpr real_t final_time = 1.0;
-  constexpr size_t max_steps = 10;
+  size_t max_steps = 1e6;
 
   // the value of gamma
   constexpr real_t gamma = 1.4;
@@ -401,18 +593,10 @@ int main(int argc, char** argv)
 
   // this is the mesh object
   auto mesh = mesh::box<mesh_t>( 
-    num_cells_x, num_cells_y, num_cells_z, 0.0, 0.0, 0.0, length_x, length_y, length_z );
+    num_cells_x, num_cells_y, num_cells_z, 0.0, 0.0, 0.0, 
+    length_x, length_y, length_z 
+  );
 
-#else
-
-#  pragma message("NO CASE DEFINED!")
-
-#endif
-
-  //===========================================================================
-  // Mesh Setup
-  //===========================================================================
-  
   // the boundary mapper
   boundary_map_t< mesh_t::num_dimensions > boundaries;
 
@@ -456,7 +640,94 @@ int main(int argc, char** argv)
     } 
   );
   boundaries.emplace( bc_key, &bc_type );
-  
+
+
+#else
+
+#  pragma message("NO CASE DEFINED!")
+
+#endif
+
+  //===========================================================================
+  // Parse arguments
+  //===========================================================================
+
+  // the usage stagement
+  auto print_usage = [&argv]() {
+    std::cout << "Usage: " << argv[0] 
+              << " [--max_steps MAX_STEPS]"
+              << " [--output_freq OUTPUT_FREQ]"
+              << " [--case CASE_NAME]"
+              << " [--postfix EXTENSION]"
+              << std::endl << std::endl;
+    std::cout << "\t--max_steps MAX_STEPS:\tOverride the number of "
+              << "iterations with MAX_STEPS." << std::endl;
+    std::cout << "\t--output_freq OUTPUT_FREQ:\tOverride the frequency "
+              << "of output to occur ever OUTPUT_FREQ." << std::endl;
+    std::cout << "\t--case CASE_NAME:\tOverride the case name "
+              << "with CASE_NAME." << std::endl;
+    std::cout << "\t--postfix EXTENSION:\tOverride the output extension "
+              << "with EXTENSION." << std::endl;
+  };
+
+  while (1) {
+    
+    // Define the options
+    static struct option long_options[] =
+      {
+        {"help",              no_argument, 0, 'h'},
+        {"max_steps",   required_argument, 0, 'n'},
+        {"output_freq", required_argument, 0, 'f'},
+        {"case",        required_argument, 0, 'c'},
+        {"postfix",     required_argument, 0, 'p'},
+        {0, 0, 0, 0}
+      };
+      // getopt_long stores the option index here.
+      int option_index = 0;
+
+      auto c = getopt_long (argc, argv, "h", long_options, &option_index);
+
+      // Detect the end of the options.
+      if (c == -1) break;
+
+      switch (c) {
+        case 'c':
+          short_warning ("Overriding case name with \"" << optarg << "\"" );
+          prefix = optarg;
+          break;
+
+        case 'p':
+          short_warning ("Overriding extension with \"" << optarg << "\"" );
+          postfix = optarg;
+          break;
+
+        case 'f':
+          short_warning ("Overriding output frequency to \"" << optarg << "\"" );
+          output_freq = atoi( optarg );
+          break;
+
+        case 'n':
+          short_warning ("Overriding max iterations to \"" << optarg << "\"" );
+          max_steps = atoi( optarg );
+          break;
+
+        case 'h':
+          print_usage();
+          return 0;
+
+        case '?':
+          // getopt_long already printed an error message.
+          print_usage();
+          return 1;
+
+        default:
+          abort ();
+        }
+    }
+
+  //===========================================================================
+  // Mesh Setup
+  //===========================================================================  
 
   // now check the mesh
   mesh.is_valid();
@@ -592,14 +863,20 @@ int main(int argc, char** argv)
     // access the computed time step and make sure its not too large
     *time_step = std::min( *time_step, final_time - soln_time );       
 
+    cout << std::string(60, '=') << endl;
     auto ss = cout.precision();
     cout.setf( std::ios::scientific );
     cout.precision(6);
-    cout << "step = " << time_cnt+1
-         << ", time = " << soln_time + (*time_step)
-         << ", dt = " << *time_step
-         << ", limit = " << limit_string
-         << std::endl;
+    cout << "| " << std::setw(8) << "Step:"
+         << " | " << std::setw(13) << "Time:"
+         << " | " << std::setw(13) << "Step Size:"
+         << " | " << std::setw(13) << "Limit:"
+         << " |" << std::endl;
+    cout << "| " << std::setw(8) << time_cnt+1
+         << " | " << std::setw(13) << soln_time + (*time_step)
+         << " | " << std::setw(13) << *time_step
+         << " | " << std::setw(13) << limit_string
+         << " |" << std::endl;
     cout.unsetf( std::ios::scientific );
     cout.precision(ss);
 
@@ -614,7 +891,7 @@ int main(int argc, char** argv)
     apps::hydro::move_mesh( mesh, 0.5 );
 
     // update solution to n+1/2
-    apps::hydro::apply_update( mesh, 0.5 );
+    apps::hydro::apply_update( mesh, 0.5, true );
 
     // Update derived solution quantities
     apps::hydro::update_state_from_energy( mesh );
@@ -646,7 +923,7 @@ int main(int argc, char** argv)
     apps::hydro::move_mesh( mesh, 1.0 );
     
     // update solution to n+1
-    apps::hydro::apply_update( mesh, 1.0 );
+    apps::hydro::apply_update( mesh, 1.0, false );
 
     // Update derived solution quantities
     apps::hydro::update_state_from_energy( mesh );

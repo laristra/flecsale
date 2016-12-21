@@ -20,11 +20,17 @@ if( NOT output_test )
    message( FATAL_ERROR "Variable output_test not defined" )
 endif()
 
+# how many threads are there
+message(STATUS "Using $ENV{OMP_NUM_THREADS} threads")
+
 # blow away the compare-to-file in case it is already there
 file(REMOVE ${output_test})
 
 # run the test
 separate_arguments( test_cmd ) 
+
+string(REPLACE ";" " " test_cmd_string "${test_cmd}")
+message(STATUS "Executing '${test_cmd_string}'")
 
 execute_process(
    COMMAND ${test_cmd}
@@ -40,6 +46,9 @@ endif()
 separate_arguments( compare_cmd ) 
 
 # run the diff
+string(REPLACE ";" " " test_cmd_string "${compare_cmd} ${output_blessed} ${output_test}")
+message(STATUS "Executing '${test_cmd_string}'")
+
 execute_process(
   COMMAND ${compare_cmd} ${output_blessed} ${output_test}
   RESULT_VARIABLE test_not_successful
