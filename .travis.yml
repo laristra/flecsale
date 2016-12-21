@@ -11,12 +11,12 @@ env:
     - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Release MINIMAL=ON
     - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Release COVERAGE=ON
     - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Debug
-    - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Release
+    - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Release DOCKERHUB=true
     - DISTRO=ubuntu INTERNAL_FLECSI=OFF BUILD_TYPE=Release
     - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Debug   MINIMAL=ON
     - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Release MINIMAL=ON
     - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Debug
-    - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Release
+    - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Release DOCKERHUB=true
 
 matrix:
   allow_failures:
@@ -45,6 +45,12 @@ script:
    rm -rf ${HOME}/.ccache &&
    CON=$(docker run -d flecsi/flecsale:${DISTRO} /bin/bash) &&
    docker cp ${CON}:/home/flecsi/.ccache ${HOME}/
+
+after_success:
+  - if [[ ${DOCKERHUB} = true && ${DOCKER_EMAIL} && ${DOCKER_USERNAME} && ${DOCKER_PASSWORD} && ${TRAVIS_PULL_REQUEST} == false && ${TRAVIS_BRANCH} == master && ${CC} = gcc ]]; then
+      docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+      docker push "flecsi/flecsale:${DISTRO}";
+    fi
 
 cache:
   - ccache
