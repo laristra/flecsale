@@ -40,6 +40,15 @@ ELSE (PYTHONINTERP_FOUND)
    MESSAGE (FATAL "Did not find python. Python is needed to run regression tests.")
 ENDIF ()
 
+# find python for embedding
+FIND_PACKAGE (PythonLibs)
+IF (PYTHONLIBS_FOUND)
+   MESSAGE (STATUS "Found PythonLibs: ${PYTHON_INCLUDE_DIRS}")
+ELSE (PYTHONINTERP_FOUND)
+   MESSAGE (FATAL "Did not find python. Python is needed to run regression tests.")
+ENDIF ()
+
+
 #------------------------------------------------------------------------------#
 # Enable shapo
 #------------------------------------------------------------------------------#
