@@ -70,3 +70,18 @@
     THROW_EXCEPTION(ale::utils::ExceptionNotImplemented());             \
   } while(0)
 
+/////////////////////////////////////////////////////////////////////
+//! \brief Assert that something is true.
+//! \param[in] cond  the condition to assert evaluates to true
+//! \param[in] msg  the message to display
+/////////////////////////////////////////////////////////////////////
+#define assert_true(cond, msg)                                          \
+  if ( ! (cond) )                                                       \
+    raise_runtime_error("Assertion falied: " << msg)
+
+/////////////////////////////////////////////////////////////////////
+//! \brief Display a warning.
+//! \param[in] msg  the message to display
+/////////////////////////////////////////////////////////////////////
+#define short_warning(msg)                                              \
+    std::cout << "Warning ==> " << msg << std::endl;
