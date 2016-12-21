@@ -22,10 +22,6 @@
 #include <sstream>
 #include <utility>
 
-#ifdef _GNU_SOURCE
-#  include <fenv.h>
-#endif
-
 // everything is in the hydro namespace
 using namespace apps::hydro;
 

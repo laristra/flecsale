@@ -2,8 +2,15 @@
 # Copyright (c) 2016 Los Alamos National Security, LLC
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
+
 #------------------------------------------------------------------------------#
-# Thirdparty libraries
+# Flecsi Config
+#------------------------------------------------------------------------------#
+
+add_definitions( -DFLECSI_RUNTIME_MODEL_serial )
+
+#------------------------------------------------------------------------------#
+# Other Thirdparty libraries
 #------------------------------------------------------------------------------#
 
 # find_package(Boost 1.47 REQUIRED)
@@ -33,20 +40,22 @@ endif()
 
 
 # find python for running regression tests
-FIND_PACKAGE (PythonInterp)
-IF (PYTHONINTERP_FOUND)
-   MESSAGE (STATUS "Found PythonInterp: ${PYTHON_EXECUTABLE}")
-ELSE (PYTHONINTERP_FOUND)
-   MESSAGE (FATAL "Did not find python. Python is needed to run regression tests.")
-ENDIF ()
+find_package (PythonInterp)
+if (PYTHONINTERP_FOUND)
+   message (STATUS "Found PythonInterp: ${PYTHON_EXECUTABLE}")
+else (PYTHONINTERP_FOUND)
+   message (FATAL "Did not find python. Python is needed to run regression tests.")
+endif ()
 
 # find python for embedding
-FIND_PACKAGE (PythonLibs)
-IF (PYTHONLIBS_FOUND)
-   MESSAGE (STATUS "Found PythonLibs: ${PYTHON_INCLUDE_DIRS}")
-ELSE (PYTHONINTERP_FOUND)
-   MESSAGE (FATAL "Did not find python. Python is needed to run regression tests.")
-ENDIF ()
+find_package (PythonLibs)
+if (PYTHONLIBS_FOUND)
+   message (STATUS "Found PythonLibs: ${PYTHON_INCLUDE_DIRS}")
+   include_directories( ${PYTHON_INCLUDE_DIRS} )
+   list( APPEND ALE_LIBRARIES ${PYTHON_LIBRARIES} )
+else (PYTHONINTERP_FOUND)
+   message (FATAL "Did not find python. Python is needed to run regression tests.")
+endif ()
 
 
 #------------------------------------------------------------------------------#
@@ -131,4 +140,7 @@ endif(ENABLE_IO)
 #------------------------------------------------------------------------------#
 # ADD to ALE libraries
 #------------------------------------------------------------------------------#
-list( APPEND ALE_LIBRARIES ${IO_LIBRARIES} ${VORO_LIBRARIES} )
+list( APPEND ALE_LIBRARIES 
+  ${IO_LIBRARIES} 
+  ${VORO_LIBRARIES}
+)

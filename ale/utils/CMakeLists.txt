@@ -12,6 +12,7 @@ set(utils_HEADERS
   errors.h
   filter_iterator.h
   fixed_vector.h
+  python_utils.h
   string_utils.h
   static_for.h
   tasks.h

@@ -10,13 +10,12 @@
 // hydro incdludes
 #include "tasks.h"
 #include "types.h"
+#include "../common/exceptions.h"
 
 // user includes
 #include <ale/mesh/factory.h>
+#include <ale/utils/python_utils.h>
 #include <ale/utils/time_utils.h>
-
-// use python
-#include <Python.h>
 
 // system includes
 #include <getopt.h>
@@ -41,10 +40,8 @@ using namespace apps::hydro;
 int main(int argc, char** argv) 
 {
 
-  // enable exceptions
-#if defined(_GNU_SOURCE) && !defined(NDEBUG)
-  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
-#endif
+  // set exceptions 
+  enable_exceptions();
 
   //===========================================================================
   // Parse arguments
@@ -115,11 +112,13 @@ int main(int argc, char** argv)
   //===========================================================================
 
   // setup the python interpreter
-  Py_SetProgramName(argv[0]);  /* optional but recommended */
-  Py_Initialize();
+  utils::python_set_program_name( argv[0] );
+  auto py_module = utils::python_import( input_file_name.c_str() );
+
+  utils::python_initialize();
 
   // shut down python
-  Py_Finalize();
+  utils::python_finalize();
 
 #if 0
 
