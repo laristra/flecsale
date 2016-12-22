@@ -9,6 +9,8 @@
 
 #pragma once
 
+// system includes
+#include <cstring>
 #include <string>
 
 namespace ale {

@@ -35,10 +35,14 @@ cinch_add_unit(utils
     SOURCES 
       test/array_view.cc
       test/fixed_vector.cc
+      test/python_utils.cc
       test/static_for.cc
       test/tasks.cc
       test/tuple_for_each.cc
       test/tuple_visit.cc
       test/tuple_zip.cc
       test/zip.cc
+    INPUTS 
+      test/python_test.py
+    LIBRARIES ${ALE_LIBRARIES}
 )
