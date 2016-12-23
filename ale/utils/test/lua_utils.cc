@@ -4,21 +4,18 @@
  *~-------------------------------------------------------------------------~~*/
 ////////////////////////////////////////////////////////////////////////////////
 /// \file
-/// \brief Tests related to ebedded python.
+/// \brief Tests related to embedded lua.
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef HAVE_PYTHON
+#if HAVE_LUA
 
 // user includes
 #include "ale/common/types.h"
+#include "ale/utils/lua_utils.h"
 
 // system includes
 #include<cinchtest.h>
 #include<iostream>
-
-// Python include should go last cause it conflicts with alot of other 
-// includes.
-#include "ale/utils/python_utils.h"
 
 
 // explicitly use some stuff
@@ -26,60 +23,42 @@ using namespace ale::utils;
 using ale::common::test_tolerance;
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief Test the simple use of embedded python.
+//! \brief Test the simple use of embedded lua.
 ///////////////////////////////////////////////////////////////////////////////
-TEST(python_utils, simple) 
+TEST(lua_utils, simple) 
 {
 
   // setup the python interpreter
-  python_initialize();
+  auto state = lua();
 
   // load the test file
-  python_run_string(
-    "import sys\n"
-    "for path in sys.path:\n"
-    "    print('path: ', path)\n"
+  state.run_string(
+    "print(\"Hello World\")\n"
   );
 
-  // shut down python
-  python_finalize();
-
 } // TEST
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the simple use of embedded python.
 ///////////////////////////////////////////////////////////////////////////////
-TEST(python_utils, embedded) 
+TEST(lua_utils, embedded) 
 {
 
   // setup the python interpreter
-  python_initialize();
-  auto py_path = python_add_to_path(".");
+  auto state = lua();
 
   // load the test file
-  auto py_module = python_import( "python_test" );
+  state.loadfile( "lua_test.lua" );
 
   // run a simple function and check the result
-  auto py_func = python_get_attribute(py_module, "add");
-  auto py_res = python_call_function( py_func, 1, 2 );
-  ASSERT_EQ( 3, python_as_long(py_res) );
-  ASSERT_NEAR( 3., python_as_double(py_res), test_tolerance );
-  python_free(py_res);
+  ASSERT_EQ( 3, state.call_function<int>( "sum", 1, 2 ) );
+  ASSERT_NEAR( 3., state.call_function<double>( "sum", 1, 2 ), test_tolerance );
 
   // try with different arguments
-  py_res = python_call_function( py_func, 1., 2. );
-  ASSERT_EQ( 3, python_as_long(py_res) );
-  ASSERT_NEAR( 3., python_as_double(py_res), test_tolerance );
-  python_free(py_res);
-
-  // free up references.
-  python_free(py_module);
-  python_free(py_path);
-
-  // shut down python
-  python_finalize();
+  ASSERT_EQ( 3, state.call_function<int>( "sum", 1., 2. ) );
+  ASSERT_NEAR( 3., state.call_function<double>( "sum", 1., 2. ), test_tolerance );
 
 } // TEST
 
-
-#endif // HAVE_PYTHON
+#endif // HAVE_LUA

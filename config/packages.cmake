@@ -43,18 +43,26 @@ endif()
 find_package (PythonInterp)
 if (PYTHONINTERP_FOUND)
    message (STATUS "Found PythonInterp: ${PYTHON_EXECUTABLE}")
-else (PYTHONINTERP_FOUND)
+else ()
    message (FATAL "Did not find python. Python is needed to run regression tests.")
 endif ()
 
 # find python for embedding
-find_package (PythonLibs)
+find_package (PythonLibs QUIET)
 if (PYTHONLIBS_FOUND)
    message (STATUS "Found PythonLibs: ${PYTHON_INCLUDE_DIRS}")
    include_directories( ${PYTHON_INCLUDE_DIRS} )
    list( APPEND ALE_LIBRARIES ${PYTHON_LIBRARIES} )
-else (PYTHONINTERP_FOUND)
-   message (FATAL "Did not find python. Python is needed to run regression tests.")
+   add_definitions( -DHAVE_PYTHON )    
+endif ()
+
+# find python for embedding
+find_package (Lua QUIET)
+if (LUA_FOUND)
+   message (STATUS "Found Lua: ${LUA_INCLUDE_DIR}")
+   include_directories( ${LUA_INCLUDE_DIR} )
+   list( APPEND ALE_LIBRARIES ${LUA_LIBRARIES} )
+   add_definitions( -DHAVE_LUA )    
 endif ()
 
 

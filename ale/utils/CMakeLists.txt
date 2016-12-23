@@ -12,6 +12,7 @@ set(utils_HEADERS
   errors.h
   filter_iterator.h
   fixed_vector.h
+  lua_utils.h
   python_utils.h
   string_utils.h
   static_for.h
@@ -35,6 +36,7 @@ cinch_add_unit(utils
     SOURCES 
       test/array_view.cc
       test/fixed_vector.cc
+      test/lua_utils.cc
       test/python_utils.cc
       test/static_for.cc
       test/tasks.cc
@@ -43,6 +45,7 @@ cinch_add_unit(utils
       test/tuple_zip.cc
       test/zip.cc
     INPUTS 
+      test/lua_test.lua
       test/python_test.py
     LIBRARIES ${ALE_LIBRARIES}
 )
