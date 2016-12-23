@@ -10,6 +10,7 @@
 // hydro incdludes
 #include "tasks.h"
 #include "types.h"
+#include "../common/exceptions.h"
 
 // user includes
 #include <ale/mesh/factory.h>
@@ -39,10 +40,8 @@ using namespace apps::hydro;
 int main(int argc, char** argv) 
 {
 
-  // enable exceptions
-#if defined(_GNU_SOURCE) && !defined(NDEBUG)
-  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
-#endif
+  // set exceptions 
+  enable_exceptions();
 
 
   //===========================================================================

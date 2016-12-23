@@ -4,7 +4,7 @@
 #~----------------------------------------------------------------------------~#
 
 add_executable( maire_hydro main.cc )
-target_link_libraries( maire_hydro ${ALE_LIBRARIES} )
+target_link_libraries( maire_hydro common ${ALE_LIBRARIES} )
 
 create_regression_test( 
 	NAME sedov_maire

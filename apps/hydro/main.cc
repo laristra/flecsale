@@ -14,7 +14,6 @@
 
 // user includes
 #include <ale/mesh/factory.h>
-#include <ale/utils/python_utils.h>
 #include <ale/utils/time_utils.h>
 
 // system includes
@@ -43,25 +42,230 @@ int main(int argc, char** argv)
   // set exceptions 
   enable_exceptions();
 
+
+  //===========================================================================
+  // X-direction SOD Inputs
+  //===========================================================================
+
+#ifdef SODX_2D
+
+  using mesh_t = mesh_2d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
+
+  // the case prefix
+  std::string prefix = "sodx_2d";
+  std::string postfix = "vtk";
+
+  // output frequency
+  size_t output_freq = 1;
+
+  // the grid dimensions
+  constexpr size_t num_cells_x = 100;
+  constexpr size_t num_cells_y = 1;
+
+  constexpr real_t length_x = 1.0;
+  constexpr real_t length_y = 0.1;
+  
+  // the CFL and final solution time
+  constexpr real_t CFL = 1.0;
+  constexpr real_t final_time = 0.2;
+  size_t max_steps = 1e6;
+
+  // this is a lambda function to set the initial conditions
+  auto ics = [] ( const auto & x )
+    {
+      real_t d, p;
+      vector_t v(0);
+      if ( x[0] < 0.0 ) {
+        d = 1.0;
+        p = 1.0;
+      }
+      else {
+        d = 0.125;
+        p = 0.1;
+      }    
+      return std::make_tuple( d, v, p );
+    };
+
+  // this is the mesh object
+  auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, length_x, length_y );
+
+  //===========================================================================
+  // X-direction SOD Inputs
+  //===========================================================================
+#elif defined(SODX_3D)
+
+  using mesh_t = mesh_3d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
+
+  // the case prefix
+  std::string prefix = "sodx_3d";
+  std::string postfix = "vtk";
+
+  // output frequency
+  size_t output_freq = 1;
+
+  // the grid dimensions
+  constexpr size_t num_cells_x = 100;
+  constexpr size_t num_cells_y = 1;
+  constexpr size_t num_cells_z = 1;
+
+  constexpr real_t length_x = 1.0;
+  constexpr real_t length_y = 0.1;
+  constexpr real_t length_z = 0.1;
+  
+  // the CFL and final solution time
+  constexpr real_t CFL = 1.0;
+  constexpr real_t final_time = 0.2;
+  size_t max_steps = 1e6;
+
+  // this is a lambda function to set the initial conditions
+  auto ics = [] ( const auto & x )
+    {
+      real_t d, p;
+      vector_t v(0);
+      if ( x[0] < 0.0 ) {
+        d = 1.0;
+        p = 1.0;
+      }
+      else {
+        d = 0.125;
+        p = 0.1;
+      }    
+      return std::make_tuple( d, v, p );
+    };
+
+  // this is the mesh object
+  auto mesh = mesh::box<mesh_t>( 
+    num_cells_x, num_cells_y, num_cells_z, length_x, length_y, length_z );
+
+  //===========================================================================
+  // Shock Box Inputs
+  //===========================================================================
+#elif defined(SHOCK_BOX_2D)
+
+  using mesh_t = mesh_2d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
+
+  // the case prefix
+  std::string prefix = "shock_box_2d";
+  std::string postfix = "vtk";
+
+  // output frequency
+  size_t output_freq = 1;
+
+  // the grid dimensions
+  constexpr size_t num_cells_x = 100;
+  constexpr size_t num_cells_y = 100;
+
+  constexpr real_t length_x = 1.0;
+  constexpr real_t length_y = 1.0;
+  
+  // the CFL and final solution time
+  constexpr real_t CFL = 0.5;
+  constexpr real_t final_time = 0.2;
+  size_t max_steps = 1e6;
+
+  // this is a lambda function to set the initial conditions
+  auto ics = [] ( const auto & x )
+    {
+      real_t d, p;
+      vector_t v(0);
+      if ( x[0] < 0.0 && x[1] < 0.0 ) {
+        d = 0.125;
+        p = 0.1;
+      }
+      else {
+        d = 1.0;
+        p = 1.0;
+      }    
+      return std::make_tuple( d, v, p );
+    };
+  
+  // this is the mesh object
+  auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, length_x, length_y );
+
+  //===========================================================================
+  // Shock Box Inputs
+  //===========================================================================
+#elif defined(SHOCK_BOX_3D)
+
+  using mesh_t = mesh_3d_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
+
+  // the case prefix
+  std::string prefix = "shock_box_3d";
+  std::string postfix = "vtk";
+
+  // output frequency
+  size_t output_freq = 100;
+
+  // the grid dimensions
+  constexpr size_t num_cells_x = 10;
+  constexpr size_t num_cells_y = 10;
+  constexpr size_t num_cells_z = 10;
+
+  constexpr real_t length_x = 1.0;
+  constexpr real_t length_y = 1.0;
+  constexpr real_t length_z = 1.0;
+  
+  // the CFL and final solution time
+  constexpr real_t CFL = 1/3.;
+  constexpr real_t final_time = 0.2;
+  size_t max_steps = 1e6;
+
+  // this is a lambda function to set the initial conditions
+  auto ics = [] ( const auto & x )
+    {
+      real_t d, p;
+      vector_t v(0);
+      if ( x[0] < 0 && x[1] < 0 && x[2] < 0 ) {
+        d = 0.125;
+        p = 0.1;
+      }
+      else {
+        d = 1.0;
+        p = 1.0;
+      }    
+      return std::make_tuple( d, v, p );
+    };
+  
+  // this is the mesh object
+  auto mesh = mesh::box<mesh_t>( num_cells_x, num_cells_y, num_cells_z, length_x, length_y, length_z );
+
+#else
+
+#  pragma message("NO CASE DEFINED!")
+
+#endif
+
+  // setup an equation of state
+  eos_t eos( /* gamma */ 1.4, /* cv */ 1.0 ); 
+
   //===========================================================================
   // Parse arguments
   //===========================================================================
 
-  // argument defaults
-  bool is_verbose = false;
-  std::string input_file_name = "infile.py";
-
   // the usage stagement
   auto print_usage = [&argv]() {
     std::cout << "Usage: " << argv[0] 
-              << " [--verbose]"
-              << " [--help]"
-              << " [--file INPUT_FILE]"
+              << " [--max_steps MAX_STEPS]"
+              << " [--output_freq OUTPUT_FREQ]"
+              << " [--case CASE_NAME]"
+              << " [--postfix EXTENSION]"
               << std::endl << std::endl;
-    std::cout << "\t--file INPUT_FILE:\t Override the input file "
-              << "with INPUT_FILE." << std::endl;
-    std::cout << "\t--help:\t Print the usage." << std::endl;
-    std::cout << "\t--verbose:\t Turn on verbosity." << std::endl;
+    std::cout << "\t--max_steps MAX_STEPS:\tOverride the number of "
+              << "iterations with MAX_STEPS." << std::endl;
+    std::cout << "\t--output_freq OUTPUT_FREQ:\tOverride the frequency "
+              << "of output to occur ever OUTPUT_FREQ." << std::endl;
+    std::cout << "\t--case CASE_NAME:\tOverride the case name "
+              << "with CASE_NAME." << std::endl;
+    std::cout << "\t--postfix EXTENSION:\tOverride the output extension "
+              << "with EXTENSION." << std::endl;
   };
 
   while (1) {
@@ -69,28 +273,40 @@ int main(int argc, char** argv)
     // Define the options
     static struct option long_options[] =
       {
-        {"help",            no_argument, 0, 'h'},
-        {"verbose",         no_argument, 0, 'v'},
-        {"file",      required_argument, 0, 'f'},
+        {"help",              no_argument, 0, 'h'},
+        {"max_steps",   required_argument, 0, 'n'},
+        {"output_freq", required_argument, 0, 'f'},
+        {"case",        required_argument, 0, 'c'},
+        {"postfix",     required_argument, 0, 'p'},
         {0, 0, 0, 0}
       };
       // getopt_long stores the option index here.
       int option_index = 0;
 
-      auto c = getopt_long (argc, argv, "hvf:", long_options, &option_index);
+      auto c = getopt_long (argc, argv, "h", long_options, &option_index);
 
       // Detect the end of the options.
       if (c == -1) break;
 
       switch (c) {
-        case 'f':
-          short_warning ("Using input file \"" << optarg << "\"." );
-          input_file_name = optarg;
+        case 'c':
+          short_warning ("Overriding case name with \"" << optarg << "\"" );
+          prefix = optarg;
           break;
 
-        case 'v':
-          short_warning ("Setting verbosity on." );
-          is_verbose = true;
+        case 'p':
+          short_warning ("Overriding extension with \"" << optarg << "\"" );
+          postfix = optarg;
+          break;
+
+        case 'f':
+          short_warning ("Overriding output frequency to \"" << optarg << "\"" );
+          output_freq = atoi( optarg );
+          break;
+
+        case 'n':
+          short_warning ("Overriding max iterations to \"" << optarg << "\"" );
+          max_steps = atoi( optarg );
           break;
 
         case 'h':
@@ -106,22 +322,6 @@ int main(int argc, char** argv)
           abort ();
         }
     }
-
-  //===========================================================================
-  // Case Setup
-  //===========================================================================
-
-  // setup the python interpreter
-  utils::python_set_program_name( argv[0] );
-  auto py_module = utils::python_import( input_file_name.c_str() );
-
-  utils::python_initialize();
-
-  // shut down python
-  utils::python_finalize();
-
-#if 0
-
 
   //===========================================================================
   // Mesh Setup
@@ -260,8 +460,6 @@ int main(int argc, char** argv)
   auto tdelta = utils::get_wall_time() - tstart;
   std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
             << tdelta << "s." << std::endl;
-
-#endif 
 
   // success
   return 0;
