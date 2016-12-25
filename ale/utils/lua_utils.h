@@ -145,7 +145,7 @@ public:
       case LUA_TSTRING:  // strings
         os << lua_tostring(s, i);;
       case LUA_TBOOLEAN:  // booleans
-        os << lua_toboolean(s, i) ? "true" : "false";
+        os << (lua_toboolean(s, i) ? "true" : "false");
       case LUA_TNUMBER:  // numbers
         os << lua_tonumber(s, i);
       default:  // other values
@@ -180,13 +180,14 @@ public:
 
 class lua_result_t : public lua_base_t {
 
+  std::string name_;
   int index_;
-  int num_args_;
 
   template< typename Tup, int I, typename Arg >
   void unpack_args( Tup & tup ) const 
   {
-    std::get<I>(tup) = lua_value<Arg>::get( state(), index_-num_args_+I+1 );
+    constexpr auto N = std::tuple_size<Tup>::value;
+    std::get<I>(tup) = lua_value<Arg>::get( state(), index_-N+I+1 );
     // stop recursion
   }
   
@@ -195,60 +196,11 @@ class lua_result_t : public lua_base_t {
   >
   void unpack_args( Tup & tup ) const 
   {
-    std::get<I>(tup) = lua_value<Arg1>::get( state(), index_-num_args_+I+1 );
+    constexpr auto N = std::tuple_size<Tup>::value;
+    std::get<I>(tup) = lua_value<Arg1>::get( state(), index_-N+I+1 );
     // recursively extract tuple 
     unpack_args<Tup,I+1,Arg2,Args...>( tup );
   }
-
-  void check_args( int n ) const
-  {
-    if ( n > num_args_ ) {
-      raise_runtime_error(
-        "Requested \""<<n<<"\" arguments, but function " <<
-        "return \"" << num_args_ << "\"."
-      );
-    }
-  }
-
-public:
-
-  lua_result_t() = delete;
-
-  lua_result_t(lua_state_ptr_t & state, int index, int num_args) 
-    : lua_base_t(state), index_(index), num_args_(num_args)
-  {}
-
-  template< typename T >
-  explicit operator T() const {
-    check_args(1);
-    return lua_value<T>::get(state(), index_);
-  }
-
-  template< typename...Args >
-  explicit operator std::tuple<Args...>() const {
-    constexpr int N = sizeof...(Args);
-    check_args(N);
-    using Tup = std::tuple<Args...>; 
-    Tup tup;
-    unpack_args<Tup,0,Args...>(tup);
-    return tup;
-  }
-
-  template< typename T >
-  auto as() const {
-    return static_cast<T>(*this);
-  }
-  
-  template< typename T1, typename T2, typename...Ts >
-  auto as() const {
-    return static_cast< std::tuple<T1,T2,Ts...> >(*this);
-  }
-};
-
-class lua_global_t : public lua_base_t {
-
-  std::string name_;
-  int index_;
 
   template< typename T >
   void push_arg(T && arg)
@@ -282,11 +234,39 @@ class lua_global_t : public lua_base_t {
 
 public:
 
-  lua_global_t() = delete;
+  lua_result_t() = delete;
 
-  lua_global_t(lua_state_ptr_t & state, const std::string & name, int index) 
-    : lua_base_t(state), name_(name), index_(index)
+  lua_result_t(
+    lua_state_ptr_t & state, 
+    const std::string & name, 
+    int index, 
+    int num_args
+  ) : lua_base_t(state), name_(name), index_(index)
   {}
+
+  template< typename T >
+  explicit operator T() const {
+    return lua_value<T>::get(state(), index_);
+  }
+
+  template< typename...Args >
+  explicit operator std::tuple<Args...>() const {
+    constexpr int N = sizeof...(Args);
+    using Tup = std::tuple<Args...>; 
+    Tup tup;
+    unpack_args<Tup,0,Args...>(tup);
+    return tup;
+  }
+
+  template< typename T >
+  auto as() const {
+    return static_cast<T>(*this);
+  }
+  
+  template< typename T1, typename T2, typename...Ts >
+  auto as() const {
+    return static_cast< std::tuple<T1,T2,Ts...> >(*this);
+  }
   
   template < typename...Args >
   auto operator()(Args&&...args) 
@@ -304,6 +284,16 @@ public:
     }
     // add the arguments
     push_args(std::forward<Args>(args)...);
+    // keep track of the arguments
+    auto pos1 = lua_gettop(s);
+    std::stringstream args_ss;
+    args_ss << "(";
+    for ( auto p = pos0+1; p<=pos1; ++p ) {
+      auto t = lua_type(s, p);
+      args_ss << lua_typename(s, t);
+      if (p<pos1) args_ss << ",";
+    }
+    args_ss << ")";
     // call the function
     auto ret = lua_pcall(s, sizeof...(args), LUA_MULTRET, 0);
     if (ret) {
@@ -316,11 +306,10 @@ public:
       raise_runtime_error("No result from function \"" << name_ << "\".");
     }
     // get the result
-    auto pos1 = lua_gettop(s);
-    return lua_result_t( state_, pos1, pos1-pos0 );
+    pos1 = lua_gettop(s);
+    return lua_result_t( state_, name_+args_ss.str(), pos1, pos1-pos0 );
    }
 };
-
 
 class lua_t : public lua_base_t {
 
@@ -360,7 +349,7 @@ public:
     // the function name
     lua_getglobal(s, name.c_str());
     // return the global object with a pointer to a location in the stack
-    return lua_global_t( state_, name, lua_gettop(s) );
+    return lua_result_t( state_, name, lua_gettop(s), 1 );
   }
 
 };

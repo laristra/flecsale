@@ -47,5 +47,5 @@ cinch_add_unit(utils
     INPUTS 
       test/lua_test.lua
       test/python_test.py
-    LIBRARIES ${ALE_LIBRARIES}
+    LIBRARIES ${PYTHON_LIBRARIES} ${LUA_LIBRARIES}
 )

@@ -1,3 +1,5 @@
+foo = 4
+
 function sum(a, b) 
     return a+b
 end
