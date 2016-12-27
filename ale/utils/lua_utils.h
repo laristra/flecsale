@@ -42,10 +42,9 @@ struct lua_value<long long>
 {
   static long long get(lua_State * s, int index) 
   {
-    auto t = lua_type(s, index);
-    if ( t != LUA_TNUMBER )
+    if ( !lua_isnumber(s,index) )
      raise_runtime_error( "Invalid conversion of type \"" <<
-      lua_typename(s, t) << "\" to int."
+      lua_typename(s, lua_type(s, index)) << "\" to int."
     );
     return lua_tointeger(s, index);
   }
@@ -83,10 +82,9 @@ struct lua_value<double>
 {
   static double get(lua_State * s, int index) 
   {
-    auto t = lua_type(s, index);
-    if ( t != LUA_TNUMBER )
+    if ( !lua_isnumber(s,index) )
      raise_runtime_error( "Invalid conversion of type \"" <<
-      lua_typename(s, t) << "\" to double."
+      lua_typename(s, lua_type(s, index)) << "\" to double."
     );
     return lua_tonumber(s, index);
   }
@@ -106,6 +104,10 @@ struct lua_value<bool>
 {
   static bool get(lua_State * s, int index) 
   {
+    if ( !lua_isboolean(s,index) )
+     raise_runtime_error( "Invalid conversion of type \"" <<
+      lua_typename(s, lua_type(s, index)) << "\" to bool."
+    );
     return lua_toboolean(s, index);
   }
 };
@@ -115,6 +117,10 @@ struct lua_value<std::string>
 {
   static std::string get(lua_State * s, int index) 
   {
+    if ( !lua_isstring(s,index) )
+     raise_runtime_error( "Invalid conversion of type \"" <<
+      lua_typename(s, lua_type(s, index)) << "\" to string."
+    );
     return lua_tostring(s, index);
   }
 };
