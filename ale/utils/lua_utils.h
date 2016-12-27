@@ -125,6 +125,27 @@ struct lua_value<std::string>
   }
 };
 
+void lua_push(lua_State * s, int i)
+{ lua_pushinteger( s, i ); }
+
+void lua_push(lua_State * s, long long i)
+{ lua_pushinteger( s, i ); }
+
+void lua_push(lua_State * s, float x)
+{ lua_pushnumber( s, x ); }
+
+void lua_push(lua_State * s, double x) 
+{ lua_pushnumber( s, x ); }
+
+void lua_push(lua_State * s, bool b)
+{ lua_pushboolean( s, b ); }
+
+void lua_push(lua_State * s, const char * str)
+{ lua_pushstring( s, str ); }
+
+void lua_push(lua_State * s, const std::string & str) 
+{ lua_pushlstring( s, str.c_str(), str.size() ); }
+  
 class lua_base_t {
 
 protected:
@@ -194,6 +215,33 @@ public:
   }
 };
 
+class lua_ref_t : lua_base_t {
+
+  std::shared_ptr<int> ref_;
+
+public:
+
+  lua_ref_t ( const lua_state_ptr_t & state, int ref )
+    : lua_base_t(state), 
+      ref_( new int{ref}, 
+        [this](int * r) 
+        { luaL_unref(this->state(), LUA_REGISTRYINDEX, *ref_); } )
+  {}
+
+  lua_ref_t( const lua_state_ptr_t & state )
+    : lua_ref_t(state, LUA_REFNIL)
+  {}
+
+};
+
+template< typename T >
+lua_ref_t make_lua_ref(lua_State * state, T && t)
+{
+  lua_push( state, std::forward<T>(t) );
+  return { state, luaL_ref(state, LUA_REGISTRYINDEX) };
+}
+
+
 class lua_result_t : public lua_base_t {
 
   std::string name_;
@@ -218,27 +266,6 @@ class lua_result_t : public lua_base_t {
     unpack_args<Tup,I+1,Arg2,Args...>( tup );
   }
 
-  void push_arg(int i) const
-  { lua_pushinteger( state(), i ); }
-  
-  void push_arg(long long i) const 
-  { lua_pushinteger( state(), i ); }
-
-  void push_arg(float x) const
-  { lua_pushnumber( state(), x ); }
-
-  void push_arg(double x) const
-  { lua_pushnumber( state(), x ); }
-
-  void push_arg(bool b) const
-  { lua_pushboolean( state(), b ); }
-
-  void push_arg(const char * s) const
-  { lua_pushstring( state(), s ); }
-
-  void push_arg(const std::string & s) const
-  { lua_pushlstring( state(), s.c_str(), s.size() ); }
-  
   void push_args() const
   {}
   
@@ -248,14 +275,14 @@ class lua_result_t : public lua_base_t {
     // grow the stack
     check_stack(1);
     // push the last argument
-    push_arg( std::forward<Arg>(arg) );
+    lua_push( state(), std::forward<Arg>(arg) );
   }
   
   template< typename Arg, typename... Args >
   void push_args( Arg&& arg, Args&&... args ) const
   {
     // chop off an argument and push it
-    push_arg( std::forward<Arg>(arg) );
+    lua_push( state(), std::forward<Arg>(arg) );
     // set the remaining arguments
     push_args(std::forward<Args>(args)...);
   }
