@@ -59,10 +59,19 @@ TEST(lua_utils, embedded)
   ASSERT_EQ( 3, state["sum"]( 1., 2. ).as<int>() );
   ASSERT_NEAR( 3., state["sum"]( 1., 2. ).as<double>(), test_tolerance );
 
+  // try a function that returns tuples
   auto tup1 = state["split"]( 1, 2 ).as<int,double>();
   ASSERT_EQ( std::forward_as_tuple(1,2.), tup1 );
 
+  // access a global variable
   ASSERT_EQ( 4, state["foo"].as<int>() );
+
+  // access table elements
+  auto tab1 = state["mytable"];
+  ASSERT_EQ( "hi", tab1[3].as<std::string>() );
+  ASSERT_EQ( 4.5, tab1["there"].as<double>() );
+  ASSERT_EQ( 6, tab1["func"]().as<int>() );
+  
   
 } // TEST
 

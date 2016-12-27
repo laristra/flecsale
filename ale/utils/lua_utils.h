@@ -21,6 +21,8 @@ extern "C" {
 }
 
 // system libraries
+#include <iostream>
+#include <iomanip>
 #include <memory>
 #include <sstream>
 #include <tuple>
@@ -143,13 +145,17 @@ public:
     auto t = lua_type(s, i);
     switch (t) {
       case LUA_TSTRING:  // strings
-        os << lua_tostring(s, i);;
+        os << "string >> " << lua_tostring(s, i);
+        break;
       case LUA_TBOOLEAN:  // booleans
-        os << (lua_toboolean(s, i) ? "true" : "false");
+        os << "bool   >> " << (lua_toboolean(s, i) ? "true" : "false");
+        break;
       case LUA_TNUMBER:  // numbers
-        os << lua_tonumber(s, i);
+        os << "number >> " << lua_tonumber(s, i);
+        break;
       default:  // other values
-        os << lua_typename(s, t);
+        os << "other  >> " << lua_typename(s, t);
+        break;
     }
     return os.str();
   }
@@ -158,18 +164,22 @@ public:
   {
     auto s = state();
     auto top = lua_gettop(s);
+    os << "Row : Type   >> Value" << std::endl;
     for (int i = 1; i <= top; i++) {  /* repeat for each level */
+      os << std::setw(3) << i << " : ";
       os << get_row(i);
-      os << "  ";  // put a separator
+      os << std::endl;  // put a separator
     }
-    os << std::endl; // end the listing
     return os;
   }
   
-  void print_last_error()
+  void print_last_error() const
   {
-    std::cerr << get_row(-1) << std::endl;
-    lua_pop(state(), 1);
+    auto s = state();
+    auto top = lua_gettop(s);
+    std::cerr << "Row : Type   >> Value" << std::endl;
+    std::cerr << std::setw(3) << top << " : " << get_row(-1) << std::endl;
+    //lua_pop(state(), 1);
   }
 
   friend std::ostream& operator<<(std::ostream& os, const lua_base_t & s)  
@@ -202,34 +212,83 @@ class lua_result_t : public lua_base_t {
     unpack_args<Tup,I+1,Arg2,Args...>( tup );
   }
 
-  template< typename T >
-  void push_arg(T && arg)
-  {
-    auto s = state();
-    if ( std::is_integral<T>::value )
-      lua_pushinteger(s, std::forward<T>(arg) );
-    else if ( std::is_arithmetic<T>::value )
-      lua_pushnumber(s, std::forward<T>(arg) );
-    else
-      raise_runtime_error(
-        "Trying to push unknown type \"" << typeid(T).name() <<
-        "\" onto stack."
-      );
-  }
+  void push_arg(int i) const
+  { lua_pushinteger( state(), i ); }
+  
+  void push_arg(long long i) const 
+  { lua_pushinteger( state(), i ); }
+
+  void push_arg(float x) const
+  { lua_pushnumber( state(), x ); }
+
+  void push_arg(double x) const
+  { lua_pushnumber( state(), x ); }
+
+  void push_arg(bool b) const
+  { lua_pushboolean( state(), b ); }
+
+  void push_arg(const char * s) const
+  { lua_pushstring( state(), s ); }
+
+  void push_arg(const std::string & s) const
+  { lua_pushlstring( state(), s.c_str(), s.size() ); }
+  
+  void push_args() const
+  {}
   
   template< typename Arg >
-  void push_args( Arg&& arg )
+  void push_args( Arg&& arg ) const
   {
+    // grow the stack
+    check_stack(1);
     // push the last argument
     push_arg( std::forward<Arg>(arg) );
   }
   
   template< typename Arg, typename... Args >
-  void push_args( Arg&& arg, Args&&... args ) {
+  void push_args( Arg&& arg, Args&&... args ) const
+  {
     // chop off an argument and push it
     push_arg( std::forward<Arg>(arg) );
     // set the remaining arguments
     push_args(std::forward<Args>(args)...);
+  }
+  
+  void check_stack(int extra) const
+  {
+    auto s = state();
+    auto ret = lua_checkstack(s, extra);
+    if ( !ret ) {
+      std::ostringstream ss;
+      ss << "Cannot grow stack " << extra << " slots operating on element \""
+         << name_ << "\"." << std::endl << "Current stack size is " 
+         << lua_gettop(s) << ".";
+      raise_runtime_error(ss.str());
+    }
+  } 
+
+  void check_table(int index, const std::string & name) const
+  {
+    if ( !lua_istable(state(), index) ) {
+      print_last_error();
+      raise_runtime_error("\"" << name << "\" is not a table.");
+    }
+  }
+
+  void check_result(int index, const std::string & name) const
+  {
+    if (lua_isnil(state(), index)) {
+      print_last_error();
+      raise_runtime_error("\"" << name << "\" returned nil.");
+    }
+  }
+
+  void check_function(int index, const std::string & name) const
+  {
+    if ( !lua_isfunction(state(), index) ) {
+      print_last_error();
+      raise_runtime_error("\"" << name << "\" is not a function.");
+    }
   }
 
 public:
@@ -237,10 +296,9 @@ public:
   lua_result_t() = delete;
 
   lua_result_t(
-    lua_state_ptr_t & state, 
+    const lua_state_ptr_t & state, 
     const std::string & name, 
-    int index, 
-    int num_args
+    int index
   ) : lua_base_t(state), name_(name), index_(index)
   {}
 
@@ -269,19 +327,17 @@ public:
   }
   
   template < typename...Args >
-  auto operator()(Args&&...args) 
+  lua_result_t operator()(Args&&...args) const 
   {
     auto s = state();
     // get the current stack position ( the function and arguments will get
     // deleted from the stack after the function call )
     auto pos0 = lua_gettop(s);
     // push the function onto the stack
+    check_stack(1);
     lua_pushvalue( s, index_ );
     // now make sure its a function
-    if ( !lua_isfunction(s, -1) ) {
-      print_last_error();
-      raise_runtime_error("\"" << name_ << "\" is not a function.");
-    }
+    check_function(index_, name_);
     // add the arguments
     push_args(std::forward<Args>(args)...);
     // keep track of the arguments
@@ -301,14 +357,43 @@ public:
       raise_runtime_error("Problem calling \"" << name_ << "\".");
     }
     // make sure the result is non nill
-    if (lua_isnil(s, -1)) {
-      print_last_error();
-      raise_runtime_error("No result from function \"" << name_ << "\".");
-    }
+    check_result(-1,name_);
     // get the result
     pos1 = lua_gettop(s);
-    return lua_result_t( state_, name_+args_ss.str(), pos1, pos1-pos0 );
-   }
+    return { state_, name_+args_ss.str(), pos1 };
+  }
+
+  lua_result_t operator[]( const std::string & name ) const &
+  {
+    auto s = state();
+    auto new_name = name_+".[\""+name+"\"]";
+    // make sure we are accessing a table
+    check_table(index_, name_);
+    // push the key onto the stack
+    check_stack(1);
+    lua_pushlstring(s, name.c_str(), name.size());
+    // now get the table value
+    lua_rawget(s, index_);
+    // make sure returned result is not nil
+    check_result(-1, new_name);
+    // return the global object with a pointer to a location in the stack
+    return { state_, new_name, lua_gettop(s) };
+  }
+
+  lua_result_t operator[]( int n ) const &
+  {
+    auto s = state();
+    auto new_name = name_+"["+std::to_string(n)+"]";
+    // make sure we are accessing a table
+    check_table(index_, name_);
+    // access the value
+    lua_rawgeti(s, index_, n);
+    // make sure returned result is not nil
+    check_result(-1, new_name);
+    // return the global object with a pointer to a location in the stack
+    return { state_, new_name, lua_gettop(s) };
+  }
+
 };
 
 class lua_t : public lua_base_t {
@@ -324,13 +409,14 @@ public:
       luaL_openlibs(state());
   }
 
-  void run_string( const std::string & script )
+  bool run_string( const std::string & script )
   {
     auto ret = luaL_dostring(state(),script.c_str());
     if ( ret ) {
       print_last_error();
       raise_runtime_error("Cannot load buffer.");
     }
+    return ret;
   }
 
   void loadfile( const std::string & file )
@@ -342,16 +428,19 @@ public:
     }
   }
 
-  template <typename...Args> 
-  auto operator[]( const std::string & name )
+  lua_result_t operator[]( const std::string & name ) const &
   {
     auto s = state();
     // the function name
     lua_getglobal(s, name.c_str());
     // return the global object with a pointer to a location in the stack
-    return lua_result_t( state_, name, lua_gettop(s), 1 );
+    return { state_, name, lua_gettop(s) };
   }
 
+  auto operator()( const std::string & script )
+  {
+    return run_string( script );
+  }
 };
 
 #endif
