@@ -21,6 +21,8 @@ extern "C" {
 }
 
 // system libraries
+#include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <iomanip>
 #include <memory>
@@ -37,63 +39,69 @@ using lua_state_ptr_t = std::shared_ptr<lua_State>;
 template < typename T >
 struct lua_value {};
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 template <>
 struct lua_value<long long> 
 {
-  static long long get(lua_State * s, int index) 
+  static long long get(lua_State * s, int index = -1) 
   {
     if ( !lua_isnumber(s,index) )
      raise_runtime_error( "Invalid conversion of type \"" <<
       lua_typename(s, lua_type(s, index)) << "\" to int."
     );
-    return lua_tointeger(s, index);
+    auto i = lua_tointeger(s, index);
+    lua_remove(s,index);
+    return i;
   }
 };
 
 template <>
 struct lua_value<unsigned long long> 
 {
-  static unsigned long long get(lua_State * s, int index) 
+  static unsigned long long get(lua_State * s, int index = -1) 
   {
-    return static_cast<unsigned long long>(lua_value<long long>::get(s, index));
+    return static_cast<unsigned long long>(lua_value<long long>::get(s,index));
   }
 };
 
 template <>
 struct lua_value<int> 
 {
-  static int get(lua_State * s, int index) 
+  static int get(lua_State * s, int index = -1) 
   {
-    return static_cast<int>(lua_value<long long>::get(s, index));
+    return static_cast<int>(lua_value<long long>::get(s,index));
   }
 };
 
 template <>
 struct lua_value<unsigned int> 
 {
-  static unsigned int get(lua_State * s, int index) 
+  static unsigned int get(lua_State * s, int index = -1) 
   {
-    return static_cast<unsigned int>(lua_value<long long>::get(s, index));
+    return static_cast<unsigned int>(lua_value<long long>::get(s,index));
   }
 };
 
 template <>
 struct lua_value<double> 
 {
-  static double get(lua_State * s, int index) 
+  static double get(lua_State * s, int index = -1) 
   {
     if ( !lua_isnumber(s,index) )
      raise_runtime_error( "Invalid conversion of type \"" <<
       lua_typename(s, lua_type(s, index)) << "\" to double."
     );
-    return lua_tonumber(s, index);
+    auto x = lua_tonumber(s, index);
+    lua_remove(s,index);
+    return x;
   }
 };
 
 template <>
 struct lua_value<float> 
 {
-  static float get(lua_State * s, int index) 
+  static float get(lua_State * s, int index = -1) 
   {
     return static_cast<float>(lua_value<double>::get(s, index));
   }
@@ -102,29 +110,35 @@ struct lua_value<float>
 template <>
 struct lua_value<bool> 
 {
-  static bool get(lua_State * s, int index) 
+  static bool get(lua_State * s, int index = -1) 
   {
     if ( !lua_isboolean(s,index) )
      raise_runtime_error( "Invalid conversion of type \"" <<
       lua_typename(s, lua_type(s, index)) << "\" to bool."
     );
-    return lua_toboolean(s, index);
+    auto b = lua_toboolean(s, index);
+    lua_remove(s, index);
+    return b;
   }
 };
 
 template <>
 struct lua_value<std::string> 
 {
-  static std::string get(lua_State * s, int index) 
+  static std::string get(lua_State * s, int index = -1)
   {
-    if ( !lua_isstring(s,index) )
+    if ( !lua_isstring(s, index) )
      raise_runtime_error( "Invalid conversion of type \"" <<
       lua_typename(s, lua_type(s, index)) << "\" to string."
     );
-    return lua_tostring(s, index);
+    auto str = lua_tostring(s, index);
+    lua_remove(s, index);
+    return str;
   }
 };
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 void lua_push(lua_State * s, int i)
 { lua_pushinteger( s, i ); }
 
@@ -146,6 +160,8 @@ void lua_push(lua_State * s, const char * str)
 void lua_push(lua_State * s, const std::string & str) 
 { lua_pushlstring( s, str.c_str(), str.size() ); }
   
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 class lua_base_t {
 
 protected:
@@ -191,11 +207,16 @@ public:
   {
     auto s = state();
     auto top = lua_gettop(s);
-    os << "Row : Type   >> Value" << std::endl;
-    for (int i = 1; i <= top; i++) {  /* repeat for each level */
-      os << std::setw(3) << i << " : ";
-      os << get_row(i);
-      os << std::endl;  // put a separator
+    if ( top ) {
+      os << "Row : Type   >> Value" << std::endl;
+      for (int i = 1; i <= top; i++) {  /* repeat for each level */
+        os << std::setw(3) << i << " : ";
+        os << get_row(i);
+        os << std::endl;  // put a separator
+      }
+    }
+    else {
+      os << "(stack empty)" << std::endl;
     }
     return os;
   }
@@ -215,72 +236,69 @@ public:
   }
 };
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 class lua_ref_t : lua_base_t {
 
   std::shared_ptr<int> ref_;
 
 public:
 
+  lua_ref_t() = delete;
+
   lua_ref_t ( const lua_state_ptr_t & state, int ref )
     : lua_base_t(state), 
-      ref_( new int{ref}, 
-        [this](int * r) 
-        { luaL_unref(this->state(), LUA_REGISTRYINDEX, *ref_); } )
+      ref_( new int{ref},
+        [s=state](int * r) 
+        { luaL_unref(s.get(), LUA_REGISTRYINDEX, *r); } )
   {}
 
   lua_ref_t( const lua_state_ptr_t & state )
     : lua_ref_t(state, LUA_REFNIL)
   {}
 
+  void push() const
+  {
+    lua_rawgeti(state(), LUA_REGISTRYINDEX, *ref_);
+  }
+
 };
 
-template< typename T >
-lua_ref_t make_lua_ref(lua_State * state, T && t)
+lua_ref_t make_lua_ref(const lua_state_ptr_t & state)
 {
-  lua_push( state, std::forward<T>(t) );
-  return { state, luaL_ref(state, LUA_REGISTRYINDEX) };
+  return { state, luaL_ref(state.get(), LUA_REGISTRYINDEX) };
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 class lua_result_t : public lua_base_t {
 
   std::string name_;
-  int index_;
+  std::vector<lua_ref_t> refs_;
 
-  template< typename Tup, int I, typename Arg >
-  void unpack_args( Tup & tup ) const 
-  {
-    constexpr auto N = std::tuple_size<Tup>::value;
-    std::get<I>(tup) = lua_value<Arg>::get( state(), index_-N+I+1 );
-    // stop recursion
-  }
+  template< typename Tup, int I >
+  void get_results( Tup & tup ) const 
+  {}
   
   template< 
-    typename Tup, int I, typename Arg1, typename Arg2, typename... Args
+    typename Tup, int I, typename Arg1, typename... Args
   >
-  void unpack_args( Tup & tup ) const 
+  void get_results( Tup & tup ) const 
   {
-    constexpr auto N = std::tuple_size<Tup>::value;
-    std::get<I>(tup) = lua_value<Arg1>::get( state(), index_-N+I+1 );
+    std::get<I>(tup) = lua_value<Arg1>::get( state() );
     // recursively extract tuple 
-    unpack_args<Tup,I+1,Arg2,Args...>( tup );
+    get_results<Tup,I+1,Args...>( tup );
   }
 
   void push_args() const
   {}
   
-  template< typename Arg >
-  void push_args( Arg&& arg ) const
-  {
-    // grow the stack
-    check_stack(1);
-    // push the last argument
-    lua_push( state(), std::forward<Arg>(arg) );
-  }
-  
   template< typename Arg, typename... Args >
   void push_args( Arg&& arg, Args&&... args ) const
   {
+    // grow the stack
+    check_stack(1);
     // chop off an argument and push it
     lua_push( state(), std::forward<Arg>(arg) );
     // set the remaining arguments
@@ -300,28 +318,42 @@ class lua_result_t : public lua_base_t {
     }
   } 
 
-  void check_table(int index, const std::string & name) const
+  void check_table(const std::string & name) const
   {
-    if ( !lua_istable(state(), index) ) {
+    if ( !lua_istable(state(), -1) ) {
       print_last_error();
       raise_runtime_error("\"" << name << "\" is not a table.");
     }
   }
 
-  void check_result(int index, const std::string & name) const
+  void check_result(const std::string & name) const
   {
-    if (lua_isnil(state(), index)) {
+    if (lua_isnil(state(), -1)) {
       print_last_error();
       raise_runtime_error("\"" << name << "\" returned nil.");
     }
   }
 
-  void check_function(int index, const std::string & name) const
+  void check_function(const std::string & name) const
   {
-    if ( !lua_isfunction(state(), index) ) {
+    if ( !lua_isfunction(state(), -1) ) {
       print_last_error();
       raise_runtime_error("\"" << name << "\" is not a function.");
     }
+  }
+
+  void push_last() const
+  {
+    check_stack(1);
+    refs_.back().push();
+  }
+
+  void push_all() const
+  {
+    // make sure the stack can handle this
+    check_stack(refs_.size());
+    // push everything onto the stack in reverse order
+    for ( auto && r : refs_ ) std::forward<decltype(r)>(r).push();
   }
 
 public:
@@ -331,21 +363,38 @@ public:
   lua_result_t(
     const lua_state_ptr_t & state, 
     const std::string & name, 
-    int index
-  ) : lua_base_t(state), name_(name), index_(index)
+    lua_ref_t && ref
+  ) : lua_base_t(state), name_(name)
+  {
+    refs_.emplace_back( std::move(ref) );
+  }
+  
+  lua_result_t(
+    const lua_state_ptr_t & state, 
+    const std::string & name, 
+    std::vector<lua_ref_t> && refs
+  ) : lua_base_t(state), name_(name), refs_(std::move(refs))
   {}
 
   template< typename T >
   explicit operator T() const {
-    return lua_value<T>::get(state(), index_);
+    if ( refs_.size() != 1 )
+      raise_runtime_error( "Expecting 1 result, stack has " << refs_.size() );
+    refs_.back().push();
+    return lua_value<T>::get(state());
   }
 
   template< typename...Args >
   explicit operator std::tuple<Args...>() const {
     constexpr int N = sizeof...(Args);
     using Tup = std::tuple<Args...>; 
+    if ( refs_.size() != N )
+      raise_runtime_error( 
+        "Expecting "<<N<<" results, stack has " << refs_.size() 
+      );
+    push_all();
     Tup tup;
-    unpack_args<Tup,0,Args...>(tup);
+    get_results<Tup,0,Args...>(tup);
     return tup;
   }
 
@@ -368,9 +417,9 @@ public:
     auto pos0 = lua_gettop(s);
     // push the function onto the stack
     check_stack(1);
-    lua_pushvalue( s, index_ );
+    push_last();
     // now make sure its a function
-    check_function(index_, name_);
+    check_function(name_);
     // add the arguments
     push_args(std::forward<Args>(args)...);
     // keep track of the arguments
@@ -390,45 +439,65 @@ public:
       raise_runtime_error("Problem calling \"" << name_ << "\".");
     }
     // make sure the result is non nill
-    check_result(-1,name_);
-    // get the result
+    check_result(name_);
+    // figure out how much the stack grew
     pos1 = lua_gettop(s);
-    return { state_, name_+args_ss.str(), pos1 };
+    auto num_results = pos1 - pos0;
+    assert( num_results > 0 );
+    // because there could be multiple results, get a reference to each one
+    std::vector<lua_ref_t> ref_list;
+    ref_list.reserve( num_results );
+    for (int i=0; i<num_results; ++i)
+      ref_list.emplace_back( std::move(make_lua_ref(state_)) );
+    // get the result
+    return { state_, name_+args_ss.str(), std::move(ref_list) };
   }
 
   lua_result_t operator[]( const std::string & name ) const &
   {
     auto s = state();
     auto new_name = name_+".[\""+name+"\"]";
+    // push the table onto the stack
+    push_last();
     // make sure we are accessing a table
-    check_table(index_, name_);
+    check_table(name_);
     // push the key onto the stack
     check_stack(1);
     lua_pushlstring(s, name.c_str(), name.size());
-    // now get the table value
-    lua_rawget(s, index_);
+    // now get the table value, the key gets pushed from the stack
+    lua_rawget(s, -2);
     // make sure returned result is not nil
-    check_result(-1, new_name);
+    check_result(new_name);
+    // get a reference to the result, and pop the table from the stack
+    auto ref = make_lua_ref(state_);
+    lua_pop(s, -1);
     // return the global object with a pointer to a location in the stack
-    return { state_, new_name, lua_gettop(s) };
+    return { state_, new_name, std::move(ref) };
   }
 
   lua_result_t operator[]( int n ) const &
   {
     auto s = state();
     auto new_name = name_+"["+std::to_string(n)+"]";
+    // push the table onto the stack
+    push_last();
     // make sure we are accessing a table
-    check_table(index_, name_);
-    // access the value
-    lua_rawgeti(s, index_, n);
+    check_table(name_);
+    // now get the table value, the key gets pushed from the stack
+    lua_rawgeti(s, -1, n);
     // make sure returned result is not nil
-    check_result(-1, new_name);
+    check_result(new_name);
+    // get a reference to the result, and pop the table from the stack
+    auto ref = make_lua_ref(state_);
+    lua_pop(s, -1);
     // return the global object with a pointer to a location in the stack
-    return { state_, new_name, lua_gettop(s) };
+    return { state_, new_name, std::move(ref) };
   }
 
 };
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 class lua_t : public lua_base_t {
 
 public:
@@ -467,7 +536,7 @@ public:
     // the function name
     lua_getglobal(s, name.c_str());
     // return the global object with a pointer to a location in the stack
-    return { state_, name, lua_gettop(s) };
+    return { state_, name, make_lua_ref(state_) };
   }
 
   auto operator()( const std::string & script )

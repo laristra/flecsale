@@ -60,8 +60,8 @@ TEST(lua_utils, embedded)
   ASSERT_NEAR( 3., state["sum"]( 1., 2. ).as<double>(), test_tolerance );
 
   // try a function that returns tuples
-  auto tup1 = state["split"]( 1, 2 ).as<int,double>();
-  ASSERT_EQ( std::forward_as_tuple(1,2.), tup1 );
+  auto tup1 = state["split"]( 1, 2.5 ).as<int,double>();
+  ASSERT_EQ( std::forward_as_tuple(1,2.5), tup1 );
 
   // access a global variable
   ASSERT_EQ( 4, state["foo"].as<int>() );
