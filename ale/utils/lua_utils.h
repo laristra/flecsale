@@ -34,16 +34,32 @@ extern "C" {
 namespace ale {
 namespace utils {
 
+
+//! \brief Use a shared pointer to the lua state.
+//! Multiple objects may use the same lua state, so we don't want to 
+//! destroy it unless all objects are destroyed.
 using lua_state_ptr_t = std::shared_ptr<lua_State>;
  
+////////////////////////////////////////////////////////////////////////////////
+/// \defgroup lua_value lua_value
+/// \brief A struct to extract and typecast values from the lua stack.
+////////////////////////////////////////////////////////////////////////////////
+/// \{
+
+/// \brief The default implementation.
+/// \tparam T  The type.
 template < typename T >
 struct lua_value {};
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+/// \brief The implementation for long long.
 template <>
 struct lua_value<long long> 
 {
+  /// \brief Return the value in the lua stack.
+  /// \param [in] s  The lua state to query.
+  /// \param [in] index  The row to access.  Defaults to the value at the top
+  ///                    of the stack.
+  /// \return The requested value as a long long.
   static long long get(lua_State * s, int index = -1) 
   {
     if ( !lua_isnumber(s,index) )
@@ -56,36 +72,60 @@ struct lua_value<long long>
   }
 };
 
+/// \brief The implementation for unsigned long long.
 template <>
 struct lua_value<unsigned long long> 
 {
+  /// \brief Return the value in the lua stack.
+  /// \param [in] s  The lua state to query.
+  /// \param [in] index  The row to access.  Defaults to the value at the top
+  ///                    of the stack.
+  /// \return The requested value as an unsigned long long.
   static unsigned long long get(lua_State * s, int index = -1) 
   {
     return static_cast<unsigned long long>(lua_value<long long>::get(s,index));
   }
 };
 
+/// \brief The implementation for int.
 template <>
 struct lua_value<int> 
 {
+  /// \brief Return the value in the lua stack.
+  /// \param [in] s  The lua state to query.
+  /// \param [in] index  The row to access.  Defaults to the value at the top
+  ///                    of the stack.
+  /// \return The requested value as an int.
   static int get(lua_State * s, int index = -1) 
   {
     return static_cast<int>(lua_value<long long>::get(s,index));
   }
 };
 
+/// \brief The implementation for unsigned int.
 template <>
 struct lua_value<unsigned int> 
 {
+  /// \brief Return the value in the lua stack.
+  /// \param [in] s  The lua state to query.
+  /// \param [in] index  The row to access.  Defaults to the value at the top
+  ///                    of the stack.
+  /// \return The requested value as an unsigned int.
   static unsigned int get(lua_State * s, int index = -1) 
   {
     return static_cast<unsigned int>(lua_value<long long>::get(s,index));
   }
 };
 
+/// \brief The implementation for double.
 template <>
 struct lua_value<double> 
 {
+  /// \brief Return the value in the lua stack.
+  /// \param [in] s  The lua state to query.
+  /// \param [in] index  The row to access.  Defaults to the value at the top
+  ///                    of the stack.
+  /// \return The requested value as a double.
   static double get(lua_State * s, int index = -1) 
   {
     if ( !lua_isnumber(s,index) )
@@ -98,18 +138,30 @@ struct lua_value<double>
   }
 };
 
+/// \brief The implementation for float.
 template <>
 struct lua_value<float> 
 {
+  /// \brief Return the value in the lua stack.
+  /// \param [in] s  The lua state to query.
+  /// \param [in] index  The row to access.  Defaults to the value at the top
+  ///                    of the stack.
+  /// \return The requested value as a float.
   static float get(lua_State * s, int index = -1) 
   {
     return static_cast<float>(lua_value<double>::get(s, index));
   }
 };
 
+/// \brief The implementation for bool.
 template <>
 struct lua_value<bool> 
 {
+  /// \brief Return the value in the lua stack.
+  /// \param [in] s  The lua state to query.
+  /// \param [in] index  The row to access.  Defaults to the value at the top
+  ///                    of the stack.
+  /// \return The requested value as a boolean.
   static bool get(lua_State * s, int index = -1) 
   {
     if ( !lua_isboolean(s,index) )
@@ -122,9 +174,15 @@ struct lua_value<bool>
   }
 };
 
+/// \brief The implementation for std::string.
 template <>
 struct lua_value<std::string> 
 {
+  /// \brief Return the value in the lua stack.
+  /// \param [in] s  The lua state to query.
+  /// \param [in] index  The row to access.  Defaults to the value at the top
+  ///                    of the stack.
+  /// \return The requested value as a string.
   static std::string get(lua_State * s, int index = -1)
   {
     if ( !lua_isstring(s, index) )
@@ -136,51 +194,91 @@ struct lua_value<std::string>
     return str;
   }
 };
+/// \}
 
 ////////////////////////////////////////////////////////////////////////////////
+/// \defgroup lua_push lua_push
+/// \brief Functions to push values onto the lua stack.
 ////////////////////////////////////////////////////////////////////////////////
+/// \{
+
+/// \brief Push an integer onto the stack.
+/// \param [in] s  The lua state to push a value to.
+/// \param [in] i  The integer to push.
 void lua_push(lua_State * s, int i)
 { lua_pushinteger( s, i ); }
 
+/// \brief Push a long long onto the stack.
+/// \param [in] s  The lua state to push a value to.
+/// \param [in] i  The long long to push.
 void lua_push(lua_State * s, long long i)
 { lua_pushinteger( s, i ); }
 
+/// \brief Push a float onto the stack.
+/// \param [in] s  The lua state to push a value to.
+/// \param [in] x  The float to push.
 void lua_push(lua_State * s, float x)
 { lua_pushnumber( s, x ); }
 
+/// \brief Push a double onto the stack.
+/// \param [in] s  The lua state to push a value to.
+/// \param [in] x  The double to push.
 void lua_push(lua_State * s, double x) 
 { lua_pushnumber( s, x ); }
 
+/// \brief Push a boolean onto the stack.
+/// \param [in] s  The lua state to push a value to.
+/// \param [in] b  The boolean to push.
 void lua_push(lua_State * s, bool b)
 { lua_pushboolean( s, b ); }
 
+/// \brief Push a character array onto the stack.
+/// \param [in] s  The lua state to push a value to.
+/// \param [in] str  The character array to push.
 void lua_push(lua_State * s, const char * str)
 { lua_pushstring( s, str ); }
 
+/// \brief Push a std::string onto the stack.
+/// \param [in] s  The lua state to push a value to.
+/// \param [in] str  The string to push.
 void lua_push(lua_State * s, const std::string & str) 
 { lua_pushlstring( s, str.c_str(), str.size() ); }
+/// \}
   
 ////////////////////////////////////////////////////////////////////////////////
+/// \brief A base class for several of the implemented objects.
+/// This class mainly contains a lua state pointer which all derived
+/// classes will use.  It also has some utility member functions.
 ////////////////////////////////////////////////////////////////////////////////
 class lua_base_t {
 
 protected:
 
+  /// \brief The state pointer.
   lua_state_ptr_t state_;
 
 public:
 
+  /// \brief Default constructor.
   lua_base_t()
     : state_( luaL_newstate(), [](lua_State * s) { lua_close(s); } )
   {}
-
+  
+  /// \brief Copy constructor.
   lua_base_t(const lua_state_ptr_t & state) 
     : state_(state)
   {}
   
+  /// \brief Return the raw state pointer.
+  /// \remark Non-const version.
   auto state() { return state_.get(); }
+  /// \brief Return the raw state pointer.
+  /// \remark Const version.
   auto state() const { return state_.get(); }
 
+  /// \brief Get the ith row of the stack.
+  /// \param [in] i The row of the stack.
+  /// \return A string with the type and value at the ith row.
   std::string get_row(int i) const
   {
     auto s = state();
@@ -202,7 +300,10 @@ public:
     }
     return os.str();
   }
-  
+ 
+  /// \brief Dump the stack to an output stream/
+  /// \param [in,out] os The stream to output to.
+  /// \return A reference to the output stream. 
   std::ostream& dump_stack(std::ostream& os) const 
   {
     auto s = state();
@@ -221,7 +322,8 @@ public:
     return os;
   }
   
-  void print_last_error() const
+  /// \brief Print the last row in the stack.
+  void print_last_row() const
   {
     auto s = state();
     auto top = lua_gettop(s);
@@ -230,6 +332,10 @@ public:
     //lua_pop(state(), 1);
   }
 
+  /// \brief the output operator.
+  /// \param [in,out] os  The output stream.
+  /// \param [in] s  The object whose stack to dump.
+  /// \return The output stream.
   friend std::ostream& operator<<(std::ostream& os, const lua_base_t & s)  
   { 
     return s.dump_stack(os); 
@@ -237,15 +343,25 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+/// \brief A class to keep track of a lua reference.
 ////////////////////////////////////////////////////////////////////////////////
-class lua_ref_t : lua_base_t {
+class lua_ref_t : public lua_base_t {
 
+  /// \brief The reference is stored as a shared_ptr to an int.
+  /// A shared pointer is used so that the reference isn't deleted until
+  /// all associated objects are destroyed.  Multiple copies of a single
+  /// reference may exist.
   std::shared_ptr<int> ref_;
 
 public:
 
+  /// Delete the default destructor.
   lua_ref_t() = delete;
 
+  /// \brief The main constructor.
+  /// References are created in LUA_REGISTRYINDEX table.
+  /// \param [in] state  A pointer to a lua state.
+  /// \param [in] ref  The lua reference key.
   lua_ref_t ( const lua_state_ptr_t & state, int ref )
     : lua_base_t(state), 
       ref_( new int{ref},
@@ -253,10 +369,12 @@ public:
         { luaL_unref(s.get(), LUA_REGISTRYINDEX, *r); } )
   {}
 
+  /// \brief Constructor to create an empty reference.
   lua_ref_t( const lua_state_ptr_t & state )
     : lua_ref_t(state, LUA_REFNIL)
   {}
 
+  /// \brief Push the refered value onto the stack.
   void push() const
   {
     lua_rawgeti(state(), LUA_REGISTRYINDEX, *ref_);
@@ -264,6 +382,9 @@ public:
 
 };
 
+/// \brief Create a lua reference to the last value on the stack.
+/// \param [in] state A lua state pointer.
+/// \return A new lua_ref_t object.
 lua_ref_t make_lua_ref(const lua_state_ptr_t & state)
 {
   return { state, luaL_ref(state.get(), LUA_REGISTRYINDEX) };
@@ -271,16 +392,34 @@ lua_ref_t make_lua_ref(const lua_state_ptr_t & state)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+/// \brief This class stores a reference to a lua value.
+/// The class is used to convert the refered lua value to a desired type.  It is
+/// is the root of the implementation.
 ////////////////////////////////////////////////////////////////////////////////
 class lua_result_t : public lua_base_t {
 
+  /// \brief The name of the object.
   std::string name_;
+  /// \brief A reference to the lua value in the LUA_REGISTRYINDEX table.
   std::vector<lua_ref_t> refs_;
 
+  /// \defgroup get_results get_results
+  /// \brief These templates are used to extract multiple results as tuples.
+  /// \{
+
+  /// \brief Final templated function to end the recursion.
+  /// \tparam Tup The tuple type the data gets stored as.
+  /// \tparam I The static index of the tuple.
+  /// \param [in,out] tup  The tuple to store the lua results in.
   template< typename Tup, int I >
   void get_results( Tup & tup ) const 
   {}
   
+  /// \brief Main recursive function to set each value of the tuple.
+  /// \tparam Tup The tuple type the data gets stored as.
+  /// \tparam I The static index of the tuple.
+  /// \tparam Arg1,Args  The requested argument types.
+  /// \param [in,out] tup  The tuple to store the lua results in.
   template< 
     typename Tup, int I, typename Arg1, typename... Args
   >
@@ -290,10 +429,19 @@ class lua_result_t : public lua_base_t {
     // recursively extract tuple 
     get_results<Tup,I+1,Args...>( tup );
   }
+  /// /}
 
+  /// \defgroup push_args push_args
+  /// \brief These templates are used to push function arguments on the stack.
+  /// \{
+
+  /// \brief Final templated function to end the recursion.
   void push_args() const
   {}
   
+  /// \brief The main recursive function.
+  /// \tparam Arg,Args  The function argument types.
+  /// \param [in]  arg,args  The values of the function arguments.
   template< typename Arg, typename... Args >
   void push_args( Arg&& arg, Args&&... args ) const
   {
@@ -304,7 +452,10 @@ class lua_result_t : public lua_base_t {
     // set the remaining arguments
     push_args(std::forward<Args>(args)...);
   }
-  
+  /// /}
+
+  /// \brief Check the stack to make sure it can be expanded.
+  /// \param [in] extra The desired size to grow the stack by. 
   void check_stack(int extra) const
   {
     auto s = state();
@@ -321,33 +472,41 @@ class lua_result_t : public lua_base_t {
   void check_table(const std::string & name) const
   {
     if ( !lua_istable(state(), -1) ) {
-      print_last_error();
+      print_last_row();
       raise_runtime_error("\"" << name << "\" is not a table.");
     }
   }
 
+  /// \brief Check that a result is valid.
+  /// \parm [in] name  The name of the object we are checking.
   void check_result(const std::string & name) const
   {
     if (lua_isnil(state(), -1)) {
-      print_last_error();
+      print_last_row();
       raise_runtime_error("\"" << name << "\" returned nil.");
     }
   }
 
+  /// \brief Check that a result is a function.
+  /// \parm [in] name  The name of the object we are checking.
   void check_function(const std::string & name) const
   {
     if ( !lua_isfunction(state(), -1) ) {
-      print_last_error();
+      print_last_row();
       raise_runtime_error("\"" << name << "\" is not a function.");
     }
   }
 
+  /// \brief Push the last value onto the stack.
+  /// \remark The stack references are collected in reverse order.
   void push_last() const
   {
     check_stack(1);
     refs_.back().push();
   }
 
+  /// \brief Push all referred values onto the stack.
+  /// \remark The stack references are collected in reverse order.
   void push_all() const
   {
     // make sure the stack can handle this
@@ -358,8 +517,13 @@ class lua_result_t : public lua_base_t {
 
 public:
 
+  /// \brief No default constructor.
   lua_result_t() = delete;
 
+  /// \brief This is the main constructor with a single reference.
+  /// \param [in] state  The lua state pointer.
+  /// \param [in] name  The name of the object.
+  /// \param [in] ref  A reference to the last value popped off the stack.
   lua_result_t(
     const lua_state_ptr_t & state, 
     const std::string & name, 
@@ -369,6 +533,11 @@ public:
     refs_.emplace_back( std::move(ref) );
   }
   
+  /// \brief This is the main constructor with a multiple references.
+  /// \param [in] state  The lua state pointer.
+  /// \param [in] name  The name of the object.
+  /// \param [in] refs  A references to the last set of values popped off the
+  ///                   stack.
   lua_result_t(
     const lua_state_ptr_t & state, 
     const std::string & name, 
@@ -376,6 +545,9 @@ public:
   ) : lua_base_t(state), name_(name), refs_(std::move(refs))
   {}
 
+  /// \brief Explicit type conversion operators for single values.
+  /// \tparam T The type to convert to.
+  /// \return The typecast value.
   template< typename T >
   explicit operator T() const {
     if ( refs_.size() != 1 )
@@ -384,6 +556,9 @@ public:
     return lua_value<T>::get(state());
   }
 
+  /// \brief Explicit type conversion operators for tuples.
+  /// \tparam Args The element types of the tuple.
+  /// \return The typecast tuple of values.
   template< typename...Args >
   explicit operator std::tuple<Args...>() const {
     constexpr int N = sizeof...(Args);
@@ -398,16 +573,27 @@ public:
     return tup;
   }
 
+  /// \brief Explicit type conversion operators for single values.
+  /// \tparam T The type to convert to.
+  /// \return The typecast value.
   template< typename T >
   auto as() const {
     return static_cast<T>(*this);
   }
   
+  /// \brief Explicit type conversion operators for tuples.
+  /// \tparam Args The element types of the tuple.
+  /// \return The typecast tuple of values.
   template< typename T1, typename T2, typename...Ts >
   auto as() const {
     return static_cast< std::tuple<T1,T2,Ts...> >(*this);
   }
   
+  /// \brief Evaluate a lua function.
+  /// \tparam Args The function argument types.
+  /// \param [in] args The argument types.
+  /// \return A new lua_result_t with a reference to the result of the function
+  ///         call.
   template < typename...Args >
   lua_result_t operator()(Args&&...args) const 
   {
@@ -435,7 +621,7 @@ public:
     // call the function
     auto ret = lua_pcall(s, sizeof...(args), LUA_MULTRET, 0);
     if (ret) {
-      print_last_error();
+      print_last_row();
       raise_runtime_error("Problem calling \"" << name_ << "\".");
     }
     // make sure the result is non nill
@@ -453,17 +639,21 @@ public:
     return { state_, name_+args_ss.str(), std::move(ref_list) };
   }
 
-  lua_result_t operator[]( const std::string & name ) const &
+  /// \brief Get the lua value in the table given a key.
+  /// \param [in] key  The key to search for.
+  /// \return A new lua_result_t with a reference to the result of the table
+  ///         lookup.
+  lua_result_t operator[]( const std::string & key ) const &
   {
     auto s = state();
-    auto new_name = name_+".[\""+name+"\"]";
+    auto new_name = name_+".[\""+key+"\"]";
     // push the table onto the stack
     push_last();
     // make sure we are accessing a table
     check_table(name_);
     // push the key onto the stack
     check_stack(1);
-    lua_pushlstring(s, name.c_str(), name.size());
+    lua_pushlstring(s, key.c_str(), key.size());
     // now get the table value, the key gets pushed from the stack
     lua_rawget(s, -2);
     // make sure returned result is not nil
@@ -475,6 +665,10 @@ public:
     return { state_, new_name, std::move(ref) };
   }
 
+  /// \brief Get the lua value in the table given an index.
+  /// \param [in] n  The index to access.
+  /// \return A new lua_result_t with a reference to the result of the table
+  ///         lookup.
   lua_result_t operator[]( int n ) const &
   {
     auto s = state();
@@ -497,11 +691,16 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+/// \brief The top level object for the lua interface.
+/// This is the object the user will instantiate.
 ////////////////////////////////////////////////////////////////////////////////
 class lua_t : public lua_base_t {
 
 public:
 
+  /// \brief Main constructor.
+  /// \param [in] with_system  If true, load all system libraries.  
+  ///                          Default is true.
   lua_t(bool with_system = true) : lua_base_t() 
   {
     if ( !state_ )
@@ -511,34 +710,46 @@ public:
       luaL_openlibs(state());
   }
 
+  /// \brief Run a string through the lua interpreter.
+  /// \param [in] script  The script to run.
+  /// \return The lua error code.
   bool run_string( const std::string & script )
   {
     auto ret = luaL_dostring(state(),script.c_str());
     if ( ret ) {
-      print_last_error();
+      print_last_row();
       raise_runtime_error("Cannot load buffer.");
     }
     return ret;
   }
 
+  /// \brief Load a file in the lua interpreter.
+  /// \param [in] file  The file to load.
   void loadfile( const std::string & file )
   {
     auto ret = luaL_dofile(state(),file.c_str());
     if ( ret ) {
-      print_last_error();
+      print_last_row();
       raise_runtime_error("Cannot load file.");
     }
   }
 
-  lua_result_t operator[]( const std::string & name ) const &
+  /// \brief Access an object in the global table.
+  /// \param [in] key  The key to access.
+  /// \return A lua_result_t object which points to the value of the table 
+  ///         lookup.
+  lua_result_t operator[]( const std::string & key ) const &
   {
     auto s = state();
     // the function name
-    lua_getglobal(s, name.c_str());
+    lua_getglobal(s, key.c_str());
     // return the global object with a pointer to a location in the stack
-    return { state_, name, make_lua_ref(state_) };
+    return { state_, key, make_lua_ref(state_) };
   }
 
+  /// \brief Run a string through the lua interpreter.
+  /// \param [in] script  The script to run.
+  /// \return The lua error code.
   auto operator()( const std::string & script )
   {
     return run_string( script );
