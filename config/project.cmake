@@ -10,7 +10,7 @@ project(FleCSALE)
 #  cmake_policy(SET CMP0012 NEW)  # recognize number & boolean literals
 #endif(COMMAND cmake_policy)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # set some global variables
 set( ALE_LIBRARIES )
