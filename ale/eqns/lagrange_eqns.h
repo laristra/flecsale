@@ -226,12 +226,13 @@ public:
   }
 
   //! \copydoc volume
-  template<typename U>
-  static auto impedance_multiplier( U && u )
+  template <typename U, typename E>
+  static auto impedance_multiplier( U && u, const E & eos )
   { 
-    // FIXME
-    auto gamma = impedance( std::forward<U>(u) ); // 2.4 / 2;
-    return 0.5 * (gamma + 1);
+    // (gamma + 1) / 2
+    auto gamma = eos.compute_gamma_de( 
+      density(std::forward<U>(u)), internal_energy(std::forward<U>(u)) );
+    return 0.5 * ( 1 + gamma );
   }
 
   //============================================================================

@@ -16,6 +16,7 @@
 #include <ale/utils/time_utils.h>
 
 // system includes
+#include <getopt.h>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -61,7 +62,7 @@ int main(int argc, char** argv)
   std::string postfix = "vtk";
 
   // output frequency
-  constexpr size_t output_freq = 1;
+  size_t output_freq = 1;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 100;
@@ -73,7 +74,7 @@ int main(int argc, char** argv)
   // the CFL and final solution time
   constexpr real_t CFL = 1.0;
   constexpr real_t final_time = 0.2;
-  constexpr size_t max_steps = 1e6;
+  size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -108,7 +109,7 @@ int main(int argc, char** argv)
   std::string postfix = "vtk";
 
   // output frequency
-  constexpr size_t output_freq = 1;
+  size_t output_freq = 1;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 100;
@@ -122,7 +123,7 @@ int main(int argc, char** argv)
   // the CFL and final solution time
   constexpr real_t CFL = 1.0;
   constexpr real_t final_time = 0.2;
-  constexpr size_t max_steps = 1e6;
+  size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -158,7 +159,7 @@ int main(int argc, char** argv)
   std::string postfix = "vtk";
 
   // output frequency
-  constexpr size_t output_freq = 1;
+  size_t output_freq = 1;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 100;
@@ -170,7 +171,7 @@ int main(int argc, char** argv)
   // the CFL and final solution time
   constexpr real_t CFL = 0.5;
   constexpr real_t final_time = 0.2;
-  constexpr size_t max_steps = 1e6;
+  size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -202,10 +203,10 @@ int main(int argc, char** argv)
 
   // the case prefix
   std::string prefix = "shock_box_3d";
-  std::string postfix = "dat";
+  std::string postfix = "vtk";
 
   // output frequency
-  constexpr size_t output_freq = 100;
+  size_t output_freq = 100;
 
   // the grid dimensions
   constexpr size_t num_cells_x = 10;
@@ -219,7 +220,7 @@ int main(int argc, char** argv)
   // the CFL and final solution time
   constexpr real_t CFL = 1/3.;
   constexpr real_t final_time = 0.2;
-  constexpr size_t max_steps = 1e6;
+  size_t max_steps = 1e6;
 
   // this is a lambda function to set the initial conditions
   auto ics = [] ( const auto & x )
@@ -248,6 +249,83 @@ int main(int argc, char** argv)
 
   // setup an equation of state
   eos_t eos( /* gamma */ 1.4, /* cv */ 1.0 ); 
+
+  //===========================================================================
+  // Parse arguments
+  //===========================================================================
+
+  // the usage stagement
+  auto print_usage = [&argv]() {
+    std::cout << "Usage: " << argv[0] 
+              << " [--max_steps MAX_STEPS]"
+              << " [--output_freq OUTPUT_FREQ]"
+              << " [--case CASE_NAME]"
+              << " [--postfix EXTENSION]"
+              << std::endl << std::endl;
+    std::cout << "\t--max_steps MAX_STEPS:\tOverride the number of "
+              << "iterations with MAX_STEPS." << std::endl;
+    std::cout << "\t--output_freq OUTPUT_FREQ:\tOverride the frequency "
+              << "of output to occur ever OUTPUT_FREQ." << std::endl;
+    std::cout << "\t--case CASE_NAME:\tOverride the case name "
+              << "with CASE_NAME." << std::endl;
+    std::cout << "\t--postfix EXTENSION:\tOverride the output extension "
+              << "with EXTENSION." << std::endl;
+  };
+
+  while (1) {
+    
+    // Define the options
+    static struct option long_options[] =
+      {
+        {"help",              no_argument, 0, 'h'},
+        {"max_steps",   required_argument, 0, 'n'},
+        {"output_freq", required_argument, 0, 'f'},
+        {"case",        required_argument, 0, 'c'},
+        {"postfix",     required_argument, 0, 'p'},
+        {0, 0, 0, 0}
+      };
+      // getopt_long stores the option index here.
+      int option_index = 0;
+
+      auto c = getopt_long (argc, argv, "h", long_options, &option_index);
+
+      // Detect the end of the options.
+      if (c == -1) break;
+
+      switch (c) {
+        case 'c':
+          short_warning ("Overriding case name with \"" << optarg << "\"" );
+          prefix = optarg;
+          break;
+
+        case 'p':
+          short_warning ("Overriding extension with \"" << optarg << "\"" );
+          postfix = optarg;
+          break;
+
+        case 'f':
+          short_warning ("Overriding output frequency to \"" << optarg << "\"" );
+          output_freq = atoi( optarg );
+          break;
+
+        case 'n':
+          short_warning ("Overriding max iterations to \"" << optarg << "\"" );
+          max_steps = atoi( optarg );
+          break;
+
+        case 'h':
+          print_usage();
+          return 0;
+
+        case '?':
+          // getopt_long already printed an error message.
+          print_usage();
+          return 1;
+
+        default:
+          abort ();
+        }
+    }
 
   //===========================================================================
   // Mesh Setup

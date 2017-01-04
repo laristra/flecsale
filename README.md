@@ -13,6 +13,7 @@ tabular equation of state (EOS).
 ## Minimal
 
 - [FleCSI](https://github.com/losalamos/flecsi)
+- [cereal](https://github.com/USCiLab/cereal)
 - [CMake](http://www.cmake.org/) >= 2.8
 - C++14 compliant compiler  (gcc >= 5.3.0, clang>=3.7.0)
 
@@ -31,17 +32,30 @@ Below are some general instructions for obtaining and building FleCSALE.
 
 FleCSALE uses git submodules, so it mush be checked out recursively.  Type
 
-    $ git clone --recursive git@github.com:flecsale/flecsale.git
+    $ git clone --recursive git@github.com:losalamos/flecsale.git
     
 to clone the repository using ssh, or 
 
-    $ git clone --recursive https://github.com/flecsale/flecsale.git
+    $ git clone --recursive https://github.com/losalamos/flecsale.git
     
 to clone using https.
     
 **Make sure to include the `--recursive` so that all of the
 submodules are cloned as well.** 
 
+# Getting Cereal
+
+[FleCSI](https://github.com/losalamos/flecsi) uses the 
+[cereal](https://github.com/USCiLab/cereal) library for serializing 
+data.  To download it using git, type
+
+    $ git clone git@github.com:USCiLab/cereal.git
+
+to clone the repository using ssh, or 
+
+    $ git clone https://github.com/USCiLab/cereal.git
+
+to clone using https.
 
 # Installation
 
@@ -50,7 +64,8 @@ using [CMake](https://cmake.org/):
 
     $ mkdir build
     $ cd build
-    $ CC=gcc CXX=g++ cmake /path/to/source/directory [options]
+    $ CC=gcc CXX=g++ cmake /path/to/source/directory \
+      -DCereal_INCLUDE_DIR=/path/to/cereal/include/ [options]
     $ make -j
 
 The environment variables `CC` and `CXX` are only necessary to select

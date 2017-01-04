@@ -171,9 +171,6 @@ public:
 
   //! \brief compute the internal energy
   //!
-  //! This version is less efficient since there is one virtual call for
-  //! every internal energy evaluation.
-  //! 
   //! \param[in] density the density
   //! \param[in] pressure the pressure
   //! \return the internal energy
@@ -185,9 +182,6 @@ public:
 
   //! \brief compute the pressure
   //!
-  //! This version is less efficient since there is one virtual call for
-  //! every internal pressure evaluation.
-  //! 
   //! \param[in] density the density
   //! \param[in] internal_energy the internal energy
   //! \return the pressure
@@ -197,9 +191,6 @@ public:
 
   //! \brief comput the sound speed
   //!
-  //! This version is less efficient since there is one virtual call for
-  //! every sound speed evaluation.
-  //! 
   //! \param[in] density the density
   //! \param[in] internal_energy the internal energy
   //! \return the sound speed
@@ -212,15 +203,29 @@ public:
 
   //! \brief comput the temperature
   //!
-  //! This version is less efficient since there is one virtual call for
-  //! every temperature evaluation.
-  //! 
   //! \param[in] density the density
   //! \param[in] internal_energy the internal energy
   //! \return the temperature
   real_t compute_temperature_de( real_t density, 
                                  real_t internal_energy ) const
   { return internal_energy / specific_heat_v_; }
+
+
+  //! \brief Return the gas constant or an effective one. 
+  //!
+  //! \param[in] density the density
+  //! \param[in] pressure the pressure
+  //! \return the effective gamma
+  real_t compute_gamma_dp( real_t density, real_t pressure ) const
+  { return gamma_; }
+
+  //! \brief Return the gas constant or an effective one. 
+  //!
+  //! \param[in] density the density
+  //! \param[in] internal_energy the internal energy
+  //! \return the effective gamma
+  real_t compute_gamma_de( real_t density, real_t internal_energy ) const
+  { return gamma_; }
 
 
 protected:
