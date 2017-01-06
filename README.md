@@ -4,7 +4,7 @@ FleCSALE is a computer software package developed for studying problems that
 can be characterized using continuum dynamics, such as fluid flow. It is
 specifically developed for existing and emerging large distributed memory
 system architectures. FleCSALE uses the Flexible Computational Science
-Infrastructure ([FleCSI](https://github.com/losalamos/flecsi)) project for mesh
+Infrastructure ([FleCSI](https://github.com/laristra/flecsi)) project for mesh
 and data structure support. FleCSALE has support for multi-phase fluids and
 tabular equation of state (EOS).
 
@@ -12,7 +12,7 @@ tabular equation of state (EOS).
 
 ## Minimal
 
-- [FleCSI](https://github.com/losalamos/flecsi)
+- [FleCSI](https://github.com/laristra/flecsi)
 - [cereal](https://github.com/USCiLab/cereal)
 - [CMake](http://www.cmake.org/) >= 2.8
 - C++14 compliant compiler  (gcc >= 5.3.0, clang>=3.7.0)
@@ -32,11 +32,11 @@ Below are some general instructions for obtaining and building FleCSALE.
 
 FleCSALE uses git submodules, so it mush be checked out recursively.  Type
 
-    $ git clone --recursive git@github.com:flecsale/flecsale.git
+    $ git clone --recursive git@github.com:laristra/flecsale.git
     
 to clone the repository using ssh, or 
 
-    $ git clone --recursive https://github.com/flecsale/flecsale.git
+    $ git clone --recursive https://github.com/laristra/flecsale.git
     
 to clone using https.
     
@@ -45,7 +45,7 @@ submodules are cloned as well.**
 
 # Getting Cereal
 
-[FleCSI](https://github.com/losalamos/flecsi) uses the 
+[FleCSI](https://github.com/laristra/flecsi) uses the 
 [cereal](https://github.com/USCiLab/cereal) library for serializing 
 data.  To download it using git, type
 

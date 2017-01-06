@@ -11,12 +11,12 @@ env:
     - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Release MINIMAL=ON
     - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Release COVERAGE=ON
     - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Debug
-    - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Release
+    - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Release DOCKERHUB=true
     - DISTRO=ubuntu INTERNAL_FLECSI=OFF BUILD_TYPE=Release
     - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Debug   MINIMAL=ON
     - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Release MINIMAL=ON
     - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Debug
-    - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Release
+    - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Release DOCKERHUB=true
 
 matrix:
   allow_failures:
@@ -41,10 +41,16 @@ script:
                 --build-arg TRAVIS_PULL_REQUEST=${TRAVIS_PULL_REQUEST} --build-arg TRAVIS_JOB_ID=${TRAVIS_JOB_ID}
                 --build-arg TRAVIS_TAG=${TRAVIS_TAG} --build-arg TRAVIS_REPO_SLUG=${TRAVIS_REPO_SLUG}
                 --build-arg TRAVIS_COMMIT=${TRAVIS_COMMIT}
-                -t flecsi/flecsale:${DISTRO} ${HOME}/docker/ &&
+                -t ${TRAVIS_REPO_SLUG}:${DISTRO} ${HOME}/docker/ &&
    rm -rf ${HOME}/.ccache &&
-   CON=$(docker run -d flecsi/flecsale:${DISTRO} /bin/bash) &&
+   CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO} /bin/bash) &&
    docker cp ${CON}:/home/flecsi/.ccache ${HOME}/
+
+after_success:
+  - if [[ ${DOCKERHUB} = true && ${DOCKER_USERNAME} && ${DOCKER_PASSWORD} && ${TRAVIS_PULL_REQUEST} == false && ${TRAVIS_BRANCH} == master && ${CC} = gcc ]]; then
+      docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+      docker push "${TRAVIS_REPO_SLUG}:${DISTRO}";
+    fi
 
 cache:
   - ccache

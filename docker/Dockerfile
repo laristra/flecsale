@@ -1,4 +1,4 @@
-FROM flecsi/flecsi:fedora_serial
+FROM laristra/flecsi:fedora_serial
 
 ARG MINIMAL
 ARG COVERAGE
