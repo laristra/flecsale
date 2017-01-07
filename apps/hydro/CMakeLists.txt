@@ -3,7 +3,7 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-add_executable( hydro main.cc )
+add_executable( hydro main.cc inputs.cc )
 target_link_libraries( hydro common ${ALE_LIBRARIES} )
 
 
