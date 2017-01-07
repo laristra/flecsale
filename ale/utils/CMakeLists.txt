@@ -12,6 +12,8 @@ set(utils_HEADERS
   errors.h
   filter_iterator.h
   fixed_vector.h
+  lua_utils.h
+  python_utils.h
   string_utils.h
   static_for.h
   tasks.h
@@ -30,14 +32,28 @@ set(utils_HEADERS
 #  PARENT_SCOPE
 #)
 
+set(utils_LIBRARIES)
+if (PYTHON_LIBRARIES) 
+  list(APPEND utils_LIBRARIES ${PYTHON_LIBRARIES})
+endif()
+if (LUA_LIBRARIES) 
+  list(APPEND utils_LIBRARIES ${LUA_LIBRARIES})
+endif()
+
 cinch_add_unit(utils
     SOURCES 
       test/array_view.cc
       test/fixed_vector.cc
+      test/lua_utils.cc
+      test/python_utils.cc
       test/static_for.cc
       test/tasks.cc
       test/tuple_for_each.cc
       test/tuple_visit.cc
       test/tuple_zip.cc
       test/zip.cc
+    INPUTS 
+      test/lua_test.lua
+      test/python_test.py
+    LIBRARIES ${utils_LIBRARIES}
 )

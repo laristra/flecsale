@@ -9,6 +9,10 @@
 
 #pragma once
 
+// system includes
+#include <cstring>
+#include <string>
+
 namespace ale {
 namespace utils {
 
@@ -29,6 +33,23 @@ auto replace_all(std::string str, const std::string & from, const std::string & 
   }
   return str;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Convert a character array to a wstring.
+//! \param [in] text  the input string
+//! \return the new string
+////////////////////////////////////////////////////////////////////////////////
+static std::wstring to_wstring(const char* text)
+{
+    const size_t size = std::strlen(text);
+    std::wstring wstr;
+    if (size > 0) {
+        wstr.resize(size);
+        std::mbstowcs(&wstr[0], text, size);
+    }
+    return wstr;
+}
+
 
 } // namspeace
 } // namspeace
