@@ -34,6 +34,13 @@ extern "C" {
 namespace ale {
 namespace utils {
 
+#define lua_try_access(state, key, ...)                                        \
+  (!state[key].empty()) ?                                                      \
+    state[key].as<__VA_ARGS__>() :                                             \
+    throw std::runtime_error(                                                  \
+      "\'" + std::string(key) +                                                \
+      "\' does not exist in the lua state you are accessing."                  \
+    )
 
 //! \brief Use a shared pointer to the lua state.
 //! Multiple objects may use the same lua state, so we don't want to 
@@ -48,19 +55,19 @@ using lua_state_ptr_t = std::shared_ptr<lua_State>;
 
 /// \brief The default implementation.
 /// \tparam T  The type.
-template < typename T >
+template < typename T, typename Enable = void>
 struct lua_value {};
 
-/// \brief The implementation for long long.
-template <>
-struct lua_value<long long> 
+/// \brief The implementation for integral values.
+template <typename T>
+struct lua_value< T, std::enable_if_t< std::is_integral<T>::value > > 
 {
   /// \brief Return the value in the lua stack.
   /// \param [in] s  The lua state to query.
   /// \param [in] index  The row to access.  Defaults to the value at the top
   ///                    of the stack.
   /// \return The requested value as a long long.
-  static long long get(lua_State * s, int index = -1) 
+  static T get(lua_State * s, int index = -1) 
   {
     if ( !lua_isnumber(s,index) )
      raise_runtime_error( "Invalid conversion of type \"" <<
@@ -72,61 +79,17 @@ struct lua_value<long long>
   }
 };
 
-/// \brief The implementation for unsigned long long.
-template <>
-struct lua_value<unsigned long long> 
-{
-  /// \brief Return the value in the lua stack.
-  /// \param [in] s  The lua state to query.
-  /// \param [in] index  The row to access.  Defaults to the value at the top
-  ///                    of the stack.
-  /// \return The requested value as an unsigned long long.
-  static unsigned long long get(lua_State * s, int index = -1) 
-  {
-    return static_cast<unsigned long long>(lua_value<long long>::get(s,index));
-  }
-};
-
-/// \brief The implementation for int.
-template <>
-struct lua_value<int> 
-{
-  /// \brief Return the value in the lua stack.
-  /// \param [in] s  The lua state to query.
-  /// \param [in] index  The row to access.  Defaults to the value at the top
-  ///                    of the stack.
-  /// \return The requested value as an int.
-  static int get(lua_State * s, int index = -1) 
-  {
-    return static_cast<int>(lua_value<long long>::get(s,index));
-  }
-};
-
-/// \brief The implementation for unsigned int.
-template <>
-struct lua_value<unsigned int> 
-{
-  /// \brief Return the value in the lua stack.
-  /// \param [in] s  The lua state to query.
-  /// \param [in] index  The row to access.  Defaults to the value at the top
-  ///                    of the stack.
-  /// \return The requested value as an unsigned int.
-  static unsigned int get(lua_State * s, int index = -1) 
-  {
-    return static_cast<unsigned int>(lua_value<long long>::get(s,index));
-  }
-};
 
 /// \brief The implementation for double.
-template <>
-struct lua_value<double> 
+template <typename T>
+struct lua_value<T, std::enable_if_t< std::is_floating_point<T>::value > >
 {
   /// \brief Return the value in the lua stack.
   /// \param [in] s  The lua state to query.
   /// \param [in] index  The row to access.  Defaults to the value at the top
   ///                    of the stack.
   /// \return The requested value as a double.
-  static double get(lua_State * s, int index = -1) 
+  static T get(lua_State * s, int index = -1) 
   {
     if ( !lua_isnumber(s,index) )
      raise_runtime_error( "Invalid conversion of type \"" <<
@@ -135,21 +98,6 @@ struct lua_value<double>
     auto x = lua_tonumber(s, index);
     lua_remove(s,index);
     return x;
-  }
-};
-
-/// \brief The implementation for float.
-template <>
-struct lua_value<float> 
-{
-  /// \brief Return the value in the lua stack.
-  /// \param [in] s  The lua state to query.
-  /// \param [in] index  The row to access.  Defaults to the value at the top
-  ///                    of the stack.
-  /// \return The requested value as a float.
-  static float get(lua_State * s, int index = -1) 
-  {
-    return static_cast<float>(lua_value<double>::get(s, index));
   }
 };
 
@@ -194,6 +142,83 @@ struct lua_value<std::string>
     return str;
   }
 };
+
+/// \brief The implementation for vectors.
+template< 
+  typename T, 
+  typename Allocator,
+  template<typename,typename> class Vector
+>
+struct lua_value< Vector<T,Allocator> > 
+{
+
+  /// \brief Return the value in the lua stack.
+  /// \param [in] s  The lua state to query.
+  /// \param [in] index  The row to access.  Defaults to the value at the top
+  ///                    of the stack.
+  /// \return The requested value as a vector.
+  static Vector<T,Allocator> get(lua_State * s, int index = -1)
+  {
+    // make sure we are accessing a table
+    if ( !lua_istable(s, index) )
+     raise_runtime_error( "Invalid conversion of type \"" <<
+      lua_typename(s, lua_type(s, index)) << "\" to vector."
+    );
+    // get the size of the table
+    auto n = lua_rawlen(s, -1);
+    // extract the results
+    Vector<T,Allocator> res;
+    res.reserve(n);
+    for ( int i=1; i<=n; ++i ) {
+      lua_rawgeti(s, -1, i);  // push t[i]
+      res.emplace_back( lua_value<T>::get(s) );
+    }
+    // remove it from the stack
+    lua_remove(s, index);
+    return res;
+  }
+};
+
+/// \brief The implementation for vectors.
+template< 
+  typename T, 
+  std::size_t N, 
+  template <typename,std::size_t> class Array 
+>
+struct lua_value< Array<T,N> > 
+{
+
+  /// \brief Return the value in the lua stack.
+  /// \param [in] s  The lua state to query.
+  /// \param [in] index  The row to access.  Defaults to the value at the top
+  ///                    of the stack.
+  /// \return The requested value as a vector.
+  static Array<T,N> get(lua_State * s, int index = -1)
+  {
+    // make sure we are accessing a table
+    // make sure we are accessing a table
+    if ( !lua_istable(s, index) )
+     raise_runtime_error( "Invalid conversion of type \"" <<
+      lua_typename(s, lua_type(s, index)) << "\" to vector."
+    );
+    // get the size of the table
+    auto n = lua_rawlen(s, -1);
+    if ( n != N )
+      raise_runtime_error( 
+        "Expecting array of size"<<N<<", stack array is size " << n
+      );
+    // extract the results
+    Array<T,N> res;
+    for ( int i=1; i<=std::min(n,N); ++i ) {
+      lua_rawgeti(s, -1, i);  // push t[i]
+      res[i-1] = lua_value<T>::get(s);
+    }
+    // remove it from the stack
+    lua_remove(s, index);
+    return res;
+  }
+};
+
 /// \}
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -205,43 +230,43 @@ struct lua_value<std::string>
 /// \brief Push an integer onto the stack.
 /// \param [in] s  The lua state to push a value to.
 /// \param [in] i  The integer to push.
-void lua_push(lua_State * s, int i)
+inline void lua_push(lua_State * s, int i)
 { lua_pushinteger( s, i ); }
 
 /// \brief Push a long long onto the stack.
 /// \param [in] s  The lua state to push a value to.
 /// \param [in] i  The long long to push.
-void lua_push(lua_State * s, long long i)
+inline void lua_push(lua_State * s, long long i)
 { lua_pushinteger( s, i ); }
 
 /// \brief Push a float onto the stack.
 /// \param [in] s  The lua state to push a value to.
 /// \param [in] x  The float to push.
-void lua_push(lua_State * s, float x)
+inline void lua_push(lua_State * s, float x)
 { lua_pushnumber( s, x ); }
 
 /// \brief Push a double onto the stack.
 /// \param [in] s  The lua state to push a value to.
 /// \param [in] x  The double to push.
-void lua_push(lua_State * s, double x) 
+inline void lua_push(lua_State * s, double x) 
 { lua_pushnumber( s, x ); }
 
 /// \brief Push a boolean onto the stack.
 /// \param [in] s  The lua state to push a value to.
 /// \param [in] b  The boolean to push.
-void lua_push(lua_State * s, bool b)
+inline void lua_push(lua_State * s, bool b)
 { lua_pushboolean( s, b ); }
 
 /// \brief Push a character array onto the stack.
 /// \param [in] s  The lua state to push a value to.
 /// \param [in] str  The character array to push.
-void lua_push(lua_State * s, const char * str)
+inline void lua_push(lua_State * s, const char * str)
 { lua_pushstring( s, str ); }
 
 /// \brief Push a std::string onto the stack.
 /// \param [in] s  The lua state to push a value to.
 /// \param [in] str  The string to push.
-void lua_push(lua_State * s, const std::string & str) 
+inline void lua_push(lua_State * s, const std::string & str) 
 { lua_pushlstring( s, str.c_str(), str.size() ); }
 /// \}
   
@@ -380,12 +405,18 @@ public:
     lua_rawgeti(state(), LUA_REGISTRYINDEX, *ref_);
   }
 
+  /// \brief return true if the pointed reference is null
+  bool empty() const
+  {
+    return (*ref_ == LUA_REFNIL || *ref_ == LUA_NOREF);
+  }
+
 };
 
 /// \brief Create a lua reference to the last value on the stack.
 /// \param [in] state A lua state pointer.
 /// \return A new lua_ref_t object.
-lua_ref_t make_lua_ref(const lua_state_ptr_t & state)
+inline lua_ref_t make_lua_ref(const lua_state_ptr_t & state)
 {
   return { state, luaL_ref(state.get(), LUA_REGISTRYINDEX) };
 }
@@ -545,6 +576,14 @@ public:
   ) : lua_base_t(state), name_(name), refs_(std::move(refs))
   {}
 
+  /// \brief Return true if all references are nil.
+  bool empty() const
+  {
+    for ( const auto & r : refs_ )
+      if (!r.empty()) return false;
+    return true;
+  }
+
   /// \brief Explicit type conversion operators for single values.
   /// \tparam T The type to convert to.
   /// \return The typecast value.
@@ -577,7 +616,7 @@ public:
   /// \tparam T The type to convert to.
   /// \return The typecast value.
   template< typename T >
-  auto as() const {
+  T as() const {
     return static_cast<T>(*this);
   }
   
@@ -629,7 +668,7 @@ public:
     // figure out how much the stack grew
     pos1 = lua_gettop(s);
     auto num_results = pos1 - pos0;
-    assert( num_results > 0 );
+    assert( num_results >= 0 );
     // because there could be multiple results, get a reference to each one
     std::vector<lua_ref_t> ref_list;
     ref_list.reserve( num_results );
@@ -656,8 +695,6 @@ public:
     lua_pushlstring(s, key.c_str(), key.size());
     // now get the table value, the key gets pushed from the stack
     lua_rawget(s, -2);
-    // make sure returned result is not nil
-    check_result(new_name);
     // get a reference to the result, and pop the table from the stack
     auto ref = make_lua_ref(state_);
     lua_pop(s, -1);
@@ -679,8 +716,6 @@ public:
     check_table(name_);
     // now get the table value, the key gets pushed from the stack
     lua_rawgeti(s, -1, n);
-    // make sure returned result is not nil
-    check_result(new_name);
     // get a reference to the result, and pop the table from the stack
     auto ref = make_lua_ref(state_);
     lua_pop(s, -1);

@@ -10,7 +10,6 @@
 // hydro includes
 #include "inputs.h"
 
-
 namespace apps {
 namespace hydro {
 
@@ -27,7 +26,7 @@ inputs_t::real_t inputs_t::final_time = 0.2;
 inputs_t::size_t inputs_t::max_steps = 1e6;
 
 // this is a lambda function to set the initial conditions
-inputs_t::ics_return_t inputs_t::ics( const inputs_t::vector_t & x )
+inputs_t::ics_function_t inputs_t::ics = []( const inputs_t::vector_t & x )
 {
   real_t d, p;
   vector_t v(0);
@@ -43,7 +42,7 @@ inputs_t::ics_return_t inputs_t::ics( const inputs_t::vector_t & x )
 };
 
 // This function builds and returns a mesh
-inputs_t::mesh_t inputs_t::make_mesh() 
+inputs_t::mesh_function_t inputs_t::make_mesh = [](void)
 { 
   // the grid dimensions
   constexpr size_t num_cells_x = 10;
@@ -60,7 +59,7 @@ inputs_t::mesh_t inputs_t::make_mesh()
   );
 
   return mesh;
-}
+};
 
 
 } // namespace
