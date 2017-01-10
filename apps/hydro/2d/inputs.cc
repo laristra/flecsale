@@ -13,21 +13,29 @@
 namespace apps {
 namespace hydro {
 
+// type aliases confined to this translation unit
+using size_t = inputs_t::size_t;
+using real_t = inputs_t::real_t;
+using vector_t = inputs_t::vector_t;
+using string = std::string;
+using base_t = inputs_t::base_t;
+
 
 // the case prefix
-std::string inputs_t::prefix = "shock_box_2d";
-std::string inputs_t::postfix = "dat";
+template<> string base_t::prefix = "shock_box_2d";
+template<> string base_t::postfix = "dat";
 
 // output frequency
-inputs_t::size_t inputs_t::output_freq = 100;
+template<> size_t base_t::output_freq = 100;
 
 //! \brief the CFL and final solution time
-inputs_t::real_t inputs_t::CFL = 1.0/2.0;
-inputs_t::real_t inputs_t::final_time = 0.2;
-inputs_t::size_t inputs_t::max_steps = 1e6;
+template<> real_t base_t::CFL = 1.0/2.0;
+template<> real_t base_t::final_time = 0.2;
+template<> size_t base_t::max_steps = 1e6;
 
 // this is a lambda function to set the initial conditions
-inputs_t::ics_function_t inputs_t::ics = []( const inputs_t::vector_t & x )
+template<>
+inputs_t::ics_function_t base_t::ics = []( const inputs_t::vector_t & x )
 {
   real_t d, p;
   vector_t v(0);
@@ -43,7 +51,8 @@ inputs_t::ics_function_t inputs_t::ics = []( const inputs_t::vector_t & x )
 };
 
 // This function builds and returns a mesh
-inputs_t::mesh_function_t inputs_t::make_mesh = [](void)
+template<>
+inputs_t::mesh_function_t base_t::make_mesh = [](void)
 { 
   // the grid dimensions
   constexpr size_t num_cells_x = 10;

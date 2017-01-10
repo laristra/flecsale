@@ -9,6 +9,8 @@
 #pragma once 
 
 // user includes
+#include "../inputs.h"
+
 #include <ale/mesh/burton/burton.h>
 #include <ale/mesh/factory.h>
 #include <ale/utils/lua_utils.h>
@@ -22,54 +24,17 @@ namespace hydro {
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A struct that contains all the inputs for a 3d case.
 ///////////////////////////////////////////////////////////////////////////////
-class inputs_t {
+class inputs_t : public inputs_<3> {
 public:
 
-  //! The number of dimensions
-  static constexpr auto num_dimensions = 3;
- 
-  //! the mesh type
-  using mesh_t = ale::mesh::burton_mesh_t<num_dimensions>; 
-  //! the size type
-  using size_t = typename mesh_t::size_t;
-  //! the real type
-  using real_t = typename mesh_t::real_t;
-  //! the vector type
-  using vector_t = typename mesh_t::vector_t;
+  //! \brief The base class.
+  using base_t = inputs_<3>;
 
-  //! the ics function type
-  //! \{
-  using ics_return_t = std::tuple<real_t,vector_t,real_t>;
-  using ics_function_t = std::function< ics_return_t(const vector_t & x) >;
-  //! \}
-
-  //! the mesh function type
-  using mesh_function_t = std::function< mesh_t(void) >;
-
-  //! \brief the case prefix and postfix
-  //! \{
-  static std::string prefix;
-  static std::string postfix;
-  //! \}
-
-  //! \brief output frequency
-  static size_t output_freq;
-
-  //! \brief the CFL and final solution time
-  //! \{
-  static real_t CFL;
-  static real_t final_time;
-  static size_t max_steps;
-  //! \}
-
-  //! \brief this is a lambda function to set the initial conditions
-  static ics_function_t ics;
-
-  //! \brief This function builds and returns a mesh
-  static mesh_function_t make_mesh  ; 
-
+  //===========================================================================
   //! \brief Load the input file
-  static void load(const std::string & file) 
+  //! \param [in] file  The name of the lua file to load.
+  //===========================================================================
+  static void load(const std::string & file)
   {
     auto ext = ale::utils::file_extension(file);
     if ( ext == "lua" ) {
@@ -87,24 +52,16 @@ public:
   //===========================================================================
   static void load_lua(const std::string & file) 
   {
-    // setup the python interpreter
-    auto state = ale::utils::lua_t();
-    // load the test file
-    state.loadfile( file );
+    // setup the lua interpreter and read the common inputs
+    auto state = base_t::load_lua(file);
 
     // get the hydro table
     auto hydro_ics = state["hydro"];
 
-    // now set some inputs
-    prefix = hydro_ics["prefix"].as<std::string>();
-    postfix = hydro_ics["postfix"].as<std::string>();
-    output_freq = hydro_ics["output_freq"].as<size_t>();
-    CFL = hydro_ics["CFL"].as<real_t>();
-    final_time = hydro_ics["final_time"].as<real_t>();
-    max_steps = hydro_ics["max_steps"].as<size_t>();
-    auto ics_func = hydro_ics["ics"];
+    // now set some dimension specific inputs
 
     // set the ics function
+    auto ics_func = hydro_ics["ics"];
     ics = [ics_func]( const vector_t & x )
       {
         real_t d, p;
