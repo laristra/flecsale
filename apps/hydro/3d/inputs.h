@@ -20,7 +20,7 @@ namespace apps {
 namespace hydro {
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief A struct that contains all the inputs.
+//! \brief A struct that contains all the inputs for a 3d case.
 ///////////////////////////////////////////////////////////////////////////////
 class inputs_t {
 public:
@@ -123,7 +123,7 @@ public:
       make_mesh = [=](void)
       {
         return ale::mesh::box<mesh_t>( 
-          dims[0], dims[1], dims[2], lens[0], lens[1], lens[2] 
+          dims[0], dims[1], dims[2], lens[0], lens[1], lens[2]
         );
       };
     }

@@ -4,18 +4,16 @@
  *~-------------------------------------------------------------------------~~*/
 ///////////////////////////////////////////////////////////////////////////////
 /// \file
-/// \brief Simple tests related to solving full hydro solutions.
+/// \brief This is the main driver for the hydro solver.
 ///////////////////////////////////////////////////////////////////////////////
 
-// hydro incdludes
-#include "inputs.h"
+// hydro includes
 #include "tasks.h"
 #include "types.h"
 #include "../common/exceptions.h"
 #include "../common/parse_arguments.h"
 
 // user includes
-#include <ale/mesh/factory.h>
 #include <ale/utils/time_utils.h>
 
 // system includes
@@ -25,25 +23,19 @@
 #include <sstream>
 #include <utility>
 
-// everything is in the hydro namespace
-using namespace apps::hydro;
-
+namespace apps {
+namespace hydro {
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
 ///////////////////////////////////////////////////////////////////////////////
-int main(int argc, char** argv) 
+template< typename inputs_t >
+int driver(int argc, char** argv) 
 {
+
 
   // set exceptions 
   enable_exceptions();
-
-  //===========================================================================
-  // Compile Time Inputs
-  //===========================================================================
-
-  // setup an equation of state
-  eos_t eos( /* gamma */ 1.4, /* cv */ 1.0 ); 
 
   //===========================================================================
   // Parse arguments
@@ -117,6 +109,9 @@ int main(int argc, char** argv)
   //===========================================================================
   // Field Creation
   //===========================================================================
+
+  // setup an equation of state
+  eos_t eos( /* gamma */ 1.4, /* cv */ 1.0 ); 
 
   // start the timer
   auto tstart = utils::get_wall_time();
@@ -245,8 +240,10 @@ int main(int argc, char** argv)
   std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
             << tdelta << "s." << std::endl;
 
-  // success
+  // success if you reached here
   return 0;
 
 }
 
+} // namespace
+} // namespace
