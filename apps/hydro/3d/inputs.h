@@ -53,31 +53,31 @@ public:
   static void load_lua(const std::string & file) 
   {
     // setup the lua interpreter and read the common inputs
-    auto state = base_t::load_lua(file);
+    auto lua_state = base_t::load_lua(file);
 
     // get the hydro table
-    auto hydro_ics = state["hydro"];
+    auto hydro_input = lua_try_access( lua_state, "hydro" );
 
     // now set some dimension specific inputs
 
     // set the ics function
-    auto ics_func = hydro_ics["ics"];
-    ics = [ics_func]( const vector_t & x )
+    auto ics_func = lua_try_access( hydro_input, "ics" );
+    ics = [ics_func]( const vector_t & x, const real_t & t )
       {
         real_t d, p;
         vector_t v(0);
         std::tie(d, v, p) = 
-          ics_func(x[0], x[1], x[2]).as<real_t, vector_t, real_t>();
-        return std::make_tuple( d, v, p );
+          ics_func(x[0], x[1], x[2], t).as<real_t, vector_t, real_t>();
+        return std::make_tuple( d, std::move(v), p );
       };
       
     // now set the mesh building function
-    auto mesh_input = hydro_ics["mesh"];
-    auto mesh_type = lua_try_access(mesh_input, "type", std::string );
+    auto mesh_input = lua_try_access( hydro_input, "mesh" );
+    auto mesh_type = lua_try_access_as(mesh_input, "type", std::string );
     if ( mesh_type == "box" ) {
-      auto dims = lua_try_access( mesh_input, "dimensions", std::vector<int> );
-      auto lens = lua_try_access( mesh_input, "lengths", std::vector<real_t> );
-      make_mesh = [=](void)
+      auto dims = lua_try_access_as( mesh_input, "dimensions", std::vector<int> );
+      auto lens = lua_try_access_as( mesh_input, "lengths", std::vector<real_t> );
+      make_mesh = [=](const real_t &)
       {
         return ale::mesh::box<mesh_t>( 
           dims[0], dims[1], dims[2], lens[0], lens[1], lens[2]
@@ -85,8 +85,8 @@ public:
       };
     }
     else if (mesh_type == "read" ) {
-      auto file = lua_try_access( mesh_input, "file", std::string );
-      make_mesh = [=](void)
+      auto file = lua_try_access_as( mesh_input, "file", std::string );
+      make_mesh = [=](const real_t &)
       {
         mesh_t m;
         ale::mesh::read_mesh(file, m);

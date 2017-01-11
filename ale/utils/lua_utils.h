@@ -35,11 +35,20 @@ extern "C" {
 namespace ale {
 namespace utils {
 
-#define lua_try_access(state, key, ...)                                        \
+
+#define lua_try_access_as(state, key, ...)                                     \
   (!state[key].empty()) ?                                                      \
     state[key].as<__VA_ARGS__>() :                                             \
     throw std::runtime_error(                                                  \
-      "\'" + std::string(key) +                                                \
+      "\'" + state[key].name() +                                               \
+      "\' does not exist in the lua state you are accessing."                  \
+    )
+
+#define lua_try_access(state, key)                                             \
+  (!state[key].empty()) ?                                                      \
+    state[key] :                                                               \
+    throw std::runtime_error(                                                  \
+      "\'" + state[key].name() +                                               \
       "\' does not exist in the lua state you are accessing."                  \
     )
 
@@ -379,6 +388,9 @@ class lua_ref_t : public lua_base_t {
   /// reference may exist.
   std::shared_ptr<int> ref_;
 
+  /// \brief Also store the type id of the object we are referencing
+  int type_ = LUA_TNONE;
+
 public:
 
   /// Delete the default destructor.
@@ -388,16 +400,19 @@ public:
   /// References are created in LUA_REGISTRYINDEX table.
   /// \param [in] state  A pointer to a lua state.
   /// \param [in] ref  The lua reference key.
-  lua_ref_t ( const lua_state_ptr_t & state, int ref )
+  lua_ref_t ( const lua_state_ptr_t & state, int ref, int type )
     : lua_base_t(state), 
-      ref_( new int{ref},
+      ref_( 
+        new int{ref},
         [s=state](int * r) 
-        { luaL_unref(s.get(), LUA_REGISTRYINDEX, *r); } )
+        { luaL_unref(s.get(), LUA_REGISTRYINDEX, *r); } 
+      ),
+      type_(type)
   {}
 
   /// \brief Constructor to create an empty reference.
   lua_ref_t( const lua_state_ptr_t & state )
-    : lua_ref_t(state, LUA_REFNIL)
+    : lua_ref_t(state, LUA_REFNIL, LUA_TNONE)
   {}
 
   /// \brief Push the refered value onto the stack.
@@ -419,7 +434,8 @@ public:
 /// \return A new lua_ref_t object.
 inline lua_ref_t make_lua_ref(const lua_state_ptr_t & state)
 {
-  return { state, luaL_ref(state.get(), LUA_REGISTRYINDEX) };
+  auto s = state.get();
+  return { state, luaL_ref(s, LUA_REGISTRYINDEX), lua_type(s, -1) };
 }
 
 
@@ -434,6 +450,8 @@ class lua_result_t : public lua_base_t {
   std::string name_;
   /// \brief A reference to the lua value in the LUA_REGISTRYINDEX table.
   std::vector<lua_ref_t> refs_;
+  /// \brief The size of the object on the stack
+  std::size_t size_ = 0;
 
   /// \defgroup get_results get_results
   /// \brief These templates are used to extract multiple results as tuples.
@@ -501,8 +519,17 @@ class lua_result_t : public lua_base_t {
     }
   } 
 
+  void check_nil(const std::string & name) const
+  {
+    if ( lua_isnil(state(), -1) ) {
+      print_last_row();
+      raise_runtime_error("\"" << name << "\" does not exist.");
+    }
+  }
+
   void check_table(const std::string & name) const
   {
+    check_nil(name);
     if ( !lua_istable(state(), -1) ) {
       print_last_row();
       raise_runtime_error("\"" << name << "\" is not a table.");
@@ -523,6 +550,7 @@ class lua_result_t : public lua_base_t {
   /// \parm [in] name  The name of the object we are checking.
   void check_function(const std::string & name) const
   {
+    check_nil(name);
     if ( !lua_isfunction(state(), -1) ) {
       print_last_row();
       raise_runtime_error("\"" << name << "\" is not a function.");
@@ -556,14 +584,14 @@ public:
   /// \param [in] state  The lua state pointer.
   /// \param [in] name  The name of the object.
   /// \param [in] ref  A reference to the last value popped off the stack.
+  /// \param [in] size  The size of the object on the stack.
   lua_result_t(
     const lua_state_ptr_t & state, 
     const std::string & name, 
-    lua_ref_t && ref
-  ) : lua_base_t(state), name_(name)
-  {
-    refs_.emplace_back( std::move(ref) );
-  }
+    lua_ref_t && ref,
+    std::size_t size
+  ) : lua_base_t(state), name_(name), refs_({std::move(ref)}), size_(size)
+  {}
   
   /// \brief This is the main constructor with a multiple references.
   /// \param [in] state  The lua state pointer.
@@ -574,7 +602,8 @@ public:
     const lua_state_ptr_t & state, 
     const std::string & name, 
     std::vector<lua_ref_t> && refs
-  ) : lua_base_t(state), name_(name), refs_(std::move(refs))
+  ) : lua_base_t(state), name_(name), refs_(std::move(refs)), 
+      size_(refs_.size())
   {}
 
   /// \brief Return true if all references are nil.
@@ -585,6 +614,18 @@ public:
     return true;
   }
 
+  /// \brief Return the name of the object.
+  const auto & name() const
+  {
+    return name_;
+  }
+
+  /// \brief Return the size of the table.
+  std::size_t size() const
+  {
+    return size_;
+  }
+
   /// \brief Explicit type conversion operators for single values.
   /// \tparam T The type to convert to.
   /// \return The typecast value.
@@ -592,7 +633,7 @@ public:
   explicit operator T() const {
     if ( refs_.size() != 1 )
       raise_runtime_error( "Expecting 1 result, stack has " << refs_.size() );
-    refs_.back().push();
+    push_last();
     return lua_value<T>::get(state());
   }
 
@@ -696,11 +737,13 @@ public:
     lua_pushlstring(s, key.c_str(), key.size());
     // now get the table value, the key gets pushed from the stack
     lua_rawget(s, -2);
+    // get the size of the object
+    auto len = lua_rawlen(s, -1);
     // get a reference to the result, and pop the table from the stack
     auto ref = make_lua_ref(state_);
     lua_pop(s, -1);
     // return the global object with a pointer to a location in the stack
-    return { state_, new_name, std::move(ref) };
+    return { state_, new_name, std::move(ref), len };
   }
 
   /// \brief Get the lua value in the table given an index.
@@ -717,11 +760,13 @@ public:
     check_table(name_);
     // now get the table value, the key gets pushed from the stack
     lua_rawgeti(s, -1, n);
+    // get the size of the object
+    auto len = lua_rawlen(s, -1);
     // get a reference to the result, and pop the table from the stack
     auto ref = make_lua_ref(state_);
     lua_pop(s, -1);
     // return the global object with a pointer to a location in the stack
-    return { state_, new_name, std::move(ref) };
+    return { state_, new_name, std::move(ref), len };
   }
 
 };
@@ -779,8 +824,10 @@ public:
     auto s = state();
     // the function name
     lua_getglobal(s, key.c_str());
+    // get the size of the object
+    auto len = lua_rawlen(s, -1);
     // return the global object with a pointer to a location in the stack
-    return { state_, key, make_lua_ref(state_) };
+    return { state_, key, make_lua_ref(state_), len };
   }
 
   /// \brief Run a string through the lua interpreter.

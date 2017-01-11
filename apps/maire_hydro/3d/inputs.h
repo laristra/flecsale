@@ -22,19 +22,19 @@ namespace apps {
 namespace hydro {
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief A struct that contains all the inputs for a 2d case.
+//! \brief A struct that contains all the inputs for a 3d case.
 ///////////////////////////////////////////////////////////////////////////////
-class inputs_t : public inputs_<2> {
+class inputs_t : public inputs_<3> {
 public:
 
   //! \brief The base class.
-  using base_t = inputs_<2>;
+  using base_t = inputs_<3>;
 
   //===========================================================================
   //! \brief Load the input file
   //! \param [in] file  The name of the lua file to load.
   //===========================================================================
-  static void load(const std::string & file) 
+  static void load(const std::string & file)
   {
     auto ext = ale::utils::file_extension(file);
     if ( ext == "lua" ) {
@@ -68,20 +68,21 @@ public:
         real_t d, p;
         vector_t v(0);
         std::tie(d, v, p) = 
-          ics_func(x[0], x[1], t).as<real_t, vector_t, real_t>();
+          ics_func(x[0], x[1], x[2], t).as<real_t, vector_t, real_t>();
         return std::make_tuple( d, std::move(v), p );
       };
       
     // now set the mesh building function
-    auto mesh_input = lua_try_access( hydro_input, "mesh" );
+    auto mesh_input = hydro_input["mesh"];
     auto mesh_type = lua_try_access_as(mesh_input, "type", std::string );
+
     if ( mesh_type == "box" ) {
       auto dims = lua_try_access_as( mesh_input, "dimensions", std::vector<int> );
       auto lens = lua_try_access_as( mesh_input, "lengths", std::vector<real_t> );
       make_mesh = [=](const real_t &)
       {
         return ale::mesh::box<mesh_t>( 
-          dims[0], dims[1], lens[0], lens[1]
+          dims[0], dims[1], dims[2], 0, 0, 0, lens[0], lens[1], lens[2]
         );
       };
     }
@@ -97,6 +98,31 @@ public:
     else {
       raise_implemented_error("Unknown mesh type \""<<mesh_type<<"\"");
     }
+
+    // now clear and reset the boundary conditions
+    auto bcs_input = lua_try_access( hydro_input, "bcs" );
+    bcs.clear();
+    
+    for ( int i=0; i<bcs_input.size(); ++i ) {
+      // get each bc pair
+      auto bc_input = bcs_input[i+1];
+      auto bc_type = lua_try_access_as( bc_input, "type", std::string );
+      auto bc_func = lua_try_access( bc_input, "func" );
+      // make the boundary condition function
+      auto bc_predicate = [=]( const vector_t & x, const real_t & t )
+        { 
+          return bc_func(x[0], x[1], x[2], t).as<bool>();
+        };
+      // make a new boundary condition type
+      auto bc_object = bcs_ptr_t( 
+        make_boundary_condition<num_dimensions>(bc_type) 
+      );
+      // now make the boundary condition pair
+      auto new_bc = 
+        std::make_pair( std::move(bc_object), std::move(bc_predicate) );
+      bcs.emplace_back( std::move(new_bc) );
+    }
+    
   }
 };
 

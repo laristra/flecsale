@@ -6,6 +6,7 @@
 /// \file
 /// \brief This is the main driver for the hydro solver.
 ///////////////////////////////////////////////////////////////////////////////
+#pragma once
 
 // hydro includes
 #include "tasks.h"
@@ -90,7 +91,7 @@ int driver(int argc, char** argv)
   //===========================================================================
 
   // make the mesh
-  auto mesh = inputs_t::make_mesh();
+  auto mesh = inputs_t::make_mesh( /* solution time */ 0.0 );
 
   // this is the mesh object
   mesh.is_valid();
@@ -228,7 +229,7 @@ int driver(int argc, char** argv)
   //===========================================================================
     
   // now output the solution
-  if ( (inputs_t::output_freq > 0) && (time_cnt%inputs_t::output_freq != 0) )
+  if ( (inputs_t::output_freq > 0) && (time_cnt % inputs_t::output_freq != 0) )
     output(mesh, inputs_t::prefix, inputs_t::postfix, 1);
 
   cout << "Final solution time is " 

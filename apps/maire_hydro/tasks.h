@@ -38,6 +38,9 @@ int32_t initial_conditions( T & mesh, F && ics ) {
   using real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
 
+  // get the current time
+  auto soln_time = mesh.time();
+
   // get the collection accesor
   auto M = get_accessor( mesh, hydro, cell_mass,       real_t, dense, 0 );
   auto p = get_accessor( mesh, hydro, cell_pressure,   real_t, dense, 0 );
@@ -55,7 +58,7 @@ int32_t initial_conditions( T & mesh, F && ics ) {
     auto c = cs[i];
     // now copy the state to flexi
     real_t d;
-    std::tie( d, v[c], p[c] ) = std::forward<F>(ics)( xc[c] );
+    std::tie( d, v[c], p[c] ) = std::forward<F>(ics)( xc[c], soln_time );
     // set mass and volume now
     M[c] = d*vol[c];
   }

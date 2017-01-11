@@ -15,7 +15,8 @@ hydro = {
     lengths = {1., 0.1}
   },
   -- the initial conditions
-  ics = function (x,y)
+  -- return density, velocity, pressure
+  ics = function (x,y,t)
     if x < 0 then
       return 1.0, {0,0}, 1.0
     else

@@ -9,11 +9,16 @@
 #pragma once 
 
 // user includes
+#include "types.h"
+
 #include <ale/mesh/burton/burton.h>
 #include <ale/utils/lua_utils.h>
 
 // system includes
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace apps {
 namespace hydro {
@@ -47,6 +52,15 @@ public:
   //! the mesh function type
   using mesh_function_t = std::function< mesh_t(const real_t & t) >;
 
+  //! the bcs function type
+  //! \{
+  using bcs_t = boundary_condition_t<num_dimensions>;
+  using bcs_ptr_t = std::shared_ptr< bcs_t >;
+  using bcs_function_t = 
+    std::function< bool(const vector_t & x, const real_t & t) >;
+  using bcs_list_t = std::vector< std::pair< bcs_ptr_t, bcs_function_t > >;
+  //! \}
+
   //! \brief the case prefix and postfix
   //! \{
   static std::string prefix;
@@ -58,8 +72,9 @@ public:
 
   //! \brief the CFL and final solution time
   //! \{
-  static real_t CFL;
+  static time_constants_t CFL;
   static real_t final_time;
+  static real_t initial_time_step;
   static size_t max_steps;
   //! \}
 
@@ -68,6 +83,10 @@ public:
 
   //! \brief This function builds and returns a mesh
   static mesh_function_t make_mesh; 
+
+  //! \brief this is a list of lambda functions to set the boundary conditions
+  static bcs_list_t bcs;
+
 
   //===========================================================================
   //! \brief Load the lua input file
@@ -87,9 +106,14 @@ public:
     prefix = lua_try_access_as( hydro_input, "prefix", std::string );
     postfix = lua_try_access_as( hydro_input, "postfix", std::string );
     output_freq = lua_try_access_as( hydro_input, "output_freq", size_t );
-    CFL = lua_try_access_as( hydro_input, "CFL", real_t );
     final_time = lua_try_access_as( hydro_input, "final_time", real_t );
     max_steps = lua_try_access_as( hydro_input, "max_steps", size_t );
+    initial_time_step = lua_try_access_as( hydro_input, "initial_time_step", real_t );
+
+    auto cfl_ics = lua_try_access( hydro_input, "CFL" );
+    CFL.accoustic = lua_try_access_as( cfl_ics, "accoustic", real_t );
+    CFL.volume    = lua_try_access_as( cfl_ics, "volume",    real_t );
+    CFL.growth    = lua_try_access_as( cfl_ics, "growth",    real_t );
 
     // return the state
     return lua_state;

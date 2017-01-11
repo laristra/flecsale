@@ -27,48 +27,50 @@ template<> string base_t::postfix = "dat";
 // output frequency
 template<> size_t base_t::output_freq = 100;
 
-//! \brief the CFL and final solution time
+// the CFL and final solution time
 template<> real_t base_t::CFL = 1.0/3.0;
 template<> real_t base_t::final_time = 0.2;
 template<> size_t base_t::max_steps = 1e6;
 
 // this is a lambda function to set the initial conditions
 template<>
-inputs_t::ics_function_t base_t::ics = []( const vector_t & x )
-{
-  real_t d, p;
-  vector_t v(0);
-  if ( x[0] < 0 && x[1] < 0 && x[2] < 0 ) {
-    d = 0.125;
-    p = 0.1;
-  }
-  else {
-    d = 1.0;
-    p = 1.0;
-  }    
-  return std::make_tuple( d, v, p );
-};
+inputs_t::ics_function_t base_t::ics = 
+  []( const vector_t & x, const real_t & )
+  {
+    real_t d, p;
+    vector_t v(0);
+    if ( x[0] < 0 && x[1] < 0 && x[2] < 0 ) {
+      d = 0.125;
+      p = 0.1;
+    }
+    else {
+      d = 1.0;
+      p = 1.0;
+    }    
+    return std::make_tuple( d, v, p );
+  };
 
 // This function builds and returns a mesh
 template<>
-inputs_t::mesh_function_t base_t::make_mesh = [](void)
-{ 
-  // the grid dimensions
-  constexpr size_t num_cells_x = 10;
-  constexpr size_t num_cells_y = 10;
-  constexpr size_t num_cells_z = 10;
-
-  constexpr real_t length_x = 1.0;
-  constexpr real_t length_y = 1.0;
-  constexpr real_t length_z = 1.0;
-
-  // this is the mesh object
-  auto mesh = ale::mesh::box<mesh_t>( 
-    num_cells_x, num_cells_y, num_cells_z, length_x, length_y, length_z
-  );
-
-  return mesh;
-};
+inputs_t::mesh_function_t base_t::make_mesh = 
+  [](const real_t &)
+  { 
+    // the grid dimensions
+    constexpr size_t num_cells_x = 10;
+    constexpr size_t num_cells_y = 10;
+    constexpr size_t num_cells_z = 10;
+  
+    constexpr real_t length_x = 1.0;
+    constexpr real_t length_y = 1.0;
+    constexpr real_t length_z = 1.0;
+  
+    // this is the mesh object
+    auto mesh = ale::mesh::box<mesh_t>( 
+      num_cells_x, num_cells_y, num_cells_z, length_x, length_y, length_z
+    );
+  
+    return mesh;
+  };
 
 } // namespace
 } // namespace

@@ -33,6 +33,9 @@ int32_t initial_conditions( T & mesh, F && ics ) {
   using real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
 
+  // get the current time
+  auto soln_time = mesh.time();
+
   // get the collection accesor
   auto d = get_accessor( mesh, hydro, density,    real_t, dense, 0 );
   auto p = get_accessor( mesh, hydro, pressure,   real_t, dense, 0 );
@@ -46,7 +49,7 @@ int32_t initial_conditions( T & mesh, F && ics ) {
   #pragma omp parallel for
   for ( counter_t i=0; i<num_cells; i++ ) {
     auto c = cs[i];
-    std::tie( d[c], v[c], p[c] ) = std::forward<F>(ics)( xc[c] );
+    std::tie( d[c], v[c], p[c] ) = std::forward<F>(ics)( xc[c], soln_time );
   }
 
   return 0;
