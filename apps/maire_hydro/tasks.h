@@ -692,11 +692,13 @@ int32_t apply_update( T & mesh, real_t coef, bool first_time ) {
   //----------------------------------------------------------------------------
 
 #ifndef NDEBUG
-  std::stringstream mom_str;
-  mom_str.setf( std::ios::scientific );
+  std::stringstream mom_ss;
+  mom_ss.setf( std::ios::scientific );
 
   for ( const auto & mx : mom )
-    mom_str << std::setprecision(2) << std::setw(9) << mx << " ";
+    mom_ss << std::setprecision(2) << std::setw(9) << mx << " ";
+  auto mom_str = mom_ss.str();
+  mom_str.pop_back();
 
   auto ss = cout.precision();
   cout.setf( std::ios::scientific );
@@ -709,8 +711,8 @@ int32_t apply_update( T & mesh, real_t coef, bool first_time ) {
          << " |" << std::endl;
   }
   cout << "| " << std::setprecision(3) << std::setw(10) << mass
-       << " | " << std::setw(28) << mom_str.str()
-       << "| " << std::setprecision(4)  << std::setw(11) << ener
+       << " | " << std::setw(29) << mom_str
+       << " | " << std::setprecision(4)  << std::setw(11) << ener
        << " |" << std::endl;
 
   cout.unsetf( std::ios::scientific );
