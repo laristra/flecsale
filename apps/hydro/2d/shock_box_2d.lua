@@ -12,7 +12,8 @@ hydro = {
   mesh = {
     type = "box",
     dimensions = {10, 10},
-    lengths = {1., 1.}
+    xmin = {-0.5, -0.5},
+    xmax = { 0.5,  0.5}
   },
   -- the initial conditions
   -- return density, velocity, pressure

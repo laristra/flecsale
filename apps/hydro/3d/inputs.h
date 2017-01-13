@@ -76,11 +76,14 @@ public:
     auto mesh_type = lua_try_access_as(mesh_input, "type", std::string );
     if ( mesh_type == "box" ) {
       auto dims = lua_try_access_as( mesh_input, "dimensions", std::vector<int> );
-      auto lens = lua_try_access_as( mesh_input, "lengths", std::vector<real_t> );
+      auto xmin = lua_try_access_as( mesh_input, "xmin", std::array<real_t, num_dimensions> );
+      auto xmax = lua_try_access_as( mesh_input, "xmax", std::array<real_t, num_dimensions> );
       make_mesh = [=](const real_t &)
       {
         return ale::mesh::box<mesh_t>( 
-          dims[0], dims[1], dims[2], lens[0], lens[1], lens[2]
+          dims[0], dims[1], dims[2], 
+          xmin[0], xmin[1], xmin[2], 
+          xmax[0], xmax[1], xmax[2]
         );
       };
     }
