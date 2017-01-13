@@ -7,7 +7,7 @@
 /// \brief Tests related to embedded lua.
 ////////////////////////////////////////////////////////////////////////////////
 
-#if HAVE_LUA
+#ifdef HAVE_LUA
 
 // user includes
 #include "ale/common/types.h"

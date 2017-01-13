@@ -8,7 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#if HAVE_LUA 
+#ifdef HAVE_LUA 
 
 // user includes
 #include "ale/utils/string_utils.h"
@@ -839,7 +839,8 @@ public:
   }
 };
 
-#endif
-  
 } // namespace utils
 } // namespace ale
+
+#endif // HAVE_LUA
+  

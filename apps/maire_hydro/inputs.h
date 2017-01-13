@@ -91,6 +91,7 @@ public:
   //! \brief this is a list of lambda functions to set the boundary conditions
   static bcs_list_t bcs;
 
+#ifdef HAVE_LUA
 
   //===========================================================================
   //! \brief Load the lua input file
@@ -122,6 +123,9 @@ public:
     // return the state
     return lua_state;
   }
+
+#endif // HAVE_LUA
+
 };
 
 } // namespace hydro

@@ -26,7 +26,7 @@ hydro = {
   output_freq = "10",
   -- The time stepping parameters
   final_time = 1.0,
-  max_steps = 10,
+  max_steps = 1e6,
   initial_time_step = 1.e-5,
   CFL = { accoustic = 0.25, volume = 0.1, growth = 1.01 },
 
@@ -34,7 +34,8 @@ hydro = {
   mesh = {
     type = "box",
     dimensions = num_cells,
-    lengths = length
+    xmin = {0, 0, 0},
+    xmax = length
   },
 
   -- the initial conditions

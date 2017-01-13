@@ -52,6 +52,8 @@ public:
   //===========================================================================
   static void load_lua(const std::string & file) 
   {
+#ifdef HAVE_LUA
+
     // setup the lua interpreter and read the common inputs
     auto lua_state = base_t::load_lua(file);
 
@@ -98,6 +100,14 @@ public:
     else {
       raise_implemented_error("Unknown mesh type \""<<mesh_type<<"\"");
     }
+
+#else
+
+    raise_implemented_error( 
+      "You need to link with lua in order to use lua functionality."
+    );
+
+#endif // HAVE_LUA
   }
 };
 

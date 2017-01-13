@@ -73,6 +73,8 @@ public:
   //! \brief This function builds and returns a mesh
   static mesh_function_t make_mesh; 
 
+#ifdef HAVE_LUA
+
   //===========================================================================
   //! \brief Load the lua input file
   //! \param [in] file  The name of the lua file to load.
@@ -98,6 +100,9 @@ public:
     // return the state
     return lua_state;
   }
+
+#endif // HAVE_LUA
+
 };
 
 } // namespace hydro
