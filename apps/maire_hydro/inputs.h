@@ -42,6 +42,10 @@ public:
   //! the vector type
   using vector_t = typename mesh_t::vector_t;
 
+  //! a dimensioned array type helper
+  template< typename T>
+  using array_t = std::array<T, num_dimensions>;
+
   //! the ics function type
   //! \{
   using ics_return_t = std::tuple<real_t,vector_t,real_t>;

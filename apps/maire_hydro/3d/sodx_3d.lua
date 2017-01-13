@@ -20,7 +20,8 @@ hydro = {
   mesh = {
     type = "box",
     dimensions = num_cells,
-    lengths = length
+    xmin = {0, 0, 0},
+    xmax = length
   },
 
   -- the initial conditions

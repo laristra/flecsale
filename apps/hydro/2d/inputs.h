@@ -76,9 +76,9 @@ public:
     auto mesh_input = lua_try_access( hydro_input, "mesh" );
     auto mesh_type = lua_try_access_as(mesh_input, "type", std::string );
     if ( mesh_type == "box" ) {
-      auto dims = lua_try_access_as( mesh_input, "dimensions", std::vector<int> );
-      auto xmin = lua_try_access_as( mesh_input, "xmin", std::array<real_t, num_dimensions> );
-      auto xmax = lua_try_access_as( mesh_input, "xmax", std::array<real_t, num_dimensions> );
+      auto dims = lua_try_access_as( mesh_input, "dimensions", array_t<int> );
+      auto xmin = lua_try_access_as( mesh_input, "xmin", array_t<real_t> );
+      auto xmax = lua_try_access_as( mesh_input, "xmax", array_t<real_t> );
       make_mesh = [=](const real_t &)
       {
         return ale::mesh::box<mesh_t>( 

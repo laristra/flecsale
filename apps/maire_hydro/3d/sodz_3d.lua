@@ -1,12 +1,12 @@
 -- mesh sizes
-num_cells = {10, 100, 10}
-length = {.1, 1., .1}
+num_cells = {10, 10, 100}
+length = {.1, .1, 1.}
 
 -- Begin Main Input
 hydro = {
 
   -- The case prefix and postfixes
-  prefix = "sody_3d",
+  prefix = "sodz_3d",
   postfix = "dat",
   -- The frequency of outputs
   output_freq = "1",
@@ -27,7 +27,7 @@ hydro = {
   -- the initial conditions
   -- return density, velocity, pressure
   ics = function (x,y,z,t)
-    if y < 0.5*length[2] then
+    if z < 0.5*length[3] then
       return 1.0, {0,0,0}, 1.0
     else
       return 0.125, {0,0,0}, 0.1
