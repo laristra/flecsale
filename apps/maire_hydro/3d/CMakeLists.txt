@@ -9,18 +9,18 @@ target_link_libraries( maire_hydro_3d common ${ALE_LIBRARIES} )
 if (LUA_FOUND) 
 
   create_regression_test( 
-  	NAME sedov_maire_3d
-  	COMMAND $<TARGET_FILE:maire_hydro_3d> -f ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d.lua
-  	COMPARE sedov_3d0000010.dat 
-  	STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d0000010.dat.std 
+    NAME sedov_maire_3d
+    COMMAND $<TARGET_FILE:maire_hydro_3d> -f ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d.lua
+    COMPARE sedov_3d0000010.dat 
+    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d0000010.dat.std 
   )
   
   create_regression_test( 
-  	NAME sedov_maire_3d_omp4
-  	COMMAND $<TARGET_FILE:maire_hydro_3d> -f ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d.lua
-  	THREADS 4
-  	COMPARE sedov_3d0000010.dat 
-  	STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d0000010.dat.std 
+    NAME sedov_maire_3d_omp4
+    COMMAND $<TARGET_FILE:maire_hydro_3d> -f ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d.lua
+    THREADS 4
+    COMPARE sedov_3d0000010.dat 
+    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d0000010.dat.std 
   )
 
 else()
