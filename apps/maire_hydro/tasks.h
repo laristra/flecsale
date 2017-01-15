@@ -318,7 +318,7 @@ int32_t evaluate_corner_coef( T & mesh ) {
     const auto & uv = vertex_velocity[vt];
 
     // for estimating the impedances
-    auto delta_u = uv - uc;
+    // auto delta_u = uv - uc;
     
     // Estimate the impedance.  This is Burton's form but it also seems to
     // kill the timestep in 3d.
@@ -523,7 +523,7 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
           vertex_velocity[vt][d] = b_view[d];
 
       } // end has symmetry
-      
+
     } // boundary point
 
     //---------- internal point
@@ -539,8 +539,6 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 
   } // vertex
   //----------------------------------------------------------------------------
-
-
 
   return 0;
    

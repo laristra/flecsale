@@ -75,7 +75,7 @@ template<> time_constants_t base_t::CFL =
 
 template<> real_t base_t::final_time = 1.0;
 template<> real_t base_t::initial_time_step = 1.e-5;
-template<> size_t base_t::max_steps = 1e6;
+template<> size_t base_t::max_steps = 10;
 
 // this is a lambda function to set the initial conditions
 template<>

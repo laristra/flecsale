@@ -23,10 +23,10 @@ hydro = {
   prefix = "sedov_2d",
   postfix = "dat",
   -- The frequency of outputs
-  output_freq = "10",
+  output_freq = "20",
   -- The time stepping parameters
   final_time = 1.0,
-  max_steps = 1e6,
+  max_steps = 20,
   initial_time_step = 1.e-5,
   CFL = { accoustic = 0.25, volume = 0.1, growth = 1.01 },
 

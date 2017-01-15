@@ -111,7 +111,8 @@ struct burton_types_t<2> {
       std::tuple<domain_<0>, vertex_t, edge_t>,
       std::tuple<domain_<0>, vertex_t, cell_t>,
       std::tuple<domain_<0>, edge_t, vertex_t>,
-      std::tuple<domain_<0>, edge_t, edge_t>,
+      // edges->edges makes sure edges(faces) works in 2d
+      // std::tuple<domain_<0>, edge_t, edge_t>,
       std::tuple<domain_<0>, edge_t, cell_t>,
       std::tuple<domain_<0>, cell_t, vertex_t>,
       std::tuple<domain_<0>, cell_t, edge_t>

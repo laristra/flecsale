@@ -26,7 +26,7 @@ hydro = {
   output_freq = "10",
   -- The time stepping parameters
   final_time = 1.0,
-  max_steps = 1e6,
+  max_steps = 10,
   initial_time_step = 1.e-5,
   CFL = { accoustic = 0.25, volume = 0.1, growth = 1.01 },
 
