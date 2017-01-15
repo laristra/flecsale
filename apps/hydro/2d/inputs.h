@@ -81,7 +81,7 @@ public:
       auto dims = lua_try_access_as( mesh_input, "dimensions", array_t<int> );
       auto xmin = lua_try_access_as( mesh_input, "xmin", array_t<real_t> );
       auto xmax = lua_try_access_as( mesh_input, "xmax", array_t<real_t> );
-      make_mesh = [=](const real_t &)
+      make_mesh = [dims,xmin,xmax](const real_t &)
       {
         return ale::mesh::box<mesh_t>( 
           dims[0], dims[1], xmin[0], xmin[1], xmax[0], xmax[1]
@@ -90,7 +90,7 @@ public:
     }
     else if (mesh_type == "read" ) {
       auto file = lua_try_access_as( mesh_input, "file", std::string );
-      make_mesh = [=](const real_t &)
+      make_mesh = [file](const real_t &)
       {
         mesh_t m;
         ale::mesh::read_mesh(file, m);
