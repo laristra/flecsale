@@ -46,7 +46,8 @@ int32_t initial_conditions( T & mesh, F && ics ) {
   auto cs = mesh.cells();
   auto num_cells = cs.size();
 
-  #pragma omp parallel for
+  // This doesn't work with lua input
+  //#pragma omp parallel for
   for ( counter_t i=0; i<num_cells; i++ ) {
     auto c = cs[i];
     std::tie( d[c], v[c], p[c] ) = std::forward<F>(ics)( xc[c], soln_time );
