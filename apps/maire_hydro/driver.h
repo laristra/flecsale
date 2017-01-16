@@ -207,6 +207,7 @@ int driver(int argc, char** argv)
           const auto & fx = f->midpoint();
           return ( bc_function(fx, soln_time) );
         }
+        return false;
       }
     );
     boundaries.emplace( bc_key, bc_type );

@@ -77,7 +77,7 @@ template<> size_t base_t::max_steps = 20;
 // this is a lambda function to set the initial conditions
 template<>
 inputs_t::ics_function_t base_t::ics = 
-  [=]( const vector_t & x, const real_t & )
+  [g=gamma, V=vol]( const vector_t & x, const real_t & )
   {
     constexpr real_t e0 = 0.244816;
     real_t d = 1.0;
@@ -85,18 +85,18 @@ inputs_t::ics_function_t base_t::ics =
     real_t p = 1.e-6;
     auto r = sqrt( x[0]*x[0] + x[1]*x[1] );
     if ( r < delta_r  )
-      p = (gamma - 1) * d * e0 / vol;
+      p = (g - 1) * d * e0 / V;
     return std::make_tuple( d, v, p );
   };
 
 // This function builds and returns a mesh
 template<>
 inputs_t::mesh_function_t base_t::make_mesh = 
-  [=](const real_t &)
+  [nx=num_cells_x, ny=num_cells_y, lx=length_x, ly=length_y](const real_t &)
   { 
     // this is the mesh object
     auto mesh = ale::mesh::box<mesh_t>( 
-      num_cells_x, num_cells_y, 0, 0, length_x, length_y
+      nx, ny, 0, 0, lx, ly
     );
   
     return mesh;
@@ -114,18 +114,18 @@ inputs_t::bcs_list_t base_t::bcs = {
   // the +/- x-axis boundaries
   std::make_pair( 
     symmetry_condition,
-    [=]( const vector_t & x, const real_t & t )
+    [lx=length_x]( const vector_t & x, const real_t & t )
     { 
-      return ( x[0] == 0.0 || x[0] == length_x );
+      return ( x[0] == 0.0 || x[0] == lx );
     }
   ),
 
   // the +/- y-axis boundaries
   std::make_pair( 
     symmetry_condition,
-    [=]( const vector_t & x, const real_t & t )
+    [ly=length_y]( const vector_t & x, const real_t & t )
     { 
-      return ( x[1] == 0.0 || x[1] == length_y );
+      return ( x[1] == 0.0 || x[1] == ly );
     }
   )
 };
