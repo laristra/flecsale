@@ -32,6 +32,7 @@ namespace eos   = ale::eos;
 namespace eqns  = ale::eqns;
 
 // mesh and some underlying data types
+using mesh::burton_mesh_t;
 using mesh_2d_t = mesh::burton_mesh_2d_t;
 using mesh_3d_t = mesh::burton_mesh_3d_t;
 

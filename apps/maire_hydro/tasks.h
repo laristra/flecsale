@@ -38,6 +38,9 @@ int32_t initial_conditions( T & mesh, F && ics ) {
   using real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
 
+  // get the current time
+  auto soln_time = mesh.time();
+
   // get the collection accesor
   auto M = get_accessor( mesh, hydro, cell_mass,       real_t, dense, 0 );
   auto p = get_accessor( mesh, hydro, cell_pressure,   real_t, dense, 0 );
@@ -55,7 +58,7 @@ int32_t initial_conditions( T & mesh, F && ics ) {
     auto c = cs[i];
     // now copy the state to flexi
     real_t d;
-    std::tie( d, v[c], p[c] ) = std::forward<F>(ics)( xc[c] );
+    std::tie( d, v[c], p[c] ) = std::forward<F>(ics)( xc[c], soln_time );
     // set mass and volume now
     M[c] = d*vol[c];
   }
@@ -315,7 +318,7 @@ int32_t evaluate_corner_coef( T & mesh ) {
     const auto & uv = vertex_velocity[vt];
 
     // for estimating the impedances
-    auto delta_u = uv - uc;
+    // auto delta_u = uv - uc;
     
     // Estimate the impedance.  This is Burton's form but it also seems to
     // kill the timestep in 3d.
@@ -520,7 +523,7 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
           vertex_velocity[vt][d] = b_view[d];
 
       } // end has symmetry
-      
+
     } // boundary point
 
     //---------- internal point
@@ -536,8 +539,6 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 
   } // vertex
   //----------------------------------------------------------------------------
-
-
 
   return 0;
    
@@ -689,11 +690,13 @@ int32_t apply_update( T & mesh, real_t coef, bool first_time ) {
   //----------------------------------------------------------------------------
 
 #ifndef NDEBUG
-  std::stringstream mom_str;
-  mom_str.setf( std::ios::scientific );
+  std::stringstream mom_ss;
+  mom_ss.setf( std::ios::scientific );
 
   for ( const auto & mx : mom )
-    mom_str << std::setprecision(2) << std::setw(9) << mx << " ";
+    mom_ss << std::setprecision(2) << std::setw(9) << mx << " ";
+  auto mom_str = mom_ss.str();
+  mom_str.pop_back();
 
   auto ss = cout.precision();
   cout.setf( std::ios::scientific );
@@ -706,8 +709,8 @@ int32_t apply_update( T & mesh, real_t coef, bool first_time ) {
          << " |" << std::endl;
   }
   cout << "| " << std::setprecision(3) << std::setw(10) << mass
-       << " | " << std::setw(28) << mom_str.str()
-       << "| " << std::setprecision(4)  << std::setw(11) << ener
+       << " | " << std::setw(29) << mom_str
+       << " | " << std::setprecision(4)  << std::setw(11) << ener
        << " |" << std::endl;
 
   cout.unsetf( std::ios::scientific );

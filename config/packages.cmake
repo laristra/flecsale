@@ -44,7 +44,7 @@ find_package (PythonInterp)
 if (PYTHONINTERP_FOUND)
    message (STATUS "Found PythonInterp: ${PYTHON_EXECUTABLE}")
 else ()
-   message (FATAL "Did not find python. Python is needed to run regression tests.")
+  message (FATAL_ERROR "Did not find python. Python is needed to run regression tests.")
 endif ()
 
 # find python for embedding
@@ -57,7 +57,7 @@ if (PYTHONLIBS_FOUND)
 endif ()
 
 # find python for embedding
-find_package (Lua QUIET)
+find_package (Lua)
 if (LUA_FOUND)
    message (STATUS "Found Lua: ${LUA_INCLUDE_DIR}")
    include_directories( ${LUA_INCLUDE_DIR} )

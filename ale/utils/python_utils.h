@@ -6,6 +6,9 @@
 /// \file
 /// \brief Some utilities for using python.
 ////////////////////////////////////////////////////////////////////////////////
+#pragma once
+
+#ifdef HAVE_PYTHON
 
 // user includes
 #include "ale/utils/string_utils.h"
@@ -281,3 +284,5 @@ auto python_call_function( PyObject * py_func, Args&&... args )
 
 } // namespace utils
 } // namespace ale
+
+#endif // HAVE_PYTHON

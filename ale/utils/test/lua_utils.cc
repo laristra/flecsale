@@ -7,7 +7,7 @@
 /// \brief Tests related to embedded lua.
 ////////////////////////////////////////////////////////////////////////////////
 
-#if HAVE_LUA
+#ifdef HAVE_LUA
 
 // user includes
 #include "ale/common/types.h"
@@ -71,7 +71,18 @@ TEST(lua_utils, embedded)
   ASSERT_EQ( "hi", tab1[3].as<std::string>() );
   ASSERT_EQ( 4.5, tab1["there"].as<double>() );
   ASSERT_EQ( 6, tab1["func"]().as<int>() );
-  
+
+  // access arrays
+  auto arr1 = state["bar"];  
+  auto arr1_vec_ans = std::vector<int>{1,2,3};
+  auto arr1_arr_ans = std::array<int,3>{1,2,3};
+  arr1.as<std::array<int,3>>();
+  ASSERT_EQ( arr1_vec_ans, arr1.as<std::vector<int>>() );
+  //ASSERT_EQ( arr1_arr_ans, arr1.as<std::array<int,3>>() );
+
+  // access non-existant data
+  ASSERT_TRUE(state["not_there"].empty());
+  ASSERT_TRUE(arr1["not_there"].empty());
   
 } // TEST
 

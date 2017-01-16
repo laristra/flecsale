@@ -1,5 +1,7 @@
 foo = 4
 
+bar = {1, 2, 3}
+
 function sum(a, b) 
     return a+b
 end

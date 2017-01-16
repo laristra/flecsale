@@ -1046,17 +1046,19 @@ public:
 
     // now set the boundary flags.
     for ( auto f : faces() ) {
-      // get the points and cells attached to the edge
-      auto ps = vertices(f);
-      auto es = edges(f);
-      auto cs = cells(f);
       // if there is only one cell, it is a boundary
       if ( f->is_boundary() ) {
-        for ( auto e : es ) 
-          edge_flags[e].setbit( bits::boundary );
+        // point flags
+        auto ps = vertices(f);
         for ( auto p : ps ) 
           point_flags[ p ].setbit( bits::boundary );
-      }
+        // edge flags are only for 3d
+        if ( num_dimensions == 3 ) {
+          auto es = edges(f);
+          for ( auto e : es ) 
+            edge_flags[e].setbit( bits::boundary );
+        } // dims
+      } // is_boundary
     } // for
 
     // identify the cell regions
@@ -1409,14 +1411,19 @@ public:
     // add the face tags and collect the attached edge and vertices
     for ( auto f : faces() )
       if ( p( f ) ) {
-        auto es = edges( f );
-        auto vs = vertices( f );
+        // tag the face
         f->tag( this_bnd );
         this_bnd_faces.emplace_back( f );
-        this_bnd_edges.reserve( this_bnd_edges.size() + es.size() );
+        // tag the vertices
+        auto vs = vertices( f );
         this_bnd_verts.reserve( this_bnd_verts.size() + vs.size() );
-        for ( auto e : es ) this_bnd_edges.emplace_back( e );
         for ( auto v : vs ) this_bnd_verts.emplace_back( v );
+        // tag edges in 3d
+        if ( num_dimensions == 3 ) {
+          auto es = edges( f );
+          this_bnd_edges.reserve( this_bnd_edges.size() + es.size() );
+          for ( auto e : es ) this_bnd_edges.emplace_back( e );
+        } // dims
       }
 
     // need to remove duplicates from edge and vertex lists
@@ -1436,6 +1443,10 @@ public:
     for ( auto e : this_bnd_edges ) e->tag( this_bnd );
     // add the vertex tags
     for ( auto v : this_bnd_verts ) v->tag( this_bnd );
+
+    // if it's two dimensions, copy the face list into the edge list
+    // if ( num_dimensions == 2 )
+    //   this_bnd_edges.assign( this_bnd_faces.begin(), this_bnd_faces.end() );
 
     return this_bnd;
   }
