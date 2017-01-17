@@ -3,7 +3,16 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-add_executable( maire_hydro_3d main.cc inputs.cc )
+add_executable( maire_hydro_3d
+  inputs.cc
+  ${FLECSI_RUNTIME_DRIVER}
+  ${FLECSI_RUNTIME_MAIN}
+)
+target_compile_definitions( 
+  maire_hydro_3d
+  PRIVATE
+  FLECSI_DRIVER=${CMAKE_CURRENT_SOURCE_DIR}/driver.h 
+ )
 target_link_libraries( maire_hydro_3d common ${ALE_LIBRARIES} )
 
 if (LUA_FOUND) 

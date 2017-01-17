@@ -7,7 +7,21 @@
 # Flecsi Config
 #------------------------------------------------------------------------------#
 
-add_definitions( -DFLECSI_RUNTIME_MODEL_serial )
+set(FLECSI_EXEC_DIR ${PROJECT_SOURCE_DIR}/flecsi/flecsi/execution)
+set(FLECSI_RUNTIME_MAIN ${FLECSI_EXEC_DIR}/runtime_main.cc)
+
+if(FLECSI_RUNTIME_MODEL STREQUAL "serial")
+  set(FLECSI_RUNTIME_DRIVER ${FLECSI_EXEC_DIR}/serial/runtime_driver.cc)
+  add_definitions( -DFLECSI_RUNTIME_MODEL_serial )
+elseif(FLECSI_RUNTIME_MODEL STREQUAL "legion")
+  set(FLECSI_RUNTIME_DRIVER ${FLECSI_EXEC_DIR}/legion/runtime_driver.cc)
+  add_definitions( -DFLECSI_RUNTIME_MODEL_legion )
+elseif(FLECSI_RUNTIME_MODEL STREQUAL "mpilegion")
+  set(FLECSI_RUNTIME_DRIVER ${FLECSI_EXEC_DIR}/mpilegion/runtime_driver.cc)
+  add_definitions( -DFLECSI_RUNTIME_MODEL_mpilegion )
+else()
+    message(FATAL_ERROR "This runtime is not yet supported")
+endif()
 
 #------------------------------------------------------------------------------#
 # Other Thirdparty libraries
