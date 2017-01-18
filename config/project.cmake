@@ -3,7 +3,21 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
+#------------------------------------------------------------------------------#
+# Set the minimum Cinch version
+#------------------------------------------------------------------------------#
+
+cinch_minimum_required(1.0)
+
+#------------------------------------------------------------------------------#
+# Set the project name
+#------------------------------------------------------------------------------#
+
 project(FleCSALE)
+
+#------------------------------------------------------------------------------#
+# Begin project setup
+#------------------------------------------------------------------------------#
 
 #if(COMMAND cmake_policy)
 #  cmake_policy(SET CMP0005 NEW)  # generate escape sequences for defines
@@ -60,6 +74,13 @@ else()
   message(STATUS "Note: using 32 bit integer ids.")
 endif()
 
+#------------------------------------------------------------------------------#
+# Enable Boost.Preprocessor
+#------------------------------------------------------------------------------#
+
+# This changes the Cinch default
+set(ENABLE_BOOST_PREPROCESSOR ON CACHE BOOL
+    "Enable Boost.Preprocessor")
 
 #------------------------------------------------------------------------------#
 # Add subprojects
@@ -74,6 +95,7 @@ find_package(FLECSI QUIET)
 if(NOT FLECSI_FOUND)
   cinch_add_subproject("flecsi")
   list( APPEND ALE_LIBRARIES flecsi )
+  include_directories( ${CMAKE_BINARY_DIR} )
 else()
   include_directories(${FleCSI_INCLUDE_DIRS})
   list( APPEND ALE_LIBRARIES ${FleCSI_LIBRARIES})

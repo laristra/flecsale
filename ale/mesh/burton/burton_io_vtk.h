@@ -49,7 +49,7 @@ namespace mesh {
 /// \tparam N The number of mesh dimensions.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
-class burton_io_vtk_t : public flecsi::io_base_t< burton_mesh_t<N> > {
+class burton_io_vtk_t : public flecsi::io::io_base_t< burton_mesh_t<N> > {
 
 public:
 
@@ -436,7 +436,7 @@ public:
 //! \return Pointer to io_base_t base class of io_vtk_t.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
-inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_vtk()
+inline flecsi::io::io_base_t< burton_mesh_t<N> > * create_io_vtk()
 {
   return new burton_io_vtk_t<N>;
 } // create_io_vtk
@@ -447,11 +447,11 @@ inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_vtk()
 ////////////////////////////////////////////////////////////////////////////////
 //! @{
 static bool burton_2d_vtk_registered =
-  flecsi::io_factory_t< burton_mesh_t<2> >::instance().registerType(
+  flecsi::io::io_factory_t< burton_mesh_t<2> >::instance().registerType(
     "vtk", create_io_vtk );
 
 static bool burton_3d_vtk_registered =
-  flecsi::io_factory_t< burton_mesh_t<3> >::instance().registerType(
+  flecsi::io::io_factory_t< burton_mesh_t<3> >::instance().registerType(
     "vtk", create_io_vtk );
 //! @}
 

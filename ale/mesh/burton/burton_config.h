@@ -37,10 +37,10 @@ struct burton_config_t {
   static constexpr size_t num_domains = 2;
 
   //! the constant string type
-  using const_string_t = flecsi::const_string_t;
+  using const_string_t = flecsi::utils::const_string_t;
 
   //! the bitfield type
-  using bitfield_t = flecsi::bitfield_t;
+  using bitfield_t = flecsi::utils::bitfield_t;
 
   //! A type used for loop indexing.
   using counter_t = long long;

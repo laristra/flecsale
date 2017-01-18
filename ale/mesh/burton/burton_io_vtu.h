@@ -48,7 +48,7 @@ namespace mesh {
 /// \brief This is the mesh reader and writer based on the vtk format.
 ////////////////////////////////////////////////////////////////////////////////
 template<std::size_t N>
-class burton_io_vtu_t : public flecsi::io_base_t<burton_mesh_t<N>> {
+class burton_io_vtu_t : public flecsi::io::io_base_t<burton_mesh_t<N>> {
 
 public:
 
@@ -146,7 +146,7 @@ public:
 //! \return Pointer to io_base_t base class of io_vtu_t.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
-inline flecsi::io_base_t<burton_mesh_t<N>> * create_io_vtu()
+inline flecsi::io::io_base_t<burton_mesh_t<N>> * create_io_vtu()
 {
   return new burton_io_vtu_t<N>;
 } // create_io_vtu
@@ -157,11 +157,11 @@ inline flecsi::io_base_t<burton_mesh_t<N>> * create_io_vtu()
 ////////////////////////////////////////////////////////////////////////////////
 //! @{
 static bool burton_2d_vtu_registered =
-  flecsi::io_factory_t<burton_mesh_t<2>>::instance().registerType(
+  flecsi::io::io_factory_t<burton_mesh_t<2>>::instance().registerType(
     "vtu", create_io_vtu );
 
 static bool burton_3d_vtu_registered =
-  flecsi::io_factory_t<burton_mesh_t<3>>::instance().registerType(
+  flecsi::io::io_factory_t<burton_mesh_t<3>>::instance().registerType(
     "vtu", create_io_vtu );
 //! @}
 

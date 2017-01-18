@@ -258,7 +258,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 struct burton_io_tecplot_ascii_t : 
-    public flecsi::io_base_t< burton_mesh_t<N> >, burton_io_tecplot_base<N>
+    public flecsi::io::io_base_t< burton_mesh_t<N> >, burton_io_tecplot_base<N>
 {
 
   //============================================================================
@@ -622,7 +622,7 @@ struct burton_io_tecplot_ascii_t :
 ////////////////////////////////////////////////////////////////////////////////
 template<std::size_t N>
 struct burton_io_tecplot_binary_t : 
-    public flecsi::io_base_t< burton_mesh_t<N> >, burton_io_tecplot_base<N>
+    public flecsi::io::io_base_t< burton_mesh_t<N> >, burton_io_tecplot_base<N>
 {
 
   //============================================================================
@@ -1069,7 +1069,7 @@ struct burton_io_tecplot_binary_t :
 //! \return Pointer to io_base_t base class of io_tecplot_ascii_t.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
-inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_tecplot_ascii()
+inline flecsi::io::io_base_t< burton_mesh_t<N> > * create_io_tecplot_ascii()
 {
   return new burton_io_tecplot_ascii_t<N>;
 }
@@ -1082,7 +1082,7 @@ inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_tecplot_ascii()
 //! \return Pointer to io_base_t base class of io_tecplot_binary_t.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
-inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_tecplot_binary()
+inline flecsi::io::io_base_t< burton_mesh_t<N> > * create_io_tecplot_binary()
 {
   return new burton_io_tecplot_binary_t<N>;
 }
@@ -1093,11 +1093,11 @@ inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_tecplot_binary()
 ////////////////////////////////////////////////////////////////////////////////
 //! @{
 static bool burton_2d_tecplot_dat_registered =
-  flecsi::io_factory_t< burton_mesh_t<2> >::instance().registerType(
+  flecsi::io::io_factory_t< burton_mesh_t<2> >::instance().registerType(
     "dat", create_io_tecplot_ascii<2> );
 
 static bool burton_3d_tecplot_dat_registered =
-  flecsi::io_factory_t< burton_mesh_t<3> >::instance().registerType(
+  flecsi::io::io_factory_t< burton_mesh_t<3> >::instance().registerType(
     "dat", create_io_tecplot_ascii<3> );
 //! @}
 
@@ -1106,11 +1106,11 @@ static bool burton_3d_tecplot_dat_registered =
 ////////////////////////////////////////////////////////////////////////////////
 //! @{
 static bool burton_2d_tecplot_plt_registered =
-  flecsi::io_factory_t< burton_mesh_t<2> >::instance().registerType(
+  flecsi::io::io_factory_t< burton_mesh_t<2> >::instance().registerType(
     "plt", create_io_tecplot_binary<2> );
 
 static bool burton_3d_tecplot_plt_registered =
-  flecsi::io_factory_t< burton_mesh_t<3> >::instance().registerType(
+  flecsi::io::io_factory_t< burton_mesh_t<3> >::instance().registerType(
     "plt", create_io_tecplot_binary<3> );
 //! @}
 

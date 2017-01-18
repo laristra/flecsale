@@ -313,7 +313,7 @@ struct burton_element_t<2,2>
   using vector_t = typename config_t::vector_t;
 
   //! the flecsi id type
-  using id_t = flecsi::id_t;
+  using id_t = flecsi::utils::id_t;
 
   //! The flecsi domain connectivity type.
   using connectivity_t = flecsi::topology::domain_connectivity<num_dimensions>;
@@ -499,7 +499,7 @@ struct burton_element_t<3,2>
   using vector_t = typename config_t::vector_t;
 
   //! the flecsi id type
-  using id_t = flecsi::id_t;
+  using id_t = flecsi::utils::id_t;
 
   //! The flecsi domain connectivity type.
   using connectivity_t = flecsi::topology::domain_connectivity<num_dimensions>;
@@ -696,7 +696,7 @@ struct burton_element_t<3,3>
   using vector_t = typename config_t::vector_t;
 
   // the flecsi id type
-  using id_t = flecsi::id_t;
+  using id_t = flecsi::utils::id_t;
 
   //! The flecsi domain connectivity type.
   using connectivity_t = flecsi::topology::domain_connectivity<num_dimensions>;

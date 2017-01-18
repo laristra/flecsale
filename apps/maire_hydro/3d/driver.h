@@ -11,14 +11,12 @@
 #include "inputs.h"
 #include "../driver.h"
 
-// bring the hydro namespace to the front
-using namespace apps::hydro;
-
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
 ///////////////////////////////////////////////////////////////////////////////
 int driver(int argc, char** argv) 
 {
+  using namespace apps::hydro;
   return driver<inputs_t>( argc, argv );
 }
 

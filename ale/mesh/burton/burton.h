@@ -67,9 +67,9 @@ namespace ale {
 namespace mesh {
 
 //! \brief bring write/read mesh into the ale::mesh namespace
-using flecsi::write_mesh;
+using flecsi::io::write_mesh;
 //! \brief bring write/read mesh into the ale::mesh namespace
-using flecsi::read_mesh;
+using flecsi::io::read_mesh;
 
 }
 }
