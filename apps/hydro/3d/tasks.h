@@ -27,7 +27,7 @@ namespace hydro {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 int32_t initial_conditions_task( 
-  mesh::burton_mesh_2d_t & mesh, inputs_t::ics_function_t ics 
+  mesh::burton_mesh_3d_t & mesh, inputs_t::ics_function_t ics 
 ) {
   return initial_conditions( mesh, ics );
 }
@@ -40,7 +40,7 @@ int32_t initial_conditions_task(
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t update_state_from_pressure_task( mesh::burton_mesh_2d_t & mesh ) 
+int32_t update_state_from_pressure_task( mesh::burton_mesh_3d_t & mesh ) 
 {
 	return update_state_from_pressure( mesh );
 }
@@ -53,7 +53,7 @@ int32_t update_state_from_pressure_task( mesh::burton_mesh_2d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t update_state_from_energy_task( mesh::burton_mesh_2d_t & mesh ) 
+int32_t update_state_from_energy_task( mesh::burton_mesh_3d_t & mesh ) 
 {
 	return update_state_from_energy( mesh );
 }
@@ -65,9 +65,9 @@ int32_t update_state_from_energy_task( mesh::burton_mesh_2d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t evaluate_time_step_task( mesh::burton_mesh_2d_t & mesh ) 
+int32_t evaluate_time_step_task( mesh::burton_mesh_3d_t & mesh ) 
 {
-  using eqns_t = eqns_t<mesh::burton_mesh_2d_t::num_dimensions>;
+  using eqns_t = eqns_t<mesh::burton_mesh_3d_t::num_dimensions>;
   return evaluate_time_step<eqns_t>( mesh );
 }
 
@@ -77,7 +77,7 @@ int32_t evaluate_time_step_task( mesh::burton_mesh_2d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t evaluate_fluxes_task( mesh::burton_mesh_2d_t & mesh ) 
+int32_t evaluate_fluxes_task( mesh::burton_mesh_3d_t & mesh ) 
 {
   return evaluate_fluxes( mesh );
 }
@@ -88,7 +88,7 @@ int32_t evaluate_fluxes_task( mesh::burton_mesh_2d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t apply_update_task( mesh::burton_mesh_2d_t & mesh ) 
+int32_t apply_update_task( mesh::burton_mesh_3d_t & mesh ) 
 {
   return apply_update( mesh );
 }

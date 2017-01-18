@@ -8,7 +8,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 // hydro incdludes
-#include "tasks.h"
 #include "types.h"
 #include "../common/exceptions.h"
 #include "../common/parse_arguments.h"
@@ -170,11 +169,11 @@ int driver(int argc, char** argv)
   
   // now call the main task to set the ics.  Here we set primitive/physical 
   // quanties
-  apps::hydro::initial_conditions( mesh, inputs_t::ics );
+  execute_task( initial_conditions_task, loc, single, mesh, inputs_t::ics );
   
 
   // Update the EOS
-  apps::hydro::update_state_from_pressure( mesh );
+  execute_task( update_state_from_pressure_task, loc, single, mesh );
 
   //===========================================================================
   // Pre-processing
@@ -182,7 +181,7 @@ int driver(int argc, char** argv)
 
   // now output the solution
   if ( inputs_t::output_freq > 0 )
-    apps::hydro::output(mesh, inputs_t::prefix, inputs_t::postfix, 1);
+    output(mesh, inputs_t::prefix, inputs_t::postfix, 1);
   
   //===========================================================================
   // Boundary Conditions
@@ -234,24 +233,24 @@ int driver(int argc, char** argv)
     //--------------------------------------------------------------------------
 
     // Save solution at n=0
-    apps::hydro::save_coordinates( mesh );
-    apps::hydro::save_solution( mesh );
+    execute_task( save_coordinates_task, loc, single, mesh );
+    execute_task( save_solution_task, loc, single, mesh );
 
     //--------------------------------------------------------------------------
     // Predictor step : Evaluate Forces at n=0
     //--------------------------------------------------------------------------
 
     // estimate the nodal velocity at n=0
-    apps::hydro::estimate_nodal_state( mesh );
+    execute_task( estimate_nodal_state_task, loc, single, mesh );
 
     // evaluate corner matrices and normals at n=0 
-    apps::hydro::evaluate_corner_coef( mesh );
+    execute_task( evaluate_corner_coef_task, loc, single, mesh );
 
     // compute the nodal velocity at n=0
-    apps::hydro::evaluate_nodal_state( mesh, boundaries );
+    execute_task( evaluate_nodal_state_task, loc, single, mesh, boundaries );
 
     // compute the fluxes
-    apps::hydro::evaluate_forces( mesh );
+    execute_task( evaluate_forces_task, loc, single, mesh );
 
     //--------------------------------------------------------------------------
     // Time step evaluation
@@ -259,7 +258,7 @@ int driver(int argc, char** argv)
 
     // compute the time step
     std::string limit_string;
-    apps::hydro::evaluate_time_step( mesh, limit_string );
+    execute_task( evaluate_time_step_task, loc, single, mesh, limit_string );
     
     // access the computed time step and make sure its not too large
     *time_step = std::min( *time_step, inputs_t::final_time - soln_time );       
@@ -289,45 +288,45 @@ int driver(int argc, char** argv)
     //--------------------------------------------------------------------------
 
     // move the mesh to n+1/2
-    apps::hydro::move_mesh( mesh, 0.5 );
+    execute_task( move_mesh_task, loc, single, mesh, 0.5 );
 
     // update solution to n+1/2
-    apps::hydro::apply_update( mesh, 0.5, true );
+    execute_task( apply_update_task, loc, single, mesh, 0.5, true );
 
     // Update derived solution quantities
-    apps::hydro::update_state_from_energy( mesh );
+    execute_task( update_state_from_energy_task, loc, single, mesh );
 
     //--------------------------------------------------------------------------
     // Corrector : Evaluate Forces at n=1/2
     //--------------------------------------------------------------------------
 
     // evaluate corner matrices and normals at n=1/2
-    apps::hydro::evaluate_corner_coef( mesh );
+    execute_task( evaluate_corner_coef_task, loc, single, mesh );
 
     // compute the nodal velocity at n=1/2
-    apps::hydro::evaluate_nodal_state( mesh, boundaries );
+    execute_task( evaluate_nodal_state_task, loc, single, mesh, boundaries );
 
     // compute the fluxes
-    apps::hydro::evaluate_forces( mesh );
+    execute_task( evaluate_forces_task, loc, single, mesh );
 
     //--------------------------------------------------------------------------
     // Move to n+1
     //--------------------------------------------------------------------------
 
     // restore the solution to n=0
-    apps::hydro::restore_coordinates( mesh );
-    apps::hydro::restore_solution( mesh );
+    execute_task( restore_coordinates_task, loc, single, mesh );
+    execute_task( restore_solution_task, loc, single, mesh );
 
 #endif
 
     // move the mesh to n+1
-    apps::hydro::move_mesh( mesh, 1.0 );
+    execute_task( move_mesh_task, loc, single, mesh, 1.0 );
     
     // update solution to n+1
-    apps::hydro::apply_update( mesh, 1.0, false );
+    execute_task( apply_update_task, loc, single, mesh, 1.0, false );
 
     // Update derived solution quantities
-    apps::hydro::update_state_from_energy( mesh );
+    execute_task( update_state_from_energy_task, loc, single, mesh );
 
     //--------------------------------------------------------------------------
     // End Time step
@@ -338,7 +337,7 @@ int driver(int argc, char** argv)
     time_cnt = mesh.increment_time_step_counter();
   
     // now output the solution
-    apps::hydro::output(
+    output(
       mesh, inputs_t::prefix, inputs_t::postfix, inputs_t::output_freq
     );
 
@@ -351,7 +350,7 @@ int driver(int argc, char** argv)
     
   // now output the solution
   if ( (inputs_t::output_freq > 0) && (time_cnt % inputs_t::output_freq != 0) )
-    apps::hydro::output(mesh, inputs_t::prefix, inputs_t::postfix, 1);
+    output(mesh, inputs_t::prefix, inputs_t::postfix, 1);
 
   cout << "Final solution time is " 
        << std::scientific << std::setprecision(6) << soln_time

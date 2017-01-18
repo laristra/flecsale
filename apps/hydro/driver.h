@@ -9,7 +9,6 @@
 #pragma once
 
 // hydro includes
-#include "tasks.h"
 #include "types.h"
 #include "../common/exceptions.h"
 #include "../common/parse_arguments.h"
@@ -160,11 +159,11 @@ int driver(int argc, char** argv)
   
   // now call the main task to set the ics.  Here we set primitive/physical 
   // quanties
-  initial_conditions( mesh, inputs_t::ics );
+  execute_task( initial_conditions_task, loc, single, mesh, inputs_t::ics );
   
 
   // Update the EOS
-  update_state_from_pressure( mesh );
+  execute_task( update_state_from_pressure_task, loc, single, mesh );
 
   //===========================================================================
   // Pre-processing
@@ -195,8 +194,8 @@ int driver(int argc, char** argv)
   ) {   
 
     // compute the time step
-    evaluate_time_step<eqns_t>( mesh );
-    
+    execute_task( evaluate_time_step_task, loc, single, mesh );
+ 
     // access the computed time step and make sure its not too large
     *time_step = std::min( *time_step, inputs_t::final_time - soln_time );       
 
@@ -207,13 +206,14 @@ int driver(int argc, char** argv)
          << std::endl;
 
     // compute the fluxes
-    evaluate_fluxes( mesh );
+    execute_task( evaluate_fluxes_task, loc, single, mesh );
     
     // Loop over each cell, scattering the fluxes to the cell
-    apply_update( mesh );
+    execute_task( apply_update_task, loc, single, mesh );
 
     // Update derived solution quantities
-    update_state_from_energy( mesh );
+    execute_task( update_state_from_energy_task, loc, single, mesh );
+
 
     // update time
     soln_time = mesh.increment_time( *time_step );
