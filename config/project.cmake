@@ -3,14 +3,28 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
+#------------------------------------------------------------------------------#
+# Set the minimum Cinch version
+#------------------------------------------------------------------------------#
+
+cinch_minimum_required(1.0)
+
+#------------------------------------------------------------------------------#
+# Set the project name
+#------------------------------------------------------------------------------#
+
 project(FleCSALE)
+
+#------------------------------------------------------------------------------#
+# Begin project setup
+#------------------------------------------------------------------------------#
 
 #if(COMMAND cmake_policy)
 #  cmake_policy(SET CMP0005 NEW)  # generate escape sequences for defines
 #  cmake_policy(SET CMP0012 NEW)  # recognize number & boolean literals
 #endif(COMMAND cmake_policy)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 # set some global variables
 set( ALE_LIBRARIES )
@@ -60,15 +74,28 @@ else()
   message(STATUS "Note: using 32 bit integer ids.")
 endif()
 
+#------------------------------------------------------------------------------#
+# Enable Boost.Preprocessor
+#------------------------------------------------------------------------------#
+
+# This changes the Cinch default
+set(ENABLE_BOOST_PREPROCESSOR ON CACHE BOOL
+    "Enable Boost.Preprocessor")
 
 #------------------------------------------------------------------------------#
 # Add subprojects
 #------------------------------------------------------------------------------#
 
-find_package(FleCSI QUIET)
-if(NOT FleCSI_FOUND)
+set(FLECSI_RUNTIME_MODEL "serial" CACHE STRING
+  "Select the runtime model")
+set_property(CACHE FLECSI_RUNTIME_MODEL
+  PROPERTY STRINGS serial mpilegion legion mpi)
+
+find_package(FLECSI QUIET)
+if(NOT FLECSI_FOUND)
   cinch_add_subproject("flecsi")
   list( APPEND ALE_LIBRARIES flecsi )
+  include_directories( ${CMAKE_BINARY_DIR} )
 else()
   include_directories(${FleCSI_INCLUDE_DIRS})
   list( APPEND ALE_LIBRARIES ${FleCSI_LIBRARIES})

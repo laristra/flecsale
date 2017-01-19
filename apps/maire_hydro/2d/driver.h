@@ -6,19 +6,19 @@
 /// \file
 /// \brief Simple tests related to solving full hydro solutions.
 ///////////////////////////////////////////////////////////////////////////////
+#pragma once 
 
 // hydro includes
 #include "inputs.h"
+#include "tasks.h"
 #include "../driver.h"
-
-// bring the hydro namespace to the front
-using namespace apps::hydro;
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
 ///////////////////////////////////////////////////////////////////////////////
-int main(int argc, char** argv) 
+int driver(int argc, char** argv) 
 {
+  using namespace apps::hydro;
   return driver<inputs_t>( argc, argv );
 }
 

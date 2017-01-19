@@ -46,7 +46,7 @@ namespace mesh {
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief This is the mesh reader and writer based on the vtm format.
 ////////////////////////////////////////////////////////////////////////////////
-class burton_io_vtm_t : public flecsi::io_base_t<burton_mesh_2d_t> {
+class burton_io_vtm_t : public flecsi::io::io_base_t<burton_mesh_2d_t> {
 
 public:
 
@@ -561,7 +561,7 @@ public:
 //!
 //! \return Pointer to io_base_t base class of io_vtm_t.
 ////////////////////////////////////////////////////////////////////////////////
-inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_vtm()
+inline flecsi::io::io_base_t<burton_mesh_2d_t> * create_io_vtm()
 {
   return new burton_io_vtm_t;
 } // create_io_vtm
@@ -571,7 +571,7 @@ inline flecsi::io_base_t<burton_mesh_2d_t> * create_io_vtm()
 //! Register file extension "vtm" with factory.
 ////////////////////////////////////////////////////////////////////////////////
 static bool burton_vtm_registered =
-  flecsi::io_factory_t<burton_mesh_2d_t>::instance().registerType(
+  flecsi::io::io_factory_t<burton_mesh_2d_t>::instance().registerType(
     "vtm", create_io_vtm );
 
 

@@ -465,7 +465,7 @@ class burton_io_exodus_t {};
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 class burton_io_exodus_t<2> : 
-    public flecsi::io_base_t< burton_mesh_t<2> >, burton_io_exodus_base<2>
+    public flecsi::io::io_base_t< burton_mesh_t<2> >, burton_io_exodus_base<2>
 {
 
 public:
@@ -806,7 +806,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 template<>
 class burton_io_exodus_t<3> : 
-    public flecsi::io_base_t< burton_mesh_t<3> >, burton_io_exodus_base<3>
+    public flecsi::io::io_base_t< burton_mesh_t<3> >, burton_io_exodus_base<3>
 
 {
 
@@ -1373,7 +1373,7 @@ private:
 //! \return Pointer to io_base_t base class of io_exodus_t.
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
-inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_exodus()
+inline flecsi::io::io_base_t< burton_mesh_t<N> > * create_io_exodus()
 {
   return new burton_io_exodus_t<N>;
 } // create_io_exodus
@@ -1385,11 +1385,11 @@ inline flecsi::io_base_t< burton_mesh_t<N> > * create_io_exodus()
 ////////////////////////////////////////////////////////////////////////////////
 //! @{
 static bool burton_2d_exodus_g_registered =                 
-  flecsi::io_factory_t< burton_mesh_t<2> >::instance().registerType(
+  flecsi::io::io_factory_t< burton_mesh_t<2> >::instance().registerType(
     "g", create_io_exodus<2> );
 
 static bool burton_3d_exodus_g_registered =                 
-  flecsi::io_factory_t< burton_mesh_t<3> >::instance().registerType(
+  flecsi::io::io_factory_t< burton_mesh_t<3> >::instance().registerType(
     "g", create_io_exodus<3> );
 //! @}
 
@@ -1398,11 +1398,11 @@ static bool burton_3d_exodus_g_registered =
 ////////////////////////////////////////////////////////////////////////////////
 //! @{
 static bool burton_2d_exodus_exo_registered =
-  flecsi::io_factory_t< burton_mesh_t<2> >::instance().registerType(
+  flecsi::io::io_factory_t< burton_mesh_t<2> >::instance().registerType(
     "exo", create_io_exodus<2> );
 
 static bool burton_3d_exodus_exo_registered =
-  flecsi::io_factory_t< burton_mesh_t<3> >::instance().registerType(
+  flecsi::io::io_factory_t< burton_mesh_t<3> >::instance().registerType(
     "exo", create_io_exodus<3> );
 //! @}
 
