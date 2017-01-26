@@ -15,6 +15,12 @@ hydro = {
     xmin = {-0.5, -0.05},
     xmax = { 0.5,  0.05}
   },
+  -- the equation of state
+  eos = {
+    type = "ideal_gas",
+    gas_constant = 1.4,
+    specific_heat = 1.0
+  },
   -- the initial conditions
   -- return density, velocity, pressure
   ics = function (x,y,t)

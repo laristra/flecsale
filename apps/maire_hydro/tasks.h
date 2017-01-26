@@ -73,15 +73,14 @@ int32_t initial_conditions( T & mesh, F && ics ) {
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int32_t update_state_from_pressure( T & mesh ) {
+template< typename T, typename EOS >
+int32_t update_state_from_pressure( T & mesh, const EOS * eos ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
   using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the collection accesor
-  auto eos = get_accessor( mesh, hydro, eos, eos_t, global, 0 );
   auto cell_state = cell_state_accessor<T>( mesh );
 
   auto cs = mesh.cells();
@@ -104,8 +103,8 @@ int32_t update_state_from_pressure( T & mesh ) {
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int32_t update_state_from_energy( T & mesh ) {
+template< typename T, typename EOS >
+int32_t update_state_from_energy( T & mesh, const EOS * eos ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -113,13 +112,14 @@ int32_t update_state_from_energy( T & mesh ) {
   using flux_data_t = flux_data_t<T::num_dimensions>;
 
   // get the collection accesor
-  auto eos = get_accessor( mesh, hydro, eos, eos_t, global, 0 );
   auto cell_state = cell_state_accessor<T>( mesh );
 
   auto dudt = get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
 
   auto cs = mesh.cells();
   auto num_cells = cs.size();
+
+  // loop over materials first?
 
   #pragma omp parallel for
   for ( counter_t i=0; i<num_cells; ++i ) {
@@ -265,8 +265,9 @@ int32_t estimate_nodal_state( T & mesh ) {
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int32_t evaluate_corner_coef( T & mesh ) {
+template< typename T, typename EOS >
+int32_t evaluate_corner_coef( T & mesh, const EOS * eos ) 
+{
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -286,8 +287,6 @@ int32_t evaluate_corner_coef( T & mesh ) {
   auto npc = get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
   auto wedge_facet_normal = get_accessor( mesh, mesh, wedge_facet_normal, vector_t, dense, 0 );
   auto wedge_facet_area = get_accessor( mesh, mesh, wedge_facet_area, real_t, dense, 0 );
-
-  auto eos = get_accessor( mesh, hydro, eos, eos_t, global, 0 );
 
   //----------------------------------------------------------------------------
   // build corner matrices

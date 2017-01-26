@@ -40,9 +40,10 @@ int32_t initial_conditions_task(
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t update_state_from_pressure_task( mesh::burton_mesh_3d_t & mesh ) 
-{
-	return update_state_from_pressure( mesh );
+int32_t update_state_from_pressure_task( 
+  mesh::burton_mesh_3d_t & mesh, const eos_t * eos 
+) {
+	return update_state_from_pressure( mesh, eos );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,9 +54,10 @@ int32_t update_state_from_pressure_task( mesh::burton_mesh_3d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t update_state_from_energy_task( mesh::burton_mesh_3d_t & mesh ) 
-{
-	return update_state_from_energy( mesh );
+int32_t update_state_from_energy_task( 
+  mesh::burton_mesh_3d_t & mesh, const eos_t * eos 
+) {
+	return update_state_from_energy( mesh, eos );
 }
 
 

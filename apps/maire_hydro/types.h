@@ -42,7 +42,7 @@ using real_t = common::real_t;
 template< std::size_t N >
 using matrix_t = math::matrix< real_t, N, N >; 
 
-using eos_t = eos::ideal_gas_t<real_t>;
+using eos_t = eos::eos_base_t<real_t>;
 
 template<std::size_t N>
 using eqns_t = eqns::lagrange_eqns_t<real_t, N>;

@@ -40,9 +40,10 @@ int32_t initial_conditions_task(
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t update_state_from_pressure_task( mesh::burton_mesh_2d_t & mesh ) 
-{
-	return update_state_from_pressure( mesh );
+int32_t update_state_from_pressure_task( 
+  const mesh::burton_mesh_2d_t & mesh, const eos_t * eos
+) {
+	return update_state_from_pressure( mesh, eos );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,9 +54,10 @@ int32_t update_state_from_pressure_task( mesh::burton_mesh_2d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t update_state_from_energy_task( mesh::burton_mesh_2d_t & mesh ) 
-{
-	return update_state_from_energy( mesh );
+int32_t update_state_from_energy_task( 
+  mesh::burton_mesh_2d_t & mesh, const eos_t * eos
+) {
+	return update_state_from_energy( mesh, eos );
 }
 
 
@@ -89,9 +91,10 @@ int32_t estimate_nodal_state_task( mesh::burton_mesh_2d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t evaluate_corner_coef_task( mesh::burton_mesh_2d_t & mesh ) 
-{
-  return evaluate_corner_coef( mesh );
+int32_t evaluate_corner_coef_task( 
+  mesh::burton_mesh_2d_t & mesh, const eos_t * eos
+) {
+  return evaluate_corner_coef( mesh, eos );
 }
 
 ////////////////////////////////////////////////////////////////////////////////

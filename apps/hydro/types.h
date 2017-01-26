@@ -39,7 +39,7 @@ using mesh_3d_t = mesh::burton_mesh_3d_t;
 using size_t = common::size_t;
 using real_t = common::real_t;
 
-using eos_t = eos::ideal_gas_t<real_t>;
+using eos_t = eos::eos_base_t<real_t>;
 
 template< std::size_t N >
 using eqns_t = typename eqns::euler_eqns_t<real_t, N>;
