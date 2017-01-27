@@ -71,7 +71,7 @@ if (PYTHONLIBS_FOUND)
 endif ()
 
 # find python for embedding
-find_package (Lua)
+find_package (Lua 5.2)
 if (LUA_FOUND)
    message (STATUS "Found Lua: ${LUA_INCLUDE_DIR}")
    include_directories( ${LUA_INCLUDE_DIR} )
