@@ -165,7 +165,7 @@ public:
     };
 
     // get the general statistics
-    auto num_dims  = m.num_dimensions;
+    constexpr auto num_dims  = m.num_dimensions;
     auto num_nodes = m.num_vertices();
     auto num_elem  = m.num_cells();
 

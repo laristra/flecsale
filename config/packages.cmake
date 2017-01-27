@@ -166,3 +166,21 @@ list( APPEND ALE_LIBRARIES
   ${IO_LIBRARIES} 
   ${VORO_LIBRARIES}
 )
+
+#------------------------------------------------------------------------------#
+# OpenSSL
+#------------------------------------------------------------------------------#
+
+option(ENABLE_OPENSSL "Enable OpenSSL Support" OFF)
+
+if(ENABLE_OPENSSL)
+  find_package(OpenSSL REQUIRED)
+
+  if(OPENSSL_FOUND)
+    include_directories(${OPENSSL_INCLUDE_DIR})
+    add_definitions(-DHAVE_OPENSSL)
+    list( APPEND ALE_LIBRARIES ${OPENSSL_LIBRARIES} )
+  endif()
+endif()
+
+

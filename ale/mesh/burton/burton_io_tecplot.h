@@ -325,7 +325,7 @@ struct burton_io_tecplot_ascii_t :
     //--------------------------------------------------------------------------
 
     // get the general statistics
-    auto num_dims  = m.num_dimensions;
+    constexpr auto num_dims  = m.num_dimensions;
 
     // variable extension for vectors
     std::string var_ext[3];
