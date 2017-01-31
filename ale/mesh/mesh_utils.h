@@ -10,7 +10,9 @@
 #pragma once
 
 // user includes
-#include <flecsi/utils/checksum.h>
+#ifdef HAVE_OPENSSL
+#  include <flecsi/utils/checksum.h>
+#endif
 
 // system includes
 #include <iomanip>
