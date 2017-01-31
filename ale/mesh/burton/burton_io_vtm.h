@@ -339,7 +339,7 @@ public:
     //--------------------------------------------------------------------------
 
     // some general mesh stats
-    constexpr auto num_dims = m.num_dimensions;
+    constexpr auto num_dims = mesh_t::num_dimensions;
 
     // a points comparison function
     auto is_same_point = [=](auto first1, auto last1, auto first2) 
