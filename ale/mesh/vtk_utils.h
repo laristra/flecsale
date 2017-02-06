@@ -381,7 +381,7 @@ static auto to_vtk( M & m )
   //----------------------------------------------------------------------------
 
   // some general mesh stats
-  auto num_dims = m.num_dimensions;
+  constexpr auto num_dims = M::num_dimensions;
   auto num_vertices = m.num_vertices();
   auto num_cells = m.num_cells();
     
@@ -500,7 +500,7 @@ to_mesh( vtkUnstructuredGrid* ug )
   M m;
   
   // some general mesh stats
-  auto num_dims = m.num_dimensions;
+  constexpr auto num_dims = M::num_dimensions;
 
 
   //----------------------------------------------------------------------------
@@ -591,7 +591,7 @@ static auto to_mesh( vtkUnstructuredGrid* ug )
   M m;
   
   // some general mesh stats
-  auto num_dims = m.num_dimensions;
+  constexpr auto num_dims = M::num_dimensions;
 
   //----------------------------------------------------------------------------
   // Points

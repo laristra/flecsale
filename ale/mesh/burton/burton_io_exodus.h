@@ -133,7 +133,7 @@ public:
   { 
     
     // mesh statistics
-    auto num_dims  = m.num_dimensions;
+    constexpr auto num_dims  = mesh_t::num_dimensions;
     auto num_nodes = m.num_vertices();
 
     // storage for coordinates
@@ -171,7 +171,7 @@ public:
     mesh_t & m, size_t num_nodes, std::vector<vertex_t *> & vs ) 
   { 
     // mesh statistics
-    auto num_dims = m.num_dimensions;
+    constexpr auto num_dims = mesh_t::num_dimensions;
 
     // intitialize the number of nodes
     m.init_parameters(num_nodes);
@@ -215,7 +215,7 @@ public:
     int status;
 
     // mesh statistics
-    auto num_dims  = m.num_dimensions;
+    constexpr auto num_dims  = mesh_t::num_dimensions;
     auto num_nodes = m.num_vertices();
     auto num_elem = m.num_cells();
     auto num_elem_blk = m.num_regions();
@@ -682,7 +682,7 @@ public:
     assert(exoid >= 0);
 
     // get the general statistics
-    auto num_dims = m.num_dimensions;
+    constexpr auto num_dims = mesh_t::num_dimensions;
     auto num_nodes = m.num_vertices();
     auto num_elem = m.num_cells();
     auto num_elem_blk = m.num_regions();
@@ -1140,7 +1140,7 @@ public:
 
 
     // get the general statistics
-    auto num_dims = m.num_dimensions;
+    constexpr auto num_dims = mesh_t::num_dimensions;
     auto num_nodes = m.num_vertices();
     auto num_faces = m.num_faces();
     auto num_elem = m.num_cells();

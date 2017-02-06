@@ -71,7 +71,7 @@ if (PYTHONLIBS_FOUND)
 endif ()
 
 # find python for embedding
-find_package (Lua)
+find_package (Lua 5.2)
 if (LUA_FOUND)
    message (STATUS "Found Lua: ${LUA_INCLUDE_DIR}")
    include_directories( ${LUA_INCLUDE_DIR} )
@@ -166,3 +166,21 @@ list( APPEND ALE_LIBRARIES
   ${IO_LIBRARIES} 
   ${VORO_LIBRARIES}
 )
+
+#------------------------------------------------------------------------------#
+# OpenSSL
+#------------------------------------------------------------------------------#
+
+option(ENABLE_OPENSSL "Enable OpenSSL Support" OFF)
+
+if(ENABLE_OPENSSL)
+  find_package(OpenSSL REQUIRED)
+
+  if(OPENSSL_FOUND)
+    include_directories(${OPENSSL_INCLUDE_DIR})
+    add_definitions(-DHAVE_OPENSSL)
+    list( APPEND ALE_LIBRARIES ${OPENSSL_LIBRARIES} )
+  endif()
+endif()
+
+

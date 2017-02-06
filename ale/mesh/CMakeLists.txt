@@ -31,6 +31,7 @@ set(mesh_HEADERS
   burton/burton_polyhedron.h
 
   factory.h
+  mesh_utils.h
   voronoi.h  detail/voronoi_impl.h
   vtk_utils.h
 

@@ -14,6 +14,7 @@
 #include "../common/parse_arguments.h"
 
 // user includes
+#include <ale/mesh/mesh_utils.h>
 #include <ale/utils/time_utils.h>
 
 // system includes
@@ -240,6 +241,11 @@ int driver(int argc, char** argv)
   auto tdelta = utils::get_wall_time() - tstart;
   std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
             << tdelta << "s." << std::endl;
+
+
+  // now output the checksums
+  mesh::checksum(mesh);
+
 
   // success if you reached here
   return 0;
