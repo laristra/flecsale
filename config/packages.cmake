@@ -24,11 +24,8 @@ else()
 endif()
 
 #------------------------------------------------------------------------------#
-# Other Thirdparty libraries
+# Global variables
 #------------------------------------------------------------------------------#
-
-# find_package(Boost 1.47 REQUIRED)
-# include_directories( ${Boost_INCLUDE_DIRS} )
 
 set( IO_LIBRARIES )
 set( VORO_LIBRARIES )
@@ -61,23 +58,60 @@ else ()
   message (FATAL_ERROR "Did not find python. Python is needed to run regression tests.")
 endif ()
 
+#------------------------------------------------------------------------------#
+# Enable Embedded Interpreters
+#------------------------------------------------------------------------------#
+
 # find python for embedding
 find_package (PythonLibs QUIET)
+
 if (PYTHONLIBS_FOUND)
+  option(ENABLE_PYTHON "Enable Python Support" ON)
+else()
+  option(ENABLE_PYTHON "Enable Python Support" OFF)
+endif()
+
+if (ENABLE_PYTHON)
    message (STATUS "Found PythonLibs: ${PYTHON_INCLUDE_DIRS}")
    include_directories( ${PYTHON_INCLUDE_DIRS} )
    list( APPEND ALE_LIBRARIES ${PYTHON_LIBRARIES} )
    add_definitions( -DHAVE_PYTHON )    
 endif ()
 
-# find python for embedding
-find_package (Lua 5.2)
+# find lua for embedding
+find_package (Lua 5.2 QUIET)
+
 if (LUA_FOUND)
+  option(ENABLE_LUA "Enable Lua Support" ON)
+else()
+  option(ENABLE_LUA "Enable Lua Support" OFF)
+endif()
+
+if (ENABLE_LUA)
    message (STATUS "Found Lua: ${LUA_INCLUDE_DIR}")
    include_directories( ${LUA_INCLUDE_DIR} )
    list( APPEND ALE_LIBRARIES ${LUA_LIBRARIES} )
    add_definitions( -DHAVE_LUA )    
 endif ()
+
+#------------------------------------------------------------------------------#
+# OpenSSL
+#------------------------------------------------------------------------------#
+
+# OpenSSL
+find_package(OpenSSL QUIET)
+
+if (OPENSSL_FOUND)
+  option(ENABLE_OPENSSL "Enable OpenSSL Support" ON)
+else()
+  option(ENABLE_OPENSSL "Enable OpenSSL Support" OFF)
+endif()
+
+if(ENABLE_OPENSSL)
+  include_directories(${OPENSSL_INCLUDE_DIR})
+  add_definitions(-DHAVE_OPENSSL)
+  list( APPEND ALE_LIBRARIES ${OPENSSL_LIBRARIES} )
+endif()
 
 
 #------------------------------------------------------------------------------#
@@ -166,21 +200,5 @@ list( APPEND ALE_LIBRARIES
   ${IO_LIBRARIES} 
   ${VORO_LIBRARIES}
 )
-
-#------------------------------------------------------------------------------#
-# OpenSSL
-#------------------------------------------------------------------------------#
-
-option(ENABLE_OPENSSL "Enable OpenSSL Support" OFF)
-
-if(ENABLE_OPENSSL)
-  find_package(OpenSSL REQUIRED)
-
-  if(OPENSSL_FOUND)
-    include_directories(${OPENSSL_INCLUDE_DIR})
-    add_definitions(-DHAVE_OPENSSL)
-    list( APPEND ALE_LIBRARIES ${OPENSSL_LIBRARIES} )
-  endif()
-endif()
 
 
