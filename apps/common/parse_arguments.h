@@ -9,8 +9,8 @@
 #pragma once
 
 // user includes
-#include <ale/utils/errors.h>
-#include <ale/utils/string_utils.h>
+#include <flecsale/utils/errors.h>
+#include <flecsale/utils/string_utils.h>
 
 // system libraries
 #include <cstring>

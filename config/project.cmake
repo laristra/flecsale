@@ -105,8 +105,8 @@ endif()
 # Add library targets
 #------------------------------------------------------------------------------#
 
-cinch_add_library_target(ale ale)
-list( APPEND ALE_LIBRARIES ale )
+cinch_add_library_target(flecsale libsrc)
+list( APPEND ALE_LIBRARIES flecsale )
 
 #------------------------------------------------------------------------------#
 # Set application directory

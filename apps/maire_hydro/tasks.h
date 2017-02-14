@@ -12,10 +12,10 @@
 // hydro includes
 #include "types.h"
 
-#include <ale/linalg/qr.h>
-#include <ale/utils/algorithm.h>
-#include <ale/utils/array_view.h>
-#include <ale/utils/filter_iterator.h>
+#include <flecsale/linalg/qr.h>
+#include <flecsale/utils/algorithm.h>
+#include <flecsale/utils/array_view.h>
+#include <flecsale/utils/filter_iterator.h>
 
 // system includes
  #include <iomanip>

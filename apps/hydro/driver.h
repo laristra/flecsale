@@ -14,8 +14,8 @@
 #include "../common/parse_arguments.h"
 
 // user includes
-#include <ale/mesh/mesh_utils.h>
-#include <ale/utils/time_utils.h>
+#include <flecsale/mesh/mesh_utils.h>
+#include <flecsale/utils/time_utils.h>
 
 // system includes
 #include <getopt.h>
