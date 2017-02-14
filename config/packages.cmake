@@ -3,6 +3,15 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
+include(CMakeDependentOption)
+
+#------------------------------------------------------------------------------#
+# Global variables
+#------------------------------------------------------------------------------#
+
+set( IO_LIBRARIES )
+set( VORO_LIBRARIES )
+
 #------------------------------------------------------------------------------#
 # Flecsi Config
 #------------------------------------------------------------------------------#
@@ -24,38 +33,23 @@ else()
 endif()
 
 #------------------------------------------------------------------------------#
-# Global variables
+# Enable Regression Tests
 #------------------------------------------------------------------------------#
-
-set( IO_LIBRARIES )
-set( VORO_LIBRARIES )
-
-#------------------------------------------------------------------------------#
-# Find libraries
-#------------------------------------------------------------------------------#
-
-
-find_package(EXODUSII)
-
-find_package(TECIO QUIET)
-
-find_package(ShaPo QUIET)
-if (ShaPo_FOUND)
-  message(STATUS "Found ShaPo: ${ShaPo_DIR}")
-endif()
-
-find_package(VTK QUIET)
-if (VTK_FOUND)
-  message(STATUS "Found VTK: ${VTK_DIR}")
-endif()
-
 
 # find python for running regression tests
-find_package (PythonInterp)
+find_package (PythonInterp QUIET)
 if (PYTHONINTERP_FOUND)
-   message (STATUS "Found PythonInterp: ${PYTHON_EXECUTABLE}")
+  option(ENABLE_REGRESSION_TESTS "Enable regression tests" ON)
+  cmake_dependent_option( 
+    ENABLE_REGRESSION_TESTS "Enable regression tests" ON 
+    "ENABLE_UNIT_TESTS" OFF 
+  )
 else ()
-  message (FATAL_ERROR "Did not find python. Python is needed to run regression tests.")
+  option(ENABLE_REGRESSION_TESTS "Enable regression tests" OFF)
+endif ()
+
+if (ENABLE_REGRESSION_TESTS)
+  message (STATUS "Found PythonInterp: ${PYTHON_EXECUTABLE}")
 endif ()
 
 #------------------------------------------------------------------------------#
@@ -111,6 +105,24 @@ if(ENABLE_OPENSSL)
   include_directories(${OPENSSL_INCLUDE_DIR})
   add_definitions(-DHAVE_OPENSSL)
   list( APPEND ALE_LIBRARIES ${OPENSSL_LIBRARIES} )
+endif()
+
+#------------------------------------------------------------------------------#
+# Find some general libraries
+#------------------------------------------------------------------------------#
+
+find_package(EXODUSII)
+
+find_package(TECIO QUIET)
+
+find_package(ShaPo QUIET)
+if (ShaPo_FOUND)
+  message(STATUS "Found ShaPo: ${ShaPo_DIR}")
+endif()
+
+find_package(VTK QUIET)
+if (VTK_FOUND)
+  message(STATUS "Found VTK: ${VTK_DIR}")
 endif()
 
 
