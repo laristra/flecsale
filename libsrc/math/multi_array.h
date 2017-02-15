@@ -9,7 +9,6 @@
 #pragma once
 
 // user includes
-#include "std/type_traits.h"
 #include "utils/type_traits.h"
 #include "utils/template_helpers.h"
 #include "utils/tuple_visit.h"
@@ -726,7 +725,7 @@ auto operator+( const multi_array<T,N...>& lhs,
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
 template <typename T, typename U, size_t... N>
-std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
+std::enable_if_t< utils::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
 operator+( const multi_array<T,N...>& lhs, 
            const U& rhs )
 {
@@ -738,7 +737,7 @@ operator+( const multi_array<T,N...>& lhs,
 }
 
 template <typename T, typename U, size_t... N>
-std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
+std::enable_if_t< utils::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
 operator+( const U& lhs, 
            const multi_array<T,N...>& rhs )
 {
@@ -773,7 +772,7 @@ auto operator-( const multi_array<T,N...>& lhs,
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
 template <typename T, typename U, size_t... N>
-std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
+std::enable_if_t< utils::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
 operator-( const multi_array<T,N...>& lhs, 
            const U& rhs )
 {
@@ -785,7 +784,7 @@ operator-( const multi_array<T,N...>& lhs,
 }
 
 template <typename T, typename U, size_t... N>
-std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
+std::enable_if_t< utils::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
 operator-( const U& lhs, 
            const multi_array<T,N...>& rhs )
 {
@@ -821,7 +820,7 @@ auto operator*( const multi_array<T,N...>& lhs,
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
 template <typename T, typename U, size_t... N>
-std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
+std::enable_if_t< utils::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
 operator*( const multi_array<T,N...>& lhs, 
            const U& rhs )
 {
@@ -833,7 +832,7 @@ operator*( const multi_array<T,N...>& lhs,
 }
 
 template <typename T, typename U, size_t... N>
-std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
+std::enable_if_t< utils::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
 operator*( const U& lhs,
            const multi_array<T,N...>& rhs )
 {
@@ -870,7 +869,7 @@ auto operator/( const multi_array<T,N...>& lhs,
 //! \param[in] rhs The scalar on the right hand side of the operator.
 //! \return A reference to the current object.
 template <typename T, typename U, size_t... N>
-std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
+std::enable_if_t< utils::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
 operator/( const multi_array<T,N...>& lhs, 
            const U& rhs )
 {
@@ -883,7 +882,7 @@ operator/( const multi_array<T,N...>& lhs,
 }
 
 template <typename T, typename U, size_t... N>
-std::enable_if_t< std::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
+std::enable_if_t< utils::is_arithmetic_v< std::decay_t<U> >, multi_array<T,N...> >
 operator/( const U& lhs, 
            const multi_array<T,N...>& rhs )
 {

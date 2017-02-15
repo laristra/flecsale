@@ -12,6 +12,7 @@ set(utils_HEADERS
   errors.h
   filter_iterator.h
   fixed_vector.h
+  functional.h
   lua_utils.h
   python_utils.h
   string_utils.h

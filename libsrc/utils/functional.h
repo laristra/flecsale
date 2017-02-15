@@ -11,7 +11,8 @@
 // system includes
 #include <functional>
 
-namespace std {
+namespace ale {
+namespace utils {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Allow functional operators to work for two different argument types.  In
@@ -53,3 +54,4 @@ constexpr auto divides( T && lhs, U && rhs )
 
 
 } // namespace
+} //
