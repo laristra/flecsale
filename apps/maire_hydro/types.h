@@ -10,14 +10,14 @@
 #pragma once
 
 // user includes
-#include <ale/common/types.h>
-#include <ale/eqns/lagrange_eqns.h>
-#include <ale/eqns/flux.h>
-#include <ale/eos/ideal_gas.h>
-#include <ale/math/general.h>
-#include <ale/math/matrix.h>
+#include <flecsale/common/types.h>
+#include <flecsale/eqns/lagrange_eqns.h>
+#include <flecsale/eqns/flux.h>
+#include <flecsale/eos/ideal_gas.h>
+#include <flecsale/math/general.h>
+#include <flecsale/math/matrix.h>
 
-#include <ale/mesh/burton/burton.h>
+#include <flecsale/mesh/burton/burton.h>
 
 
 namespace apps {

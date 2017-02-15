@@ -9,8 +9,8 @@
 #pragma once 
 
 // user includes
-#include <ale/mesh/burton/burton.h>
-#include <ale/utils/lua_utils.h>
+#include <flecsale/mesh/burton/burton.h>
+#include <flecsale/utils/lua_utils.h>
 
 // system includes
 #include <string>

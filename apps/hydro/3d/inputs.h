@@ -11,9 +11,9 @@
 // user includes
 #include "../inputs.h"
 
-#include <ale/mesh/burton/burton.h>
-#include <ale/mesh/factory.h>
-#include <ale/utils/lua_utils.h>
+#include <flecsale/mesh/burton/burton.h>
+#include <flecsale/mesh/factory.h>
+#include <flecsale/utils/lua_utils.h>
 
 // system includes
 #include <string>
