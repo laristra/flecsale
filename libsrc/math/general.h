@@ -12,7 +12,6 @@
 // user includes
 #include "detail/general_impl.h"
 
-#include "std/type_traits.h"
 #include "utils/errors.h"
 #include "utils/template_helpers.h"
 #include "utils/type_traits.h"

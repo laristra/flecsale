@@ -856,7 +856,7 @@ public:
   auto create_cell(
     V && verts,
     typename std::enable_if_t< 
-      std::is_same_v< typename std::decay_t<V>::value_type, vertex_t* > &&
+      utils::is_same_v< typename std::decay_t<V>::value_type, vertex_t* > &&
       std::remove_pointer_t<typename std::decay_t<V>::value_type>::num_dimensions == 2
     >* = nullptr ) 
   {
@@ -870,7 +870,7 @@ public:
   auto  create_cell( 
     std::initializer_list<V*> verts,
     typename std::enable_if_t< 
-      std::is_same_v<V, vertex_t> && V::num_dimensions == 2 
+      utils::is_same_v<V, vertex_t> && V::num_dimensions == 2 
     >* = nullptr ) 
   {
     return create_2d_element_from_verts_<cell_t>( verts );
@@ -884,7 +884,7 @@ public:
   auto create_cell(
     V && verts,
     typename std::enable_if_t< 
-      std::is_same_v< typename std::decay_t<V>::value_type, vertex_t* > &&
+      utils::is_same_v< typename std::decay_t<V>::value_type, vertex_t* > &&
       std::remove_pointer_t<typename std::decay_t<V>::value_type>::num_dimensions == 3
     >* = nullptr ) 
   {
@@ -898,7 +898,7 @@ public:
   auto  create_cell( 
     std::initializer_list<V*> verts,
     typename std::enable_if_t< 
-      std::is_same_v<V, vertex_t> && V::num_dimensions == 3
+      utils::is_same_v<V, vertex_t> && V::num_dimensions == 3
     >* = nullptr ) 
   {
     return create_3d_element_from_verts_( verts );
@@ -911,7 +911,7 @@ public:
   auto create_cell(
     F && faces,
     typename std::enable_if_t< 
-      std::is_same_v< typename std::decay_t<F>::value_type, face_t* >  &&
+      utils::is_same_v< typename std::decay_t<F>::value_type, face_t* >  &&
       std::remove_pointer_t<typename std::decay_t<F>::value_type>::num_dimensions == 3
     >* = nullptr ) 
   {

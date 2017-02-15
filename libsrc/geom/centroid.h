@@ -10,7 +10,6 @@
 
 
 // user includes
-#include "std/type_traits.h"
 #include "utils/errors.h"
 #include "utils/type_traits.h"
 #include "detail/centroid_impl.h"
