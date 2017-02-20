@@ -15,7 +15,7 @@
 
 // library includes
 #include <shapo/Mesh2D.hxx>
-#include <shapo/Tessellator.hxx>
+#include <shapo/Tessellator2D.hxx>
 #include <vtkPoints.h>
 
 namespace ale {
@@ -274,7 +274,8 @@ void create_boundaries_constrained( const mesh_t & mesh, Tessellator & tess )
   // the number of generators
   auto num_gens = tess.GetNumberOfGenerators();
   // get the generators
-  auto generators = tess.GetGenerators();
+  std::vector<shapo_real_t> generators;
+  tess.GetGenerators( generators );
 
   // extract the boundaries from the mesh
   std::vector<shapo_real_t>  bnd_point_coords;

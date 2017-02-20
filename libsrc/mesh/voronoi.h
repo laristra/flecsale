@@ -62,7 +62,7 @@ T voronoi(
 
 
   // the tesselator
-  using shapo::Tessellator;
+  using Tessellator = shapo::Tessellator2D;
 
   //----------------------------------------------------------------------------
   // shapo setup
