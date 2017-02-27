@@ -32,6 +32,10 @@ else()
     message(FATAL_ERROR "This runtime is not yet supported")
 endif()
 
+# flecsi needs Cereal
+find_package( Cereal REQUIRED )
+include_directories(${Cereal_INCLUDE_DIR})
+
 #------------------------------------------------------------------------------#
 # Enable Regression Tests
 #------------------------------------------------------------------------------#

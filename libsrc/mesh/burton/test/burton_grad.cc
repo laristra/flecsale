@@ -35,12 +35,12 @@ TEST_F(burton_2d, gradients) {
 
 
   // setup a cell centered and vertex-based field
-  register_data(mesh_, hydro, pressure, real_t, dense, 1, vertices);
-  register_data(mesh_, hydro, velocity, vector_t, dense, 1, cells);
+  flecsi_register_data(mesh_, hydro, pressure, real_t, dense, 1, vertices);
+  flecsi_register_data(mesh_, hydro, velocity, vector_t, dense, 1, cells);
 
   // access the state arrays
-  auto pressure = get_accessor(mesh_, hydro, pressure,   real_t, dense, 0);
-  auto velocity = get_accessor(mesh_, hydro, velocity, vector_t, dense, 0);
+  auto pressure = flecsi_get_accessor(mesh_, hydro, pressure,   real_t, dense, 0);
+  auto velocity = flecsi_get_accessor(mesh_, hydro, velocity, vector_t, dense, 0);
 
   // loop over vertices and assign the field value
   for ( auto v : mesh_.vertices() ) {
@@ -61,7 +61,7 @@ TEST_F(burton_2d, gradients) {
 
   // get constant accessors to the pressure
   const auto const_pressure = 
-    get_accessor(mesh_, hydro, pressure, real_t, dense, 0);
+    flecsi_get_accessor(mesh_, hydro, pressure, real_t, dense, 0);
 
   // loop over vertices and compute the gradient
   for ( auto v0 : mesh_.vertices() ) {
@@ -115,7 +115,7 @@ TEST_F(burton_2d, gradients) {
 
   // get constant accessors to the pressure
   const auto const_velocity = 
-    get_accessor(mesh_, hydro, velocity, vector_t, dense, 0);
+    flecsi_get_accessor(mesh_, hydro, velocity, vector_t, dense, 0);
 
   // loop over vertices and compute the gradient
   for ( auto c0 : mesh_.cells() ) {

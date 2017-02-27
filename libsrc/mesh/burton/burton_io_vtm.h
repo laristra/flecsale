@@ -160,8 +160,8 @@ public:
       auto rvals = vtk_array_t<real_t>::type::New();
       rvals->SetNumberOfValues( num_vertices );
       
-      auto rspav = get_accessors_all(
-        m, real_t, dense, 0, has_attribute_at(persistent,vertices)
+      auto rspav = flecsi_get_accessors_all(
+        m, real_t, dense, 0, flecsi_has_attribute_at(persistent,vertices)
       );
       for(auto sf: rspav) {
         auto label = validate_string( sf.label() );      
@@ -177,8 +177,8 @@ public:
       auto ivals = vtk_array_t<integer_t>::type::New();
       ivals->SetNumberOfValues( num_vertices );
 
-      auto ispav = get_accessors_all(
-        m, integer_t, dense, 0, has_attribute_at(persistent,vertices)
+      auto ispav = flecsi_get_accessors_all(
+        m, integer_t, dense, 0, flecsi_has_attribute_at(persistent,vertices)
       );
       for(auto sf: ispav) {
         auto label = validate_string( sf.label() );
@@ -195,8 +195,8 @@ public:
       vvals->SetNumberOfComponents( 3 ); // always 3d
       vvals->SetNumberOfTuples( num_vertices );
 
-      auto rvpav = get_accessors_all(
-        m, vector_t, dense, 0, has_attribute_at(persistent,vertices)
+      auto rvpav = flecsi_get_accessors_all(
+        m, vector_t, dense, 0, flecsi_has_attribute_at(persistent,vertices)
       );
       for(auto vf: rvpav) {
         auto label = validate_string( vf.label() );
@@ -224,8 +224,8 @@ public:
       rvals = vtk_array_t<real_t>::type::New();
       rvals->SetNumberOfValues( num_cells_this_block );
 
-      auto rspac = get_accessors_all(
-        m, real_t, dense, 0, has_attribute_at(persistent,cells)
+      auto rspac = flecsi_get_accessors_all(
+        m, real_t, dense, 0, flecsi_has_attribute_at(persistent,cells)
       );
       for(auto sf: rspac) {
         auto label = validate_string( sf.label() );      
@@ -241,8 +241,8 @@ public:
       ivals = vtk_array_t<integer_t>::type::New();
       ivals->SetNumberOfValues( num_cells_this_block );
 
-      auto ispac = get_accessors_all(
-        m, integer_t, dense, 0, has_attribute_at(persistent,cells)
+      auto ispac = flecsi_get_accessors_all(
+        m, integer_t, dense, 0, flecsi_has_attribute_at(persistent,cells)
       );
       for(auto sf: ispac) {
         auto label = validate_string( sf.label() );
@@ -259,8 +259,8 @@ public:
       vvals->SetNumberOfComponents( 3 ); // always 3d
       vvals->SetNumberOfTuples( num_cells_this_block );
 
-      auto rvpac = get_accessors_all(
-        m, vector_t, dense, 0, has_attribute_at(persistent,cells)
+      auto rvpac = flecsi_get_accessors_all(
+        m, vector_t, dense, 0, flecsi_has_attribute_at(persistent,cells)
       );
       for(auto vf: rvpac) {
         auto label = validate_string( vf.label() );

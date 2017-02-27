@@ -29,13 +29,13 @@ void create_data(M & mesh )
   using vector_t = typename M::vector_t;
 
   // register
-  register_data(mesh, hydro, pressure, real_t, dense, 1, cells);
-  register_data(mesh, hydro, region, integer_t, dense, 1, cells);
-  register_data(mesh, hydro, velocity, vector_t, dense, 1, vertices);
+  flecsi_register_data(mesh, hydro, pressure, real_t, dense, 1, cells);
+  flecsi_register_data(mesh, hydro, region, integer_t, dense, 1, cells);
+  flecsi_register_data(mesh, hydro, velocity, vector_t, dense, 1, vertices);
   // access
-  auto p = get_accessor(mesh, hydro, pressure, real_t, dense, 0);
-  auto r = get_accessor(mesh, hydro, region, integer_t, dense, 0);
-  auto velocity = get_accessor(mesh, hydro, velocity, vector_t, dense, 0);
+  auto p = flecsi_get_accessor(mesh, hydro, pressure, real_t, dense, 0);
+  auto r = flecsi_get_accessor(mesh, hydro, region, integer_t, dense, 0);
+  auto velocity = flecsi_get_accessor(mesh, hydro, velocity, vector_t, dense, 0);
   // set attributes
   p.attributes().set(persistent);
   r.attributes().set(persistent);

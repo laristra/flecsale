@@ -148,19 +148,19 @@ public:
   //! \tparam T the data type we are accessing
   template< typename T >
   using accessor_t = 
-    decltype( get_accessor( std::declval<M>(), hydro, var_name, T, dense, 0 ) );
+    decltype( flecsi_get_accessor( std::declval<M>(), hydro, var_name, T, dense, 0 ) );
 
   //! \brief main constructor
   //! \param [in]  mesh  the mesh object
   constexpr cell_state_accessor( M & mesh ) :
-    m( get_accessor( mesh, hydro, cell_mass, real_t, dense, 0 ) ),
-    V( get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 ) ),
-    p( get_accessor( mesh, hydro, cell_pressure, real_t, dense, 0 ) ),
-    v( get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 ) ),
-    d( get_accessor( mesh, hydro, cell_density, real_t, dense, 0 ) ),
-    e( get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 0 ) ),
-    t( get_accessor( mesh, hydro, cell_temperature, real_t, dense, 0 ) ),
-    a( get_accessor( mesh, hydro, cell_sound_speed, real_t, dense, 0 ) )
+    m( flecsi_get_accessor( mesh, hydro, cell_mass, real_t, dense, 0 ) ),
+    V( flecsi_get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 ) ),
+    p( flecsi_get_accessor( mesh, hydro, cell_pressure, real_t, dense, 0 ) ),
+    v( flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 ) ),
+    d( flecsi_get_accessor( mesh, hydro, cell_density, real_t, dense, 0 ) ),
+    e( flecsi_get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 0 ) ),
+    t( flecsi_get_accessor( mesh, hydro, cell_temperature, real_t, dense, 0 ) ),
+    a( flecsi_get_accessor( mesh, hydro, cell_sound_speed, real_t, dense, 0 ) )
   {}
 
   //! \brief main accessor

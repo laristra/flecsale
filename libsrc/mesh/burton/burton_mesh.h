@@ -229,7 +229,7 @@ public:
   //! \brief Return the time associated with the mesh
   auto time()
   {
-    auto soln_time = get_accessor(*this, mesh, time, real_t, global, 0 );
+    auto soln_time = flecsi_get_accessor(*this, mesh, time, real_t, global, 0 );
     return *soln_time;
   }
 
@@ -237,7 +237,7 @@ public:
   //! \param [in] soln_time  The solution time.
   void set_time(real_t soln_time)
   {
-    get_accessor(*this, mesh, time, real_t, global, 0 ) = soln_time;
+    flecsi_get_accessor(*this, mesh, time, real_t, global, 0 ) = soln_time;
   }
 
 
@@ -246,7 +246,7 @@ public:
   //! \return The new solution time.
   auto increment_time(real_t delta_time)
   {
-    auto soln_time = get_accessor(*this, mesh, time, real_t, global, 0 );
+    auto soln_time = flecsi_get_accessor(*this, mesh, time, real_t, global, 0 );
     (*soln_time) += delta_time;
     return *soln_time;
   }
@@ -254,7 +254,7 @@ public:
   //! \brief Return the time associated with the mesh
   auto time_step_counter()
   {
-    auto step = get_accessor(*this, mesh, time_step, size_t, global, 0 );
+    auto step = flecsi_get_accessor(*this, mesh, time_step, size_t, global, 0 );
     return *step;
   }
 
@@ -263,7 +263,7 @@ public:
   //! \return The new counter value.
   auto increment_time_step_counter(size_t delta = 1)
   {
-    auto step = get_accessor(*this, mesh, time_step, size_t, global, 0 );
+    auto step = flecsi_get_accessor(*this, mesh, time_step, size_t, global, 0 );
     (*step) += delta;
     return *step;
   }
@@ -801,7 +801,7 @@ public:
   //! \return The number of regions in the burton mesh.
   size_t num_regions() const
   {
-    auto n = get_accessor(*this, mesh, num_regions, size_t, global, 0 );
+    auto n = flecsi_get_accessor(*this, mesh, num_regions, size_t, global, 0 );
     return *n;
   }
 
@@ -809,7 +809,7 @@ public:
   //! \param [in]  n  The number of regions in the burton mesh.
   void set_num_regions(size_t n)
   {
-    auto n_acc = get_accessor(*this, mesh, num_regions, size_t, global, 0 ) ;
+    auto n_acc = flecsi_get_accessor(*this, mesh, num_regions, size_t, global, 0 ) ;
     *n_acc = n;
   }
 
@@ -1005,44 +1005,44 @@ public:
 #endif
 
     // register cell data
-    register_data(*this, mesh, cell_volume, real_t, dense, 1, burton::cells);
-    register_data(*this, mesh, cell_centroid, vector_t, dense, 1, burton::cells);
-    register_data(*this, mesh, cell_min_length, real_t, dense, 1, burton::cells);
+    flecsi_register_data(*this, mesh, cell_volume, real_t, dense, 1, burton::cells);
+    flecsi_register_data(*this, mesh, cell_centroid, vector_t, dense, 1, burton::cells);
+    flecsi_register_data(*this, mesh, cell_min_length, real_t, dense, 1, burton::cells);
 
     // register face data
-    register_data(*this, mesh, face_area, real_t, dense, 1, burton::faces);
-    register_data(*this, mesh, face_normal, vector_t, dense, 1, burton::faces);
-    register_data(*this, mesh, face_midpoint, vector_t, dense, 1, burton::faces);
+    flecsi_register_data(*this, mesh, face_area, real_t, dense, 1, burton::faces);
+    flecsi_register_data(*this, mesh, face_normal, vector_t, dense, 1, burton::faces);
+    flecsi_register_data(*this, mesh, face_midpoint, vector_t, dense, 1, burton::faces);
 
     // register edge data
-    register_data(*this, mesh, edge_midpoint, vector_t, dense, 1, burton::edges);
+    flecsi_register_data(*this, mesh, edge_midpoint, vector_t, dense, 1, burton::edges);
     
     // register wedge data
-    register_data(*this, mesh, wedge_facet_area, real_t, dense, 1, burton::wedges);
-    register_data(*this, mesh, wedge_facet_normal, vector_t, dense, 1, burton::wedges);
-    register_data(*this, mesh, wedge_facet_centroid, vector_t, dense, 1, burton::wedges);
+    flecsi_register_data(*this, mesh, wedge_facet_area, real_t, dense, 1, burton::wedges);
+    flecsi_register_data(*this, mesh, wedge_facet_normal, vector_t, dense, 1, burton::wedges);
+    flecsi_register_data(*this, mesh, wedge_facet_centroid, vector_t, dense, 1, burton::wedges);
     
     // register time state
-    register_data(*this, mesh, time, real_t, global, 1 );
-    register_data(*this, mesh, time_step, size_t, global, 1 );
+    flecsi_register_data(*this, mesh, time, real_t, global, 1 );
+    flecsi_register_data(*this, mesh, time_step, size_t, global, 1 );
 
-    auto soln_time = get_accessor(*this, mesh, time, real_t, global, 0);
-    auto step = get_accessor(*this, mesh, time_step, size_t, global, 0);
+    auto soln_time = flecsi_get_accessor(*this, mesh, time, real_t, global, 0);
+    auto step = flecsi_get_accessor(*this, mesh, time_step, size_t, global, 0);
     *soln_time = 0;
     *step = 0;
 
     // register some flags for identifying boundarys and various other things
-    register_data(*this, mesh, node_flags, bitfield_t, dense, 1, burton::vertices);
-    register_data(*this, mesh, edge_flags, bitfield_t, dense, 1, burton::edges);
+    flecsi_register_data(*this, mesh, node_flags, bitfield_t, dense, 1, burton::vertices);
+    flecsi_register_data(*this, mesh, edge_flags, bitfield_t, dense, 1, burton::edges);
 
-    auto point_flags = get_accessor(*this, mesh, node_flags, bitfield_t, dense, 0);
-    auto edge_flags = get_accessor(*this, mesh, edge_flags, bitfield_t, dense, 0);
+    auto point_flags = flecsi_get_accessor(*this, mesh, node_flags, bitfield_t, dense, 0);
+    auto edge_flags = flecsi_get_accessor(*this, mesh, edge_flags, bitfield_t, dense, 0);
 
     // register some flags for associating boundaries with entities
-    register_data(*this, mesh, node_tags, tag_list_t, dense, 1, burton::vertices);
-    register_data(*this, mesh, edge_tags, tag_list_t, dense, 1, burton::edges);
-    register_data(*this, mesh, face_tags, tag_list_t, dense, 1, burton::faces);
-    register_data(*this, mesh, cell_tags, tag_list_t, dense, 1, burton::cells);
+    flecsi_register_data(*this, mesh, node_tags, tag_list_t, dense, 1, burton::vertices);
+    flecsi_register_data(*this, mesh, edge_tags, tag_list_t, dense, 1, burton::edges);
+    flecsi_register_data(*this, mesh, face_tags, tag_list_t, dense, 1, burton::faces);
+    flecsi_register_data(*this, mesh, cell_tags, tag_list_t, dense, 1, burton::cells);
 
     // now set the boundary flags.
     for ( auto f : faces() ) {
@@ -1062,11 +1062,11 @@ public:
     } // for
 
     // identify the cell regions
-    register_data(*this, mesh, cell_region, size_t, dense, 1, burton::cells);
-    register_data(*this, mesh, num_regions, size_t, global, 1);
+    flecsi_register_data(*this, mesh, cell_region, size_t, dense, 1, burton::cells);
+    flecsi_register_data(*this, mesh, num_regions, size_t, global, 1);
 
-    auto cell_region = get_accessor(*this, mesh, cell_region, size_t, dense, 0);
-    auto num_regions = get_accessor(*this, mesh, num_regions, size_t, global, 0);
+    auto cell_region = flecsi_get_accessor(*this, mesh, cell_region, size_t, dense, 0);
+    auto num_regions = flecsi_get_accessor(*this, mesh, num_regions, size_t, global, 0);
 
     *num_regions = 1;
 
@@ -1302,19 +1302,19 @@ public:
     auto num_corners = cnrs.size();
 
     // get all the data now so we can put everything in one parallel region
-    auto cell_center = get_accessor(*this, mesh, cell_centroid, vector_t, dense, 0);
-    auto cell_volume = get_accessor(*this, mesh, cell_volume, real_t, dense, 0);
-    auto cell_min_length = get_accessor(*this, mesh, cell_min_length, real_t, dense, 0);
+    auto cell_center = flecsi_get_accessor(*this, mesh, cell_centroid, vector_t, dense, 0);
+    auto cell_volume = flecsi_get_accessor(*this, mesh, cell_volume, real_t, dense, 0);
+    auto cell_min_length = flecsi_get_accessor(*this, mesh, cell_min_length, real_t, dense, 0);
 
-    auto face_area = get_accessor(*this, mesh, face_area, real_t, dense, 0);
-    auto face_norm = get_accessor(*this, mesh, face_normal, vector_t, dense, 0);
-    auto face_midp = get_accessor(*this, mesh, face_midpoint, vector_t, dense, 0); 
+    auto face_area = flecsi_get_accessor(*this, mesh, face_area, real_t, dense, 0);
+    auto face_norm = flecsi_get_accessor(*this, mesh, face_normal, vector_t, dense, 0);
+    auto face_midp = flecsi_get_accessor(*this, mesh, face_midpoint, vector_t, dense, 0); 
 
-    auto edge_midp = get_accessor(*this, mesh, edge_midpoint, vector_t, dense, 0); 
+    auto edge_midp = flecsi_get_accessor(*this, mesh, edge_midpoint, vector_t, dense, 0); 
 
-    auto wedge_facet_normal = get_accessor(*this, mesh, wedge_facet_normal, vector_t, dense, 0);
-    auto wedge_facet_area = get_accessor(*this, mesh, wedge_facet_area, real_t, dense, 0);
-    auto wedge_facet_centroid = get_accessor(*this, mesh, wedge_facet_centroid, vector_t, dense, 0); 
+    auto wedge_facet_normal = flecsi_get_accessor(*this, mesh, wedge_facet_normal, vector_t, dense, 0);
+    auto wedge_facet_area = flecsi_get_accessor(*this, mesh, wedge_facet_area, real_t, dense, 0);
+    auto wedge_facet_centroid = flecsi_get_accessor(*this, mesh, wedge_facet_centroid, vector_t, dense, 0); 
 
     //--------------------------------------------------------------------------
     // compute cell parameters
