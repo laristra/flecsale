@@ -46,8 +46,8 @@ int32_t initial_conditions( T & mesh, F && ics ) {
   auto p = flecsi_get_accessor( mesh, hydro, cell_pressure,   real_t, dense, 0 );
   auto v = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
 
-  auto  xc = flecsi_get_accessor( mesh, mesh, cell_centroid, vector_t, dense, 0 );
-  auto vol = flecsi_get_accessor( mesh, mesh, cell_volume,     real_t, dense, 0 );
+  auto  xc = mesh.cell_centroids();
+  auto vol = mesh.cell_volumes();
 
   auto cs = mesh.cells();
   auto num_cells = cs.size();
@@ -154,8 +154,8 @@ int32_t evaluate_time_step( T & mesh, std::string & limit_string )
   auto sound_speed = flecsi_get_accessor( mesh, hydro, cell_sound_speed, real_t, dense, 0 );
 
   auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
-  auto cell_volume = flecsi_get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 );
-  auto cell_min_length = flecsi_get_accessor( mesh, mesh, cell_min_length, real_t, dense, 0 );
+  auto cell_volume = mesh.cell_volumes();
+  auto cell_min_length = mesh.cell_min_lengths();
 
   auto time_step = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
   auto cfl = flecsi_get_accessor( mesh, hydro, cfl, time_constants_t, global, 0 );
@@ -284,8 +284,8 @@ int32_t evaluate_corner_coef( T & mesh ) {
   auto vertex_velocity = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
   auto Mpc = flecsi_get_accessor( mesh, hydro, corner_matrix, matrix_t, dense, 0 );
   auto npc = flecsi_get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
-  auto wedge_facet_normal = flecsi_get_accessor( mesh, mesh, wedge_facet_normal, vector_t, dense, 0 );
-  auto wedge_facet_area = flecsi_get_accessor( mesh, mesh, wedge_facet_area, real_t, dense, 0 );
+  auto wedge_facet_normal = mesh.wedge_facet_normals();
+  auto wedge_facet_area = mesh.wedge_facet_areas();
 
   auto eos = flecsi_get_accessor( mesh, hydro, eos, eos_t, global, 0 );
 
@@ -378,9 +378,9 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
   auto Mpc = flecsi_get_accessor( mesh, hydro, corner_matrix, matrix_t, dense, 0 );
   auto npc = flecsi_get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
 
-  auto wedge_facet_normal = flecsi_get_accessor( mesh, mesh, wedge_facet_normal, vector_t, dense, 0 );
-  auto wedge_facet_area = flecsi_get_accessor( mesh, mesh, wedge_facet_area, real_t, dense, 0 );
-  auto wedge_facet_centroid = flecsi_get_accessor( mesh, mesh, wedge_facet_centroid, vector_t, dense, 0 );
+  auto wedge_facet_normal = mesh.wedge_facet_normals();
+  auto wedge_facet_area = mesh.wedge_facet_areas();
+  auto wedge_facet_centroid = mesh.wedge_facet_centroids();
 
   // get the current time
   auto soln_time = mesh.time();

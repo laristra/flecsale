@@ -540,6 +540,19 @@ public:
     return base_t::template entity_ids<face_t::dimension, face_t::domain>(e);
   }
 
+  //! \brief Return the precomputed areas for each face.
+  decltype(auto) face_areas() const 
+  {
+    return flecsi_get_accessor( *this, mesh, face_area, real_t, dense, 0 );
+  }
+
+  //! \brief Return the precomputed normals for each face.
+  decltype(auto) face_normals() const 
+  {
+    return flecsi_get_accessor( *this, mesh, face_normal, vector_t, dense, 0 );
+  }
+
+
   //============================================================================
   // Cell Interface
   //============================================================================
@@ -630,6 +643,24 @@ public:
     return cell_types;
   }
 
+  //! \brief Return the precomputed volumes for each cell.
+  decltype(auto) cell_volumes() const 
+  {
+    return flecsi_get_accessor( *this, mesh, cell_volume, real_t, dense, 0 );
+  }
+
+  //! \brief Return the precomputed centroids for each cell.
+  decltype(auto) cell_centroids() const 
+  {
+    return flecsi_get_accessor( *this, mesh, cell_centroid, vector_t, dense, 0 );
+  }
+
+  //! \brief Return the precomputed centroids for each cell.
+  decltype(auto) cell_min_lengths() const 
+  {
+    return flecsi_get_accessor( *this, mesh, cell_min_length, real_t, dense, 0 );
+  }
+
 
   //============================================================================
   // Wedge Interface
@@ -708,6 +739,24 @@ public:
   decltype(auto) wedge_ids(E * e) const
   {
     return base_t::template entity_ids<wedge_t::dimension, wedge_t::domain>(e);
+  }
+
+  //! \brief Return the precomputed facet normals for each wedge.
+  decltype(auto) wedge_facet_normals() const 
+  {
+    return flecsi_get_accessor( *this, mesh, wedge_facet_normal, vector_t, dense, 0 );
+  }
+
+  //! \brief Return the precomputed facet centroids for each wedge.
+  decltype(auto) wedge_facet_centroids() const 
+  {
+    return flecsi_get_accessor( *this, mesh, wedge_facet_centroid, vector_t, dense, 0 );
+  }
+
+  //! \brief Return the precomputed facet area for each wdge.
+  decltype(auto) wedge_facet_areas() const 
+  {
+    return flecsi_get_accessor( *this, mesh, wedge_facet_area, real_t, dense, 0 );
   }
 
   //============================================================================

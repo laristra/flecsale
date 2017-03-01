@@ -145,9 +145,9 @@ int32_t evaluate_time_step( T & mesh ) {
   auto delta_t = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
   const auto cfl = flecsi_get_accessor( mesh, hydro, cfl, real_t, global, 0 );
  
-  auto area   = flecsi_get_accessor( mesh, mesh, face_area, real_t, dense, 0 );
-  auto normal = flecsi_get_accessor( mesh, mesh, face_normal, vector_t, dense, 0 );
-  auto volume = flecsi_get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 );
+  auto area   = mesh.face_areas();
+  auto normal = mesh.face_normals();
+  auto volume = mesh.cell_volumes();
  
   // Loop over each cell, computing the minimum time step,
   // which is also the maximum 1/dt
@@ -205,8 +205,8 @@ int32_t evaluate_fluxes( T & mesh ) {
   auto flux = flecsi_get_accessor( mesh, hydro, flux, flux_data_t, dense, 0 );
   state_accessor<T> state( mesh );
 
-  auto area   = flecsi_get_accessor( mesh, mesh, face_area, real_t, dense, 0 );
-  auto normal = flecsi_get_accessor( mesh, mesh, face_normal, vector_t, dense, 0 );
+  auto area   = mesh.face_areas();
+  auto normal = mesh.face_normals();
 
   //----------------------------------------------------------------------------
   // TASK: loop over each edge and compute/store the flux
@@ -272,7 +272,7 @@ int32_t apply_update( T & mesh ) {
   auto flux = flecsi_get_accessor( mesh, hydro, flux, flux_data_t, dense, 0 );
   state_accessor<T> state( mesh );
   
-  auto volume = flecsi_get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 );
+  auto volume = mesh.cell_volumes();
 
   // read only access
   const auto delta_t = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
