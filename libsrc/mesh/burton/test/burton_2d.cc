@@ -600,3 +600,4 @@ TEST_F(burton_2d, copy) {
   CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 
 } // TEST
+

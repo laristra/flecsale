@@ -13,6 +13,7 @@
 #include "../common/parse_arguments.h"
 
 // user includes
+#include <flecsale/eos/ideal_gas.h>
 #include <flecsale/mesh/mesh_utils.h>
 #include <flecsale/utils/time_utils.h>
 
@@ -119,23 +120,27 @@ int driver(int argc, char** argv)
 
   // create some field data.  Fields are registered as struct of arrays.
   // this allows us to access the data in different patterns.
+  flecsi_register_data(mesh, hydro, cell_volume,     real_t, dense, 1, cells);
   flecsi_register_data(mesh, hydro, cell_mass,       real_t, dense, 1, cells);
   flecsi_register_data(mesh, hydro, cell_pressure,   real_t, dense, 1, cells);
   flecsi_register_data(mesh, hydro, cell_velocity, vector_t, dense, 2, cells);
 
-  flecsi_register_data(mesh, hydro, cell_density,         real_t, dense, 1, cells);
+  flecsi_register_data(mesh, hydro, cell_density,         real_t, dense, 2, cells);
   flecsi_register_data(mesh, hydro, cell_internal_energy, real_t, dense, 2, cells);
   flecsi_register_data(mesh, hydro, cell_temperature,     real_t, dense, 1, cells);
   flecsi_register_data(mesh, hydro, cell_sound_speed,     real_t, dense, 1, cells);
 
-  flecsi_register_data(mesh, hydro, cell_residual, flux_data_t, dense, 1, cells);
-
+  // node state
   flecsi_register_data(mesh, hydro, node_coordinates, vector_t, dense, 1, vertices);
   flecsi_register_data(mesh, hydro, node_velocity, vector_t, dense, 1, vertices);
-  
+
+  // solver state
+  flecsi_register_data(mesh, hydro, cell_residual, flux_data_t, dense, 1, cells);
+
   flecsi_register_data(mesh, hydro, corner_matrix, matrix_t, dense, 1, corners);
   flecsi_register_data(mesh, hydro, corner_normal, vector_t, dense, 1, corners);
-
+  flecsi_register_data(mesh, hydro, corner_impedance, real_t, dense, 1, corners);
+  
   // register the time step and set a cfl
   flecsi_register_data( mesh, hydro, time_step, real_t, global, 1 );
   flecsi_register_data( mesh, hydro, cfl, time_constants_t, global, 1 );
@@ -240,11 +245,14 @@ int driver(int argc, char** argv)
 
     // evaluate corner matrices and normals at n=0 
     flecsi_execute_task( 
-      evaluate_corner_coef_task, loc, single, mesh, inputs_t::eos.get()
+      evaluate_corner_coef_task, loc, single, mesh, inputs_t::eos.get() 
     );
+    evaluate_corner_quantities( mesh, inputs_t::eos.get() );
 
     // compute the nodal velocity at n=0
-    flecsi_execute_task( evaluate_nodal_state_task, loc, single, mesh, boundaries );
+    flecsi_execute_task( 
+      evaluate_nodal_state_task, loc, single, mesh, boundaries
+    );
 
     // compute the fluxes
     flecsi_execute_task( evaluate_forces_task, loc, single, mesh );
@@ -301,11 +309,14 @@ int driver(int argc, char** argv)
 
     // evaluate corner matrices and normals at n=1/2
     flecsi_execute_task( 
-      evaluate_corner_coef_task, loc, single, mesh, inputs_t::eos.get()
+      evaluate_corner_coef_task, loc, single, mesh, inputs_t::eos.get() 
     );
+    evaluate_corner_quantities( mesh, inputs_t::eos.get() );
 
     // compute the nodal velocity at n=1/2
-    flecsi_execute_task( evaluate_nodal_state_task, loc, single, mesh, boundaries );
+    flecsi_execute_task( 
+      evaluate_nodal_state_task, loc, single, mesh, boundaries
+    );
 
     // compute the fluxes
     flecsi_execute_task( evaluate_forces_task, loc, single, mesh );

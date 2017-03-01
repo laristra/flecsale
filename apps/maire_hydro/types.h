@@ -130,6 +130,8 @@ using tag_t = mesh_2d_t::tag_t;
 template< std::size_t N >
 using boundary_map_t = std::map< tag_t, boundary_condition_t<N> * >;
 
+//! \breif a map for equations of state
+using eos_map_t = std::map< tag_t, eos_t * >;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief A functor for accessing state in the mesh
@@ -154,7 +156,7 @@ public:
   //! \param [in]  mesh  the mesh object
   constexpr cell_state_accessor( M & mesh ) :
     m( flecsi_get_accessor( mesh, hydro, cell_mass, real_t, dense, 0 ) ),
-    V( flecsi_get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 ) ),
+    V( flecsi_get_accessor( mesh, hydro, cell_volume, real_t, dense, 0 ) ),
     p( flecsi_get_accessor( mesh, hydro, cell_pressure, real_t, dense, 0 ) ),
     v( flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 ) ),
     d( flecsi_get_accessor( mesh, hydro, cell_density, real_t, dense, 0 ) ),
@@ -216,7 +218,6 @@ private:
   accessor_t<real_t>   a;
        
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief A class to make setting the cfl easy
