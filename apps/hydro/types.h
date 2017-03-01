@@ -10,13 +10,13 @@
 #pragma once
 
 // user includes
-#include <ale/common/types.h>
-#include <ale/eqns/euler_eqns.h>
-#include <ale/eqns/flux.h>
-#include <ale/eos/ideal_gas.h>
-#include <ale/math/general.h>
+#include <flecsale/common/types.h>
+#include <flecsale/eqns/euler_eqns.h>
+#include <flecsale/eqns/flux.h>
+#include <flecsale/eos/ideal_gas.h>
+#include <flecsale/math/general.h>
 
-#include <ale/mesh/burton/burton.h>
+#include <flecsale/mesh/burton/burton.h>
 
 
 namespace apps {
@@ -94,17 +94,17 @@ public:
   //! \tparam T the data type we are accessing
   template< typename T >
   using accessor_t = 
-    decltype( get_accessor( std::declval<M>(), hydro, var_name, T, dense, 0 ) );
+    decltype( flecsi_get_accessor( std::declval<M>(), hydro, var_name, T, dense, 0 ) );
 
   //! \brief main constructor
   //! \param [in]  mesh  the mesh object
   constexpr state_accessor( M & mesh ) :
-    d( get_accessor( mesh, hydro, density, real_t, dense, 0 ) ),
-    p( get_accessor( mesh, hydro, pressure, real_t, dense, 0 ) ),
-    v( get_accessor( mesh, hydro, velocity, vector_t, dense, 0 ) ),
-    e( get_accessor( mesh, hydro, internal_energy, real_t, dense, 0 ) ),
-    t( get_accessor( mesh, hydro, temperature, real_t, dense, 0 ) ),
-    a( get_accessor( mesh, hydro, sound_speed, real_t, dense, 0 ) )
+    d( flecsi_get_accessor( mesh, hydro, density, real_t, dense, 0 ) ),
+    p( flecsi_get_accessor( mesh, hydro, pressure, real_t, dense, 0 ) ),
+    v( flecsi_get_accessor( mesh, hydro, velocity, vector_t, dense, 0 ) ),
+    e( flecsi_get_accessor( mesh, hydro, internal_energy, real_t, dense, 0 ) ),
+    t( flecsi_get_accessor( mesh, hydro, temperature, real_t, dense, 0 ) ),
+    a( flecsi_get_accessor( mesh, hydro, sound_speed, real_t, dense, 0 ) )
   {}
 
   //! \brief main accessor

@@ -9,10 +9,10 @@
 #pragma once 
 
 // user includes
-#include <ale/eos/eos_base.h>
-#include <ale/eos/ideal_gas.h>
-#include <ale/mesh/burton/burton.h>
-#include <ale/utils/lua_utils.h>
+#include <flecsale/eos/eos_base.h>
+#include <flecsale/eos/ideal_gas.h>
+#include <flecsale/mesh/burton/burton.h>
+#include <flecsale/utils/lua_utils.h>
 
 // system includes
 #include <string>

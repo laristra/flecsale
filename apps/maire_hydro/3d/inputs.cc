@@ -10,7 +10,7 @@
 // hydro includes
 #include "inputs.h"
 
-#include <ale/eos/ideal_gas.h>
+#include <flecsale/eos/ideal_gas.h>
 
 // system includes
 #include <limits>

@@ -21,6 +21,9 @@ tabular equation of state (EOS).
 
 - [Doxygen](http://doxygen.org) to generate documentation
 - [Exodus](https://github.com/gsjaardema/seacas) to read/write ExodusII formatted files
+- [Lua](http://lua.org) >= 5.2 for application input
+- [OpenSSL](http://openssl.org) for field data checksums
+- [Python](http://python.org) >= 2.7 for regression tests
 - [VTK](http://vtk.org) to read/write VTK formatted files
 
 
@@ -80,9 +83,12 @@ specify an option.  For example, to build the unit tests, specify
 
 # CMake installation options
 
- - `ENABLE_UNIT_TESTS`:  Build the unit tests - Default is OFF
- - `ENABLE_DOXYGEN`:  Generate HTML API documentation with Doxygen - Default is OFF
- - `CMAKE_BUILD_TYPE`:  Type of build: Release (for users) or Debug (for developers)
+ - `CMAKE_BUILD_TYPE`:  Type of build: `Release` (for users) or `Debug` (for developers)
+ - `ENABLE_DOXYGEN`:  Generate HTML API documentation with Doxygen - Default is `OFF`
+ - `ENABLE_LUA`: Enable application input with Lua - Defaults to `ON` if Lua was found
+ - `ENABLE_OPENSSL`: Enable checksum reporting - Defaults to `ON` if OpenSSL was found
+ - `ENABLE_REGRESSION_TESTS`: Build the regression tests - Defaults to `ENABLE_UNIT_TESTS`
+ - `ENABLE_UNIT_TESTS`:  Build the unit tests - Default is `OFF`
 
 # Release
 

@@ -99,12 +99,12 @@ int32_t apply_update_task( mesh::burton_mesh_3d_t & mesh )
 // TASK REGISTRATION
 ////////////////////////////////////////////////////////////////////////////////
 
-register_task(initial_conditions_task, loc, single);
-register_task(update_state_from_pressure_task, loc, single);
-register_task(update_state_from_energy_task, loc, single);
-register_task(evaluate_time_step_task, loc, single);
-register_task(evaluate_fluxes_task, loc, single);
-register_task(apply_update_task, loc, single);
+flecsi_register_task(initial_conditions_task, loc, single);
+flecsi_register_task(update_state_from_pressure_task, loc, single);
+flecsi_register_task(update_state_from_energy_task, loc, single);
+flecsi_register_task(evaluate_time_step_task, loc, single);
+flecsi_register_task(evaluate_fluxes_task, loc, single);
+flecsi_register_task(apply_update_task, loc, single);
 
 } // namespace
 } // namespace

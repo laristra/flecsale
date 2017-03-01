@@ -12,10 +12,10 @@
 // hydro includes
 #include "types.h"
 
-#include <ale/linalg/qr.h>
-#include <ale/utils/algorithm.h>
-#include <ale/utils/array_view.h>
-#include <ale/utils/filter_iterator.h>
+#include <flecsale/linalg/qr.h>
+#include <flecsale/utils/algorithm.h>
+#include <flecsale/utils/array_view.h>
+#include <flecsale/utils/filter_iterator.h>
 
 // system includes
  #include <iomanip>
@@ -42,12 +42,12 @@ int32_t initial_conditions( T & mesh, F && ics ) {
   auto soln_time = mesh.time();
 
   // get the collection accesor
-  auto M = get_accessor( mesh, hydro, cell_mass,       real_t, dense, 0 );
-  auto p = get_accessor( mesh, hydro, cell_pressure,   real_t, dense, 0 );
-  auto v = get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
+  auto M = flecsi_get_accessor( mesh, hydro, cell_mass,       real_t, dense, 0 );
+  auto p = flecsi_get_accessor( mesh, hydro, cell_pressure,   real_t, dense, 0 );
+  auto v = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
 
-  auto  xc = get_accessor( mesh, mesh, cell_centroid, vector_t, dense, 0 );
-  auto vol = get_accessor( mesh, mesh, cell_volume,     real_t, dense, 0 );
+  auto  xc = mesh.cell_centroids();
+  auto vol = mesh.cell_volumes();
 
   auto cs = mesh.cells();
   auto num_cells = cs.size();
@@ -114,7 +114,7 @@ int32_t update_state_from_energy( T & mesh, const EOS * eos ) {
   // get the collection accesor
   auto cell_state = cell_state_accessor<T>( mesh );
 
-  auto dudt = get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
+  auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
 
   auto cs = mesh.cells();
   auto num_cells = cs.size();
@@ -151,14 +151,14 @@ int32_t evaluate_time_step( T & mesh, std::string & limit_string )
   using flux_data_t = flux_data_t<T::num_dimensions>;
 
   // access what we need
-  auto sound_speed = get_accessor( mesh, hydro, cell_sound_speed, real_t, dense, 0 );
+  auto sound_speed = flecsi_get_accessor( mesh, hydro, cell_sound_speed, real_t, dense, 0 );
 
-  auto dudt = get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
-  auto cell_volume = get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 );
-  auto cell_min_length = get_accessor( mesh, mesh, cell_min_length, real_t, dense, 0 );
+  auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
+  auto cell_volume = mesh.cell_volumes();
+  auto cell_min_length = mesh.cell_min_lengths();
 
-  auto time_step = get_accessor( mesh, hydro, time_step, real_t, global, 0 );
-  auto cfl = get_accessor( mesh, hydro, cfl, time_constants_t, global, 0 );
+  auto time_step = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
+  auto cfl = flecsi_get_accessor( mesh, hydro, cfl, time_constants_t, global, 0 );
  
  
   //----------------------------------------------------------------------------
@@ -237,8 +237,8 @@ int32_t estimate_nodal_state( T & mesh ) {
   using vector_t = typename T::vector_t;
 
   // access what we need
-  auto cell_vel = get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
-  auto vertex_vel = get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
+  auto cell_vel = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
+  auto vertex_vel = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
 
   //----------------------------------------------------------------------------
   // Loop over each vertex
@@ -282,11 +282,11 @@ int32_t evaluate_corner_coef( T & mesh, const EOS * eos )
   
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
-  auto vertex_velocity = get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
-  auto Mpc = get_accessor( mesh, hydro, corner_matrix, matrix_t, dense, 0 );
-  auto npc = get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
-  auto wedge_facet_normal = get_accessor( mesh, mesh, wedge_facet_normal, vector_t, dense, 0 );
-  auto wedge_facet_area = get_accessor( mesh, mesh, wedge_facet_area, real_t, dense, 0 );
+  auto vertex_velocity = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
+  auto Mpc = flecsi_get_accessor( mesh, hydro, corner_matrix, matrix_t, dense, 0 );
+  auto npc = flecsi_get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
+  auto wedge_facet_normal = mesh.wedge_facet_normals();
+  auto wedge_facet_area = mesh.wedge_facet_areas();
 
   //----------------------------------------------------------------------------
   // build corner matrices
@@ -373,13 +373,13 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
   
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
-  auto vertex_velocity = get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
-  auto Mpc = get_accessor( mesh, hydro, corner_matrix, matrix_t, dense, 0 );
-  auto npc = get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
+  auto vertex_velocity = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
+  auto Mpc = flecsi_get_accessor( mesh, hydro, corner_matrix, matrix_t, dense, 0 );
+  auto npc = flecsi_get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
 
-  auto wedge_facet_normal = get_accessor( mesh, mesh, wedge_facet_normal, vector_t, dense, 0 );
-  auto wedge_facet_area = get_accessor( mesh, mesh, wedge_facet_area, real_t, dense, 0 );
-  auto wedge_facet_centroid = get_accessor( mesh, mesh, wedge_facet_centroid, vector_t, dense, 0 );
+  auto wedge_facet_normal = mesh.wedge_facet_normals();
+  auto wedge_facet_area = mesh.wedge_facet_areas();
+  auto wedge_facet_centroid = mesh.wedge_facet_centroids();
 
   // get the current time
   auto soln_time = mesh.time();
@@ -563,11 +563,11 @@ int32_t evaluate_forces( T & mesh ) {
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
 
-  auto dudt = get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
-  auto uv = get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
+  auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
+  auto uv = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
 
-  auto Mpc = get_accessor( mesh, hydro, corner_matrix, matrix_t, dense, 0 );
-  auto npc = get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
+  auto Mpc = flecsi_get_accessor( mesh, hydro, corner_matrix, matrix_t, dense, 0 );
+  auto npc = flecsi_get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
 
   //----------------------------------------------------------------------------
   // TASK: loop over each cell and compute the residual
@@ -636,12 +636,12 @@ int32_t apply_update( T & mesh, real_t coef, bool first_time ) {
 
 
   // access what we need
-  auto dudt = get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
+  auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
 
   auto cell_state = cell_state_accessor<T>( mesh );
 
   // read only access
-  const auto delta_t = get_accessor( mesh, hydro, time_step, real_t, global, 0 );
+  const auto delta_t = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
 
   // the time step factor
   auto fact = coef * (*delta_t);
@@ -735,10 +735,10 @@ int32_t move_mesh( T & mesh, real_t coef ) {
   using vector_t = typename T::vector_t;
 
   // access what we need
-  auto vel = get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
+  auto vel = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
 
   // read only access
-  const auto delta_t = get_accessor( mesh, hydro, time_step, real_t, global, 0 );
+  const auto delta_t = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
 
   // the time step factor
   auto fact = coef * (*delta_t);
@@ -776,7 +776,7 @@ int32_t save_coordinates( T & mesh ) {
   using vector_t = typename T::vector_t;
 
   // access what we need
-  auto coord0 = get_accessor( mesh, hydro, node_coordinates, vector_t, dense, 0 );
+  auto coord0 = flecsi_get_accessor( mesh, hydro, node_coordinates, vector_t, dense, 0 );
 
   // Loop over vertices
   auto vs = mesh.vertices();
@@ -807,7 +807,7 @@ int32_t restore_coordinates( T & mesh ) {
   using vector_t = typename T::vector_t;
 
   // access what we need
-  auto coord0 = get_accessor( mesh, hydro, node_coordinates, vector_t, dense, 0 );
+  auto coord0 = flecsi_get_accessor( mesh, hydro, node_coordinates, vector_t, dense, 0 );
 
   // Loop over vertices
   auto vs = mesh.vertices();
@@ -839,11 +839,11 @@ int32_t save_solution( T & mesh ) {
   using vector_t = typename T::vector_t;
 
   // access what we need
-  auto vel  = get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
-  auto vel0 = get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 1 );
+  auto vel  = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
+  auto vel0 = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 1 );
 
-  auto ener  = get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 0 );
-  auto ener0 = get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 1 );
+  auto ener  = flecsi_get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 0 );
+  auto ener0 = flecsi_get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 1 );
 
   // Loop over cells
   auto cs = mesh.cells();
@@ -876,11 +876,11 @@ int32_t restore_solution( T & mesh ) {
   using vector_t = typename T::vector_t;
 
   // access what we need
-  auto vel  = get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
-  auto vel0 = get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 1 );
+  auto vel  = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
+  auto vel0 = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 1 );
 
-  auto ener  = get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 0 );
-  auto ener0 = get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 1 );
+  auto ener  = flecsi_get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 0 );
+  auto ener0 = flecsi_get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 1 );
 
   // Loop over cells
   auto cs = mesh.cells();
@@ -926,6 +926,7 @@ int32_t output( T & mesh,
   
   return 0;
 }
+
 
 } // namespace hydro
 } // namespace apps

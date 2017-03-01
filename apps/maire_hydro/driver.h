@@ -13,7 +13,8 @@
 #include "../common/parse_arguments.h"
 
 // user includes
-#include <ale/utils/time_utils.h>
+#include <flecsale/mesh/mesh_utils.h>
+#include <flecsale/utils/time_utils.h>
 
 // system includes
 #include <getopt.h>
@@ -118,41 +119,41 @@ int driver(int argc, char** argv)
 
   // create some field data.  Fields are registered as struct of arrays.
   // this allows us to access the data in different patterns.
-  register_data(mesh, hydro, cell_mass,       real_t, dense, 1, cells);
-  register_data(mesh, hydro, cell_pressure,   real_t, dense, 1, cells);
-  register_data(mesh, hydro, cell_velocity, vector_t, dense, 2, cells);
+  flecsi_register_data(mesh, hydro, cell_mass,       real_t, dense, 1, cells);
+  flecsi_register_data(mesh, hydro, cell_pressure,   real_t, dense, 1, cells);
+  flecsi_register_data(mesh, hydro, cell_velocity, vector_t, dense, 2, cells);
 
-  register_data(mesh, hydro, cell_density,         real_t, dense, 1, cells);
-  register_data(mesh, hydro, cell_internal_energy, real_t, dense, 2, cells);
-  register_data(mesh, hydro, cell_temperature,     real_t, dense, 1, cells);
-  register_data(mesh, hydro, cell_sound_speed,     real_t, dense, 1, cells);
+  flecsi_register_data(mesh, hydro, cell_density,         real_t, dense, 1, cells);
+  flecsi_register_data(mesh, hydro, cell_internal_energy, real_t, dense, 2, cells);
+  flecsi_register_data(mesh, hydro, cell_temperature,     real_t, dense, 1, cells);
+  flecsi_register_data(mesh, hydro, cell_sound_speed,     real_t, dense, 1, cells);
 
-  register_data(mesh, hydro, cell_residual, flux_data_t, dense, 1, cells);
+  flecsi_register_data(mesh, hydro, cell_residual, flux_data_t, dense, 1, cells);
 
-  register_data(mesh, hydro, node_coordinates, vector_t, dense, 1, vertices);
-  register_data(mesh, hydro, node_velocity, vector_t, dense, 1, vertices);
+  flecsi_register_data(mesh, hydro, node_coordinates, vector_t, dense, 1, vertices);
+  flecsi_register_data(mesh, hydro, node_velocity, vector_t, dense, 1, vertices);
   
-  register_data(mesh, hydro, corner_matrix, matrix_t, dense, 1, corners);
-  register_data(mesh, hydro, corner_normal, vector_t, dense, 1, corners);
+  flecsi_register_data(mesh, hydro, corner_matrix, matrix_t, dense, 1, corners);
+  flecsi_register_data(mesh, hydro, corner_normal, vector_t, dense, 1, corners);
 
   // register the time step and set a cfl
-  register_data( mesh, hydro, time_step, real_t, global, 1 );
-  register_data( mesh, hydro, cfl, time_constants_t, global, 1 );
+  flecsi_register_data( mesh, hydro, time_step, real_t, global, 1 );
+  flecsi_register_data( mesh, hydro, cfl, time_constants_t, global, 1 );
   
-  *get_accessor( mesh, hydro, time_step, real_t, global, 0 ) = inputs_t::initial_time_step;
-  *get_accessor( mesh, hydro, cfl, time_constants_t, global, 0 ) = inputs_t::CFL;
+  *flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 ) = inputs_t::initial_time_step;
+  *flecsi_get_accessor( mesh, hydro, cfl, time_constants_t, global, 0 ) = inputs_t::CFL;
 
   // set the persistent variables, i.e. the ones that will be plotted
-  get_accessor(mesh, hydro, cell_mass,       real_t, dense, 0).attributes().set(persistent);
-  get_accessor(mesh, hydro, cell_pressure,   real_t, dense, 0).attributes().set(persistent);
-  get_accessor(mesh, hydro, cell_velocity, vector_t, dense, 0).attributes().set(persistent);
+  flecsi_get_accessor(mesh, hydro, cell_mass,       real_t, dense, 0).attributes().set(persistent);
+  flecsi_get_accessor(mesh, hydro, cell_pressure,   real_t, dense, 0).attributes().set(persistent);
+  flecsi_get_accessor(mesh, hydro, cell_velocity, vector_t, dense, 0).attributes().set(persistent);
 
-  get_accessor(mesh, hydro, cell_density,         real_t, dense, 0).attributes().set(persistent);
-  get_accessor(mesh, hydro, cell_internal_energy, real_t, dense, 0).attributes().set(persistent);
-  get_accessor(mesh, hydro, cell_temperature,     real_t, dense, 0).attributes().set(persistent);
-  get_accessor(mesh, hydro, cell_sound_speed,     real_t, dense, 0).attributes().set(persistent);
+  flecsi_get_accessor(mesh, hydro, cell_density,         real_t, dense, 0).attributes().set(persistent);
+  flecsi_get_accessor(mesh, hydro, cell_internal_energy, real_t, dense, 0).attributes().set(persistent);
+  flecsi_get_accessor(mesh, hydro, cell_temperature,     real_t, dense, 0).attributes().set(persistent);
+  flecsi_get_accessor(mesh, hydro, cell_sound_speed,     real_t, dense, 0).attributes().set(persistent);
 
-  get_accessor(mesh, hydro, node_velocity, vector_t, dense, 0).attributes().set(persistent);
+  flecsi_get_accessor(mesh, hydro, node_velocity, vector_t, dense, 0).attributes().set(persistent);
   
 
   //===========================================================================
@@ -161,13 +162,13 @@ int driver(int argc, char** argv)
   
   // now call the main task to set the ics.  Here we set primitive/physical 
   // quanties
-  execute_task( initial_conditions_task, loc, single, mesh, inputs_t::ics );
+  flecsi_execute_task( initial_conditions_task, loc, single, mesh, inputs_t::ics );
   
 
   // Update the EOS
-  execute_task( 
+  flecsi_execute_task( 
     update_state_from_pressure_task, loc, single, mesh, inputs_t::eos.get()
-   );
+  );
 
   //===========================================================================
   // Pre-processing
@@ -212,7 +213,7 @@ int driver(int argc, char** argv)
   //===========================================================================
 
   // get the time step accessor
-  auto time_step = get_accessor( mesh, hydro, time_step, real_t, global, 0 );   
+  auto time_step = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );   
 
   // a counter for this session
   size_t num_steps = 0; 
@@ -227,26 +228,26 @@ int driver(int argc, char** argv)
     //--------------------------------------------------------------------------
 
     // Save solution at n=0
-    execute_task( save_coordinates_task, loc, single, mesh );
-    execute_task( save_solution_task, loc, single, mesh );
+    flecsi_execute_task( save_coordinates_task, loc, single, mesh );
+    flecsi_execute_task( save_solution_task, loc, single, mesh );
 
     //--------------------------------------------------------------------------
     // Predictor step : Evaluate Forces at n=0
     //--------------------------------------------------------------------------
 
     // estimate the nodal velocity at n=0
-    execute_task( estimate_nodal_state_task, loc, single, mesh );
+    flecsi_execute_task( estimate_nodal_state_task, loc, single, mesh );
 
     // evaluate corner matrices and normals at n=0 
-    execute_task( 
+    flecsi_execute_task( 
       evaluate_corner_coef_task, loc, single, mesh, inputs_t::eos.get()
     );
 
     // compute the nodal velocity at n=0
-    execute_task( evaluate_nodal_state_task, loc, single, mesh, boundaries );
+    flecsi_execute_task( evaluate_nodal_state_task, loc, single, mesh, boundaries );
 
     // compute the fluxes
-    execute_task( evaluate_forces_task, loc, single, mesh );
+    flecsi_execute_task( evaluate_forces_task, loc, single, mesh );
 
     //--------------------------------------------------------------------------
     // Time step evaluation
@@ -254,7 +255,7 @@ int driver(int argc, char** argv)
 
     // compute the time step
     std::string limit_string;
-    execute_task( evaluate_time_step_task, loc, single, mesh, limit_string );
+    flecsi_execute_task( evaluate_time_step_task, loc, single, mesh, limit_string );
     
     // access the computed time step and make sure its not too large
     *time_step = std::min( *time_step, inputs_t::final_time - soln_time );       
@@ -284,13 +285,13 @@ int driver(int argc, char** argv)
     //--------------------------------------------------------------------------
 
     // move the mesh to n+1/2
-    execute_task( move_mesh_task, loc, single, mesh, 0.5 );
+    flecsi_execute_task( move_mesh_task, loc, single, mesh, 0.5 );
 
     // update solution to n+1/2
-    execute_task( apply_update_task, loc, single, mesh, 0.5, true );
+    flecsi_execute_task( apply_update_task, loc, single, mesh, 0.5, true );
 
     // Update derived solution quantities
-    execute_task( 
+    flecsi_execute_task( 
       update_state_from_energy_task, loc, single, mesh, inputs_t::eos.get() 
     );
 
@@ -299,34 +300,34 @@ int driver(int argc, char** argv)
     //--------------------------------------------------------------------------
 
     // evaluate corner matrices and normals at n=1/2
-    execute_task( 
+    flecsi_execute_task( 
       evaluate_corner_coef_task, loc, single, mesh, inputs_t::eos.get()
     );
 
     // compute the nodal velocity at n=1/2
-    execute_task( evaluate_nodal_state_task, loc, single, mesh, boundaries );
+    flecsi_execute_task( evaluate_nodal_state_task, loc, single, mesh, boundaries );
 
     // compute the fluxes
-    execute_task( evaluate_forces_task, loc, single, mesh );
+    flecsi_execute_task( evaluate_forces_task, loc, single, mesh );
 
     //--------------------------------------------------------------------------
     // Move to n+1
     //--------------------------------------------------------------------------
 
     // restore the solution to n=0
-    execute_task( restore_coordinates_task, loc, single, mesh );
-    execute_task( restore_solution_task, loc, single, mesh );
+    flecsi_execute_task( restore_coordinates_task, loc, single, mesh );
+    flecsi_execute_task( restore_solution_task, loc, single, mesh );
 
 #endif
 
     // move the mesh to n+1
-    execute_task( move_mesh_task, loc, single, mesh, 1.0 );
+    flecsi_execute_task( move_mesh_task, loc, single, mesh, 1.0 );
     
     // update solution to n+1
-    execute_task( apply_update_task, loc, single, mesh, 1.0, false );
+    flecsi_execute_task( apply_update_task, loc, single, mesh, 1.0, false );
 
     // Update derived solution quantities
-    execute_task( 
+    flecsi_execute_task( 
       update_state_from_energy_task, loc, single, mesh, inputs_t::eos.get() 
     );
 
@@ -363,6 +364,9 @@ int driver(int argc, char** argv)
   std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
             << tdelta << "s." << std::endl;
   
+  // now output the checksums
+  mesh::checksum(mesh);
+
   // success
   return 0;
 
