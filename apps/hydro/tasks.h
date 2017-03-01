@@ -37,11 +37,11 @@ int32_t initial_conditions( T & mesh, F && ics ) {
   auto soln_time = mesh.time();
 
   // get the collection accesor
-  auto d = get_accessor( mesh, hydro, density,    real_t, dense, 0 );
-  auto p = get_accessor( mesh, hydro, pressure,   real_t, dense, 0 );
-  auto v = get_accessor( mesh, hydro, velocity, vector_t, dense, 0 );
+  auto d = flecsi_get_accessor( mesh, hydro, density,    real_t, dense, 0 );
+  auto p = flecsi_get_accessor( mesh, hydro, pressure,   real_t, dense, 0 );
+  auto v = flecsi_get_accessor( mesh, hydro, velocity, vector_t, dense, 0 );
 
-  auto xc = get_accessor( mesh, mesh, cell_centroid, vector_t, dense, 0 );
+  auto xc = flecsi_get_accessor( mesh, mesh, cell_centroid, vector_t, dense, 0 );
 
   auto cs = mesh.cells();
   auto num_cells = cs.size();
@@ -73,7 +73,7 @@ int32_t update_state_from_pressure( T & mesh ) {
   using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the collection accesor
-  auto eos = get_accessor( mesh, hydro, eos, eos_t, global, 0 );
+  auto eos = flecsi_get_accessor( mesh, hydro, eos, eos_t, global, 0 );
   state_accessor<T> state( mesh );
 
   auto cs = mesh.cells();
@@ -106,7 +106,7 @@ int32_t update_state_from_energy( T & mesh ) {
   using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the collection accesor
-  auto eos = get_accessor( mesh, hydro, eos, eos_t, global, 0 );
+  auto eos = flecsi_get_accessor( mesh, hydro, eos, eos_t, global, 0 );
   state_accessor<T> state( mesh );
 
   // get the cells
@@ -142,12 +142,12 @@ int32_t evaluate_time_step( T & mesh ) {
   // access what we need
   state_accessor<T> state( mesh );
 
-  auto delta_t = get_accessor( mesh, hydro, time_step, real_t, global, 0 );
-  const auto cfl = get_accessor( mesh, hydro, cfl, real_t, global, 0 );
+  auto delta_t = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
+  const auto cfl = flecsi_get_accessor( mesh, hydro, cfl, real_t, global, 0 );
  
-  auto area   = get_accessor( mesh, mesh, face_area, real_t, dense, 0 );
-  auto normal = get_accessor( mesh, mesh, face_normal, vector_t, dense, 0 );
-  auto volume = get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 );
+  auto area   = flecsi_get_accessor( mesh, mesh, face_area, real_t, dense, 0 );
+  auto normal = flecsi_get_accessor( mesh, mesh, face_normal, vector_t, dense, 0 );
+  auto volume = flecsi_get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 );
  
   // Loop over each cell, computing the minimum time step,
   // which is also the maximum 1/dt
@@ -202,11 +202,11 @@ int32_t evaluate_fluxes( T & mesh ) {
   using flux_data_t = flux_data_t<T::num_dimensions>;
 
   // access what we need
-  auto flux = get_accessor( mesh, hydro, flux, flux_data_t, dense, 0 );
+  auto flux = flecsi_get_accessor( mesh, hydro, flux, flux_data_t, dense, 0 );
   state_accessor<T> state( mesh );
 
-  auto area   = get_accessor( mesh, mesh, face_area, real_t, dense, 0 );
-  auto normal = get_accessor( mesh, mesh, face_normal, vector_t, dense, 0 );
+  auto area   = flecsi_get_accessor( mesh, mesh, face_area, real_t, dense, 0 );
+  auto normal = flecsi_get_accessor( mesh, mesh, face_normal, vector_t, dense, 0 );
 
   //----------------------------------------------------------------------------
   // TASK: loop over each edge and compute/store the flux
@@ -269,13 +269,13 @@ int32_t apply_update( T & mesh ) {
   using eqns_t = eqns_t<T::num_dimensions>;
 
   // access what we need
-  auto flux = get_accessor( mesh, hydro, flux, flux_data_t, dense, 0 );
+  auto flux = flecsi_get_accessor( mesh, hydro, flux, flux_data_t, dense, 0 );
   state_accessor<T> state( mesh );
   
-  auto volume = get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 );
+  auto volume = flecsi_get_accessor( mesh, mesh, cell_volume, real_t, dense, 0 );
 
   // read only access
-  const auto delta_t = get_accessor( mesh, hydro, time_step, real_t, global, 0 );
+  const auto delta_t = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
 
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell

@@ -84,8 +84,8 @@ int32_t checksum( T & mesh )
   // Checksum Nodal Solution Quantities
 
   // real scalars persistent at vertices
-  auto rspav = get_accessors_all(
-    mesh, real_t, dense, 0, has_attribute_at(persistent,vertices)
+  auto rspav = flecsi_get_accessors_all(
+    mesh, real_t, dense, 0, flecsi_has_attribute_at(persistent,vertices)
   );
   for(auto sf: rspav) {
     auto cs = checksum( verts, sf );
@@ -94,8 +94,8 @@ int32_t checksum( T & mesh )
   }
 
   // int scalars persistent at vertices
-  auto ispav = get_accessors_all(
-    mesh, integer_t, dense, 0, has_attribute_at(persistent,vertices)
+  auto ispav = flecsi_get_accessors_all(
+    mesh, integer_t, dense, 0, flecsi_has_attribute_at(persistent,vertices)
   );
   for(auto sf: ispav) {
     auto cs = checksum( verts, sf );
@@ -104,8 +104,8 @@ int32_t checksum( T & mesh )
   }
 
   // real vectors persistent at vertices
-  auto rvpav = get_accessors_all(
-    mesh, vector_t, dense, 0, has_attribute_at(persistent,vertices)
+  auto rvpav = flecsi_get_accessors_all(
+    mesh, vector_t, dense, 0, flecsi_has_attribute_at(persistent,vertices)
   );
   for(auto vf: rvpav) {
     for(int d=0; d < num_dims; ++d) {
@@ -121,8 +121,8 @@ int32_t checksum( T & mesh )
   auto cels = mesh.cells();
 
   // real scalars persistent at cells
-  auto rspac = get_accessors_all(
-    mesh, real_t, dense, 0, has_attribute_at(persistent,cells)
+  auto rspac = flecsi_get_accessors_all(
+    mesh, real_t, dense, 0, flecsi_has_attribute_at(persistent,cells)
   );
   for(auto sf: rspac) {
     auto cs = checksum( cels, sf );
@@ -130,8 +130,8 @@ int32_t checksum( T & mesh )
               << std::setw(32) << cs.strvalue << std::endl;
   }
   // int scalars persistent at cells
-  auto ispac = get_accessors_all(
-    mesh, integer_t, dense, 0, has_attribute_at(persistent,cells)
+  auto ispac = flecsi_get_accessors_all(
+    mesh, integer_t, dense, 0, flecsi_has_attribute_at(persistent,cells)
   );
   for(auto sf: ispac) {
     auto cs = checksum( cels, sf );
@@ -139,8 +139,8 @@ int32_t checksum( T & mesh )
               << std::setw(32) << cs.strvalue << std::endl;
   }
   // real vectors persistent at cells
-  auto rvpac = get_accessors_all(
-    mesh, vector_t, dense, 0, has_attribute_at(persistent,cells)
+  auto rvpac = flecsi_get_accessors_all(
+    mesh, vector_t, dense, 0, flecsi_has_attribute_at(persistent,cells)
   );
   for(auto vf: rvpac) {
     for(int d=0; d < num_dims; ++d) {

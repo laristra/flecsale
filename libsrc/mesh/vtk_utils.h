@@ -125,8 +125,8 @@ static auto write_fields_to_vtk( M & m, vtkUnstructuredGrid* ug )
   auto pd = ug->GetPointData();
 
   // real scalars persistent at vertices
-  auto rspav = get_accessors_all(
-    m, real_t, dense, 0, has_attribute_at(persistent,vertices)
+  auto rspav = flecsi_get_accessors_all(
+    m, real_t, dense, 0, flecsi_has_attribute_at(persistent,vertices)
   );
   for(auto sf: rspav) {
     auto label = validate_string( sf.label() );      
@@ -138,8 +138,8 @@ static auto write_fields_to_vtk( M & m, vtkUnstructuredGrid* ug )
   } // for
 
   // int scalars persistent at vertices
-  auto ispav = get_accessors_all(
-    m, integer_t, dense, 0, has_attribute_at(persistent,vertices)
+  auto ispav = flecsi_get_accessors_all(
+    m, integer_t, dense, 0, flecsi_has_attribute_at(persistent,vertices)
   );
   for(auto sf: ispav) {
     auto label = validate_string( sf.label() );
@@ -151,8 +151,8 @@ static auto write_fields_to_vtk( M & m, vtkUnstructuredGrid* ug )
   } // for
 
   // real vectors persistent at vertices
-  auto rvpav = get_accessors_all(
-    m, vector_t, dense, 0, has_attribute_at(persistent,vertices)
+  auto rvpav = flecsi_get_accessors_all(
+    m, vector_t, dense, 0, flecsi_has_attribute_at(persistent,vertices)
   );
   for(auto vf: rvpav) {
     auto label = validate_string( vf.label() );
@@ -177,8 +177,8 @@ static auto write_fields_to_vtk( M & m, vtkUnstructuredGrid* ug )
 
 
   // real scalars persistent at cells
-  auto rspac = get_accessors_all(
-    m, real_t, dense, 0, has_attribute_at(persistent,cells)
+  auto rspac = flecsi_get_accessors_all(
+    m, real_t, dense, 0, flecsi_has_attribute_at(persistent,cells)
   );
   for(auto sf: rspac) {
     auto label = validate_string( sf.label() );      
@@ -190,8 +190,8 @@ static auto write_fields_to_vtk( M & m, vtkUnstructuredGrid* ug )
   } // for
 
   // int scalars persistent at cells
-  auto ispac = get_accessors_all(
-    m, integer_t, dense, 0, has_attribute_at(persistent,cells)
+  auto ispac = flecsi_get_accessors_all(
+    m, integer_t, dense, 0, flecsi_has_attribute_at(persistent,cells)
   );
   for(auto sf: ispac) {
     auto label = validate_string( sf.label() );
@@ -203,8 +203,8 @@ static auto write_fields_to_vtk( M & m, vtkUnstructuredGrid* ug )
   } // for
     
   // real vectors persistent at cells
-  auto rvpac = get_accessors_all(
-    m, vector_t, dense, 0, has_attribute_at(persistent,cells)
+  auto rvpac = flecsi_get_accessors_all(
+    m, vector_t, dense, 0, flecsi_has_attribute_at(persistent,cells)
   );
   for(auto vf: rvpac) {
     auto label = validate_string( vf.label() );

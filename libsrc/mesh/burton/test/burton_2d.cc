@@ -350,28 +350,28 @@ TEST_F(burton_2d, accessors) {
   cout << "accessors" << endl;
   cout << separator;
 
-  register_data(mesh_, hydro, pressure, real_t, dense, 1, cells);
-  register_data(mesh_, hydro, density, real_t, dense, 1, cells);
-  register_data(mesh_, hydro, total_energy, real_t, dense, 1, cells);
-  register_data(mesh_, hydro, velocity, vector_t, dense, 1, vertices);
-  register_data(mesh_, hydro, H, vector_t, dense, 1, edges);
-  register_data(mesh_, hydro, point_not_persistent, point_t, dense, 1, vertices);
-  register_data(mesh_, hydro, point_is_persistent, point_t, dense, 1, vertices);
+  flecsi_register_data(mesh_, hydro, pressure, real_t, dense, 1, cells);
+  flecsi_register_data(mesh_, hydro, density, real_t, dense, 1, cells);
+  flecsi_register_data(mesh_, hydro, total_energy, real_t, dense, 1, cells);
+  flecsi_register_data(mesh_, hydro, velocity, vector_t, dense, 1, vertices);
+  flecsi_register_data(mesh_, hydro, H, vector_t, dense, 1, edges);
+  flecsi_register_data(mesh_, hydro, point_not_persistent, point_t, dense, 1, vertices);
+  flecsi_register_data(mesh_, hydro, point_is_persistent, point_t, dense, 1, vertices);
 
-  get_accessor(mesh_, hydro, pressure, real_t, dense, 0).attributes().set( persistent );
-  get_accessor(mesh_, hydro, total_energy, real_t, dense, 0).attributes().set( persistent );
-  get_accessor(mesh_, hydro, velocity, vector_t, dense, 0).attributes().set( persistent );
-  get_accessor(mesh_, hydro, point_is_persistent, point_t, dense, 0).attributes().set( persistent );
+  flecsi_get_accessor(mesh_, hydro, pressure, real_t, dense, 0).attributes().set( persistent );
+  flecsi_get_accessor(mesh_, hydro, total_energy, real_t, dense, 0).attributes().set( persistent );
+  flecsi_get_accessor(mesh_, hydro, velocity, vector_t, dense, 0).attributes().set( persistent );
+  flecsi_get_accessor(mesh_, hydro, point_is_persistent, point_t, dense, 0).attributes().set( persistent );
 
   struct data_t {
     double x, y;
   };  
-  register_data(mesh_, hydro, const, data_t, global, 1);
+  flecsi_register_data(mesh_, hydro, const, data_t, global, 1);
 
   cout << "Accessing state with type real_t" << endl;
 
   std::vector<std::string> labels;
-  auto vr = get_accessors(mesh_, hydro, real_t, dense, 0);
+  auto vr = flecsi_get_accessors(mesh_, hydro, real_t, dense, 0);
   for(auto v: vr) {
     std::cout << v.label() << std::endl;
     labels.push_back(v.label());
@@ -387,7 +387,7 @@ TEST_F(burton_2d, accessors) {
 
   cout << "Accessing state with type data_t" << endl;
 
-  auto vd = get_accessors(mesh_, hydro, data_t, global, 0);
+  auto vd = flecsi_get_accessors(mesh_, hydro, data_t, global, 0);
   for(auto v: vd) {
     labels.push_back(v.label());
   } // for
@@ -397,7 +397,7 @@ TEST_F(burton_2d, accessors) {
 
   cout << "Accessing state with type real_t at cells" << endl;
 
-  auto va = get_accessors(mesh_, hydro, real_t, dense, 0, is_at(cells));
+  auto va = flecsi_get_accessors(mesh_, hydro, real_t, dense, 0, flecsi_is_at(cells));
   for(auto v: va) {
     labels.push_back(v.label());
   } // for
@@ -412,7 +412,7 @@ TEST_F(burton_2d, accessors) {
   cout << "Accessing persistent state with type real_t at cells"
     << endl;
 
-  auto vp = get_accessors(mesh_, hydro, real_t, dense, 0, has_attribute_at(persistent, cells));
+  auto vp = flecsi_get_accessors(mesh_, hydro, real_t, dense, 0, flecsi_has_attribute_at(persistent, cells));
 
   for(auto v: vp) {
     labels.push_back(v.label());
@@ -425,7 +425,7 @@ TEST_F(burton_2d, accessors) {
 
   cout << "Accessing state with type vector_t at vertices" << endl;
 
-  auto vv = get_accessors(mesh_, hydro, vector_t, dense, 0, is_at(vertices));
+  auto vv = flecsi_get_accessors(mesh_, hydro, vector_t, dense, 0, flecsi_is_at(vertices));
   for(auto v: vv) {
     labels.push_back(v.label());
   } // for
@@ -436,7 +436,7 @@ TEST_F(burton_2d, accessors) {
   cout
     << "Accessing persistent state with type vector_t at vertices" << endl;
 
-  auto vpv = get_accessors(mesh_, hydro, vector_t, dense, 0, has_attribute_at(persistent, vertices));
+  auto vpv = flecsi_get_accessors(mesh_, hydro, vector_t, dense, 0, flecsi_has_attribute_at(persistent, vertices));
   for(auto v: vpv) {
     labels.push_back(v.label());
   } // for
@@ -446,7 +446,7 @@ TEST_F(burton_2d, accessors) {
 
   cout << "Accessing state with type vector_t at edges" << endl;
 
-  auto ve = get_accessors(mesh_, hydro, vector_t, dense, 0, is_at(edges));
+  auto ve = flecsi_get_accessors(mesh_, hydro, vector_t, dense, 0, flecsi_is_at(edges));
   for(auto v: ve) {
     labels.push_back(v.label());
   } // for
@@ -456,7 +456,7 @@ TEST_F(burton_2d, accessors) {
 
   cout << "Accessing state with type point_t at vertices" << endl;
 
-  auto pv = get_accessors(mesh_, hydro, point_t, dense, 0, is_at(vertices));
+  auto pv = flecsi_get_accessors(mesh_, hydro, point_t, dense, 0, flecsi_is_at(vertices));
   for(auto v: pv) {
     labels.push_back(v.label());
   } // for
@@ -469,7 +469,7 @@ TEST_F(burton_2d, accessors) {
   cout << "Accessing persistent state with type point_t at vertices"
             << endl;
 
-  auto ppv = get_accessors(mesh_, hydro, point_t, dense, 0, has_attribute_at(persistent,vertices));
+  auto ppv = flecsi_get_accessors(mesh_, hydro, point_t, dense, 0, flecsi_has_attribute_at(persistent,vertices));
   for(auto v: ppv) {
     labels.push_back(v.label());
   } // for
@@ -491,26 +491,26 @@ TEST_F(burton_2d, state) {
   cout << "state" << endl;
   cout << separator;
 
-  register_data(mesh_, hydro, pressure, real_t, dense, 1, cells);
-  register_data(mesh_, hydro, velocity, vector_t, dense, 1, vertices);
-  register_data(mesh_, hydro, H, vector_t, dense, 1, edges);
-  register_data(mesh_, hydro, cornerdata, integer_t, dense, 1, corners);
-  register_data(mesh_, hydro, wedgedata, bool, dense, 1, wedges);
+  flecsi_register_data(mesh_, hydro, pressure, real_t, dense, 1, cells);
+  flecsi_register_data(mesh_, hydro, velocity, vector_t, dense, 1, vertices);
+  flecsi_register_data(mesh_, hydro, H, vector_t, dense, 1, edges);
+  flecsi_register_data(mesh_, hydro, cornerdata, integer_t, dense, 1, corners);
+  flecsi_register_data(mesh_, hydro, wedgedata, bool, dense, 1, wedges);
 
-  get_accessor(mesh_, hydro, pressure, real_t, dense, 0).attributes().set(persistent);
-  get_accessor(mesh_, hydro, velocity, vector_t, dense, 0).attributes().set(persistent);
+  flecsi_get_accessor(mesh_, hydro, pressure, real_t, dense, 0).attributes().set(persistent);
+  flecsi_get_accessor(mesh_, hydro, velocity, vector_t, dense, 0).attributes().set(persistent);
 
   struct data_t {
     int x, y;
   };  
-  register_data(mesh_, hydro, const, data_t, global, 1);
+  flecsi_register_data(mesh_, hydro, const, data_t, global, 1);
 
 
-  auto p = get_accessor(mesh_, hydro, pressure, real_t, dense, 0);
-  auto velocity = get_accessor(mesh_, hydro, velocity, vector_t, dense, 0);
-  auto H = get_accessor(mesh_, hydro, H, vector_t, dense, 0);
-  auto cd = get_accessor(mesh_, hydro, cornerdata, integer_t, dense, 0);
-  auto wd = get_accessor(mesh_, hydro, wedgedata, bool, dense, 0);
+  auto p = flecsi_get_accessor(mesh_, hydro, pressure, real_t, dense, 0);
+  auto velocity = flecsi_get_accessor(mesh_, hydro, velocity, vector_t, dense, 0);
+  auto H = flecsi_get_accessor(mesh_, hydro, H, vector_t, dense, 0);
+  auto cd = flecsi_get_accessor(mesh_, hydro, cornerdata, integer_t, dense, 0);
+  auto wd = flecsi_get_accessor(mesh_, hydro, wedgedata, bool, dense, 0);
 
   // cells
   ASSERT_EQ(4, mesh_.num_cells());
@@ -572,7 +572,7 @@ TEST_F(burton_2d, state) {
   } // for
 
   // test global data
-  auto cnst = get_accessor(mesh_, hydro, const, data_t, global, 0);
+  auto cnst = flecsi_get_accessor(mesh_, hydro, const, data_t, global, 0);
   *cnst = { 1, 2 };
   ASSERT_EQ(1, cnst->x);  ASSERT_EQ(1, (*cnst).x);
   ASSERT_EQ(2, cnst->y);  ASSERT_EQ(2, (*cnst).y);
