@@ -137,9 +137,8 @@ int driver(int argc, char** argv)
   // solver state
   flecsi_register_data(mesh, hydro, cell_residual, flux_data_t, dense, 1, cells);
 
-  flecsi_register_data(mesh, hydro, corner_matrix, matrix_t, dense, 1, corners);
   flecsi_register_data(mesh, hydro, corner_normal, vector_t, dense, 1, corners);
-  flecsi_register_data(mesh, hydro, corner_impedance, real_t, dense, 1, corners);
+  flecsi_register_data(mesh, hydro, corner_force, vector_t, dense, 1, corners);
   
   // register the time step and set a cfl
   flecsi_register_data( mesh, hydro, time_step, real_t, global, 1 );
@@ -243,19 +242,10 @@ int driver(int argc, char** argv)
     // estimate the nodal velocity at n=0
     flecsi_execute_task( estimate_nodal_state_task, loc, single, mesh );
 
-    // evaluate corner matrices and normals at n=0 
-    flecsi_execute_task( 
-      evaluate_corner_coef_task, loc, single, mesh, inputs_t::eos.get() 
-    );
-    evaluate_corner_quantities( mesh, inputs_t::eos.get() );
-
     // compute the nodal velocity at n=0
     flecsi_execute_task( 
       evaluate_nodal_state_task, loc, single, mesh, boundaries
     );
-
-    // compute the fluxes
-    flecsi_execute_task( evaluate_forces_task, loc, single, mesh );
 
     //--------------------------------------------------------------------------
     // Time step evaluation
@@ -307,19 +297,10 @@ int driver(int argc, char** argv)
     // Corrector : Evaluate Forces at n=1/2
     //--------------------------------------------------------------------------
 
-    // evaluate corner matrices and normals at n=1/2
-    flecsi_execute_task( 
-      evaluate_corner_coef_task, loc, single, mesh, inputs_t::eos.get() 
-    );
-    evaluate_corner_quantities( mesh, inputs_t::eos.get() );
-
     // compute the nodal velocity at n=1/2
     flecsi_execute_task( 
       evaluate_nodal_state_task, loc, single, mesh, boundaries
     );
-
-    // compute the fluxes
-    flecsi_execute_task( evaluate_forces_task, loc, single, mesh );
 
     //--------------------------------------------------------------------------
     // Move to n+1

@@ -91,34 +91,11 @@ int32_t estimate_nodal_state_task( mesh::burton_mesh_3d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t evaluate_corner_coef_task( 
-  mesh::burton_mesh_3d_t & mesh, const eos_t * eos
-) {
-  return evaluate_corner_coef( mesh, eos );
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to compute nodal quantities
-//!
-//! \param [in,out] mesh the mesh object
-//! \return 0 for success
-////////////////////////////////////////////////////////////////////////////////
 int32_t evaluate_nodal_state_task( 
   mesh::burton_mesh_3d_t & mesh, 
   const boundary_map_t<mesh::burton_mesh_3d_t::num_dimensions> & boundary_map
 ) {
   return evaluate_nodal_state( mesh, boundary_map );
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to evaluate residuals
-//!
-//! \param [in,out] mesh the mesh object
-//! \return 0 for success
-////////////////////////////////////////////////////////////////////////////////
-int32_t evaluate_forces_task( mesh::burton_mesh_3d_t & mesh ) 
-{
-  return evaluate_forces( mesh );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -197,9 +174,7 @@ flecsi_register_task(update_state_from_pressure_task, loc, single);
 flecsi_register_task(update_state_from_energy_task, loc, single);
 flecsi_register_task(evaluate_time_step_task, loc, single);
 flecsi_register_task(estimate_nodal_state_task, loc, single);
-flecsi_register_task(evaluate_corner_coef_task, loc, single);
 flecsi_register_task(evaluate_nodal_state_task, loc, single);
-flecsi_register_task(evaluate_forces_task, loc, single);
 flecsi_register_task(apply_update_task, loc, single);
 flecsi_register_task(move_mesh_task, loc, single);
 flecsi_register_task(save_coordinates_task, loc, single);
