@@ -111,9 +111,6 @@ int driver(int argc, char** argv)
   // Field Creation
   //===========================================================================
 
-  // setup an equation of state
-  eos_t eos( /* gamma */ 1.4, /* cv */ 1.0 ); 
-
   // start the timer
   auto tstart = utils::get_wall_time();
 
@@ -150,9 +147,6 @@ int driver(int argc, char** argv)
   flecsi_register_data( mesh, hydro, cfl, real_t, global, 1 );
   *flecsi_get_accessor( mesh, hydro, cfl, real_t, global, 0) = inputs_t::CFL;  
 
-  // register state a global eos
-  flecsi_register_data( mesh, hydro, eos, eos_t, global, 1 );
-  *flecsi_get_accessor( mesh, hydro, eos, eos_t, global, 0 ) = eos;
 
   //===========================================================================
   // Initial conditions
@@ -164,7 +158,9 @@ int driver(int argc, char** argv)
   
 
   // Update the EOS
-  flecsi_execute_task( update_state_from_pressure_task, loc, single, mesh );
+  flecsi_execute_task( 
+    update_state_from_pressure_task, loc, single, mesh, inputs_t::eos.get() 
+  );
 
   //===========================================================================
   // Pre-processing
@@ -213,7 +209,9 @@ int driver(int argc, char** argv)
     flecsi_execute_task( apply_update_task, loc, single, mesh );
 
     // Update derived solution quantities
-    flecsi_execute_task( update_state_from_energy_task, loc, single, mesh );
+    flecsi_execute_task( 
+      update_state_from_energy_task, loc, single, mesh, inputs_t::eos.get() 
+    );
 
 
     // update time

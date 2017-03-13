@@ -110,9 +110,6 @@ int driver(int argc, char** argv)
   // Field Creation
   //===========================================================================
 
-  // setup an equation of state
-  eos_t eos( /* gamma */ 1.4, /* cv */ 1.0 ); 
-
   // start the timer
   auto tstart = utils::get_wall_time();
 
@@ -146,11 +143,6 @@ int driver(int argc, char** argv)
   *flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 ) = inputs_t::initial_time_step;
   *flecsi_get_accessor( mesh, hydro, cfl, time_constants_t, global, 0 ) = inputs_t::CFL;
 
-
-  // register state a global eos
-  flecsi_register_data( mesh, hydro, eos, eos_t, global, 1 );
-  *flecsi_get_accessor( mesh, hydro, eos, eos_t, global, 0 ) = eos;
-
   // set the persistent variables, i.e. the ones that will be plotted
   flecsi_get_accessor(mesh, hydro, cell_mass,       real_t, dense, 0).attributes().set(persistent);
   flecsi_get_accessor(mesh, hydro, cell_pressure,   real_t, dense, 0).attributes().set(persistent);
@@ -174,7 +166,9 @@ int driver(int argc, char** argv)
   
 
   // Update the EOS
-  flecsi_execute_task( update_state_from_pressure_task, loc, single, mesh );
+  flecsi_execute_task( 
+    update_state_from_pressure_task, loc, single, mesh, inputs_t::eos.get()
+  );
 
   //===========================================================================
   // Pre-processing
@@ -245,7 +239,9 @@ int driver(int argc, char** argv)
     flecsi_execute_task( estimate_nodal_state_task, loc, single, mesh );
 
     // evaluate corner matrices and normals at n=0 
-    flecsi_execute_task( evaluate_corner_coef_task, loc, single, mesh );
+    flecsi_execute_task( 
+      evaluate_corner_coef_task, loc, single, mesh, inputs_t::eos.get()
+    );
 
     // compute the nodal velocity at n=0
     flecsi_execute_task( evaluate_nodal_state_task, loc, single, mesh, boundaries );
@@ -295,14 +291,18 @@ int driver(int argc, char** argv)
     flecsi_execute_task( apply_update_task, loc, single, mesh, 0.5, true );
 
     // Update derived solution quantities
-    flecsi_execute_task( update_state_from_energy_task, loc, single, mesh );
+    flecsi_execute_task( 
+      update_state_from_energy_task, loc, single, mesh, inputs_t::eos.get() 
+    );
 
     //--------------------------------------------------------------------------
     // Corrector : Evaluate Forces at n=1/2
     //--------------------------------------------------------------------------
 
     // evaluate corner matrices and normals at n=1/2
-    flecsi_execute_task( evaluate_corner_coef_task, loc, single, mesh );
+    flecsi_execute_task( 
+      evaluate_corner_coef_task, loc, single, mesh, inputs_t::eos.get()
+    );
 
     // compute the nodal velocity at n=1/2
     flecsi_execute_task( evaluate_nodal_state_task, loc, single, mesh, boundaries );
@@ -327,7 +327,9 @@ int driver(int argc, char** argv)
     flecsi_execute_task( apply_update_task, loc, single, mesh, 1.0, false );
 
     // Update derived solution quantities
-    flecsi_execute_task( update_state_from_energy_task, loc, single, mesh );
+    flecsi_execute_task( 
+      update_state_from_energy_task, loc, single, mesh, inputs_t::eos.get() 
+    );
 
     //--------------------------------------------------------------------------
     // End Time step

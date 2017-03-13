@@ -10,15 +10,18 @@
 // hydro includes
 #include "inputs.h"
 
+#include <flecsale/eos/ideal_gas.h>
+
 namespace apps {
 namespace hydro {
 
 // type aliases confined to this translation unit
+using base_t = inputs_t::base_t;
 using size_t = inputs_t::size_t;
 using real_t = inputs_t::real_t;
 using vector_t = inputs_t::vector_t;
 using string = std::string;
-using base_t = inputs_t::base_t;
+using eos_t = inputs_t::eos_t;
 
 
 // the case prefix
@@ -32,6 +35,12 @@ template<> size_t base_t::output_freq = 100;
 template<> real_t base_t::CFL = 1.0/2.0;
 template<> real_t base_t::final_time = 0.2;
 template<> size_t base_t::max_steps = 1e6;
+
+// the equation of state
+template<> std::shared_ptr<eos_t> base_t::eos = 
+  std::make_shared< ale::eos::ideal_gas_t<real_t> >( 
+    /* gamma */ 1.4, /* cv */ 1.0 
+  ); 
 
 // this is a lambda function to set the initial conditions
 template<>
