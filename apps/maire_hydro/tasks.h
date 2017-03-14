@@ -31,7 +31,7 @@ namespace hydro {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T, typename F >
-int32_t initial_conditions( T & mesh, F && ics ) {
+int initial_conditions( T & mesh, F && ics ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -76,7 +76,7 @@ int32_t initial_conditions( T & mesh, F && ics ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T, typename EOS >
-int32_t update_state_from_pressure( T & mesh, const EOS * eos ) {
+int update_state_from_pressure( T & mesh, const EOS * eos ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -106,7 +106,7 @@ int32_t update_state_from_pressure( T & mesh, const EOS * eos ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T, typename EOS >
-int32_t update_state_from_energy( T & mesh, const EOS * eos ) {
+int update_state_from_energy( T & mesh, const EOS * eos ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -142,7 +142,7 @@ int32_t update_state_from_energy( T & mesh, const EOS * eos ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t evaluate_time_step( T & mesh, std::string & limit_string ) 
+int evaluate_time_step( T & mesh, std::string & limit_string ) 
 {
 
   // type aliases
@@ -233,7 +233,7 @@ int32_t evaluate_time_step( T & mesh, std::string & limit_string )
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t estimate_nodal_state( T & mesh ) {
+int estimate_nodal_state( T & mesh ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -270,7 +270,7 @@ int32_t estimate_nodal_state( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T, typename BC >
-int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
+int evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -520,7 +520,7 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 //!   \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t apply_update( T & mesh, real_t coef, bool first_time ) {
+int apply_update( T & mesh, real_t coef, bool first_time ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -645,7 +645,7 @@ int32_t apply_update( T & mesh, real_t coef, bool first_time ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t move_mesh( T & mesh, real_t coef ) {
+int move_mesh( T & mesh, real_t coef ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -687,7 +687,7 @@ int32_t move_mesh( T & mesh, real_t coef ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t save_coordinates( T & mesh ) {
+int save_coordinates( T & mesh ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -718,7 +718,7 @@ int32_t save_coordinates( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t restore_coordinates( T & mesh ) {
+int restore_coordinates( T & mesh ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -749,7 +749,7 @@ int32_t restore_coordinates( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t save_solution( T & mesh ) {
+int save_solution( T & mesh ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -786,7 +786,7 @@ int32_t save_solution( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t restore_solution( T & mesh ) {
+int restore_solution( T & mesh ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -822,7 +822,7 @@ int32_t restore_solution( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t output( T & mesh, 
+int output( T & mesh, 
                 const std::string & prefix, 
                 const std::string & postfix, 
                 size_t output_freq ) 
