@@ -247,6 +247,9 @@ int driver(int argc, char** argv)
       evaluate_nodal_state_task, loc, single, mesh, boundaries
     );
 
+    // compute the fluxes
+    flecsi_execute_task( evaluate_residual_task, loc, single, mesh );
+
     //--------------------------------------------------------------------------
     // Time step evaluation
     //--------------------------------------------------------------------------
@@ -301,6 +304,9 @@ int driver(int argc, char** argv)
     flecsi_execute_task( 
       evaluate_nodal_state_task, loc, single, mesh, boundaries
     );
+
+    // compute the fluxes
+    flecsi_execute_task( evaluate_residual_task, loc, single, mesh );
 
     //--------------------------------------------------------------------------
     // Move to n+1

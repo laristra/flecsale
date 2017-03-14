@@ -99,6 +99,17 @@ int evaluate_nodal_state_task(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to sum the forces and comput the cell changes
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+int evaluate_residual_task( mesh::burton_mesh_2d_t & mesh ) 
+{
+  return evaluate_residual( mesh );
+}
+
+////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to update the solution
 //!
 //! \param [in,out] mesh the mesh object
@@ -175,6 +186,7 @@ flecsi_register_task(update_state_from_energy_task, loc, single);
 flecsi_register_task(evaluate_time_step_task, loc, single);
 flecsi_register_task(estimate_nodal_state_task, loc, single);
 flecsi_register_task(evaluate_nodal_state_task, loc, single);
+flecsi_register_task(evaluate_residual_task, loc, single);
 flecsi_register_task(apply_update_task, loc, single);
 flecsi_register_task(move_mesh_task, loc, single);
 flecsi_register_task(save_coordinates_task, loc, single);

@@ -512,6 +512,66 @@ int evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to sum the forces and comput the cell changes
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int32_t evaluate_residual( T & mesh ) {
+
+  // type aliases
+  using counter_t = typename T::counter_t;
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
+  using matrix_t = matrix_t< T::num_dimensions >; 
+  using flux_data_t = flux_data_t<T::num_dimensions>;
+  using eqns_t = eqns_t<T::num_dimensions>;
+
+  // access what we need
+  auto cell_state = cell_state_accessor<T>( mesh );
+
+  auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
+  
+  auto uv = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
+
+  auto npc = flecsi_get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
+  auto Fpc = flecsi_get_accessor( mesh, hydro, corner_force, vector_t, dense, 0 );
+
+  //----------------------------------------------------------------------------
+  // TASK: loop over each cell and compute the residual
+  
+  // get the cells
+  auto cs = mesh.cells();
+  auto num_cells = cs.size();
+
+  #pragma omp parallel for
+  for ( counter_t i=0; i<num_cells; i++ ) {
+    
+    // get the cell_t pointer
+    auto cl = cs[i];
+
+    //--------------------------------------------------------------------------
+    // Gather corner forces to compute the cell residual
+
+    // local cell residual
+    dudt[cl] = 0;
+
+    // compute subcell forces
+    for ( auto cn : mesh.corners(cl) ) {
+      // corner attaches to one point and zone
+      auto pt = mesh.vertices(cn).front();
+      // add contribution
+      eqns_t::compute_update( uv[pt], Fpc[cn], npc[cn], dudt[cl] );
+    }// corners    
+    
+  } // cell
+  //----------------------------------------------------------------------------
+
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to update the solution
 //!
 //! \param [in,out] mesh the mesh object
@@ -532,10 +592,6 @@ int apply_update( T & mesh, real_t coef, bool first_time ) {
   auto cell_state = cell_state_accessor<T>( mesh );
 
   auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
-  auto uv = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
-
-  auto npc = flecsi_get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
-  auto Fpc = flecsi_get_accessor( mesh, hydro, corner_force, vector_t, dense, 0 );
 
   // read only access
   const auto delta_t = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
@@ -566,20 +622,6 @@ int apply_update( T & mesh, real_t coef, bool first_time ) {
 
     // get the cell_t pointer
     auto cl = cs[i];
-
-    //--------------------------------------------------------------------------
-    // Gather corner forces to compute the cell residual
-
-    // local cell residual
-    dudt[cl] = 0;
-
-    // compute subcell forces
-    for ( auto cn : mesh.corners(cl) ) {
-      // corner attaches to one point and zone
-      auto pt = mesh.vertices(cn).front();
-      // add contribution
-      eqns_t::compute_update( uv[pt], Fpc[cn], npc[cn], dudt[cl] );
-    }// corners    
  
     //--------------------------------------------------------------------------
     // Using the cell residual, update the state
