@@ -116,8 +116,6 @@ int update_state_from_energy( T & mesh, const EOS * eos ) {
   // get the collection accesor
   auto cell_state = cell_state_accessor<T>( mesh );
 
-  auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
-
   auto cs = mesh.cells();
   auto num_cells = cs.size();
 
