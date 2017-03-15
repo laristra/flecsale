@@ -26,7 +26,7 @@ namespace hydro {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T, typename F >
-int32_t initial_conditions( T & mesh, F && ics ) {
+int initial_conditions( T & mesh, F && ics ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -66,7 +66,7 @@ int32_t initial_conditions( T & mesh, F && ics ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T, typename EOS >
-int32_t update_state_from_pressure( T & mesh, const EOS * eos ) 
+int update_state_from_pressure( T & mesh, const EOS * eos ) 
 {
 
   // type aliases
@@ -99,7 +99,7 @@ int32_t update_state_from_pressure( T & mesh, const EOS * eos )
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T, typename EOS >
-int32_t update_state_from_energy( T & mesh, const EOS * eos ) 
+int update_state_from_energy( T & mesh, const EOS * eos ) 
 {
 
   // type aliases
@@ -132,7 +132,7 @@ int32_t update_state_from_energy( T & mesh, const EOS * eos )
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename E, typename T >
-int32_t evaluate_time_step( T & mesh ) {
+int evaluate_time_step( T & mesh ) {
 
   // type aliases
   using  counter_t = typename T::counter_t;
@@ -193,7 +193,7 @@ int32_t evaluate_time_step( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t evaluate_fluxes( T & mesh ) {
+int evaluate_fluxes( T & mesh ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -260,7 +260,7 @@ int32_t evaluate_fluxes( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t apply_update( T & mesh ) {
+int apply_update( T & mesh ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -326,7 +326,7 @@ int32_t apply_update( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t output( T & mesh, 
+int output( T & mesh, 
                 const std::string & prefix, 
                 const std::string & postfix, 
                 size_t output_freq ) 

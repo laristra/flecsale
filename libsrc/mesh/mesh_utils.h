@@ -27,7 +27,7 @@ namespace mesh {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t checksum( T & mesh ) 
+int checksum( T & mesh ) 
 {
 
 #ifdef HAVE_OPENSSL

@@ -26,7 +26,7 @@ namespace hydro {
 //! \param [in]     ics  the initial conditions to set
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t initial_conditions_task( 
+int initial_conditions_task( 
   mesh::burton_mesh_2d_t & mesh, inputs_t::ics_function_t ics 
 ) {
   return initial_conditions( mesh, ics );
@@ -40,7 +40,7 @@ int32_t initial_conditions_task(
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t update_state_from_pressure_task( 
+int update_state_from_pressure_task( 
   const mesh::burton_mesh_2d_t & mesh, const eos_t * eos
 ) {
 	return update_state_from_pressure( mesh, eos );
@@ -54,7 +54,7 @@ int32_t update_state_from_pressure_task(
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t update_state_from_energy_task( 
+int update_state_from_energy_task( 
   mesh::burton_mesh_2d_t & mesh, const eos_t * eos
 ) {
 	return update_state_from_energy( mesh, eos );
@@ -68,7 +68,7 @@ int32_t update_state_from_energy_task(
 //! \param [in,out] limit_string  a string describing the limiting time step
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t evaluate_time_step_task( 
+int evaluate_time_step_task( 
 	mesh::burton_mesh_2d_t & mesh, std::string & limit_string 
 ) {
   return evaluate_time_step( mesh, limit_string );
@@ -80,7 +80,7 @@ int32_t evaluate_time_step_task(
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t estimate_nodal_state_task( mesh::burton_mesh_2d_t & mesh ) 
+int estimate_nodal_state_task( mesh::burton_mesh_2d_t & mesh ) 
 {
   return estimate_nodal_state( mesh );
 }
@@ -91,19 +91,7 @@ int32_t estimate_nodal_state_task( mesh::burton_mesh_2d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t evaluate_corner_coef_task( 
-  mesh::burton_mesh_2d_t & mesh, const eos_t * eos
-) {
-  return evaluate_corner_coef( mesh, eos );
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to compute nodal quantities
-//!
-//! \param [in,out] mesh the mesh object
-//! \return 0 for success
-////////////////////////////////////////////////////////////////////////////////
-int32_t evaluate_nodal_state_task( 
+int evaluate_nodal_state_task( 
   mesh::burton_mesh_2d_t & mesh, 
   const boundary_map_t<mesh::burton_mesh_2d_t::num_dimensions> & boundary_map
 ) {
@@ -111,14 +99,14 @@ int32_t evaluate_nodal_state_task(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to evaluate residuals
+//! \brief The main task to sum the forces and comput the cell changes
 //!
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t evaluate_forces_task( mesh::burton_mesh_2d_t & mesh ) 
+int evaluate_residual_task( mesh::burton_mesh_2d_t & mesh ) 
 {
-  return evaluate_forces( mesh );
+  return evaluate_residual( mesh );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -127,7 +115,7 @@ int32_t evaluate_forces_task( mesh::burton_mesh_2d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //!   \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t apply_update_task( 
+int apply_update_task( 
   mesh::burton_mesh_2d_t & mesh, real_t coef, bool first_time 
 ) {
   return apply_update( mesh, coef, first_time );
@@ -139,7 +127,7 @@ int32_t apply_update_task(
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t move_mesh_task( mesh::burton_mesh_2d_t & mesh, real_t coef ) 
+int move_mesh_task( mesh::burton_mesh_2d_t & mesh, real_t coef ) 
 {
   return move_mesh( mesh, coef );
 }
@@ -150,7 +138,7 @@ int32_t move_mesh_task( mesh::burton_mesh_2d_t & mesh, real_t coef )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t save_coordinates_task( mesh::burton_mesh_2d_t & mesh ) 
+int save_coordinates_task( mesh::burton_mesh_2d_t & mesh ) 
 {
   return save_coordinates( mesh );
 }
@@ -161,7 +149,7 @@ int32_t save_coordinates_task( mesh::burton_mesh_2d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t restore_coordinates_task( mesh::burton_mesh_2d_t & mesh ) 
+int restore_coordinates_task( mesh::burton_mesh_2d_t & mesh ) 
 {
   return restore_coordinates( mesh );
 }
@@ -172,7 +160,7 @@ int32_t restore_coordinates_task( mesh::burton_mesh_2d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t save_solution_task( mesh::burton_mesh_2d_t & mesh ) 
+int save_solution_task( mesh::burton_mesh_2d_t & mesh ) 
 {
   return save_solution( mesh );
 }
@@ -183,7 +171,7 @@ int32_t save_solution_task( mesh::burton_mesh_2d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int32_t restore_solution_task( mesh::burton_mesh_2d_t & mesh ) 
+int restore_solution_task( mesh::burton_mesh_2d_t & mesh ) 
 {
   return restore_solution( mesh );
 }
@@ -197,9 +185,8 @@ flecsi_register_task(update_state_from_pressure_task, loc, single);
 flecsi_register_task(update_state_from_energy_task, loc, single);
 flecsi_register_task(evaluate_time_step_task, loc, single);
 flecsi_register_task(estimate_nodal_state_task, loc, single);
-flecsi_register_task(evaluate_corner_coef_task, loc, single);
 flecsi_register_task(evaluate_nodal_state_task, loc, single);
-flecsi_register_task(evaluate_forces_task, loc, single);
+flecsi_register_task(evaluate_residual_task, loc, single);
 flecsi_register_task(apply_update_task, loc, single);
 flecsi_register_task(move_mesh_task, loc, single);
 flecsi_register_task(save_coordinates_task, loc, single);

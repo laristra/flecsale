@@ -63,7 +63,7 @@ public:
   //!
   //! FIXME: should allow for const mesh_t &
   //============================================================================
-  int32_t write( const std::string &name, burton_mesh_2d_t &m ) override
+  int write( const std::string &name, burton_mesh_2d_t &m ) override
   {
 
 #ifdef HAVE_VTK
@@ -314,7 +314,7 @@ public:
   //!
   //! \return vtu error code. 0 on success.
   //============================================================================
-  int32_t read( const std::string &name, burton_mesh_2d_t &m) override
+  int read( const std::string &name, burton_mesh_2d_t &m) override
   {
 #ifdef HAVE_VTK
 

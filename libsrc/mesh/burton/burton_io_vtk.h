@@ -74,7 +74,7 @@ public:
   //!
   //! \remark this uses in vtk library writer
   //============================================================================
-  int32_t write( const std::string &name, mesh_t &m, bool binary ) override
+  int write( const std::string &name, mesh_t &m, bool binary ) override
   {
 
     std::cout << "Writing mesh to: " << name << std::endl;
@@ -107,7 +107,7 @@ public:
   //!
   //! \remark this uses in vtk library reader
   //============================================================================
-  int32_t read( const std::string &name, mesh_t &m) override
+  int read( const std::string &name, mesh_t &m) override
   {
 
     std::cout << "Reading mesh from: " << name << std::endl;
@@ -141,7 +141,7 @@ public:
   //! 
   //! \remark this uses in house vtk writer
   //============================================================================
-  int32_t write( const std::string &name, mesh_t &m, bool binary ) override
+  int write( const std::string &name, mesh_t &m, bool binary ) override
   {
 
     std::cout << "Writing mesh to: " << name << std::endl;
@@ -402,7 +402,7 @@ public:
   //!
   //! \remark no read support using in house vtk writer
   //============================================================================
-  int32_t read( const std::string &name, mesh_t &m) override
+  int read( const std::string &name, mesh_t &m) override
   {
     raise_implemented_error( "No vtk read functionality has been implemented" );
   };
@@ -421,7 +421,7 @@ public:
   //!
   //! FIXME: should allow for const mesh_t &
   //============================================================================
-  int32_t write( const std::string &name, mesh_t &m ) override
+  int write( const std::string &name, mesh_t &m ) override
   {
     return write( name, m, true );
   }

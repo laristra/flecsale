@@ -31,7 +31,7 @@ namespace hydro {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T, typename F >
-int32_t initial_conditions( T & mesh, F && ics ) {
+int initial_conditions( T & mesh, F && ics ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -43,11 +43,12 @@ int32_t initial_conditions( T & mesh, F && ics ) {
 
   // get the collection accesor
   auto M = flecsi_get_accessor( mesh, hydro, cell_mass,       real_t, dense, 0 );
+  auto V = flecsi_get_accessor( mesh, hydro, cell_volume,     real_t, dense, 0 );
   auto p = flecsi_get_accessor( mesh, hydro, cell_pressure,   real_t, dense, 0 );
   auto v = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
 
-  auto  xc = mesh.cell_centroids();
-  auto vol = mesh.cell_volumes();
+  auto cell_xc = mesh.cell_centroids();
+  auto cell_vol = mesh.cell_volumes();
 
   auto cs = mesh.cells();
   auto num_cells = cs.size();
@@ -58,9 +59,10 @@ int32_t initial_conditions( T & mesh, F && ics ) {
     auto c = cs[i];
     // now copy the state to flexi
     real_t d;
-    std::tie( d, v[c], p[c] ) = std::forward<F>(ics)( xc[c], soln_time );
+    std::tie( d, v[c], p[c] ) = std::forward<F>(ics)( cell_xc[c], soln_time );
     // set mass and volume now
-    M[c] = d*vol[c];
+    M[c] = d*cell_vol[c];
+    V[c] = cell_vol[c];
   }
 
   return 0;
@@ -74,7 +76,7 @@ int32_t initial_conditions( T & mesh, F && ics ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T, typename EOS >
-int32_t update_state_from_pressure( T & mesh, const EOS * eos ) {
+int update_state_from_pressure( T & mesh, const EOS * eos ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -104,7 +106,7 @@ int32_t update_state_from_pressure( T & mesh, const EOS * eos ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T, typename EOS >
-int32_t update_state_from_energy( T & mesh, const EOS * eos ) {
+int update_state_from_energy( T & mesh, const EOS * eos ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -113,8 +115,6 @@ int32_t update_state_from_energy( T & mesh, const EOS * eos ) {
 
   // get the collection accesor
   auto cell_state = cell_state_accessor<T>( mesh );
-
-  auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
 
   auto cs = mesh.cells();
   auto num_cells = cs.size();
@@ -140,7 +140,7 @@ int32_t update_state_from_energy( T & mesh, const EOS * eos ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t evaluate_time_step( T & mesh, std::string & limit_string ) 
+int evaluate_time_step( T & mesh, std::string & limit_string ) 
 {
 
   // type aliases
@@ -189,7 +189,8 @@ int32_t evaluate_time_step( T & mesh, std::string & limit_string )
   //----------------------------------------------------------------------------
 
 
-  assert( dt_acc_inv > 0 && dt_vol_inv > 0 && "infinite delta t" );
+  assert( dt_acc_inv > 0 && "infinite delta t" );
+  assert( dt_vol_inv > 0 && "infinite delta t" );
   
   // get the individual cfls
   auto dt_acc = cfl->accoustic / dt_acc_inv;
@@ -230,7 +231,7 @@ int32_t evaluate_time_step( T & mesh, std::string & limit_string )
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t estimate_nodal_state( T & mesh ) {
+int estimate_nodal_state( T & mesh ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -259,96 +260,6 @@ int32_t estimate_nodal_state( T & mesh ) {
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to compute nodal quantities
-//!
-//! \param [in,out] mesh the mesh object
-//! \return 0 for success
-////////////////////////////////////////////////////////////////////////////////
-template< typename T, typename EOS >
-int32_t evaluate_corner_coef( T & mesh, const EOS * eos ) 
-{
-
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using size_t = typename T::size_t;
-  using real_t = typename T::real_t;
-  using vector_t = typename T::vector_t;
-  using matrix_t = matrix_t< T::num_dimensions >; 
-  using eqns_t = eqns_t<T::num_dimensions>;
-
-  // get the number of dimensions and create a matrix
-  constexpr size_t num_dims = T::num_dimensions;
-  
-  // access what we need
-  auto cell_state = cell_state_accessor<T>( mesh );
-  auto vertex_velocity = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
-  auto Mpc = flecsi_get_accessor( mesh, hydro, corner_matrix, matrix_t, dense, 0 );
-  auto npc = flecsi_get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
-  auto wedge_facet_normal = mesh.wedge_facet_normals();
-  auto wedge_facet_area = mesh.wedge_facet_areas();
-
-  //----------------------------------------------------------------------------
-  // build corner matrices
-  auto cnrs = mesh.corners();
-  auto num_corners = cnrs.size();
-
-  #pragma omp parallel for
-  for ( counter_t i=0; i<num_corners; ++i ) {
-  
-    auto cn = cnrs[i];
-      
-    // initialize
-    Mpc[cn] = 0;
-    npc[cn] = 0;
-
-    // a corner connects to a cell and a vertex
-    auto cl = mesh.cells(cn).front();
-    auto vt = mesh.vertices(cn).front();
-
-    // get the cell state (there is only one)
-    auto state = cell_state(cl);
-    // the corner quantities ( equal to the cell quantities for 1st order )
-    const auto & dc = eqns_t::density( state );
-    const auto & uc = eqns_t::velocity( state );
-    const auto & ac = eqns_t::sound_speed( state );
-    const auto & Gc = eqns_t::impedance_multiplier( state, *eos );
-    // the vertex velocity
-    const auto & uv = vertex_velocity[vt];
-
-    // for estimating the impedances
-    // auto delta_u = uv - uc;
-    
-    // Estimate the impedance.  This is Burton's form but it also seems to
-    // kill the timestep in 3d.
-    // auto delta_velocity = math::delta_magnitude( uv, uc );
-    // auto zc = dc * ( ac + Gc * delta_velocity );
-
-    // The true impedance
-    auto zc = dc * ac;
-    
-    // iterate over the wedges in pairs
-    auto ws = mesh.wedges(cn);
-    for ( auto w : ws ) 
-    {
-      // get the first wedge normal
-      const auto & n = wedge_facet_normal[w];
-      const auto & l = wedge_facet_area[w];
-      // Estimate the impedance.  This is Maires original form, but it seems
-      // to kill the timestep in 3d.
-      // auto zc = dc * ( ac + Gc * std::abs(dot_product(delta_u, n)) );
-      // the final matrix
-      // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
-      math::outer_product( n, n, Mpc[cn], zc*l );
-      // compute the pressure coefficient
-      for ( int d=0; d<T::num_dimensions; ++d ) 
-        npc[cn][d] += l * n[d];
-    } // wedges
-
-  } // corners
-
-  return 0;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to compute nodal quantities
@@ -357,7 +268,7 @@ int32_t evaluate_corner_coef( T & mesh, const EOS * eos )
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T, typename BC >
-int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
+int evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -365,8 +276,8 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
   using real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
   using matrix_t = matrix_t< T::num_dimensions >; 
+  using flux_data_t = flux_data_t<T::num_dimensions>;
   using eqns_t = eqns_t<T::num_dimensions>;
-
 
   // get the number of dimensions and create a matrix
   constexpr size_t dims = T::num_dimensions;
@@ -374,12 +285,13 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
   // access what we need
   auto cell_state = cell_state_accessor<T>( mesh );
   auto vertex_velocity = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
-  auto Mpc = flecsi_get_accessor( mesh, hydro, corner_matrix, matrix_t, dense, 0 );
-  auto npc = flecsi_get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
 
   auto wedge_facet_normal = mesh.wedge_facet_normals();
-  auto wedge_facet_area = mesh.wedge_facet_areas();
+  auto wedge_facet_area = mesh.wedge_facet_areas(); 
   auto wedge_facet_centroid = mesh.wedge_facet_centroids();
+
+  auto npc = flecsi_get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
+  auto Fpc = flecsi_get_accessor( mesh, hydro, corner_force, vector_t, dense, 0 );
 
   // get the current time
   auto soln_time = mesh.time();
@@ -400,21 +312,60 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
     matrix_t Mp(0);
     vector_t rhs(0);
 
+    // get the corners
+    auto cnrs = mesh.corners(vt);
+    auto num_corners = cnrs.size();
+
+    // create some corner storage
+    std::vector< matrix_t > Mpc(num_corners, 0);
+
     //--------------------------------------------------------------------------
     // build point matrix
-    for ( auto cn : mesh.corners(vt) ) {
+    for ( int j=0; j<num_corners; ++j ) {
+
+      // get the corner
+      auto cn = cnrs[j];
+
+      // initialize the corner force
+      Fpc[cn] = 0;
+      npc[cn] = 0;
+
       // corner attaches to one cell and one point
       auto cl = mesh.cells(cn).front();
       // get the cell state (there is only one)
       auto state = cell_state(cl);
-      // the cell quantities
+      // the corner quantities are approximated as cell ones
       const auto & pc = eqns_t::pressure( state );
       const auto & uc = eqns_t::velocity( state );
+      const auto & dc = eqns_t::density( state );
+      const auto & ac = eqns_t::sound_speed( state );
+      // the corner impedance
+      auto zc = dc * ac;
+
+      // iterate over the wedges in pairs
+      auto ws = mesh.wedges(cn);
+      for ( auto w : ws ) 
+      {
+        // get the first wedge normal
+        const auto & n = wedge_facet_normal[w];
+        const auto & l = wedge_facet_area[w];
+        // the final matrix
+        // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
+        math::outer_product( n, n, Mpc[j], zc*l );
+        // compute the pressure coefficient
+        for ( int d=0; d<T::num_dimensions; ++d ) 
+          npc[cn][d] += l * n[d];
+      } // wedges
+
       // add to the global matrix
-      Mp += Mpc[cn];
+      Mp += Mpc[j];
+      // compute a portion of the corner force and 
       // add the pressure and velocity contributions to the system
-      for ( int d=0; d<T::num_dimensions; ++d ) rhs[d] += pc * npc[cn][d];
-      ax_plus_y( Mpc[cn], uc, rhs );      
+      ax_plus_y( Mpc[j], uc, Fpc[cn] );   
+      for ( int d=0; d<dims; ++d ) {
+        Fpc[cn][d] += pc * npc[cn][d];
+        rhs[d] += Fpc[cn][d];
+      }
     } // corner
 
     //--------------------------------------------------------------------------
@@ -536,6 +487,23 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
     } // internal point
 
 
+    //--------------------------------------------------------------------------
+    // Scatter RHS
+    for ( int j=0; j<num_corners; ++j ) {
+
+      // get the corner
+      auto cn = cnrs[j];
+      // corner attaches to one cell and one point
+      auto cl = mesh.cells(cn).front();
+
+      // now add the vertex component to the force
+      matrix_vector( 
+        static_cast<real_t>(-1), Mpc[j], vertex_velocity[vt], 
+        static_cast<real_t>(1), Fpc[cn]
+      );
+
+    }
+
   } // vertex
   //----------------------------------------------------------------------------
 
@@ -544,13 +512,13 @@ int32_t evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to evaluate residuals
+//! \brief The main task to sum the forces and comput the cell changes
 //!
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t evaluate_forces( T & mesh ) {
+int32_t evaluate_residual( T & mesh ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -564,10 +532,11 @@ int32_t evaluate_forces( T & mesh ) {
   auto cell_state = cell_state_accessor<T>( mesh );
 
   auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
+  
   auto uv = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
 
-  auto Mpc = flecsi_get_accessor( mesh, hydro, corner_matrix, matrix_t, dense, 0 );
   auto npc = flecsi_get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
+  auto Fpc = flecsi_get_accessor( mesh, hydro, corner_force, vector_t, dense, 0 );
 
   //----------------------------------------------------------------------------
   // TASK: loop over each cell and compute the residual
@@ -579,38 +548,22 @@ int32_t evaluate_forces( T & mesh ) {
   #pragma omp parallel for
   for ( counter_t i=0; i<num_cells; i++ ) {
     
+    // get the cell_t pointer
     auto cl = cs[i];
 
-    // get the cell state (there is only one)
-    auto state = cell_state(cl);
-    // the cell quantities
-    const auto & pc = eqns_t::pressure( state );
-    const auto & uc = eqns_t::velocity( state );
+    //--------------------------------------------------------------------------
+    // Gather corner forces to compute the cell residual
 
     // local cell residual
-    dudt[cl] = 0.0;
+    dudt[cl] = 0;
 
-    //--------------------------------------------------------------------------
     // compute subcell forces
     for ( auto cn : mesh.corners(cl) ) {
-
       // corner attaches to one point and zone
       auto pt = mesh.vertices(cn).front();
-
-      // compute the subcell force
-      // lpc*Pc*npc - Mpc*(uv-uc)
-      vector_t force, delta_u;
-      for ( int d=0; d<T::num_dimensions; ++ d ) {
-        force[d] =  pc * npc[cn][d];
-        delta_u[d] = uc[d] - uv[pt][d];
-      }
-      ax_plus_y( Mpc[cn], delta_u, force );
-
       // add contribution
-      eqns_t::compute_update( uv[pt], force, npc[cn], dudt[cl] );
-      
+      eqns_t::compute_update( uv[pt], Fpc[cn], npc[cn], dudt[cl] );
     }// corners    
-    //--------------------------------------------------------------------------
     
   } // cell
   //----------------------------------------------------------------------------
@@ -625,7 +578,7 @@ int32_t evaluate_forces( T & mesh ) {
 //!   \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t apply_update( T & mesh, real_t coef, bool first_time ) {
+int apply_update( T & mesh, real_t coef, bool first_time ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -636,9 +589,9 @@ int32_t apply_update( T & mesh, real_t coef, bool first_time ) {
 
 
   // access what we need
-  auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
-
   auto cell_state = cell_state_accessor<T>( mesh );
+
+  auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
 
   // read only access
   const auto delta_t = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
@@ -667,13 +620,18 @@ int32_t apply_update( T & mesh, real_t coef, bool first_time ) {
   
   for ( counter_t i=0; i<num_cells; i++ ) {
 
+    // get the cell_t pointer
+    auto cl = cs[i];
+ 
+    //--------------------------------------------------------------------------
+    // Using the cell residual, update the state
+
     // get the cell state
-    auto cell = cs[i];
-    auto u = cell_state( cell );
-    
+    auto u = cell_state( cl );
+
     // apply the update
-    eqns_t::update_state_from_flux( u, dudt[cell], fact );
-    eqns_t::update_volume( u, cell->volume() );
+    eqns_t::update_state_from_flux( u, dudt[cl], fact );
+    eqns_t::update_volume( u, cl->volume() );
 
 #ifndef NDEBUG
     // post update sums
@@ -727,7 +685,7 @@ int32_t apply_update( T & mesh, real_t coef, bool first_time ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t move_mesh( T & mesh, real_t coef ) {
+int move_mesh( T & mesh, real_t coef ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -769,7 +727,7 @@ int32_t move_mesh( T & mesh, real_t coef ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t save_coordinates( T & mesh ) {
+int save_coordinates( T & mesh ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -800,7 +758,7 @@ int32_t save_coordinates( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t restore_coordinates( T & mesh ) {
+int restore_coordinates( T & mesh ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -831,7 +789,7 @@ int32_t restore_coordinates( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t save_solution( T & mesh ) {
+int save_solution( T & mesh ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -868,7 +826,7 @@ int32_t save_solution( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t restore_solution( T & mesh ) {
+int restore_solution( T & mesh ) {
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -904,7 +862,7 @@ int32_t restore_solution( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int32_t output( T & mesh, 
+int output( T & mesh, 
                 const std::string & prefix, 
                 const std::string & postfix, 
                 size_t output_freq ) 
