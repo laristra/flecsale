@@ -107,7 +107,8 @@ endif()
 
 if(ENABLE_OPENSSL)
   include_directories(${OPENSSL_INCLUDE_DIR})
-  add_definitions(-DHAVE_OPENSSL)
+  # flecsi uses ENABLE_OPENSSL, flecsale uses HAVE_OPENSSL
+  add_definitions(-DHAVE_OPENSSL -DENABLE_OPENSSL)
   list( APPEND ALE_LIBRARIES ${OPENSSL_LIBRARIES} )
 endif()
 
