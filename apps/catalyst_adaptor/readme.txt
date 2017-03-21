@@ -59,21 +59,9 @@ I. 3. Using catalyst connected to a remote server
 	Since most simulations are not run on local workstations or laptops, we should be able to remotely connect ParaView to a
 	sim running on a server and visualize it.
 
-	An example of that setup using Darwin is shown below:
+	An example of that setup using Darwin is shown below.
 
-	  Server:
-		1. Login to Darwin and request an allocation
-		2. Load the required libraries and path as follows:
-			source /projects/groups/vizproject/flecsale_vis/moduleLoad.sh
-
-		3. Start paraview on that node in reverse connection mode:
-			mpirun -np X paraview/ParaView-v5.2.0/build/bin/pvserver --client-host=host-name --server-port=8000
-
-			e.g.
-			mpirun -np 20 paraview/ParaView-v5.2.0/build/bin/pvserver --client-host=pn1714908.lanl.gov --server-port=8000
-
-
-	  Client:
+	   Client:
 	  	1. Start Paraview on your client
 	  	2. From the top menu, Select File->Connect
 	  	3. From the window, select "Add Server" and fill in the details below:
@@ -89,7 +77,26 @@ I. 3. Using catalyst connected to a remote server
 	  	4. Choose the new entry and click "Connect"
 	  			That should connect you to the remote paraview server
 
-	  	5. Now, on your local computer, follow the steps in I.2 to run catalyst
+	  Server:
+		1. Login to Darwin and request an allocation
+		2. Load the required libraries and path as follows:
+			source /projects/groups/vizproject/flecsale_vis/moduleLoad.sh
+
+		3. Start paraview on that node in reverse connection mode:
+			mpirun -np X /projects/groups/vizproject/flecsale_vis/paraview/ParaView-v5.2.0/build/bin/pvserver -rc --client-host=host-name --server-port=8000
+
+			e.g.
+			mpirun -np 20 /projects/groups/vizproject/flecsale_vis/paraview/ParaView-v5.2.0/build/bin/pvserver -rc --client-host=pn1714908.lanl.gov --server-port=8000
+
+
+
+		Note: Paraview on the client should be started before on the server!
+
+
+		In another terminal window, Connect to the same node where Paraview was started and launch a flescale app with the paraview catalyst script
+	 	and, on your local computer, follow the steps in I.2 to run catalyst.
+
+
 
 
 
