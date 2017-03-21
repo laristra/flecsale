@@ -125,9 +125,11 @@ if (ShaPo_FOUND)
   message(STATUS "Found ShaPo: ${ShaPo_DIR}")
 endif()
 
-find_package(VTK QUIET)
-if (VTK_FOUND)
-  message(STATUS "Found VTK: ${VTK_DIR}")
+if (NOT VTK_FOUND)
+  find_package(VTK QUIET)
+  if (VTK_FOUND)
+    message(STATUS "Found VTK: ${VTK_DIR}")
+  endif()
 endif()
 
 

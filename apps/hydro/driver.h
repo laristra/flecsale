@@ -24,6 +24,11 @@
 #include <sstream>
 #include <utility>
 
+#ifdef USE_CATALYST
+  #include "flecsaleAdaptor.h"
+  #include "flecsale_unstructuredGrid.h"
+#endif
+
 namespace apps {
 namespace hydro {
 
@@ -156,6 +161,10 @@ int driver(int argc, char** argv)
   // quanties
   flecsi_execute_task( initial_conditions_task, loc, single, mesh, inputs_t::ics );
   
+  #ifdef USE_CATALYST
+    FlecsaleAdaptor::Init(argc, argv);
+    std::cout << "Catalyst on!" << std::endl;
+  #endif
 
   // Update the EOS
   flecsi_execute_task( 
@@ -214,18 +223,37 @@ int driver(int argc, char** argv)
     );
 
 
-    // update time
-    soln_time = mesh.increment_time( *time_step );
-    time_cnt = mesh.increment_time_step_counter();
+    #ifdef USE_CATALYST
+      vtkSmartPointer<vtkUnstructuredGrid> grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+      populate(mesh, grid, num_steps);
 
-    // now output the solution
-    output(mesh, inputs_t::prefix, inputs_t::postfix, inputs_t::output_freq);
+      FlecsaleAdaptor::CoProcess( grid, soln_time, num_steps, (num_steps==inputs_t::max_steps-1) );
+
+      // update time
+      soln_time = mesh.increment_time( *time_step );
+      time_cnt = mesh.increment_time_step_counter();
+
+      //std::cout << "fed to catalyst...\n" << std::endl;
+    #else
+      // update time
+      soln_time = mesh.increment_time( *time_step );
+      time_cnt = mesh.increment_time_step_counter();
+
+      // now output the solution
+      output(mesh, inputs_t::prefix, inputs_t::postfix, inputs_t::output_freq);
+    #endif
+
+   
 
   }
 
   //===========================================================================
   // Post-process
   //===========================================================================
+    
+  #ifdef USE_CATALYST
+    FlecsaleAdaptor::Finalize();
+  #endif   
     
   // now output the solution
   if ( (inputs_t::output_freq > 0) && (time_cnt % inputs_t::output_freq != 0) )

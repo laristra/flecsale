@@ -13,7 +13,14 @@ target_compile_definitions(
   PRIVATE
   FLECSI_DRIVER=${CMAKE_CURRENT_SOURCE_DIR}/driver.h 
  )
-target_link_libraries( hydro_2d common ${ALE_LIBRARIES} )
+
+if (USE_CATALYST)
+  target_link_libraries( hydro_2d LINK_PRIVATE common catalystadaptor ${ALE_LIBRARIES} )
+  vtk_mpi_link(hydro_2d)
+else()
+  target_link_libraries( hydro_2d common ${ALE_LIBRARIES} )
+endif()
+
 
 if (LUA_FOUND)
 
