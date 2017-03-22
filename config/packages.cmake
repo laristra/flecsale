@@ -106,11 +106,32 @@ else()
 endif()
 
 if(ENABLE_OPENSSL)
+  message(STATUS "Found OpenSSL: ${OPENSSL_INCLUDE_DIR}")
   include_directories(${OPENSSL_INCLUDE_DIR})
   # flecsi uses ENABLE_OPENSSL, flecsale uses HAVE_OPENSSL
   add_definitions(-DHAVE_OPENSSL -DENABLE_OPENSSL)
   list( APPEND ALE_LIBRARIES ${OPENSSL_LIBRARIES} )
 endif()
+
+#------------------------------------------------------------------------------#
+# Caliper
+#------------------------------------------------------------------------------#
+
+find_package(Caliper QUIET)
+
+if (Caliper_FOUND)
+  option(ENABLE_CALIPER "Enable Caliper Support" ON)
+else()
+  option(ENABLE_CALIPER "Enable Caliper Support" OFF)
+endif()
+
+if(ENABLE_CALIPER)
+  message(STATUS "Found Caliper: ${Caliper_INCLUDE_DIRS}")
+  include_directories(${Caliper_INCLUDE_DIRS})
+  add_definitions(-DHAVE_CALIPER)
+  list( APPEND ALE_LIBRARIES ${Caliper_LIBRARIES} )
+endif()
+
 
 #------------------------------------------------------------------------------#
 # Find some general libraries
