@@ -1,6 +1,6 @@
 
-Catalyst is an in situ library that allows us to view the results of a simulation as it is being executed. 
-More information on Catalyst is available at: http://www.paraview.org/in-situ/
+Catalyst is an in situ library that allows us to view the results of a simulation as it is being 
+executed. More information on Catalyst is available at: http://www.paraview.org/in-situ/
 
 
 Contents of this document:
@@ -13,7 +13,15 @@ Contents of this document:
 	   1. Adding Catalyst to an app
 
 
-------------------------------------------------------------------------------------------------------------------------------------
+NOTE: Paraview 5.2.0 is required for this.
+	OSX Build: http://www.paraview.org/files/v5.2/ParaView-5.2.0-Qt4-OpenGL2-MPI-OSX10.8-64bit.dmg
+	Linux Build: http://www.paraview.org/files/v5.2/ParaView-5.2.0-Qt4-OpenGL2-MPI-Linux-64bit.tar.gz
+
+	Src to build from: http://www.paraview.org/files/v5.2/ParaView-v5.2.0.tar.gz
+
+
+--------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
 
 I. 1. Building flecsale with catalyst
 
@@ -23,12 +31,12 @@ I. 1. Building flecsale with catalyst
 
 	a. In ccmake, turn on USE_Catalyst
 
-	b. ParaView_DIR will then be required
-		Point that directopry to a ParaView build directory
+	b. ParaView_DIR will then be required. Point that directopry to a ParaView build directory
 
 	c. configure, generate and build 
 
 
+--------------------------------------------------------------------------------------------------
 
 I. 2. Running a sim with catalyst
 	
@@ -46,18 +54,20 @@ I. 2. Running a sim with catalyst
 	b. launch the simulation with the paraview script
 		./hydro_3d ../../apps/catalyst_adaptor/catalyst_scripts/hydro3d_live.py
 
-	c. As soon as the simulation starts dumping data, ParaView will start intercepting the output and if you click on the eye
-	   icon in the pipeline browser, the simulation results will start appearing in ParaView
+	c. As soon as the simulation starts dumping data, ParaView will start intercepting the output 
+			and if you click on the eye icon in the pipeline browser, the simulation results will 
+			start appearing in ParaView.
 
 	Note:
 		Once the simulation appears in ParaView, you can use ParaView to pause the simulation
 
 
+--------------------------------------------------------------------------------------------------
 
 I. 3. Using catalyst connected to a remote server
 
-	Since most simulations are not run on local workstations or laptops, we should be able to remotely connect ParaView to a
-	sim running on a server and visualize it.
+	Since most simulations are not run on local workstations or laptops, we should be able to 
+	remotely connect ParaView to a sim running on a server and visualize it.
 
 	An example of that setup using Darwin is shown below.
 
@@ -67,7 +77,7 @@ I. 3. Using catalyst connected to a remote server
 	  	3. From the window, select "Add Server" and fill in the details below:
 	  			Name: a-meaninful-name
 	  			Server Type: Client /Server (reverse connection)
-	  			Port: 8000
+	  			Port: 11111
 
 	  		Click: the "Configure" button
 
@@ -78,34 +88,32 @@ I. 3. Using catalyst connected to a remote server
 	  			That should connect you to the remote paraview server
 
 	  Server:
-		1. Login to Darwin and request an allocation
-		2. Load the required libraries and path as follows:
-			source /projects/groups/vizproject/flecsale_vis/moduleLoad.sh
+			1. Login to Darwin and request an allocation
+			2. Load the required libraries and path as follows:
+				source /projects/groups/vizproject/flecsale_vis/moduleLoad.sh
 
-		3. Start paraview on that node in reverse connection mode:
-			mpirun -np X /projects/groups/vizproject/flecsale_vis/paraview/ParaView-v5.2.0/build/bin/pvserver -rc --client-host=host-name --server-port=8000
+			3. Start paraview on that node in reverse connection mode:
+				mpirun -np X /projects/groups/vizproject/flecsale_vis/paraview/ParaView-v5.2.0/build/bin//pvserver -rc -ch=host-name --server-port=11111 --use-offscreen-rendering -display :0.0
 
-			e.g.
-			mpirun -np 20 /projects/groups/vizproject/flecsale_vis/paraview/ParaView-v5.2.0/build/bin/pvserver -rc --client-host=pn1714908.lanl.gov --server-port=8000
+				Where:
+					X = num of mpi processes
+					host-name = ip address of host
 
+				e.g.
+					mpirun -np 8 /projects/groups/vizproject/flecsale_vis/paraview/ParaView-v5.2.0/build/bin//pvserver -rc -ch=130.55.121.27 --server-port=11111 --use-offscreen-rendering -display :0.0
 
 
 		Note: Paraview on the client should be started before on the server!
 
 
-		In another terminal window, Connect to the same node where Paraview was started and launch a flescale app with the paraview catalyst script
-	 	and, on your local computer, follow the steps in I.2 to run catalyst.
+		In another terminal window, Connect to the same node where Paraview was started and launch a 
+		flescale app with the paraview catalyst script and, on your local computer, follow the steps 
+		in I.2 to run catalyst.
 
 
 
-
-
-
-
-
-
-------------------------------------------------------------------------------------------------------------------------------------
-
+--------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
 
 
 II. 1. Adding Catalyst to an app
@@ -141,8 +149,11 @@ II. 1. Adding Catalyst to an app
 			An example of this is at: apps/hydro/driver.h
 
 
-------------------------------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
 
 
 APPENDIX:
