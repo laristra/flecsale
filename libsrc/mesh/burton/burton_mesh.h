@@ -882,10 +882,6 @@ public:
     auto n = num_regions();
     // get the cells
     auto cs = cells();
-    // create storage for regions
-    using set_type_t = decltype( 
-      base_t::template entities<cell_t::dimension, cell_t::domain>() 
-    );
 
     // now filter out the cells of each region
     auto region_cells = cs.bin( [](const auto & c){ return c->region(); } );
