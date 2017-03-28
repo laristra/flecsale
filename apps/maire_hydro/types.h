@@ -55,6 +55,21 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+//! \brief a class to distinguish between different types of 
+//!   update errors.
+enum class solution_error_t 
+{
+  unphysical, variance, ok
+};
+
+//! \brief a class to distinguish between different types of 
+//!   restarting modes.
+enum class mode_t 
+{
+  normal, retry, restart, quit
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief A general boundary condition type.
 //! \tparam N  The number of dimensions.

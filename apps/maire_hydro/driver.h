@@ -107,6 +107,16 @@ int driver(int argc, char** argv)
   using real_t = typename mesh_t::real_t;
   using vector_t = typename mesh_t::vector_t; 
 
+  // get machine zero
+  constexpr auto epsilon = std::numeric_limits<real_t>::epsilon();
+  const auto machine_zero = std::sqrt(epsilon);
+
+  // the maximum number of retries
+  constexpr int max_retries = 5;
+
+  // the time stepping stage coefficients
+  std::vector<real_t> stages = {0.5, 1.0};
+
   //===========================================================================
   // Field Creation
   //===========================================================================
@@ -147,6 +157,9 @@ int driver(int argc, char** argv)
   *flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 ) = inputs_t::initial_time_step;
   *flecsi_get_accessor( mesh, hydro, cfl, time_constants_t, global, 0 ) = inputs_t::CFL;
 
+  // Register the total energy
+  flecsi_register_data( mesh, hydro, sum_total_energy, real_t, global, 1 );
+
   // set the persistent variables, i.e. the ones that will be plotted
   flecsi_get_accessor(mesh, hydro, cell_mass,       real_t, dense, 0).attributes().set(persistent);
   flecsi_get_accessor(mesh, hydro, cell_pressure,   real_t, dense, 0).attributes().set(persistent);
@@ -158,30 +171,8 @@ int driver(int argc, char** argv)
   flecsi_get_accessor(mesh, hydro, cell_sound_speed,     real_t, dense, 0).attributes().set(persistent);
 
   flecsi_get_accessor(mesh, hydro, node_velocity, vector_t, dense, 0).attributes().set(persistent);
-  
 
-  //===========================================================================
-  // Initial conditions
-  //===========================================================================
-  
-  // now call the main task to set the ics.  Here we set primitive/physical 
-  // quanties
-  flecsi_execute_task( initial_conditions_task, loc, single, mesh, inputs_t::ics );
-  
 
-  // Update the EOS
-  flecsi_execute_task( 
-    update_state_from_pressure_task, loc, single, mesh, inputs_t::eos.get()
-  );
-
-  //===========================================================================
-  // Pre-processing
-  //===========================================================================
-
-  // now output the solution
-  if ( inputs_t::output_freq > 0 )
-    output(mesh, inputs_t::prefix, inputs_t::postfix, 1);
-  
   //===========================================================================
   // Boundary Conditions
   //===========================================================================
@@ -213,6 +204,30 @@ int driver(int argc, char** argv)
 
 
   //===========================================================================
+  // Initial conditions
+  //===========================================================================
+  
+  // now call the main task to set the ics.  Here we set primitive/physical 
+  // quanties
+  flecsi_execute_task( initial_conditions_task, loc, single, mesh, inputs_t::ics );
+  
+
+  // Update the EOS
+  flecsi_execute_task( 
+    update_state_from_pressure_task, loc, single, mesh, inputs_t::eos.get()
+  );
+
+
+  //===========================================================================
+  // Pre-processing
+  //===========================================================================
+
+  // now output the solution
+  if ( inputs_t::output_freq > 0 )
+    output(mesh, inputs_t::prefix, inputs_t::postfix, 1);
+  
+
+  //===========================================================================
   // Residual Evaluation
   //===========================================================================
 
@@ -222,7 +237,8 @@ int driver(int argc, char** argv)
   // a counter for this session
   size_t num_steps = 0; 
 
-  for ( ; 
+  for (
+    size_t num_retries = 0;
     (num_steps < inputs_t::max_steps && soln_time < inputs_t::final_time); 
     ++num_steps 
   ) {   
@@ -232,8 +248,13 @@ int driver(int argc, char** argv)
     //--------------------------------------------------------------------------
 
     // Save solution at n=0
-    flecsi_execute_task( save_coordinates_task, loc, single, mesh );
-    flecsi_execute_task( save_solution_task, loc, single, mesh );
+    if (num_retries == 0) {
+      flecsi_execute_task( save_coordinates_task, loc, single, mesh );
+      flecsi_execute_task( save_solution_task, loc, single, mesh );
+    }
+
+    // keep the old time step
+    real_t time_step_old = time_step;
 
     //--------------------------------------------------------------------------
     // Predictor step : Evaluate Forces at n=0
@@ -278,60 +299,124 @@ int driver(int argc, char** argv)
     cout.unsetf( std::ios::scientific );
     cout.precision(ss);
 
-// #define USE_FIRST_ORDER_TIME_STEPPING
-#ifndef USE_FIRST_ORDER_TIME_STEPPING // set to 0 for first order
-
     //--------------------------------------------------------------------------
-    // Move to n+1/2
+    // Multistage 
     //--------------------------------------------------------------------------
-
-    // move the mesh to n+1/2
-    flecsi_execute_task( move_mesh_task, loc, single, mesh, 0.5 );
-
-    // update solution to n+1/2
-    flecsi_execute_task( apply_update_task, loc, single, mesh, 0.5, true );
-
-    // Update derived solution quantities
-    flecsi_execute_task( 
-      update_state_from_energy_task, loc, single, mesh, inputs_t::eos.get() 
-    );
-
-    //--------------------------------------------------------------------------
-    // Corrector : Evaluate Forces at n=1/2
-    //--------------------------------------------------------------------------
-
-    // compute the nodal velocity at n=1/2
-    flecsi_execute_task( 
-      evaluate_nodal_state_task, loc, single, mesh, boundaries
-    );
-
-    // compute the fluxes
-    flecsi_execute_task( evaluate_residual_task, loc, single, mesh );
-
-    //--------------------------------------------------------------------------
-    // Move to n+1
-    //--------------------------------------------------------------------------
-
-    // restore the solution to n=0
-    flecsi_execute_task( restore_coordinates_task, loc, single, mesh );
-    flecsi_execute_task( restore_solution_task, loc, single, mesh );
-
-#endif
-
-    // move the mesh to n+1
-    flecsi_execute_task( move_mesh_task, loc, single, mesh, 1.0 );
     
-    // update solution to n+1
-    flecsi_execute_task( apply_update_task, loc, single, mesh, 1.0, false );
+    // a stage counter
+    int istage = 0;
 
-    // Update derived solution quantities
-    flecsi_execute_task( 
-      update_state_from_energy_task, loc, single, mesh, inputs_t::eos.get() 
-    );
+    // reset the time stepping mode
+    auto mode = mode_t::normal;
+
+    do {
+
+      //------------------------------------------------------------------------
+      // Move to n^stage
+
+      // move the mesh to n+1/2
+      flecsi_execute_task( move_mesh_task, loc, single, mesh, stages[istage] );
+
+      // update solution to n+1/2
+      auto err = flecsi_execute_task( 
+        apply_update_task, loc, single, mesh, stages[istage], machine_zero, (istage==0)
+      );
+      auto update_flag = err.get();
+      
+      // dump the current errored solution to a file
+      if ( update_flag != solution_error_t::ok && inputs_t::output_freq > 0)
+        output(mesh, inputs_t::prefix+"-error", inputs_t::postfix, 1);
+
+      // if we got an unphysical solution, half the time step and try again
+      if ( update_flag == solution_error_t::unphysical ) {
+        // Print a message that we are retrying
+        std::cout << "Unphysical solution detected, halfing timestep..." << std::endl;
+        // half time step
+        *time_step *= 0.5;
+        // indicate that we are retrying
+        mode = mode_t::retry;
+      }
+
+      // if there was variance, retry the solution again
+      else if (update_flag == solution_error_t::variance) {
+        // Print a message that we are retrying
+        std::cout << "Variance in solution detected, retrying..." << std::endl;
+        // reset time step
+        *time_step = time_step_old;
+        // roll the counter back
+        --num_steps;
+        // set the flag to restart
+        mode = mode_t::restart;
+      }
+
+      // otherewise, set the mode to none
+      else {
+        mode = mode_t::normal;
+      }
+
+      // if we are retrying or restarting, restore the original solution
+      if (mode == mode_t::restart || mode == mode_t::retry) {
+        // restore the initial solution
+        flecsi_execute_task( restore_coordinates_task, loc, single, mesh );
+        flecsi_execute_task( restore_solution_task, loc, single, mesh );
+        mesh.update_geometry();
+        // don't retry forever
+        if ( ++num_retries > max_retries ) {
+          // Print a message we are exiting
+          std::cout << "Too many retries, exiting..." << std::endl;
+          // flag that we want to quit
+          mode = mode_t::quit;
+        }
+      }
+
+      // Update derived solution quantities
+      flecsi_execute_task( 
+        update_state_from_energy_task, loc, single, mesh, inputs_t::eos.get() 
+      );
+
+      // compute the current nodal velocity
+      flecsi_execute_task( 
+        evaluate_nodal_state_task, loc, single, mesh, boundaries
+      );
+
+      // if we are retrying, then restart the loop since all the state has been 
+      // reset
+      if (mode == mode_t::retry) {
+        istage = 0;
+        continue;
+      }
+
+      // now we can quit once all the state has been reset
+      else if ( 
+        mode == mode_t::quit || 
+        mode == mode_t::restart || 
+        ++istage==stages.size()
+      ) 
+        break;
+
+      //------------------------------------------------------------------------
+      // Corrector : Evaluate Forces at n^stage
+
+      // compute the fluxes
+      flecsi_execute_task( evaluate_residual_task, loc, single, mesh );
+
+      //------------------------------------------------------------------------
+      // Move to n+1
+
+      // restore the solution to n=0
+      flecsi_execute_task( restore_coordinates_task, loc, single, mesh );
+      flecsi_execute_task( restore_solution_task, loc, single, mesh );
+
+    } while(true); // do
 
     //--------------------------------------------------------------------------
     // End Time step
     //--------------------------------------------------------------------------
+
+    // now we can quit once all the state has been reset
+    if (mode == mode_t::quit) break;
+    // now we can restart once all the state has been reset
+    else if (mode == mode_t::restart) continue;
 
     // update time
     soln_time = mesh.increment_time( *time_step );
@@ -341,6 +426,9 @@ int driver(int argc, char** argv)
     output(
       mesh, inputs_t::prefix, inputs_t::postfix, inputs_t::output_freq
     );
+
+    // if we got through a whole cycle, reset the retry counter
+    num_retries = 0;
 
   }
 

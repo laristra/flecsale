@@ -71,20 +71,32 @@ int update_state_from_pressure( T & mesh, const EOS * eos )
 
   // type aliases
   using counter_t = typename T::counter_t;
+  using real_t = typename T::real_t;
   using eqns_t = eqns_t<T::num_dimensions>;
 
-  // get the collection accesor
+  // access the data we need
   state_accessor<T> state( mesh );
+  auto ener0 = flecsi_get_accessor( mesh, hydro, sum_total_energy, real_t, global, 0 );
+  auto volume = mesh.cell_volumes();
+
 
   auto cs = mesh.cells();
   auto num_cells = cs.size();
 
-  #pragma omp parallel for
+  real_t ener(0);
+
+  #pragma omp parallel for reduction(+:ener)
   for ( counter_t i=0; i<num_cells; i++ ) {
     auto c = cs[i];
     auto u = state(c);
     eqns_t::update_state_from_pressure( u, *eos );
+    // sum total energy
+    auto et = eqns_t::total_energy(u);
+    auto rho  = eqns_t::density(u);
+    ener += rho * et * volume[c];
   }
+
+  *ener0 = ener;
 
   return 0;
 }
@@ -112,6 +124,8 @@ int update_state_from_energy( T & mesh, const EOS * eos )
   // get the cells
   auto cs = mesh.cells();
   auto num_cells = cs.size();
+
+  real_t ener(0);
 
   #pragma omp parallel for
   for ( counter_t i=0; i<num_cells; i++ ) {
@@ -260,11 +274,14 @@ int evaluate_fluxes( T & mesh ) {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int apply_update( T & mesh ) {
+solution_error_t
+apply_update( T & mesh, real_t tolerance, bool first_time ) 
+{
 
   // type aliases
   using counter_t = typename T::counter_t;
   using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
   using flux_data_t = flux_data_t<T::num_dimensions>;
   using eqns_t = eqns_t<T::num_dimensions>;
 
@@ -276,6 +293,11 @@ int apply_update( T & mesh ) {
 
   // read only access
   const auto delta_t = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
+  auto ener0 = flecsi_get_accessor( mesh, hydro, sum_total_energy, real_t, global, 0 );
+
+  real_t mass(0);
+  vector_t mom(0);
+  real_t ener(0);
 
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
@@ -283,7 +305,7 @@ int apply_update( T & mesh ) {
   auto cs = mesh.cells();
   auto num_cells = cs.size();
 
-  #pragma omp parallel for
+  #pragma omp parallel for reduction( + : mass, mom, ener )
   for ( counter_t i=0; i<num_cells; i++ ) {
     
     auto c = cs[i];
@@ -311,13 +333,149 @@ int apply_update( T & mesh ) {
     auto u = state( c );
     eqns_t::update_state_from_flux( u, delta_u );
 
+    // post update sums
+    auto vel = eqns_t::velocity(u);
+    auto ie = eqns_t::internal_energy(u);
+    auto rho  = eqns_t::density(u);
+    auto m = rho*volume[c];
+    mass += m;
+    ener += m * ie;
+    for ( int d=0; d<T::num_dimensions; ++d ) {
+      auto tmp = m * vel[d];
+      mom[d] += tmp;
+      ener += 0.5 * tmp * vel[d];
+    }
+
+    // check the solution quantities
+    if ( ie < 0 || rho < 0 ) {
+      std::cout << "Negative internal energy or density encountered in cell " 
+        << c.id() << std::endl << "Current state = " << u << "." << std::endl;
+      return solution_error_t::unphysical;
+    }
 
   } // for
   //----------------------------------------------------------------------------
 
+  std::stringstream mom_ss;
+  mom_ss.setf( std::ios::scientific );
+
+  for ( const auto & mx : mom )
+    mom_ss << std::setprecision(2) << std::setw(9) << mx << " ";
+  auto mom_str = mom_ss.str();
+  mom_str.pop_back();
+
+  auto ss = cout.precision();
+  cout.setf( std::ios::scientific );
+
+  if ( first_time ) {
+    cout << std::string(80, '-') << endl;
+    cout << "| " << "Mass:" << std::setprecision(3) << std::setw(10) << mass
+         << " | " << "Momentum:" << std::setw(29) << mom_str
+         << " | " << "Energy:" << std::setprecision(3)  << std::setw(10) << ener
+         << " |" << std::endl;
+  }
+
+  cout.unsetf( std::ios::scientific );
+  cout.precision(ss);
+
+  //----------------------------------------------------------------------------
+  // check the invariants
+
+  auto err = std::abs( *ener0 - ener );
+
+  // check the difference
+  if ( err > tolerance )
+    return solution_error_t::variance;
+
+  // store the old value
+  *ener0 = ener;
+
+  return solution_error_t::ok;
+  
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to save the coordinates
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int save_solution( T & mesh ) {
+
+  // type aliases
+  using counter_t = typename T::counter_t;
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
+
+  // access what we need
+  auto rho  = flecsi_get_accessor( mesh, hydro, density, real_t, dense, 0 );
+  auto rho0 = flecsi_get_accessor( mesh, hydro, density, real_t, dense, 1 );
+
+  auto vel  = flecsi_get_accessor( mesh, hydro, velocity, vector_t, dense, 0 );
+  auto vel0 = flecsi_get_accessor( mesh, hydro, velocity, vector_t, dense, 1 );
+
+  auto ener  = flecsi_get_accessor( mesh, hydro, internal_energy, real_t, dense, 0 );
+  auto ener0 = flecsi_get_accessor( mesh, hydro, internal_energy, real_t, dense, 1 );
+
+  // Loop over cells
+  auto cs = mesh.cells();
+  auto num_cells = cs.size();
+
+  #pragma omp parallel for
+  for ( counter_t i=0; i<num_cells; i++ ) {
+    auto c = cs[i];
+    rho0[c] = rho[c];
+    vel0[c] = vel[c];
+    ener0[c] = ener[c];
+  }
+
   return 0;
 
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to restore the coordinates
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+int restore_solution( T & mesh ) {
+
+  // type aliases
+  using counter_t = typename T::counter_t;
+  using real_t = typename T::real_t;
+  using vector_t = typename T::vector_t;
+
+  // access what we need
+  auto rho  = flecsi_get_accessor( mesh, hydro, density, real_t, dense, 0 );
+  auto rho0 = flecsi_get_accessor( mesh, hydro, density, real_t, dense, 1 );
+
+  auto vel  = flecsi_get_accessor( mesh, hydro, velocity, vector_t, dense, 0 );
+  auto vel0 = flecsi_get_accessor( mesh, hydro, velocity, vector_t, dense, 1 );
+
+  auto ener  = flecsi_get_accessor( mesh, hydro, internal_energy, real_t, dense, 0 );
+  auto ener0 = flecsi_get_accessor( mesh, hydro, internal_energy, real_t, dense, 1 );
+
+  // Loop over cells
+  auto cs = mesh.cells();
+  auto num_cells = cs.size();
+
+  #pragma omp parallel for
+  for ( counter_t i=0; i<num_cells; i++ ) {
+    auto c = cs[i];
+    rho[c] = rho0[c];
+    vel[c] = vel0[c];
+    ener[c] = ener0[c];
+  }
+
+  return 0;
+
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Output the solution.

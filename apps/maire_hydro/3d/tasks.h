@@ -115,10 +115,10 @@ int evaluate_residual_task( mesh::burton_mesh_3d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //!   \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int apply_update_task( 
-  mesh::burton_mesh_3d_t & mesh, real_t coef, bool first_time 
+solution_error_t apply_update_task( 
+  mesh::burton_mesh_3d_t & mesh, real_t coef, real_t tolerance, bool first_time 
 ) {
-  return apply_update( mesh, coef, first_time );
+  return apply_update( mesh, coef, tolerance, first_time );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
