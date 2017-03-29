@@ -6,12 +6,16 @@
 /// \file
 /// \brief Simple tests related to solving full hydro solutions.
 ///////////////////////////////////////////////////////////////////////////////
-#pragma once 
 
 // hydro includes
 #include "inputs.h"
 #include "tasks.h"
 #include "../driver.h"
+
+
+namespace flecsi {
+namespace execution {
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
@@ -19,6 +23,8 @@
 int driver(int argc, char** argv) 
 {
   using namespace apps::hydro;
-  return driver<inputs_t>( argc, argv );
+  return apps::hydro::driver<inputs_t>( argc, argv );
 }
 
+} // namespace
+} // namespace
