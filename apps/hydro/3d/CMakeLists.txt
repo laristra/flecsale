@@ -14,13 +14,13 @@ target_compile_definitions(
   FLECSI_DRIVER=${CMAKE_CURRENT_SOURCE_DIR}/driver.h 
  )
 
+set_property(SOURCE ${FLECSI_RUNTIME_DRIVER} APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/driver.h)
 if (USE_CATALYST)
   target_link_libraries( hydro_3d LINK_PRIVATE common catalystadaptor ${ALE_LIBRARIES} )
   vtk_mpi_link(hydro_3d)
 else()
   target_link_libraries( hydro_3d common ${ALE_LIBRARIES} )
 endif()
-
 
 if (LUA_FOUND)
 

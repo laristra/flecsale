@@ -40,10 +40,14 @@ endif()
 if (LUA_LIBRARIES) 
   list(APPEND utils_LIBRARIES ${LUA_LIBRARIES})
 endif()
+if (Caliper_LIBRARIES) 
+  list(APPEND utils_LIBRARIES ${Caliper_LIBRARIES})
+endif()
 
 cinch_add_unit(utils
     SOURCES 
       test/array_view.cc
+      test/caliper.cc
       test/fixed_vector.cc
       test/lua_utils.cc
       test/python_utils.cc

@@ -90,9 +90,32 @@ int evaluate_fluxes_task( mesh::burton_mesh_2d_t & mesh )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-int apply_update_task( mesh::burton_mesh_2d_t & mesh ) 
+solution_error_t apply_update_task( 
+  mesh::burton_mesh_2d_t & mesh, real_t tolerance, bool first_time
+) {
+  return apply_update( mesh, tolerance, first_time );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to save the coordinates
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+int save_solution_task( mesh::burton_mesh_2d_t & mesh ) 
 {
-  return apply_update( mesh );
+  return save_solution( mesh );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to restore the coordinates
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+int restore_solution_task( mesh::burton_mesh_2d_t & mesh ) 
+{
+  return restore_solution( mesh );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -105,6 +128,8 @@ flecsi_register_task(update_state_from_energy_task, loc, single);
 flecsi_register_task(evaluate_time_step_task, loc, single);
 flecsi_register_task(evaluate_fluxes_task, loc, single);
 flecsi_register_task(apply_update_task, loc, single);
+flecsi_register_task(save_solution_task, loc, single);
+flecsi_register_task(restore_solution_task, loc, single);
 
 } // namespace
 } // namespace
