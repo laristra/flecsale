@@ -107,6 +107,13 @@ int driver(int argc, char** argv)
   using real_t = typename mesh_t::real_t;
   using vector_t = typename mesh_t::vector_t; 
 
+  // get machine zero
+  constexpr auto epsilon = std::numeric_limits<real_t>::epsilon();
+  const auto machine_zero = std::sqrt(epsilon);
+
+  // the maximum number of retries
+  constexpr int max_retries = 5;
+
   //===========================================================================
   // Field Creation
   //===========================================================================
@@ -121,11 +128,11 @@ int driver(int argc, char** argv)
 
   // create some field data.  Fields are registered as struct of arrays.
   // this allows us to access the data in different patterns.
-  flecsi_register_data(mesh, hydro,  density,   real_t, dense, 1, cells);
+  flecsi_register_data(mesh, hydro,  density,   real_t, dense, 2, cells);
   flecsi_register_data(mesh, hydro, pressure,   real_t, dense, 1, cells);
-  flecsi_register_data(mesh, hydro, velocity, vector_t, dense, 1, cells);
+  flecsi_register_data(mesh, hydro, velocity, vector_t, dense, 2, cells);
 
-  flecsi_register_data(mesh, hydro, internal_energy, real_t, dense, 1, cells);
+  flecsi_register_data(mesh, hydro, internal_energy, real_t, dense, 2, cells);
   flecsi_register_data(mesh, hydro,     temperature, real_t, dense, 1, cells);
   flecsi_register_data(mesh, hydro,     sound_speed, real_t, dense, 1, cells);
 
@@ -146,6 +153,9 @@ int driver(int argc, char** argv)
   flecsi_register_data( mesh, hydro, time_step, real_t, global, 1 );
   flecsi_register_data( mesh, hydro, cfl, real_t, global, 1 );
   *flecsi_get_accessor( mesh, hydro, cfl, real_t, global, 0) = inputs_t::CFL;  
+
+  // Register the total energy
+  flecsi_register_data( mesh, hydro, sum_total_energy, real_t, global, 1 );
 
 
   //===========================================================================
@@ -185,10 +195,14 @@ int driver(int argc, char** argv)
   // a counter for this session
   size_t num_steps = 0; 
 
-  for ( ; 
+  for ( size_t num_retries = 0;
     (num_steps < inputs_t::max_steps && soln_time < inputs_t::final_time); 
     ++num_steps 
   ) {   
+
+    // store the initial solution, only if this isnt a retry
+    if (num_retries == 0)
+      flecsi_execute_task( save_solution_task, loc, single, mesh );
 
     // compute the time step
     flecsi_execute_task( evaluate_time_step_task, loc, single, mesh );
@@ -196,23 +210,98 @@ int driver(int argc, char** argv)
     // access the computed time step and make sure its not too large
     *time_step = std::min( *time_step, inputs_t::final_time - soln_time );       
 
-    cout << "step =  " << std::setw(4) << time_cnt+1
-         << std::setprecision(2)
-         << ", time = " << std::scientific << soln_time + (*time_step)
-         << ", dt = " << std::scientific << *time_step
-         << std::endl;
+    //-------------------------------------------------------------------------
+    // try a timestep
 
     // compute the fluxes
     flecsi_execute_task( evaluate_fluxes_task, loc, single, mesh );
-    
-    // Loop over each cell, scattering the fluxes to the cell
-    flecsi_execute_task( apply_update_task, loc, single, mesh );
+
+    // reset the time stepping mode
+    auto mode = mode_t::normal;
+
+    // wrap the stage update in a do loop, so it can be re-executed
+    do {
+
+      // output the time step
+      cout << std::string(80, '=') << endl;
+      auto ss = cout.precision();
+      cout.setf( std::ios::scientific );
+      cout.precision(6);
+      cout << "|  " << "Step:" << std::setw(10) << time_cnt+1
+           << "  |  Time:" << std::setw(17) << soln_time + (*time_step)
+           << "  |  Step Size:" << std::setw(17) << *time_step
+           << "  |" << std::endl;
+      cout.unsetf( std::ios::scientific );
+      cout.precision(ss);
+
+      // Loop over each cell, scattering the fluxes to the cell
+      auto err = 
+        flecsi_execute_task( 
+          apply_update_task, loc, single, mesh, machine_zero, true 
+        );
+      auto update_flag = err.get();
+
+
+      // dump the current errored solution to a file
+      if ( update_flag != solution_error_t::ok && inputs_t::output_freq > 0)
+        output(mesh, inputs_t::prefix+"-error", inputs_t::postfix, 1);
+
+      // if we got an unphysical solution, half the time step and try again
+      if ( update_flag == solution_error_t::unphysical ) {
+        // Print a message that we are retrying
+        std::cout << "Unphysical solution detected, halfing timestep..." << std::endl;
+        // half time step
+        *time_step *= 0.5;
+        // indicate that we are retrying
+        mode = mode_t::retry;
+      }
+
+      // if there was variance, retry the solution again
+      else if (update_flag == solution_error_t::variance) {
+        // Print a message that we are retrying
+        std::cout << "Variance in solution detected, retrying..." << std::endl;
+        // roll the counter back
+        --num_steps;
+        // set the flag to restart
+        mode = mode_t::restart;
+      }
+
+      // if there is no error, just break
+      else {
+        mode = mode_t::normal;
+        break;
+      }
+
+
+      // if we are retrying or restarting, restore the original solution
+      if (mode==mode_t::retry || mode==mode_t::restart) {
+        // restore the initial solution
+        flecsi_execute_task( restore_solution_task, loc, single, mesh );
+        // don't retry forever
+        if ( ++num_retries > max_retries ) {
+          // Print a message we are exiting
+          std::cout << "Too many retries, exiting..." << std::endl;
+          // flag that we want to quit
+          mode = mode_t::quit;
+        }
+      }
+
+
+    } while ( mode==mode_t::retry );
+
+    // end timestep
+    //-------------------------------------------------------------------------
+
+    // if a restart is detected, restart the whole iteration loop
+    if (mode==mode_t::restart) continue;
 
     // Update derived solution quantities
     flecsi_execute_task( 
       update_state_from_energy_task, loc, single, mesh, inputs_t::eos.get() 
     );
 
+    // now we can quit after the solution has been reset to the previous step's
+    if (mode==mode_t::quit) break;
 
     // update time
     soln_time = mesh.increment_time( *time_step );
@@ -220,6 +309,9 @@ int driver(int argc, char** argv)
 
     // now output the solution
     output(mesh, inputs_t::prefix, inputs_t::postfix, inputs_t::output_freq);
+
+    // reset the number of retrys if we eventually made it through a time step
+    num_retries  = 0;
 
   }
 

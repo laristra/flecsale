@@ -43,7 +43,6 @@ include_directories(${Cereal_INCLUDE_DIR})
 # find python for running regression tests
 find_package (PythonInterp QUIET)
 if (PYTHONINTERP_FOUND)
-  option(ENABLE_REGRESSION_TESTS "Enable regression tests" ON)
   cmake_dependent_option( 
     ENABLE_REGRESSION_TESTS "Enable regression tests" ON 
     "ENABLE_UNIT_TESTS" OFF 
@@ -51,6 +50,10 @@ if (PYTHONINTERP_FOUND)
 else ()
   option(ENABLE_REGRESSION_TESTS "Enable regression tests" OFF)
 endif ()
+
+if(ENABLE_REGRESSION_TESTS AND NOT PYTHONINTERP_FOUND)
+  message(FATAL_ERROR "Regression tests requested, but python was not found")
+endif()
 
 if (ENABLE_REGRESSION_TESTS)
   message (STATUS "Found PythonInterp: ${PYTHON_EXECUTABLE}")
@@ -63,10 +66,10 @@ endif ()
 # find python for embedding
 find_package (PythonLibs QUIET)
 
-if (PYTHONLIBS_FOUND)
-  option(ENABLE_PYTHON "Enable Python Support" ON)
-else()
-  option(ENABLE_PYTHON "Enable Python Support" OFF)
+option(ENABLE_PYTHON "Enable Python Support" ${PYTHONLIBS_FOUND})
+
+if(ENABLE_PYTHON AND NOT PYTHONLIBS_FOUND)
+  message(FATAL_ERROR "Python requested, but not found")
 endif()
 
 if (ENABLE_PYTHON)
@@ -79,10 +82,10 @@ endif ()
 # find lua for embedding
 find_package (Lua 5.2 QUIET)
 
-if (LUA_FOUND)
-  option(ENABLE_LUA "Enable Lua Support" ON)
-else()
-  option(ENABLE_LUA "Enable Lua Support" OFF)
+option(ENABLE_LUA "Enable Lua Support" ${LUA_FOUND})
+
+if(ENABLE_LUA AND NOT LUA_FOUND)
+  message(FATAL_ERROR "Lua requested, but not found")
 endif()
 
 if (ENABLE_LUA)
@@ -99,18 +102,39 @@ endif ()
 # OpenSSL
 find_package(OpenSSL QUIET)
 
-if (OPENSSL_FOUND)
-  option(ENABLE_OPENSSL "Enable OpenSSL Support" ON)
-else()
-  option(ENABLE_OPENSSL "Enable OpenSSL Support" OFF)
+option(ENABLE_OPENSSL "Enable OpenSSL Support" ${OPENSSL_FOUND})
+
+if(ENABLE_OPENSSL AND NOT OPENSSL_FOUND)
+  message(FATAL_ERROR "OpenSSL requested, but not found")
 endif()
 
 if(ENABLE_OPENSSL)
+  message(STATUS "Found OpenSSL: ${OPENSSL_INCLUDE_DIR}")
   include_directories(${OPENSSL_INCLUDE_DIR})
   # flecsi uses ENABLE_OPENSSL, flecsale uses HAVE_OPENSSL
   add_definitions(-DHAVE_OPENSSL -DENABLE_OPENSSL)
   list( APPEND ALE_LIBRARIES ${OPENSSL_LIBRARIES} )
 endif()
+
+#------------------------------------------------------------------------------#
+# Caliper
+#------------------------------------------------------------------------------#
+
+find_package(Caliper QUIET)
+
+option(ENABLE_CALIPER "Enable Caliper Support" ${Caliper_FOUND})
+
+if(ENABLE_CALIPER AND NOT Caliper_FOUND)
+  message(FATAL_ERROR "Caliper requested, but not found")
+endif()
+  
+if(ENABLE_CALIPER)
+  message(STATUS "Found Caliper: ${Caliper_INCLUDE_DIRS}")
+  include_directories(${Caliper_INCLUDE_DIRS})
+  add_definitions(-DHAVE_CALIPER)
+  list( APPEND ALE_LIBRARIES ${Caliper_LIBRARIES} )
+endif()
+
 
 #------------------------------------------------------------------------------#
 # Find some general libraries

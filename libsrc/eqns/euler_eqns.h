@@ -407,18 +407,6 @@ public:
     internal_energy(u) = 
       ener*inv_mass - 0.5 * dot_product( vel, vel );
 
-    if ( internal_energy(std::forward<U>(u)) < 0 )
-      raise_runtime_error( 
-        "Negative internal energy encountered, " << internal_energy(u) << "." 
-        << std::endl << "Current state = " << u << "."
-      );
-
-    if ( density(std::forward<U>(u)) < 0 )
-      raise_runtime_error( 
-        "Negative density encountered, " << density(u) << "." 
-        << std::endl << "Current state = " << u << "."
-      );
-
   }
 
 };
