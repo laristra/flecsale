@@ -20,10 +20,10 @@ namespace execution {
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
 ///////////////////////////////////////////////////////////////////////////////
-int driver(int argc, char** argv) 
+void driver(int argc, char** argv) 
 {
   using namespace apps::hydro;
-  return apps::hydro::driver<inputs_t>( argc, argv );
+  apps::hydro::driver<inputs_t>( argc, argv );
 }
 
 } // namespace
