@@ -111,11 +111,9 @@ inputs_t::mesh_function_t base_t::make_mesh =
   (const real_t &)
   { 
     // this is the mesh object
-    auto mesh = ale::mesh::box<mesh_t>( 
+    return ale::mesh::box<mesh_t>( 
       nx, ny, nz, 0, 0, 0, lx, ly, lz
     );
-  
-    return mesh;
   };
 
 // install each boundary
