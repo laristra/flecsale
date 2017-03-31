@@ -82,18 +82,27 @@ int update_state_from_pressure( T & mesh, const EOS * eos ) {
   using counter_t = typename T::counter_t;
   using eqns_t = eqns_t<T::num_dimensions>;
 
-  // get the collection accesor
+  // access the data we need
   auto cell_state = cell_state_accessor<T>( mesh );
+  auto ener0 = flecsi_get_accessor( mesh, hydro, sum_total_energy, real_t, global, 0 );
 
   auto cs = mesh.cells();
   auto num_cells = cs.size();
 
-  #pragma omp parallel for
+  real_t ener(0);
+
+  #pragma omp parallel for reduction(+:ener)
   for ( counter_t i=0; i<num_cells; ++i ) {
     auto c = cs[i];
     auto u = cell_state(c);
     eqns_t::update_state_from_pressure( u, *eos );
+    // sum total energy
+    auto et = eqns_t::total_energy(u);
+    auto m  = eqns_t::mass(u);
+    ener += m * et;
   }
+
+  *ener0 = ener;
 
   return 0;
 }
@@ -578,7 +587,9 @@ int32_t evaluate_residual( T & mesh ) {
 //!   \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
-int apply_update( T & mesh, real_t coef, bool first_time ) {
+solution_error_t
+apply_update( T & mesh, real_t coef, real_t tolerance, bool first_time ) 
+{
 
   // type aliases
   using counter_t = typename T::counter_t;
@@ -593,8 +604,11 @@ int apply_update( T & mesh, real_t coef, bool first_time ) {
 
   auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
 
+  auto cell_volume = mesh.cell_volumes();
+
   // read only access
   const auto delta_t = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
+  auto ener0 = flecsi_get_accessor( mesh, hydro, sum_total_energy, real_t, global, 0 );
 
   // the time step factor
   auto fact = coef * (*delta_t);
@@ -612,12 +626,7 @@ int apply_update( T & mesh, real_t coef, bool first_time ) {
   #pragma omp declare reduction( + : vector_t : omp_out += omp_in ) \
     initializer (omp_priv(0))
 
-  #ifndef NDEBUG
-  #  pragma omp parallel for reduction( + : mass, mom, ener )
-  #else
-  #  pragma omp parallel for
-  #endif
-  
+  #pragma omp parallel for reduction( + : mass, mom, ener )
   for ( counter_t i=0; i<num_cells; i++ ) {
 
     // get the cell_t pointer
@@ -631,22 +640,31 @@ int apply_update( T & mesh, real_t coef, bool first_time ) {
 
     // apply the update
     eqns_t::update_state_from_flux( u, dudt[cl], fact );
-    eqns_t::update_volume( u, cl->volume() );
+    eqns_t::update_volume( u, cell_volume[cl] );
 
-#ifndef NDEBUG
     // post update sums
     auto vel = eqns_t::velocity(u);
-    auto et = eqns_t::total_energy(u);
+    auto ie = eqns_t::internal_energy(u);
     auto m  = eqns_t::mass(u);
+    auto rho  = eqns_t::density(u);
     mass += m;
-    for ( int d=0; d<T::num_dimensions; ++d ) mom[d] += m * vel[d];
-    ener += m * et;
-#endif
+    ener += m * ie;
+    for ( int d=0; d<T::num_dimensions; ++d ) {
+      auto tmp = m * vel[d];
+      mom[d] += tmp;
+      ener += 0.5 * tmp * vel[d];
+    }
     
+    // check the solution quantities
+    if ( ie < 0 || rho < 0 || cell_volume[cl] < 0 ) {
+      std::cout << "Negative internal energy or density encountered in cell " 
+        << cl.id() << std::endl << "Current state = " << u << "." << std::endl;
+      return solution_error_t::unphysical;
+    }
+
   } // for
   //----------------------------------------------------------------------------
 
-#ifndef NDEBUG
   std::stringstream mom_ss;
   mom_ss.setf( std::ios::scientific );
 
@@ -672,9 +690,20 @@ int apply_update( T & mesh, real_t coef, bool first_time ) {
 
   cout.unsetf( std::ios::scientific );
   cout.precision(ss);
-#endif
 
-  return 0;
+  //----------------------------------------------------------------------------
+  // check the invariants
+
+  auto err = std::abs( *ener0 - ener );
+
+  // check the difference
+  if ( err > tolerance )
+    return solution_error_t::variance;
+
+  // store the old value
+  *ener0 = ener;
+
+  return solution_error_t::ok;
 
 }
 

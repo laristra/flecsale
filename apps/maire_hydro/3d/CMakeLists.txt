@@ -13,6 +13,7 @@ target_compile_definitions(
   PRIVATE
   FLECSI_DRIVER=${CMAKE_CURRENT_SOURCE_DIR}/driver.h 
  )
+set_property(SOURCE ${FLECSI_RUNTIME_DRIVER} APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/driver.h)
 target_link_libraries( maire_hydro_3d common ${ALE_LIBRARIES} )
 
 if (LUA_FOUND) 
