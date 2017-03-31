@@ -199,7 +199,7 @@ template <typename T, typename... Ts>
 class are_integral<T, Ts...>
   : public std::integral_constant <
       bool,
-      std::is_integral<T>::value && are_integral<Ts...>::value
+      (std::is_integral<T>::value && are_integral<Ts...>::value)
     >
 {};
 

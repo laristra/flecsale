@@ -191,7 +191,7 @@ public:
   };
 
   //! Destructor
-  ~burton_mesh_t() = default;
+  virtual ~burton_mesh_t() {};
 
   //============================================================================
   //! \brief Return the size of an associated index space/
@@ -1153,7 +1153,7 @@ public:
     bool bad_face = false;
     auto fs = faces();
     auto num_faces = fs.size();
-
+    
     #pragma omp parallel for reduction( || : bad_face )
     for( counter_t fid=0; fid<num_faces; ++fid ) {
       auto f = fs[fid];

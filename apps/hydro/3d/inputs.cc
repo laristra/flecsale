@@ -74,11 +74,9 @@ inputs_t::mesh_function_t base_t::make_mesh =
     constexpr real_t length_z = 1.0;
   
     // this is the mesh object
-    auto mesh = ale::mesh::box<mesh_t>( 
+    return ale::mesh::box<mesh_t>( 
       num_cells_x, num_cells_y, num_cells_z, length_x, length_y, length_z
     );
-  
-    return mesh;
   };
 
 } // namespace
