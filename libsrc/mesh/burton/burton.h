@@ -19,7 +19,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
   
-auto filter_boundary = []( auto && entities )  
+template< typename E >
+auto filter_boundary( E && entities )  
 {
   return 
     std::forward<decltype(entities)>(entities).filter( 

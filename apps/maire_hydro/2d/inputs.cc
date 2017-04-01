@@ -104,11 +104,9 @@ inputs_t::mesh_function_t base_t::make_mesh =
   [nx=num_cells_x, ny=num_cells_y, lx=length_x, ly=length_y](const real_t &)
   { 
     // this is the mesh object
-    auto mesh = ale::mesh::box<mesh_t>( 
+    return ale::mesh::box<mesh_t>( 
       nx, ny, 0, 0, lx, ly
     );
-  
-    return mesh;
   };
 
 // install each boundary
