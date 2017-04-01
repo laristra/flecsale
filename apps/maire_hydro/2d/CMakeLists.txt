@@ -5,15 +5,10 @@
 
 add_executable( maire_hydro_2d
   inputs.cc
+  driver.cc
   ${FLECSI_RUNTIME_DRIVER}
   ${FLECSI_RUNTIME_MAIN}
 )
-target_compile_definitions( 
-  maire_hydro_2d
-  PRIVATE
-  FLECSI_DRIVER=${CMAKE_CURRENT_SOURCE_DIR}/driver.h 
- )
-set_property(SOURCE ${FLECSI_RUNTIME_DRIVER} APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/driver.h)
 target_link_libraries( maire_hydro_2d common ${ALE_LIBRARIES} )
 
 if (LUA_FOUND) 

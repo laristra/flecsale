@@ -5,16 +5,11 @@
 
 add_executable( hydro_3d
   inputs.cc
+  driver.cc
   ${FLECSI_RUNTIME_DRIVER}
   ${FLECSI_RUNTIME_MAIN}
 )
-target_compile_definitions( 
-  hydro_3d
-  PRIVATE
-  FLECSI_DRIVER=${CMAKE_CURRENT_SOURCE_DIR}/driver.h 
- )
 
-set_property(SOURCE ${FLECSI_RUNTIME_DRIVER} APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/driver.h)
 if (USE_CATALYST)
   target_link_libraries( hydro_3d LINK_PRIVATE common catalystadaptor ${ALE_LIBRARIES} )
   vtk_mpi_link(hydro_3d)
