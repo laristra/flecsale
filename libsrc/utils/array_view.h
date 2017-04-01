@@ -85,7 +85,7 @@ public:
   template<
     typename... Args,
     int N = sizeof...(Args),
-    std::enable_if_t< (N == IndexType::rank && are_integral_v<Args...>) >* = nullptr
+    std::enable_if_t< (N == IndexType::rank && are_integral<Args...>::value) >* = nullptr
   >
   constexpr auto operator()(Args... args) noexcept
   {
@@ -164,7 +164,7 @@ public:
   //! \brief constructor with values, must be the same number as rank
   template <
     typename... Ts,
-    typename = std::enable_if_t< (sizeof...(Ts) == Rank) && are_integral_v<Ts...> >
+    typename = std::enable_if_t< (sizeof...(Ts) == Rank) && are_integral<Ts...>::value >
   > 
   constexpr index_t(Ts... ts) noexcept : 
     index_{ detail::narrow_cast<value_type>( std::forward<Ts>(ts) )...} 
@@ -177,7 +177,7 @@ public:
     std::enable_if_t< (N == Rank) >* = nullptr 
   >
   constexpr explicit index_t( const std::array<value_type,N> & arr ) noexcept : 
-    index_{ arr } 
+    index_( arr ) 
   {};
 
   //! \brief constructor with static array, must be the same size as rank\
