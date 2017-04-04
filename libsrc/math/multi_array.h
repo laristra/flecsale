@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <iostream>
 
 namespace ale {
 namespace math {

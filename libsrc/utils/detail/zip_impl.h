@@ -15,6 +15,7 @@
 
 // system includes
 #include <cstddef>
+#include <iterator>
 #include <tuple>
 
 namespace ale {
