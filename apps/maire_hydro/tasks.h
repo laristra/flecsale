@@ -616,6 +616,7 @@ apply_update( T & mesh, real_t coef, real_t tolerance, bool first_time )
   real_t mass(0);
   vector_t mom(0);
   real_t ener(0);
+  bool bad_cell(false);
  
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
@@ -624,9 +625,10 @@ apply_update( T & mesh, real_t coef, real_t tolerance, bool first_time )
   auto num_cells = cs.size();
   
   #pragma omp declare reduction( + : vector_t : omp_out += omp_in ) \
-    initializer (omp_priv(0))
+    initializer (omp_priv(omp_orig))
 
-  #pragma omp parallel for reduction( + : mass, mom, ener )
+  #pragma omp parallel for reduction( + : mass, mom, ener ) \
+    reduction( || : bad_cell )
   for ( counter_t i=0; i<num_cells; i++ ) {
 
     // get the cell_t pointer
@@ -656,14 +658,18 @@ apply_update( T & mesh, real_t coef, real_t tolerance, bool first_time )
     }
     
     // check the solution quantities
-    if ( ie < 0 || rho < 0 || cell_volume[cl] < 0 ) {
-      std::cout << "Negative internal energy or density encountered in cell " 
-        << cl.id() << std::endl << "Current state = " << u << "." << std::endl;
-      return solution_error_t::unphysical;
-    }
+    if ( ie < 0 || rho < 0 || cell_volume[cl] < 0 )
+      bad_cell = true;
 
   } // for
   //----------------------------------------------------------------------------
+
+  // return unphysical if something went wrong
+  if (bad_cell) {
+    std::cout << "Negative internal energy or density encountered in a cell" 
+      << std::endl;
+    return solution_error_t::unphysical;
+  }
 
   std::stringstream mom_ss;
   mom_ss.setf( std::ios::scientific );
