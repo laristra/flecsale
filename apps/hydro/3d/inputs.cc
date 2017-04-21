@@ -25,11 +25,7 @@ using eos_t = inputs_t::eos_t;
 
 // the case prefix
 template<> string base_t::prefix = "shock_box_3d";
-#ifdef USE_CATALYST
-  template<> string base_t::postfix = "vtk";
-#else
-  template<> string base_t::postfix = "dat";
-#endif
+template<> string base_t::postfix = "dat";
 
 // output frequency
 template<> size_t base_t::output_freq = 100;
@@ -69,15 +65,9 @@ inputs_t::mesh_function_t base_t::make_mesh =
   [](const real_t &)
   {
     // the grid dimensions
-  #ifdef USE_CATALYST
-    constexpr size_t num_cells_x = 40;
-    constexpr size_t num_cells_y = 40;
-    constexpr size_t num_cells_z = 40;
-  #else
     constexpr size_t num_cells_x = 10;
     constexpr size_t num_cells_y = 10;
     constexpr size_t num_cells_z = 10;
-  #endif
     constexpr real_t length_x = 1.0;
     constexpr real_t length_y = 1.0;
     constexpr real_t length_z = 1.0;

@@ -20,6 +20,8 @@ NOTE: Paraview 5.2.0 is required for this.
 	Src to build from: http://www.paraview.org/files/v5.2/ParaView-v5.2.0.tar.gz
 
 
+cmake ../ -DCMAKE_INSTALL_PREFIX=./install -DPARAVIEW_ENABLE_PYTHON=on -DPARAVIEW_USE_MPI=on
+
 --------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------
 

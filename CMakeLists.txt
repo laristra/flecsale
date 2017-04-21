@@ -29,20 +29,6 @@ cmake_minimum_required(VERSION 2.8)
 # Include project-level CMake configuration file
 #------------------------------------------------------------------------------#
 
-option(USE_CATALYST "Link the sim with Catalyst for in situ" OFF)
-
-if (USE_CATALYST)
-  	find_package(ParaView REQUIRED COMPONENTS vtkPVPythonCatalyst)
-    include("${PARAVIEW_USE_FILE}")
-
-    add_definitions("-DUSE_CATALYST")
-
-    include ( "${ParaView_DIR}/VTK/VTKConfig.cmake" )
-    add_definitions( -DHAVE_VTK )
-	set(VTK_FOUND ON CACHE BOOL "Link to VTK")
-	set(VTK_INCLUDED ON CACHE BOOL "Link to VTK")
-endif()
-
 if(NOT "$ENV{CINCH_SOURCE_DIR}" STREQUAL "")
     set(CINCH_SOURCE_DIR $ENV{CINCH_SOURCE_DIR})
 elseif(EXISTS ${CMAKE_SOURCE_DIR}/cinch)

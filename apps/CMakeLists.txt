@@ -5,11 +5,6 @@
 
 include(regression) 
 
-if (USE_CATALYST)
-	add_subdirectory( catalyst_adaptor )
-	include_directories( "${CMAKE_SOURCE_DIR}/apps/catalyst_adaptor/")
-endif()
-
 add_subdirectory( common )
 add_subdirectory( hydro )
 add_subdirectory( maire_hydro )

@@ -30,6 +30,7 @@ namespace utils = ale::utils;
 namespace geom  = ale::geom;
 namespace eos   = ale::eos;
 namespace eqns  = ale::eqns;
+namespace io    = ale::io;
 
 // mesh and some underlying data types
 using mesh::burton_mesh_t;

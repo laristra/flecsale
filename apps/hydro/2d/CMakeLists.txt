@@ -10,12 +10,7 @@ add_executable( hydro_2d
   ${FLECSI_RUNTIME_MAIN}
 )
 
-if (USE_CATALYST)
-  target_link_libraries( hydro_2d LINK_PRIVATE common catalystadaptor ${ALE_LIBRARIES} )
-  vtk_mpi_link(hydro_2d)
-else()
-  target_link_libraries( hydro_2d common ${ALE_LIBRARIES} )
-endif()
+target_link_libraries( hydro_2d common ${ALE_LIBRARIES} )
 
 if (LUA_FOUND)
 
