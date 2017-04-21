@@ -28,6 +28,8 @@
 
 // system includes
 #include <iostream>
+#include <string>
+#include <vector>
 
 namespace ale {
 namespace io {
@@ -40,15 +42,16 @@ class adaptor_t {
 
 public:
 
-  adaptor_t(int numScripts, char* scripts[])
+  adaptor_t(const std::vector<std::string> & scripts)
   {
 		processor_ = vtkCPProcessor::New();
 		processor_->Initialize();
 
-	  for (int i=1; i<numScripts; i++)
+	  for (const auto & script : scripts)
 	  {
+      std::cout << "Loading pipeline '" << script << "'." << std::endl;
 	  	vtkNew<vtkCPPythonScriptPipeline> pipeline;
-	  	pipeline->Initialize(scripts[i]);
+	  	pipeline->Initialize(script.c_str());
 	  	processor_->AddPipeline(pipeline.GetPointer());
 	  }
   }

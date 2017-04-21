@@ -48,21 +48,25 @@ int driver(int argc, char** argv)
   auto print_usage = [&argv]() {
     std::cout << "Usage: " << argv[0] 
               << " [--file INPUT_FILE]"
+              << " [--catalyst PYTHON_SCRIPT]"
               << " [--help]"
               << std::endl << std::endl;
     std::cout << "\t--file INPUT_FILE:\t Override the input file "
               << "with INPUT_FILE." << std::endl;
+    std::cout << "\t--catalyst PYTHON_SCRIPT:\t Load catalyst with "
+              << "using PYTHON_SCRIPT." << std::endl;
     std::cout << "\t--help:\t Print a help message." << std::endl;
   };
 
   // Define the options
   struct option long_options[] =
     {
-      {"help",       no_argument, 0, 'h'},
-      {"file", required_argument, 0, 'f'},
+      {"help",           no_argument, 0, 'h'},
+      {"file",     required_argument, 0, 'f'},
+      {"catalyst", required_argument, 0, 'c'},
       {0, 0, 0, 0}
     };
-  const char * short_options = "hf:";
+  const char * short_options = "hf:c:";
 
   // parse the arguments
   auto args = parse_arguments(argc, argv, long_options, short_options);
@@ -87,6 +91,20 @@ int driver(int argc, char** argv)
               << std::endl;
     inputs_t::load( input_file_name );
   }
+
+  // get the catalyst arguments
+  auto catalyst_args = 
+    args.count("c") ? args.at("c") : std::string();
+  // split them up into a list
+  auto catalyst_scripts = utils::split( catalyst_args, {';'} );
+  
+  if ( !catalyst_args.empty() ) {
+    std::cout << "Using catalyst args \"" << catalyst_args << "\"." 
+              << std::endl;
+  }
+
+
+
 
   //===========================================================================
   // Mesh Setup
@@ -169,7 +187,7 @@ int driver(int argc, char** argv)
   flecsi_execute_task( initial_conditions_task, loc, single, mesh, inputs_t::ics );
   
   #ifdef HAVE_CATALYST
-    auto insitu = io::catalyst::adaptor_t(argc, argv);
+    auto insitu = io::catalyst::adaptor_t(catalyst_scripts);
     std::cout << "Catalyst on!" << std::endl;
   #endif
 
@@ -310,10 +328,12 @@ int driver(int argc, char** argv)
     if (mode==mode_t::quit) break;
 
     #ifdef HAVE_CATALYST
-    auto vtk_grid = mesh::to_vtk( mesh );
-    insitu.process( 
-      vtk_grid, soln_time, num_steps, (num_steps==inputs_t::max_steps-1)
-    );
+    if (!catalyst_scripts.empty()) {
+      auto vtk_grid = mesh::to_vtk( mesh );
+      insitu.process( 
+        vtk_grid, soln_time, num_steps, (num_steps==inputs_t::max_steps-1)
+      );
+    }
     #endif
 
     // update time
