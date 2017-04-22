@@ -12,6 +12,7 @@
 #pragma once
 
 // system includes
+#include <cstddef> // for size_t
 #include <cstdint> // for types
 
 namespace ale {

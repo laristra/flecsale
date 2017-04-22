@@ -13,8 +13,10 @@
 #include "common/types.h"
 #include "utils/lua_utils.h"
 
-// system includes
 #include<cinchtest.h>
+
+// system includes
+#include<array>
 #include<iostream>
 
 
