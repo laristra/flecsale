@@ -13,7 +13,6 @@ tabular equation of state (EOS).
 ## Minimal
 
 - [FleCSI](https://github.com/laristra/flecsi)
-- [cereal](https://github.com/USCiLab/cereal)
 - [CMake](http://www.cmake.org/) >= 2.8
 - C++14 compliant compiler  (gcc >= 5.3.0, clang>=3.7.0)
 
@@ -46,20 +45,6 @@ to clone using https.
 **Make sure to include the `--recursive` so that all of the
 submodules are cloned as well.** 
 
-# Getting Cereal
-
-[FleCSI](https://github.com/laristra/flecsi) uses the 
-[cereal](https://github.com/USCiLab/cereal) library for serializing 
-data.  To download it using git, type
-
-    $ git clone git@github.com:USCiLab/cereal.git
-
-to clone the repository using ssh, or 
-
-    $ git clone https://github.com/USCiLab/cereal.git
-
-to clone using https.
-
 # Installation
 
 Building the code is simply performed through the following steps
@@ -67,8 +52,7 @@ using [CMake](https://cmake.org/):
 
     $ mkdir build
     $ cd build
-    $ CC=gcc CXX=g++ cmake /path/to/source/directory \
-      -DCereal_INCLUDE_DIR=/path/to/cereal/include/ [options]
+    $ CC=gcc CXX=g++ cmake /path/to/source/directory [options]
     $ make -j
 
 The environment variables `CC` and `CXX` are only necessary to select
