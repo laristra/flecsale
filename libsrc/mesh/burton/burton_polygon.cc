@@ -10,6 +10,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 // some type aliases
 using burton_2d_polygon_t = burton_polygon_t<2>;
@@ -77,5 +78,6 @@ burton_3d_polygon_t::real_t burton_3d_polygon_t::area() const
 }
 
 
+} // namespace
 } // namespace
 } // namespace

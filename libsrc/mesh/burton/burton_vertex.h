@@ -18,6 +18,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The burton_vertex_t type provides an interface for managing
@@ -237,6 +238,7 @@ private:
 
 
 
+} // namespace burton
 } // namespace mesh
 } // namespace ale
 

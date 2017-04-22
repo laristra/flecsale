@@ -15,9 +15,9 @@
 #include <cinchtest.h>
 
 //! \brief the mesh type
-using mesh_2d_t   = ale::mesh::burton_mesh_2d_t;
+using mesh_2d_t   = ale::mesh::burton::burton_mesh_2d_t;
 //! \brief the mesh type
-using mesh_3d_t   = ale::mesh::burton_mesh_3d_t;
+using mesh_3d_t   = ale::mesh::burton::burton_mesh_3d_t;
 
 // some general using statements
 using std::string;

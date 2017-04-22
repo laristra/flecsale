@@ -19,6 +19,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief The mesh traits
@@ -71,6 +72,7 @@ struct burton_config_t {
 
 };
 
+} // namespace burton
 } // namespace mesh
 } // namespace ale
 

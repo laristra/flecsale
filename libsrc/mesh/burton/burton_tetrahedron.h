@@ -17,6 +17,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Provides a derived instance of burton_cell_t for 3D tetrahedron '
@@ -337,5 +338,6 @@ public:
 
 
 
+} // namespace
 } // namespace
 } // namespace

@@ -27,6 +27,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 
 
@@ -353,5 +354,6 @@ struct burton_types_t<3> {
 
 };
 
+} // namespace burton
 } // namespace mesh
 } // namespace ale

@@ -16,6 +16,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The burton_polyhedron_t type provides a derived instance of
@@ -316,5 +317,6 @@ private:
 
 
 
+} // namespace
 } // namespace
 } // namespace

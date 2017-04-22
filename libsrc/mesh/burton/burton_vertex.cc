@@ -10,6 +10,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 // some type aliases
 using burton_2d_vertex_t = burton_vertex_t<2>;
@@ -61,6 +62,7 @@ const burton_3d_vertex_t::tag_list_t &  burton_3d_vertex_t::tags() const
   return flags[mesh_entity_base_t<num_domains>::template id<0>()];
 }
 
+} // namespace burton
 } // namespace mesh
 } // namespace ale
 

@@ -36,7 +36,7 @@ public:
   static constexpr auto num_dimensions = N;
  
   //! the mesh type
-  using mesh_t = ale::mesh::burton_mesh_t<num_dimensions>; 
+  using mesh_t = typename apps::hydro::mesh_t<num_dimensions>; 
   //! the size type
   using size_t = typename mesh_t::size_t;
   //! the real type

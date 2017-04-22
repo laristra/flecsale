@@ -16,6 +16,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Provides some multidimensional polygon types.
@@ -224,5 +225,6 @@ public:
 };
 
 
+} // namespace
 } // namespace
 } // namespace

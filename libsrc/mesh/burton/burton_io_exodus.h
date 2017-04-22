@@ -29,6 +29,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1406,5 +1407,6 @@ static bool burton_3d_exodus_exo_registered =
     "exo", create_io_exodus<3> );
 //! @}
 
+} // namespace burton
 } // namespace mesh
 } // namespace ale

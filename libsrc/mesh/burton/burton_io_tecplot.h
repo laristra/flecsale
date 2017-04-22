@@ -25,6 +25,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 
 
@@ -1115,5 +1116,6 @@ static bool burton_3d_tecplot_plt_registered =
 //! @}
 
 
+} // namespace burton
 } // namespace mesh
 } // namespace ale

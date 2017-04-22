@@ -10,6 +10,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 ////////////////////////////////////////////////////////////////////////////////
 // 3D polyhedron
@@ -49,5 +50,6 @@ burton_polyhedron_t::real_t burton_polyhedron_t::volume() const
 }
 
 
+} // namespace
 } // namespace
 } // namespace

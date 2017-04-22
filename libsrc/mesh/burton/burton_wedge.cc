@@ -10,6 +10,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 // some type aliases
 using burton_2d_wedge_t = burton_wedge_t<2>;
@@ -140,6 +141,7 @@ burton_3d_wedge_t::point_t burton_3d_wedge_t::facet_midpoint() const
   return geom::shapes::triangle<num_dimensions>::midpoint( v, f, e );
 }
 
+} // namespace burton
 } // namespace mesh
 } // namespace ale
 

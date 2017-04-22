@@ -10,6 +10,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 ////////////////////////////////////////////////////////////////////////////////
 // 3D tetrahedron
@@ -46,5 +47,6 @@ burton_tetrahedron_t::real_t burton_tetrahedron_t::volume() const
     vs[2]->coordinates(), vs[3]->coordinates() );
 }
 
+} // namespace
 } // namespace
 } // namespace

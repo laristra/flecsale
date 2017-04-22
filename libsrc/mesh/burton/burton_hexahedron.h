@@ -16,6 +16,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The burton_hexahedron_t type provides a derived instance of
@@ -542,5 +543,6 @@ public:
 
 
 
+} // namespace
 } // namespace
 } // namespace

@@ -42,6 +42,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -455,5 +456,6 @@ static bool burton_3d_vtk_registered =
     "vtk", create_io_vtk );
 //! @}
 
+} // namespace burton
 } // namespace mesh
 } // namespace ale

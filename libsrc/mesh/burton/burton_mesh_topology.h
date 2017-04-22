@@ -16,6 +16,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Type for storing instance of template specialized low level mesh.
@@ -32,5 +33,6 @@ using burton_2d_mesh_topology_t = burton_mesh_topology_t<2>;
 using burton_3d_mesh_topology_t = burton_mesh_topology_t<3>; 
 
 
+} // namespace
 } // namespace
 } // namespace
