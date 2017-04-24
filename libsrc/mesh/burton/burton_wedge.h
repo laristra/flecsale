@@ -17,6 +17,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 
 //! forward decares
@@ -281,5 +282,6 @@ public:
 
 }; // struct burton_wedge_t
 
+} // namespace
 } // namespace
 } // namespace

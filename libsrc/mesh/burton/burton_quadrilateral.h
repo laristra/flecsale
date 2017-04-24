@@ -16,6 +16,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Provides a derived instance of burton_cell_t for multidimensional 
@@ -318,5 +319,6 @@ public:
 
 
 
+} // namespace
 } // namespace
 } // namespace

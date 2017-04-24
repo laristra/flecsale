@@ -11,6 +11,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 // some type aliases
 using burton_2d_edge_t = burton_element_t<2,1>;
@@ -334,5 +335,6 @@ burton_3d_cell_t::size_t burton_3d_cell_t::region() const
   return regions[mesh_entity_base_t<num_domains>::template id<0>()];
 }
 
+} // namespace
 } // namespace
 } // namespace

@@ -398,8 +398,10 @@ static auto to_vtk( M & m )
     auto num_cell_verts = cell_verts.size();
     // copy them to the vtk type
     vector< vtkIdType > vert_ids(num_cell_verts);
-    std::transform( cell_verts.begin(), cell_verts.end(), vert_ids.begin(),
-                    [](auto && v) { return v.id(); } );
+    std::transform( 
+      cell_verts.begin(), cell_verts.end(), vert_ids.begin(),
+      [](auto && v) { return v.id(); } 
+    );
     // get the faces
     auto cell_faces = m.faces(c);
     auto num_cell_faces = cell_faces.size();

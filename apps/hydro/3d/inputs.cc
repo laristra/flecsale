@@ -63,12 +63,11 @@ inputs_t::ics_function_t base_t::ics =
 template<>
 inputs_t::mesh_function_t base_t::make_mesh = 
   [](const real_t &)
-  { 
+  {
     // the grid dimensions
     constexpr size_t num_cells_x = 10;
     constexpr size_t num_cells_y = 10;
     constexpr size_t num_cells_z = 10;
-  
     constexpr real_t length_x = 1.0;
     constexpr real_t length_y = 1.0;
     constexpr real_t length_z = 1.0;

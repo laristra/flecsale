@@ -16,6 +16,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Provides various triangular element type specializations.
@@ -250,5 +251,6 @@ public:
 
 };
 
+} // namespace
 } // namespace
 } // namespace

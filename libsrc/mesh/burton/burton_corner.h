@@ -16,6 +16,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 
 
@@ -100,5 +101,6 @@ public:
 
 };
 
+} // namespace burton
 } // namespace mesh
 } // namespace ale

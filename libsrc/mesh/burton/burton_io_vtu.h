@@ -41,6 +41,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 
 
@@ -165,5 +166,6 @@ static bool burton_3d_vtu_registered =
     "vtu", create_io_vtu );
 //! @}
 
+} // namespace burton
 } // namespace mesh
 } // namespace ale

@@ -10,6 +10,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 // some type aliases
 using burton_2d_quad_t = burton_quadrilateral_t<2>;
@@ -137,5 +138,6 @@ burton_3d_quad_t::real_t burton_3d_quad_t::min_length() const
 }
 
 
+} // namespace
 } // namespace
 } // namespace

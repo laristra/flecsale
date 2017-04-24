@@ -15,6 +15,12 @@ cinch_minimum_required(1.0)
 
 project(FleCSALE)
 
+# We need C++ 14
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED on)
+set(CMAKE_CXX_EXTENSIONS off)
+
+
 #------------------------------------------------------------------------------#
 # Begin project setup
 #------------------------------------------------------------------------------#
@@ -30,20 +36,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 set( ALE_LIBRARIES )
 set( ALE_DATA_DIR "${CMAKE_SOURCE_DIR}/data" )  
 set( ALE_TOOL_DIR "${CMAKE_SOURCE_DIR}/tools" )  
-
-#------------------------------------------------------------------------------#
-# If a C++14 compiler is available, then set the appropriate flags
-#------------------------------------------------------------------------------#
-
-include(cxx14)
-
-check_for_cxx14_compiler(CXX14_COMPILER)
-
-if(CXX14_COMPILER)
-    enable_cxx14()
-else()
-    message(FATAL_ERROR "C++14 compatible compiler not found")
-endif()
 
 #------------------------------------------------------------------------------#
 # Some precision setup

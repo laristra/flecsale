@@ -24,9 +24,10 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 //! This namespace is used to expose enumerations and types.
-namespace burton {
+namespace attributes {
   
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief The burton mesh index spaces.
@@ -48,7 +49,7 @@ enum data_attributes_t : size_t {
 };
 
 
-} // namespace burton
+} // namespace attributes
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief A specialization of the flecsi low-level mesh topology, state and
@@ -200,19 +201,19 @@ public:
   size_t indices( size_t index_space_id ) const override
   {
     switch(index_space_id) {
-      case burton::vertices:
+      case attributes::vertices:
         return base_t::num_entities(vertex_t::dimension);
-      case burton::edges:
+      case attributes::edges:
         return base_t::num_entities(edge_t::dimension);
-      case burton::faces:
+      case attributes::faces:
         return base_t::num_entities(face_t::dimension);
-      case burton::cells:
+      case attributes::cells:
         return base_t::num_entities(cell_t::dimension);
-      case burton::corners:
+      case attributes::corners:
         return 
           base_t::template 
             num_entities<corner_t::dimension, corner_t::domain>();
-      case burton::wedges:
+      case attributes::wedges:
         return 
           base_t::template num_entities<wedge_t::dimension, wedge_t::domain>();
       default:
@@ -1050,22 +1051,22 @@ public:
 #endif
 
     // register cell data
-    flecsi_register_data(*this, mesh, cell_volume, real_t, dense, 1, burton::cells);
-    flecsi_register_data(*this, mesh, cell_centroid, vector_t, dense, 1, burton::cells);
-    flecsi_register_data(*this, mesh, cell_min_length, real_t, dense, 1, burton::cells);
+    flecsi_register_data(*this, mesh, cell_volume, real_t, dense, 1, attributes::cells);
+    flecsi_register_data(*this, mesh, cell_centroid, vector_t, dense, 1, attributes::cells);
+    flecsi_register_data(*this, mesh, cell_min_length, real_t, dense, 1, attributes::cells);
 
     // register face data
-    flecsi_register_data(*this, mesh, face_area, real_t, dense, 1, burton::faces);
-    flecsi_register_data(*this, mesh, face_normal, vector_t, dense, 1, burton::faces);
-    flecsi_register_data(*this, mesh, face_midpoint, vector_t, dense, 1, burton::faces);
+    flecsi_register_data(*this, mesh, face_area, real_t, dense, 1, attributes::faces);
+    flecsi_register_data(*this, mesh, face_normal, vector_t, dense, 1, attributes::faces);
+    flecsi_register_data(*this, mesh, face_midpoint, vector_t, dense, 1, attributes::faces);
 
     // register edge data
-    flecsi_register_data(*this, mesh, edge_midpoint, vector_t, dense, 1, burton::edges);
+    flecsi_register_data(*this, mesh, edge_midpoint, vector_t, dense, 1, attributes::edges);
     
     // register wedge data
-    flecsi_register_data(*this, mesh, wedge_facet_area, real_t, dense, 1, burton::wedges);
-    flecsi_register_data(*this, mesh, wedge_facet_normal, vector_t, dense, 1, burton::wedges);
-    flecsi_register_data(*this, mesh, wedge_facet_centroid, vector_t, dense, 1, burton::wedges);
+    flecsi_register_data(*this, mesh, wedge_facet_area, real_t, dense, 1, attributes::wedges);
+    flecsi_register_data(*this, mesh, wedge_facet_normal, vector_t, dense, 1, attributes::wedges);
+    flecsi_register_data(*this, mesh, wedge_facet_centroid, vector_t, dense, 1, attributes::wedges);
     
     // register time state
     flecsi_register_data(*this, mesh, time, real_t, global, 1 );
@@ -1077,17 +1078,17 @@ public:
     *step = 0;
 
     // register some flags for identifying boundarys and various other things
-    flecsi_register_data(*this, mesh, node_flags, bitfield_t, dense, 1, burton::vertices);
-    flecsi_register_data(*this, mesh, edge_flags, bitfield_t, dense, 1, burton::edges);
+    flecsi_register_data(*this, mesh, node_flags, bitfield_t, dense, 1, attributes::vertices);
+    flecsi_register_data(*this, mesh, edge_flags, bitfield_t, dense, 1, attributes::edges);
 
     auto point_flags = flecsi_get_accessor(*this, mesh, node_flags, bitfield_t, dense, 0);
     auto edge_flags = flecsi_get_accessor(*this, mesh, edge_flags, bitfield_t, dense, 0);
 
     // register some flags for associating boundaries with entities
-    flecsi_register_data(*this, mesh, node_tags, tag_list_t, dense, 1, burton::vertices);
-    flecsi_register_data(*this, mesh, edge_tags, tag_list_t, dense, 1, burton::edges);
-    flecsi_register_data(*this, mesh, face_tags, tag_list_t, dense, 1, burton::faces);
-    flecsi_register_data(*this, mesh, cell_tags, tag_list_t, dense, 1, burton::cells);
+    flecsi_register_data(*this, mesh, node_tags, tag_list_t, dense, 1, attributes::vertices);
+    flecsi_register_data(*this, mesh, edge_tags, tag_list_t, dense, 1, attributes::edges);
+    flecsi_register_data(*this, mesh, face_tags, tag_list_t, dense, 1, attributes::faces);
+    flecsi_register_data(*this, mesh, cell_tags, tag_list_t, dense, 1, attributes::cells);
 
     // now set the boundary flags.
     for ( auto f : faces() ) {
@@ -1107,7 +1108,7 @@ public:
     } // for
 
     // identify the cell regions
-    flecsi_register_data(*this, mesh, cell_region, size_t, dense, 1, burton::cells);
+    flecsi_register_data(*this, mesh, cell_region, size_t, dense, 1, attributes::cells);
     flecsi_register_data(*this, mesh, num_regions, size_t, global, 1);
 
     auto cell_region = flecsi_get_accessor(*this, mesh, cell_region, size_t, dense, 0);
@@ -1647,5 +1648,6 @@ std::ostream& operator<< (std::ostream& stream, const burton_mesh_t<M>& mesh)
 }
 
 
+} // namespace burton
 } // namespace mesh
 } // namespace ale

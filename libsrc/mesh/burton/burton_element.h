@@ -18,6 +18,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 // forward decares
 template< std::size_t N >
@@ -850,5 +851,6 @@ private:
 template< std::size_t N >
 using burton_cell_t = burton_element_t<N,N>;
 
+} // namespace burton
 } // namespace mesh
 } // namespace ale

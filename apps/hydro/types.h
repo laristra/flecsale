@@ -30,11 +30,14 @@ namespace utils = ale::utils;
 namespace geom  = ale::geom;
 namespace eos   = ale::eos;
 namespace eqns  = ale::eqns;
+namespace io    = ale::io;
 
 // mesh and some underlying data types
-using mesh::burton_mesh_t;
-using mesh_2d_t = mesh::burton_mesh_2d_t;
-using mesh_3d_t = mesh::burton_mesh_3d_t;
+template <std::size_t N>
+using mesh_t = typename mesh::burton::burton_mesh_t<N>;
+
+using mesh_2d_t = mesh_t<2>;
+using mesh_3d_t = mesh_t<3>;
 
 using size_t = common::size_t;
 using real_t = common::real_t;

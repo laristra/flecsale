@@ -42,6 +42,7 @@
 
 namespace ale {
 namespace mesh {
+namespace burton {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief This is the mesh reader and writer based on the vtm format.
@@ -575,5 +576,6 @@ static bool burton_vtm_registered =
     "vtm", create_io_vtm );
 
 
+} // namespace burton
 } // namespace mesh
 } // namespace ale
