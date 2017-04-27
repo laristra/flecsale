@@ -112,10 +112,12 @@ std::string file_extension(const std::string & str)
 //! \return the list of split strings
 ////////////////////////////////////////////////////////////////////////////////
 inline
-auto split(
+std::vector<std::string> split(
   const std::string & str, 
   std::vector<char> delim = {' '}
 ) {
+
+  if (str.empty()) return {};
 
   struct tokens_t : std::ctype<char>
   {
