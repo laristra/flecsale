@@ -1,0 +1,21 @@
+#~----------------------------------------------------------------------------~#
+# Copyright (c) 2016 Los Alamos National Laboratory, LLC
+# All rights reserved
+#~----------------------------------------------------------------------------~#
+
+set(io_HEADERS
+  catalyst/adaptor.h
+  write_binary.h
+  vtk.h
+)
+
+set(io_SOURCES
+  vtk.cc
+)
+
+cinch_install_headers(
+  FILES ${io_HEADERS}
+  DESTINATION include/flecsale/io
+)
+
+add_library(flecsale_io OBJECT ${io_SOURCES})

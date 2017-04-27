@@ -4,13 +4,13 @@
 #~----------------------------------------------------------------------------~#
 
 add_executable( hydro_2d
+  $<TARGET_OBJECTS:common> 
   inputs.cc
   driver.cc
   ${FLECSI_RUNTIME_DRIVER}
   ${FLECSI_RUNTIME_MAIN}
 )
-
-target_link_libraries( hydro_2d common ${ALE_LIBRARIES} )
+target_link_libraries( hydro_2d flecsale )
 
 if (LUA_FOUND)
 
