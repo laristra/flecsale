@@ -44,7 +44,7 @@ auto make_python_string( const char * input )
 ///////////////////////////////////////////////////////////////////////////////
 auto make_python_string( std::string input ) 
 {
-	return make_python_string(input.c_str());
+  return make_python_string(input.c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -53,7 +53,7 @@ auto make_python_string( std::string input )
 template< typename T >
 auto as_python_char( T && input ) 
 {
-	return const_cast<python_char_t*>( std::forward<T>(input).c_str() ) ;
+  return const_cast<python_char_t*>( std::forward<T>(input).c_str() ) ;
 }
 
 
@@ -70,12 +70,13 @@ void python_check( void )
 
 void python_set_program_name( std::string name ) 
 {
-#if PY_MAJOR_VERSION < 3
-	Py_SetProgramName( const_cast<char*>(name.c_str()) );
+#if PY_MAJOR_VERSION < 3 || \
+  ( PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 5 )
+  Py_SetProgramName( const_cast<char*>(name.c_str()) );
 #else
-	auto program = Py_DecodeLocale(name.c_str(), NULL);
+  auto program = Py_DecodeLocale(name.c_str(), NULL);
   if (!program) 
-  	raise_runtime_error("Cannot decode program \"" << name << "\"");
+    raise_runtime_error("Cannot decode program \"" << name << "\"");
   Py_SetProgramName(program);
   PyMem_RawFree(program);
 #endif
@@ -83,38 +84,38 @@ void python_set_program_name( std::string name )
 
 void python_initialize( void ) 
 {
-	Py_Initialize();
+  Py_Initialize();
   if (!Py_IsInitialized()) {
-  	python_check();
-  	raise_runtime_error("Cannot initialize python interpreter.");
+    python_check();
+    raise_runtime_error("Cannot initialize python interpreter.");
   }
 }
 
 void python_finalize( void ) 
 {
-	Py_Finalize();
+  Py_Finalize();
 }
 
 void python_run_string( std::string exec )
 {
-	PyRun_SimpleString( exec.c_str() );
+  PyRun_SimpleString( exec.c_str() );
 } 
 
 auto python_import( std::string name ) 
 {
 #if PY_MAJOR_VERSION < 3
-	auto pname = PyString_FromString( const_cast<char*>(name.c_str()) );
+  auto pname = PyString_FromString( const_cast<char*>(name.c_str()) );
 #else
-	auto pname = PyUnicode_DecodeFSDefault(name.c_str());
+  auto pname = PyUnicode_DecodeFSDefault(name.c_str());
 #endif
   if (!pname) {
-  	python_check();
-  	raise_runtime_error("Cannot decode module name \"" << name << "\"");
+    python_check();
+    raise_runtime_error("Cannot decode module name \"" << name << "\"");
   }
   auto pmodule = PyImport_Import(pname);
   if (!pmodule) {
-  	python_check();
-  	raise_runtime_error("Cannot import module \"" << name << "\"");
+    python_check();
+    raise_runtime_error("Cannot import module \"" << name << "\"");
   }
   Py_DECREF(pname);
   return pmodule;
@@ -122,38 +123,38 @@ auto python_import( std::string name )
 
 auto python_add_to_path( std::string path )
 {
-	auto syspath = PySys_GetObject((char*)"path");
-	if (!syspath) {
-  	python_check();
-  	raise_runtime_error("Cannot get system path.");
+  auto syspath = PySys_GetObject((char*)"path");
+  if (!syspath) {
+    python_check();
+    raise_runtime_error("Cannot get system path.");
   }
 #if PY_MAJOR_VERSION < 3
-	auto pname = PyString_FromString( const_cast<char*>(path.c_str()) );
+  auto pname = PyString_FromString( const_cast<char*>(path.c_str()) );
 #else
-	auto pname = PyUnicode_DecodeFSDefault(path.c_str());
+  auto pname = PyUnicode_DecodeFSDefault(path.c_str());
 #endif
-	if (!pname) {
-  	python_check();
-  	raise_runtime_error("Cannot decode path \"" << path << "\"");
+  if (!pname) {
+    python_check();
+    raise_runtime_error("Cannot decode path \"" << path << "\"");
   }
   if (PyList_Insert(syspath, 0, pname)) {
-  	python_check();
-  	raise_runtime_error("Cannot insert path \"" << path << "\"");
+    python_check();
+    raise_runtime_error("Cannot insert path \"" << path << "\"");
   }
   if (PySys_SetObject((char*)"path", syspath)) {
-  	python_check();
-  	raise_runtime_error("Cannot set new path.");
+    python_check();
+    raise_runtime_error("Cannot set new path.");
   }
   Py_DECREF(pname);
-	return syspath;	
+  return syspath; 
 } 
 
 auto python_get_attribute( PyObject * py_module, std::string attribute )
 {
   auto attr = PyObject_GetAttrString(py_module, attribute.c_str());
-	if (!attr) {
-  	python_check();
-  	raise_runtime_error("Cannot get attribute \"" << attribute << "\"");
+  if (!attr) {
+    python_check();
+    raise_runtime_error("Cannot get attribute \"" << attribute << "\"");
   }
   return attr;
 }
@@ -172,23 +173,23 @@ auto python_get_value( long arg )
 {
   auto pvalue = PyLong_FromLong(arg);
   if (!pvalue) {
-  	python_check();
-  	raise_runtime_error("Cannot set argument.");
+    python_check();
+    raise_runtime_error("Cannot set argument.");
   }
   return pvalue;
 }
 
 auto python_get_value( int arg )
 {
-	return python_get_value( static_cast<long>(arg) );
+  return python_get_value( static_cast<long>(arg) );
 }
 
 auto python_get_value( double arg )
 {
   auto pvalue = PyFloat_FromDouble(arg);
   if (!pvalue) {
-  	python_check();
-  	raise_runtime_error("Cannot set argument.");
+    python_check();
+    raise_runtime_error("Cannot set argument.");
   }
   return pvalue;
 }
@@ -196,14 +197,14 @@ auto python_get_value( double arg )
 auto python_get_tuple_element( PyObject * py_tup, std::size_t i )
 {
   auto n = PyTuple_GET_SIZE(py_tup);
- 	if (i>=n) {
-  	python_check();
-  	raise_runtime_error("Index out of range (i="<<i<<">="<<n<<").");
+  if (i>=n) {
+    python_check();
+    raise_runtime_error("Index out of range (i="<<i<<">="<<n<<").");
   }
   auto pitem = PyTuple_GetItem(py_tup, i);
   if (!pitem) {
-  	python_check();
-  	raise_runtime_error("Problem getting item.");
+    python_check();
+    raise_runtime_error("Problem getting item.");
   }
   return pitem;
 }
@@ -213,16 +214,16 @@ template< typename Arg >
 void python_set_tuple_element( PyObject * py_tup, std::size_t i, Arg && arg )
 {
   auto n = PyTuple_GET_SIZE(py_tup);
- 	if (i>=n) {
-  	python_check();
-  	raise_runtime_error("Index out of range (i="<<i<<">="<<n<<").");
+  if (i>=n) {
+    python_check();
+    raise_runtime_error("Index out of range (i="<<i<<">="<<n<<").");
   }
   auto pvalue = python_get_value( std::forward<Arg>(arg) );
   // pvalue reference stolen here:
   auto pitem = PyTuple_SetItem(py_tup, i, pvalue);
   if (pitem) {
-  	python_check();
-  	raise_runtime_error("Problem setting item.");
+    python_check();
+    raise_runtime_error("Problem setting item.");
   }
 }
 
@@ -237,12 +238,12 @@ void python_build_args( PyObject * py_args, std::size_t i, Arg&& arg )
 
 template< typename Arg, typename... Args >
 void python_build_args( 
-	PyObject * py_args, std::size_t i, Arg&& arg, Args&&... args 
+  PyObject * py_args, std::size_t i, Arg&& arg, Args&&... args 
 ) {
   python_set_tuple_element( py_args, i, std::forward<Arg>(arg) );
   // set the remaining arguments
   detail::python_build_args(
-  	py_args, i+1, std::forward<Args>(args)...
+    py_args, i+1, std::forward<Args>(args)...
   );
 }
 
@@ -252,9 +253,9 @@ template< typename... Args >
 auto python_build_args( Args&&... args )
 {
   auto pargs = PyTuple_New(sizeof...(args));
- 	if (!pargs) {
-  	python_check();
-  	raise_runtime_error("Cannot initialize arguments.");
+  if (!pargs) {
+    python_check();
+    raise_runtime_error("Cannot initialize arguments.");
   }
   detail::python_build_args(pargs, 0, std::forward<Args>(args)...);
   return pargs;
@@ -263,19 +264,19 @@ auto python_build_args( Args&&... args )
 template< typename... Args >
 auto python_call_function( PyObject * py_func, Args&&... args )
 {
-	if (!PyCallable_Check(py_func)) {
-  	python_check();
-  	raise_runtime_error("Function is not callable.");
+  if (!PyCallable_Check(py_func)) {
+    python_check();
+    raise_runtime_error("Function is not callable.");
   }
   auto pargs = python_build_args(std::forward<Args>(args)...);
- 	if (!pargs) {
-  	python_check();
-  	raise_runtime_error("Cannot initialize arguments.");
+  if (!pargs) {
+    python_check();
+    raise_runtime_error("Cannot initialize arguments.");
   }
   auto pval = PyObject_CallObject(py_func, pargs);
   if (!pval) {
-  	python_check();
-  	raise_runtime_error("Problem calling function.");
+    python_check();
+    raise_runtime_error("Problem calling function.");
   }
   Py_DECREF(pargs);
   return pval;
