@@ -70,9 +70,11 @@ void python_check( void )
 
 void python_set_program_name( std::string name ) 
 {
-#if PY_MAJOR_VERSION < 3 || \
-  ( PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 5 )
+#if PY_MAJOR_VERSION < 3
   Py_SetProgramName( const_cast<char*>(name.c_str()) );
+#elif ( PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 5 )
+  auto name_wstr = utils::to_wstring(name.c_str());
+  Py_SetProgramName( name_wstr );
 #else
   auto program = Py_DecodeLocale(name.c_str(), NULL);
   if (!program) 
