@@ -248,3 +248,24 @@ if(ENABLE_EXODUS)
   message( STATUS "IO with exodus enabled" )
 endif()
 
+#------------------------------------------------------------------------------#
+# Portage
+#------------------------------------------------------------------------------#
+
+find_package(PORTAGE QUIET)
+
+if (PORTAGE_FOUND)
+  option(ENABLE_PORTAGE "Enable Portage Support" ON)
+else()
+  option(ENABLE_PORTAGE "Enable Portage Support" OFF)
+endif()
+
+if(ENABLE_PORTAGE)
+  if(NOT Boost_FOUND)
+    message( FATAL_ERROR "Boost is needed for Portage" )
+  endif()
+  include_directories(${PORTAGE_INCLUDE_DIR})
+  add_definitions(-DHAVE_PORTAGE)
+  list( APPEND ALE_LIBRARIES ${PORTAGE_LIBRARY} )
+endif()
+
