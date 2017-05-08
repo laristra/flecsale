@@ -27,7 +27,8 @@ endif()
 # This changes the Cinch default
 option(ENABLE_BOOST_PREPROCESSOR "Enable Boost.Preprocessor" ON)
 
-include(${CINCH_SOURCE_DIR}/cmake/cinch.cmake)
+include(${CINCH_SOURCE_DIR}/cmake/modular-cinch-main.cmake)
+include(${CINCH_SOURCE_DIR}/cmake/modular-cinch-macros.cmake)
 
 #------------------------------------------------------------------------------#
 # Set the minimum Cinch version
