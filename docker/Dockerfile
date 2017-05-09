@@ -38,13 +38,13 @@ RUN cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DCMAKE_DISABLE_FIND_PACKAGE_LAPACKE=ON} \
           -DCMAKE_DISABLE_FIND_PACKAGE_FleCSI=${INTERNAL_FLECSI} \
           -DENABLE_UNIT_TESTS=ON \
-          -DENABLE_DOXYGEN=ON \
+          -DENABLE_DOXYGEN=OFF \
           ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} ..
 RUN make VERBOSE=1 -j2
 RUN ccache -s
 RUN make test ARGS="-V"
 RUN make install DESTDIR=${PWD}
-RUN make doxygen flecsi.doxygen
+#RUN make doxygen flecsi.doxygen
 RUN cd .. && if [ ${COVERAGE} ]; then \
   if [ ${CC} = clang ]; then \
     $HOME/.local/bin/codecov --gcov-exec "llvm-cov gcov"; \
