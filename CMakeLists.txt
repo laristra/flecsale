@@ -332,7 +332,7 @@ if(ENABLE_PORTAGE)
     message( FATAL_ERROR "Boost is needed for Portage" )
   endif()
   include_directories(${PORTAGE_INCLUDE_DIR})
-  add_definitions(-DHAVE_PORTAGE)
+  add_definitions(-DHAVE_PORTAGE -DPORTAGE_SERIAL_ONLY)
   list( APPEND FleCSALE_LIBRARIES ${PORTAGE_LIBRARY} )
 endif()
 

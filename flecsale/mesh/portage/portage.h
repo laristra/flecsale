@@ -15,6 +15,4 @@
 #include "flecsale/mesh/portage/portage_state.h"
 
 // portage library includes
-#define PORTAGE_SERIAL_ONLY
 #include <portage/driver/driver.h>
-#undef PORTAGE_SERIAL_ONLY

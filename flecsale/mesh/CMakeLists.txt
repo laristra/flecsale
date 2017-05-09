@@ -65,6 +65,13 @@ add_library( flecsale_mesh OBJECT ${mesh_SOURCES} )
 # get a relative path
 file(RELATIVE_PATH DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ${FleCSALE_DATA_DIR})
 
+# the libraries used for this sub-module
+set( mesh_LIBRARIES ${FleCSI_LIBRARIES} )
+if ( PORTAGE_LIBRARIES )
+  list(APPEND mesh_LIBRARIES ${PORTAGE_LIBRARIES})
+endif()
+
+
 mcinch_add_unit(test_mesh
     SOURCES 
       burton/test/burton_test_base.h
@@ -118,6 +125,5 @@ mcinch_add_unit(test_mesh
       ${DATA_DIR}/meshes/3d/voro/sedov-0_05cm.exo
 
     LIBRARIES
-      ${FleCSI_LIBRARIES}
-      ${PORTAGE_LIBRARY}
+      ${mesh_LIBRARIES}
 )
