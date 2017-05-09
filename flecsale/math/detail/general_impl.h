@@ -12,7 +12,7 @@
 // system includes
 #include <utility>
 
-namespace ale {
+namespace flecsale {
 namespace math {
 namespace detail {
 
@@ -52,4 +52,4 @@ constexpr void average( T & res, U && u, Args&&... args )
 
 } // namespace detail
 } // namespace math
-} // namespace ale
+} // namespace flecsale

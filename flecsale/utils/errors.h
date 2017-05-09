@@ -33,7 +33,7 @@
   do {                                                                  \
     std::cerr << __FILE__ << ", line " << __LINE__ << std::endl;        \
     std::cerr << msg << std::endl;                                      \
-    THROW_EXCEPTION(ale::utils::ExceptionRunTime());                    \
+    THROW_EXCEPTION(flecsale::utils::ExceptionRunTime());                    \
   } while(0)
 
 
@@ -45,7 +45,7 @@
   do {                                                                  \
     std::cerr << __FILE__ << ", line " << __LINE__ << std::endl;        \
     std::cerr << msg << std::endl;                                      \
-    THROW_EXCEPTION(ale::utils::ExceptionLogic());                      \
+    THROW_EXCEPTION(flecsale::utils::ExceptionLogic());                      \
   } while(0)
 
 /////////////////////////////////////////////////////////////////////
@@ -55,7 +55,7 @@
 #define raise_file_error(file)                                          \
   do {                                                                  \
     std::cerr << __FILE__ << ", line " << __LINE__ << std::endl;        \
-    THROW_EXCEPTION(ale::utils::ExceptionFileError(file));              \
+    THROW_EXCEPTION(flecsale::utils::ExceptionFileError(file));              \
   } while(0)
 
 
@@ -67,7 +67,7 @@
   do {                                                                  \
     std::cerr << __FILE__ << ", line " << __LINE__ << std::endl;        \
     std::cerr << msg << std::endl;                                      \
-    THROW_EXCEPTION(ale::utils::ExceptionNotImplemented());             \
+    THROW_EXCEPTION(flecsale::utils::ExceptionNotImplemented());             \
   } while(0)
 
 /////////////////////////////////////////////////////////////////////

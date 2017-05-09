@@ -10,31 +10,35 @@
 #ifdef HAVE_PORTAGE
 
 // user includes
-#include "portage_2d_test.h"
+#include "portage_3d_test.h"
 
 // system includes
 #include <vector>
 
-namespace math = ale::math;
-namespace mesh = ale::mesh;
+namespace math = flecsale::math;
+namespace mesh = flecsale::mesh;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief dump the mesh to std out
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(portage_2d, first_order) 
+TEST_F(portage_3d, first_order) 
 {
 
   // number of cells wide
-  constexpr size_t num_x = 10;
+  constexpr size_t num_x = 4;
   // number of cells high
-  constexpr size_t num_y = 10;
+  constexpr size_t num_y = 4;
+  // number of cells deep
+  constexpr size_t num_z = 4;
   // width of mesh
   constexpr size_t len_x = 1.;
   // length of mesh
   constexpr size_t len_y = 1.;
+  // depth of mesh
+  constexpr size_t len_z = 1.;
 
-  auto mesh_a = mesh::box<mesh_t>( num_x, num_y, 0, 0, len_x, len_y );
-  auto mesh_b = mesh::box<mesh_t>( num_x*2, num_y*2, 0, 0, len_x, len_y );
+  auto mesh_a = mesh::box<mesh_t>( num_x, num_y, num_z, 0, 0, 0, len_x, len_y, len_z );
+  auto mesh_b = mesh::box<mesh_t>( num_x*2, num_y*2, num_z*2, 0, 0, 0, len_x, len_y, len_z );
 
   portage_mesh_t mesh_wrapper_a( mesh_a );
   portage_mesh_t mesh_wrapper_b( mesh_b );
@@ -51,11 +55,11 @@ TEST_F(portage_2d, first_order)
   );
 
   // register data on the source mesh
-  register_data(mesh_a, hydro, cell_data, real_t, dense, 1, cells);
-  register_data(mesh_b, hydro, cell_data, real_t, dense, 1, cells);
+  flecsi_register_data(mesh_a, hydro, cell_data, real_t, dense, 1, cells);
+  flecsi_register_data(mesh_b, hydro, cell_data, real_t, dense, 1, cells);
 
-  auto a = get_accessor(mesh_a, hydro, cell_data, real_t, dense, 0);
-  auto b = get_accessor(mesh_b, hydro, cell_data, real_t, dense, 0);
+  auto a = flecsi_get_accessor(mesh_a, hydro, cell_data, real_t, dense, 0);
+  auto b = flecsi_get_accessor(mesh_b, hydro, cell_data, real_t, dense, 0);
 
   a.attributes().set(persistent);
   b.attributes().set(persistent);
@@ -81,7 +85,7 @@ TEST_F(portage_2d, first_order)
   real_t total_a = 0;
   for ( auto c : mesh_a.cells() ) {
     const auto & xc = c->centroid();
-    auto val = math::sqr(xc[0]) + math::sqr(xc[1]);
+    auto val = math::sqr(xc[0]) + math::sqr(xc[1]) + math::sqr(xc[2]);
     a[c] = val;
     total_a += c->volume() * val;
   }
@@ -108,12 +112,12 @@ TEST_F(portage_2d, first_order)
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Remap between a triangular mesh and a quad mesh
 ////////////////////////////////////////////////////////////////////////////////
-TEST_F(portage_2d, unstruct) 
+TEST_F(portage_3d, unstruct) 
 {
 
   mesh_t mesh_a, mesh_b;
-  mesh::read_mesh( "box-quad.g", mesh_a); 
-  mesh::read_mesh( "box-tri.g",  mesh_b); 
+  mesh::read_mesh( "box-hex.g", mesh_a); 
+  mesh::read_mesh( "box-tet.g",  mesh_b); 
 
   portage_mesh_t mesh_wrapper_a( mesh_a );
   portage_mesh_t mesh_wrapper_b( mesh_b );
@@ -130,11 +134,11 @@ TEST_F(portage_2d, unstruct)
   );
 
   // register data on the source mesh
-  register_data(mesh_a, hydro, cell_data, real_t, dense, 1, cells);
-  register_data(mesh_b, hydro, cell_data, real_t, dense, 1, cells);
+  flecsi_register_data(mesh_a, hydro, cell_data, real_t, dense, 1, cells);
+  flecsi_register_data(mesh_b, hydro, cell_data, real_t, dense, 1, cells);
 
-  auto a = get_accessor(mesh_a, hydro, cell_data, real_t, dense, 0);
-  auto b = get_accessor(mesh_b, hydro, cell_data, real_t, dense, 0);
+  auto a = flecsi_get_accessor(mesh_a, hydro, cell_data, real_t, dense, 0);
+  auto b = flecsi_get_accessor(mesh_b, hydro, cell_data, real_t, dense, 0);
 
   a.attributes().set(persistent);
   b.attributes().set(persistent);
@@ -157,12 +161,9 @@ TEST_F(portage_2d, unstruct)
   // now try something more complicated
 
   // set some initial distribution in mesh A
-  real_t total_a = 0;
   for ( auto c : mesh_a.cells() ) {
     const auto & xc = c->centroid();
-    auto val = math::sqr(xc[0]) + math::sqr(xc[1]);
-    a[c] = val;
-    total_a += c->volume() * val;
+    a[c] = math::sqr(xc[0]) + math::sqr(xc[1]) + math::sqr(xc[2]);
   }
   for ( auto c : mesh_b.cells() ) b[c] = 0.0;
 
@@ -173,14 +174,9 @@ TEST_F(portage_2d, unstruct)
   EXPECT_FALSE( mesh::write_mesh(output_prefix()+"_a.vtk", mesh_a, false) );
   EXPECT_FALSE( mesh::write_mesh(output_prefix()+"_b.vtk", mesh_b, false) );
 
-  // Check the result
-  real_t total_b = 0;
-  for ( auto c : mesh_b.cells() ) 
-    total_b += c->volume() * b[c];
- 
-  EXPECT_NEAR( total_a, total_b, test_tolerance );
 }
 
 #endif // HAVE_EXODUS
 
 #endif // HAVE_PORTAGE
+

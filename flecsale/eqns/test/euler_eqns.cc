@@ -27,9 +27,9 @@ using std::vector;
 
 using namespace std::placeholders;
 
-using namespace ale;
-using namespace ale::eqns;
-using namespace ale::eos;
+using namespace flecsale;
+using namespace flecsale::eqns;
+using namespace flecsale::eos;
 
 using real_t = common::real_t;
 using eqns_t = euler_eqns_t<real_t,3>;

@@ -11,7 +11,7 @@
 // system includes
 #include <functional>
 
-namespace ale {
+namespace flecsale {
 namespace utils {
 
 ////////////////////////////////////////////////////////////////////////////////

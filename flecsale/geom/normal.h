@@ -15,7 +15,7 @@
 #include "flecsale/utils/type_traits.h.h"
 
 
-namespace ale {
+namespace flecsale {
 namespace geom {
 
 
@@ -50,4 +50,4 @@ normal( T && a, U && b )
 }
 
 } // namespace geom
-} // namespace ale
+} // namespace flecsale

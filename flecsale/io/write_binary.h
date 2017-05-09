@@ -16,7 +16,7 @@
 #include <iostream>
 #include <fstream>
 
-namespace ale {
+namespace flecsale {
 namespace io {
 
 // data types

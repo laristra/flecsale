@@ -11,7 +11,7 @@
 // user includes
 #include "flecsale/math/vector.h"
 
-namespace ale {
+namespace flecsale {
 namespace geom {
 
 

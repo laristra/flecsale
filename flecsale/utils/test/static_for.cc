@@ -17,7 +17,7 @@
 // using declarations
 using std::cout;
 using std::endl;
-using ale::utils::static_for;
+using flecsale::utils::static_for;
 
 //=============================================================================
 //! \brief Test the static_for function.

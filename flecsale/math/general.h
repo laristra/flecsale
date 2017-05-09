@@ -22,7 +22,7 @@
 #include <numeric>
 #include <cmath>
 
-namespace ale {
+namespace flecsale {
 namespace math {
 
 

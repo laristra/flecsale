@@ -17,7 +17,7 @@
 #include<cmath>
 #include<vector>
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -254,4 +254,4 @@ void rotate( T & mesh, typename T::real_t degrees )
 }
 
 } // namespace mesh
-} // namespace ale
+} // namespace flecsale

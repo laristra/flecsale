@@ -12,7 +12,7 @@
 // system includes
 #include <array>
 
-namespace ale {
+namespace flecsale {
 namespace utils {
 namespace detail {
 

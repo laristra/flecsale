@@ -15,7 +15,7 @@
 #include "flecsale/utils/array_view.h"
 
 
-namespace ale {
+namespace flecsale {
 namespace linalg {
 
 //! \brief The matrix type for all linear solvers in this namespace.

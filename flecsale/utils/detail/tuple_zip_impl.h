@@ -14,7 +14,7 @@
 // system includes
 #include <tuple>
 
-namespace ale {
+namespace flecsale {
 namespace utils {
 namespace detail {
 

@@ -15,7 +15,7 @@
 #include "flecsale/utils/errors.h"
 #include "flecsale/utils/template_helpers.h"
 
-namespace ale {
+namespace flecsale {
 namespace utils {
 
 

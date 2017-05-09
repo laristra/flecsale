@@ -12,7 +12,7 @@
 #include "flecsale/geom/shapes/geometric_shapes.h"
 #include "flecsale/math/general.h"
 
-namespace ale {
+namespace flecsale {
 namespace geom {
 namespace shapes {
 
@@ -162,4 +162,4 @@ struct triangle<3> {
 
 } // namespace shapes
 } // namespace geom
-} // namespace ale
+} // namespace flecsale

@@ -18,7 +18,7 @@
 #include <cstring>
 #include <string>
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -80,15 +80,15 @@ public:
   //!        SIDE, WEDGE AND CORNER
   entity_kind_t get_entity(std::string var_name) const 
   {
-    auto cell_field_list = get_accessors_all(
-      *mesh_, real_t, dense, 0, is_at(cells)
+    auto cell_field_list = flecsi_get_accessors_all(
+      *mesh_, real_t, dense, 0, flecsi_is_at(cells)
     );
     for (auto var : cell_field_list)
       if (var.label() == var_name) 
         return entity_kind_t::CELL;
 
-    auto nodal_field_list = get_accessors_all(
-      *mesh_, real_t, dense, 0, is_at(vertices)
+    auto nodal_field_list = flecsi_get_accessors_all(
+      *mesh_, real_t, dense, 0, flecsi_is_at(vertices)
     );
     for (auto var : nodal_field_list)
       if (var.label() == var_name) 
@@ -112,8 +112,8 @@ public:
     // based on its name
 
     // first check cells
-    auto cell_field_list = get_accessors_all(
-      *mesh_, real_t, dense, 0, is_at(cells)
+    auto cell_field_list = flecsi_get_accessors_all(
+      *mesh_, real_t, dense, 0, flecsi_is_at(cells)
     );
     for (auto var : cell_field_list)
       if (var.label() == var_name) {
@@ -122,8 +122,8 @@ public:
       }
 
     // now check nodes
-    auto nodal_field_list = get_accessors_all(
-      *mesh_, real_t, dense, 0, is_at(vertices)
+    auto nodal_field_list = flecsi_get_accessors_all(
+      *mesh_, real_t, dense, 0, flecsi_is_at(vertices)
     );
     for (auto var : nodal_field_list)
       if (var.label() == var_name)  {

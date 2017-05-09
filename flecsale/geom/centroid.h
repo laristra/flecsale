@@ -15,7 +15,7 @@
 #include "detail/centroid_impl.h"
 
 
-namespace ale {
+namespace flecsale {
 namespace geom {
 
 
@@ -98,4 +98,4 @@ auto centroid( const V<T, Args...> & points )
 
 
 } // namespace geom
-} // namespace ale
+} // namespace flecsale

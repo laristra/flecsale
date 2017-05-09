@@ -29,7 +29,7 @@
 #endif
 
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 
 #ifdef HAVE_VTK 

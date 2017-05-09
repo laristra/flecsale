@@ -21,8 +21,8 @@
 
 
 // explicitly use some stuff
-using namespace ale::utils;
-using ale::common::test_tolerance;
+using namespace flecsale::utils;
+using flecsale::common::test_tolerance;
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the simple use of embedded lua.

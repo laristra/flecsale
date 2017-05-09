@@ -8,7 +8,7 @@
 #include "flecsale/mesh/burton/burton_mesh_topology.h"
 
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace burton {
 
@@ -143,5 +143,5 @@ burton_3d_wedge_t::point_t burton_3d_wedge_t::facet_midpoint() const
 
 } // namespace burton
 } // namespace mesh
-} // namespace ale
+} // namespace flecsale
 

@@ -19,7 +19,7 @@
 #define DUMP_DIAGNOSTICS
 
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 
 //! a unique pointer type for shapo
@@ -148,4 +148,4 @@ T voronoi(
 } // voronoi
 
 } // namespace mesh
-} // namespace ale
+} // namespace flecsale

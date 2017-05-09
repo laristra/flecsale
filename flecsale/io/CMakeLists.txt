@@ -13,7 +13,7 @@ set(io_SOURCES
   vtk.cc
 )
 
-cinch_install_headers(
+mcinch_install_headers(
   FILES ${io_HEADERS}
   DESTINATION include/flecsale/io
 )

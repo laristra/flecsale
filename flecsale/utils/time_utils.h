@@ -18,7 +18,7 @@
 #include <sys/time.h>
 #endif
 
-namespace ale {
+namespace flecsale {
 namespace utils {
 
 

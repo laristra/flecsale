@@ -13,7 +13,7 @@
 #include "flecsale/utils/type_traits.h"
 #include "detail/area_impl.h"
 
-namespace ale {
+namespace flecsale {
 namespace geom {
 
 
@@ -82,4 +82,4 @@ auto area( const V<T, Args...> & points )
 
 
 } // namespace geom
-} // namespace ale
+} // namespace flecsale

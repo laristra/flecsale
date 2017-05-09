@@ -17,8 +17,8 @@
 #include <iostream>
 
 // explicitly use some stuff
-using namespace ale;
-using namespace ale::math;
+using namespace flecsale;
+using namespace flecsale::math;
 
 using real_t = common::real_t;
 using vector_1d_t = vector<real_t,1>;

@@ -33,7 +33,7 @@ auto filter_boundary( E && entities )
 // Alias mesh types
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace burton {
 
@@ -48,9 +48,9 @@ using burton_mesh_3d_t = burton_mesh_t<3>;
 
 //! \brief Expose attributes and attachement sites to all namspaces.
 //! This is horrible but it has to be done other wise users need to 
-//! write stuff like flecsi_has_attribute_at( ale::mesh::burton::persistent,
-//! ale::mesh::burton::vertex ).
-using namespace ale::mesh::burton::attributes;
+//! write stuff like flecsi_has_attribute_at( flecsale::mesh::burton::persistent,
+//! flecsale::mesh::burton::vertex ).
+using namespace flecsale::mesh::burton::attributes;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Delayed includes
@@ -66,12 +66,12 @@ using namespace ale::mesh::burton::attributes;
 // load some things
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 
-//! \brief bring write/read mesh into the ale::mesh namespace
+//! \brief bring write/read mesh into the flecsale::mesh namespace
 using flecsi::io::write_mesh;
-//! \brief bring write/read mesh into the ale::mesh namespace
+//! \brief bring write/read mesh into the flecsale::mesh namespace
 using flecsi::io::read_mesh;
 
 }

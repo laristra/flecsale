@@ -9,8 +9,8 @@
 #pragma once
 
 // user includes
-#include "geom/shapes/geometric_shapes.h"
-#include "utils/errors.h"
+#include "flecsale/geom/shapes/geometric_shapes.h"
+#include "flecsale/utils/errors.h"
 
 // library includes
 #include <portage/support/portage.h>
@@ -22,7 +22,7 @@
 #include <memory>
 #include <vector>
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 
 namespace portage {

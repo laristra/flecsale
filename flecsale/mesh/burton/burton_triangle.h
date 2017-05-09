@@ -14,7 +14,7 @@
 #include "flecsale/mesh/burton/burton_element.h"
 
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace burton {
 
@@ -64,7 +64,7 @@ public:
   real_t min_length() const override;
 
   //! the cell type
-  geom::shapes::geometric_shapes_t type() const override 
+  shape_t type() const override 
   { return geom::shapes::triangle<num_dimensions>::shape; };
 
   //----------------------------------------------------------------------------
@@ -219,7 +219,7 @@ public:
   real_t min_length() const override;
 
   //! the cell type
-  geom::shapes::geometric_shapes_t type() const override 
+  shape_t type() const override 
   { return geom::shapes::triangle<num_dimensions>::shape; };
 
 

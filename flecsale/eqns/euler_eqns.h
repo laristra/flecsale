@@ -16,7 +16,7 @@
 #include "flecsale/math/general.h"
 #include "flecsale/math/vector.h"
 
-namespace ale {
+namespace flecsale {
 namespace eqns {
 
 ////////////////////////////////////////////////////////////////////////////////

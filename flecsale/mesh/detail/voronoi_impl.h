@@ -18,7 +18,7 @@
 #include <shapo/Tessellator2D.hxx>
 #include <vtkPoints.h>
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace detail {
 
@@ -422,7 +422,7 @@ mesh_t transfer_mesh( const Tessellator & tess )
 
 } // namespace detail
 } // namespace mesh
-} // namespace ale
+} // namespace flecsale
 
 #endif
 

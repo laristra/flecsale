@@ -26,9 +26,9 @@ using std::cout;
 using std::endl;
 using std::vector;
 
-using namespace ale;
-using namespace ale::eos;
-using namespace ale::utils;
+using namespace flecsale;
+using namespace flecsale::eos;
+using namespace flecsale::utils;
 
 using real_t = common::real_t;
 using vector_t = vector<real_t>;

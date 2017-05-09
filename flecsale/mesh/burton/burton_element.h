@@ -16,7 +16,7 @@
 #include "flecsale/utils/errors.h"
 #include "flecsi/topology/mesh_types.h"
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace burton {
 
@@ -328,6 +328,9 @@ struct burton_element_t<2,2>
   //! the base corner type
   using corner_t = burton_corner_t<num_dimensions>;
 
+  //! the shape type
+  using shape_t = config_t::shape_t;
+
   //============================================================================
   // Constructors
   //============================================================================
@@ -382,7 +385,7 @@ struct burton_element_t<2,2>
 
 
   //! the element type
-  virtual geom::shapes::geometric_shapes_t type() const
+  virtual shape_t type() const
   { raise_runtime_error("you should never get here"); };
 
 
@@ -516,6 +519,9 @@ struct burton_element_t<3,2>
   //! The boundary id list type.
   using tag_list_t = typename config_t::tag_list_t;
 
+  //! the shape type
+  using shape_t = config_t::shape_t;
+
   //============================================================================
   // Constructors
   //============================================================================
@@ -574,7 +580,7 @@ struct burton_element_t<3,2>
   virtual real_t min_length() const;
 
   //! the element type
-  virtual geom::shapes::geometric_shapes_t type() const
+  virtual shape_t type() const
   { raise_runtime_error("you should never get here"); };
 
   //----------------------------------------------------------------------------
@@ -717,6 +723,9 @@ struct burton_element_t<3,3>
   //! the base corner type
   using corner_t = burton_corner_t<num_dimensions>;
 
+  //! the shape type
+  using shape_t = config_t::shape_t;
+
   //============================================================================
   // Constructors
   //============================================================================
@@ -767,7 +776,7 @@ struct burton_element_t<3,3>
   size_t region() const;
 
   //! the element type
-  virtual geom::shapes::geometric_shapes_t type() const
+  virtual shape_t type() const
   { raise_runtime_error("you should never get here"); };
 
 
@@ -853,4 +862,4 @@ using burton_cell_t = burton_element_t<N,N>;
 
 } // namespace burton
 } // namespace mesh
-} // namespace ale
+} // namespace flecsale

@@ -19,7 +19,7 @@
 #include <array>
 #include <cassert>
 
-namespace ale {
+namespace flecsale {
 namespace utils {
     
 ////////////////////////////////////////////////////////////////////////////////

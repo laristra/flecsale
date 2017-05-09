@@ -9,11 +9,11 @@ set(eos_HEADERS
 )
 
 
-cinch_install_headers(
+mcinch_install_headers(
   FILES ${eos_HEADERS}
   DESTINATION include/flecsale/eos)
 
 
-cinch_add_unit( test_eos
+mcinch_add_unit( test_eos
   SOURCES test/ideal_gas.cc
 )

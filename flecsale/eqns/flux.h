@@ -14,7 +14,7 @@
 // user includes
 #include "flecsale/math/general.h" 
 
-namespace ale {
+namespace flecsale {
 namespace eqns {
 
 

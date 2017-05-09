@@ -8,7 +8,7 @@
 #include "flecsale/mesh/burton/burton_mesh_topology.h"
 
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace burton {
 
@@ -64,5 +64,5 @@ const burton_3d_vertex_t::tag_list_t &  burton_3d_vertex_t::tags() const
 
 } // namespace burton
 } // namespace mesh
-} // namespace ale
+} // namespace flecsale
 

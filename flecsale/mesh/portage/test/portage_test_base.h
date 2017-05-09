@@ -9,21 +9,21 @@
 #pragma once
 
 // user includes
-#include "mesh/burton/burton.h"
-#include "mesh/portage/portage.h"
+#include "flecsale/mesh/burton/burton.h"
+#include "flecsale/mesh/portage/portage.h"
 
 // system includes
 #include <cinchtest.h>
 
 //! \brief the mesh type
-using mesh_2d_t   = ale::mesh::burton_mesh_2d_t;
+using mesh_2d_t   = flecsale::mesh::burton::burton_mesh_2d_t;
 //! \brief the mesh type
-using mesh_3d_t   = ale::mesh::burton_mesh_3d_t;
+using mesh_3d_t   = flecsale::mesh::burton::burton_mesh_3d_t;
 
 // some general using statements
 using std::string;
-using ale::mesh::write_mesh;
-using ale::mesh::read_mesh;
+using flecsale::mesh::write_mesh;
+using flecsale::mesh::read_mesh;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief base test fixture for portage

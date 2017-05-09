@@ -17,8 +17,8 @@
 #include <cmath>
 
 // explicitly use some stuff
-using namespace ale;
-using namespace ale::math;
+using namespace flecsale;
+using namespace flecsale::math;
 
 using real_t = common::real_t;
 using matrix_1d_t = matrix<real_t,1,1>;

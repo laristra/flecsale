@@ -32,7 +32,7 @@ extern "C" {
 #include <type_traits>
 #include <vector>
 
-namespace ale {
+namespace flecsale {
 namespace utils {
 
 
@@ -840,7 +840,7 @@ public:
 };
 
 } // namespace utils
-} // namespace ale
+} // namespace flecsale
 
 #endif // HAVE_LUA
   

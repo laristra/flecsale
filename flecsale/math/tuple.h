@@ -17,7 +17,7 @@
 #include <iostream>
 #include <tuple>
 
-namespace ale {
+namespace flecsale {
 namespace math {
 
 ////////////////////////////////////////////////////////////////////////////////

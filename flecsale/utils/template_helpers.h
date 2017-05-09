@@ -17,7 +17,7 @@
 #include <functional>
 #include <limits>
 
-namespace ale {
+namespace flecsale {
 namespace utils {
 
 ////////////////////////////////////////////////////////////////////////////////

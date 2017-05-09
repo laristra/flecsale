@@ -14,7 +14,7 @@
 #include "flecsale/math/general.h"
 #include "flecsale/utils/array_ref.h"
 
-namespace ale {
+namespace flecsale {
 namespace geom {
 namespace shapes {
 
@@ -205,4 +205,4 @@ private:
 
 } // namespace shapes
 } // namespace geom
-} // namespace ale
+} // namespace flecsale

@@ -9,7 +9,7 @@
 #include "flecsale/mesh/burton/burton_element.h"
 
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace burton {
 

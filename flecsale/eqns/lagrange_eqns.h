@@ -18,7 +18,7 @@
 #include "flecsale/math/vector.h"
 #include "flecsale/utils/const_string.h"
 
-namespace ale {
+namespace flecsale {
 namespace eqns {
 
 ////////////////////////////////////////////////////////////////////////////////

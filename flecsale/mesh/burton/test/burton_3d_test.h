@@ -71,7 +71,7 @@ public:
 
 
   //! \brief some test tolerance
-  static constexpr real_t test_tolerance = ale::common::test_tolerance;
+  static constexpr real_t test_tolerance = flecsale::common::test_tolerance;
 
 
 
@@ -83,7 +83,7 @@ protected:
   //---------------------------------------------------------------------------
   virtual void SetUp() {
     
-    mesh_ = ale::mesh::box<mesh_t>( 
+    mesh_ = flecsale::mesh::box<mesh_t>( 
       num_cells_x, num_cells_y, num_cells_z,
       0, 0, 0, length_x, length_y, length_z );
     

@@ -15,7 +15,7 @@
 #include<iostream>
 #include <numeric>
 
-using namespace ale::utils;
+using namespace flecsale::utils;
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the construction of strided_bounds's.

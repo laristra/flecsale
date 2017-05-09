@@ -19,7 +19,7 @@
 #include <typeinfo>
 #include <unordered_map>
 
-namespace ale {
+namespace flecsale {
 namespace io {
 
 

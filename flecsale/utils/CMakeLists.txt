@@ -38,7 +38,7 @@ if (Caliper_LIBRARIES)
   list(APPEND utils_LIBRARIES ${Caliper_LIBRARIES})
 endif()
 
-cinch_add_unit(test_utils
+mcinch_add_unit(test_utils
     SOURCES 
       test/array_view.cc
       test/caliper.cc

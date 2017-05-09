@@ -9,7 +9,7 @@
 #pragma once
 
 
-namespace ale {
+namespace flecsale {
 namespace geom {
 namespace shapes {
 
@@ -29,4 +29,4 @@ enum class geometric_shapes_t
 
 } // namespace shapes
 } // namespace geom
-} // namespace ale
+} // namespace flecsale

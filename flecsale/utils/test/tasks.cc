@@ -22,7 +22,7 @@ using std::vector;
 using real_t   = double;
 using vector_t = vector<real_t>;
 
-using namespace ale::utils;
+using namespace flecsale::utils;
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the automatic task generator.

@@ -67,7 +67,7 @@ public:
   static constexpr auto num_faces = num_face_x + num_face_y + num_face_z;
 
   //! \brief some test tolerance
-  static constexpr real_t test_tolerance = ale::common::test_tolerance;
+  static constexpr real_t test_tolerance = flecsale::common::test_tolerance;
 
 
   // the vertex strides in each direction

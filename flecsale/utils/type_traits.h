@@ -17,7 +17,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace ale {
+namespace flecsale {
 namespace utils {
 
 

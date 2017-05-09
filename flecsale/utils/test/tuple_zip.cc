@@ -20,9 +20,9 @@
 using std::cout;
 using std::endl;
 using std::get;
-using ale::utils::tuple_tie;
-using ale::utils::tuple_visit;
-using ale::utils::tuple_zip;
+using flecsale::utils::tuple_tie;
+using flecsale::utils::tuple_visit;
+using flecsale::utils::tuple_zip;
 
 //=============================================================================
 //! \brief Test the tuple_zip function.

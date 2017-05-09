@@ -19,7 +19,7 @@
 #include <cassert>
 #include <iostream>
 
-namespace ale {
+namespace flecsale {
 namespace math {
 
 

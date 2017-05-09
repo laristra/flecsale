@@ -30,8 +30,8 @@ using std::cout;
 using std::endl;
 using std::vector;
 
-using namespace ale;
-using namespace ale::geom::shapes;
+using namespace flecsale;
+using namespace flecsale::geom::shapes;
 
 //! the real type
 using real_t = common::real_t;

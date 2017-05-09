@@ -12,7 +12,7 @@
 #include "flecsale/geom/shapes/geometric_shapes.h"
 #include "flecsale/math/general.h"
 
-namespace ale {
+namespace flecsale {
 namespace geom {
 namespace shapes {
 
@@ -81,4 +81,4 @@ struct tetrahedron {
 
 } // namespace shapes
 } // namespace geom
-} // namespace ale
+} // namespace flecsale

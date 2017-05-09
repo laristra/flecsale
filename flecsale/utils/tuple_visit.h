@@ -11,7 +11,7 @@
 // user includes
 #include "detail/tuple_visit_impl.h"
 
-namespace ale {
+namespace flecsale {
 namespace utils {
 
 ////////////////////////////////////////////////////////////////////////////////

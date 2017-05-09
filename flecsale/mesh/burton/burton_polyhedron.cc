@@ -8,7 +8,7 @@
 #include "flecsale/mesh/burton/burton_polyhedron.h"
 
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace burton {
 

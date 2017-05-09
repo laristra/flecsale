@@ -53,8 +53,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 # set some global variables
 set( FleCSALE_LIBRARIES )
-set( ALE_DATA_DIR "${CMAKE_SOURCE_DIR}/data" )  
-set( ALE_TOOL_DIR "${CMAKE_SOURCE_DIR}/tools" )  
+set( FleCSALE_DATA_DIR "${CMAKE_SOURCE_DIR}/data" )  
+set( FleCSALE_TOOL_DIR "${CMAKE_SOURCE_DIR}/tools" )  
 
 #------------------------------------------------------------------------------#
 # Some precision setup
@@ -307,6 +307,35 @@ if(ENABLE_EXODUS)
   list(APPEND FleCSALE_LIBRARIES ${EXODUSII_LIBRARIES} )
   message( STATUS "IO with exodus enabled" )
 endif()
+
+#------------------------------------------------------------------------------#
+# Boost - Right now, only used by portage
+#------------------------------------------------------------------------------#
+
+find_package(Boost QUIET)
+
+if(Boost_FOUND)
+  message(STATUS "Boost location: ${Boost_INCLUDE_DIRS}")
+  include_directories( ${Boost_INCLUDE_DIRS} )
+endif()
+
+#------------------------------------------------------------------------------#
+# Portage
+#------------------------------------------------------------------------------#
+
+find_package(PORTAGE QUIET)
+
+option(ENABLE_PORTAGE "Enable Portage Support" ${PORTAGE_FOUND})
+
+if(ENABLE_PORTAGE)
+  if(NOT Boost_FOUND)
+    message( FATAL_ERROR "Boost is needed for Portage" )
+  endif()
+  include_directories(${PORTAGE_INCLUDE_DIR})
+  add_definitions(-DHAVE_PORTAGE)
+  list( APPEND FleCSALE_LIBRARIES ${PORTAGE_LIBRARY} )
+endif()
+
 
 #------------------------------------------------------------------------------#
 # Add subprojects

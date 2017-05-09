@@ -14,7 +14,7 @@
 #include "flecsale/mesh/burton/burton_element.h"
 
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace burton {
 
@@ -59,7 +59,7 @@ public:
   real_t volume() const override;
 
   //! the cell type
-  geom::shapes::geometric_shapes_t type() const override 
+  shape_t type() const override 
   { return geom::shapes::polyhedron<point_t>::shape; };
 
   //----------------------------------------------------------------------------

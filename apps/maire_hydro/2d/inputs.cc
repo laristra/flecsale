@@ -79,7 +79,7 @@ template<> size_t base_t::max_steps = 20;
 
 // the equation of state
 template<> std::shared_ptr<eos_t> base_t::eos = 
-  std::make_shared< ale::eos::ideal_gas_t<real_t> >( 
+  std::make_shared< flecsale::eos::ideal_gas_t<real_t> >( 
     /* gamma */ 1.4, /* cv */ 1.0 
   ); 
 
@@ -104,7 +104,7 @@ inputs_t::mesh_function_t base_t::make_mesh =
   [nx=num_cells_x, ny=num_cells_y, lx=length_x, ly=length_y](const real_t &)
   { 
     // this is the mesh object
-    return ale::mesh::box<mesh_t>( 
+    return flecsale::mesh::box<mesh_t>( 
       nx, ny, 0, 0, lx, ly
     );
   };

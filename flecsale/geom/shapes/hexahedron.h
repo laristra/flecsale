@@ -12,7 +12,7 @@
 #include "flecsale/geom/shapes/geometric_shapes.h"
 #include "flecsale/geom/shapes/quadrilateral.h"
 
-namespace ale {
+namespace flecsale {
 namespace geom {
 namespace shapes {
 
@@ -179,4 +179,4 @@ public:
 
 } // namespace shapes
 } // namespace geom
-} // namespace ale
+} // namespace flecsale

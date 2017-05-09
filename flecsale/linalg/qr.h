@@ -16,7 +16,7 @@
 
 #include "types.h"
 
-namespace ale {
+namespace flecsale {
 namespace linalg {
 
 

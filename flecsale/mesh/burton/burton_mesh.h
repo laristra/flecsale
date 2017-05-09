@@ -22,7 +22,7 @@
 #include <sstream>
 
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace burton {
 
@@ -126,6 +126,9 @@ public:
   //! \brief the type of id for marking boundaries
   using tag_t = typename config_t::tag_t;
   using tag_list_t = typename config_t::tag_list_t;
+
+  //! Shape data type.
+  using shape_t = typename config_t::shape_t;
 
   //============================================================================
   // Constructors
@@ -1650,4 +1653,4 @@ std::ostream& operator<< (std::ostream& stream, const burton_mesh_t<M>& mesh)
 
 } // namespace burton
 } // namespace mesh
-} // namespace ale
+} // namespace flecsale

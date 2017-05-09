@@ -11,7 +11,7 @@
 // user includes
 #include "flecsale/math/array.h"
 
-namespace ale {
+namespace flecsale {
 namespace math {
 
 ////////////////////////////////////////////////////////////////////////////////

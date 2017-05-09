@@ -32,6 +32,11 @@ set(mesh_HEADERS
 
   factory.h
   mesh_utils.h
+
+  portage/portage.h
+  portage/portage_mesh.h
+  portage/portage_state.h
+
   voronoi.h  detail/voronoi_impl.h
   vtk_utils.h
 
@@ -50,7 +55,7 @@ set(mesh_SOURCES
   burton/burton_vertex.cc
 )
 
-cinch_install_headers(
+mcinch_install_headers(
   FILES ${mesh_HEADERS}
   DESTINATION include/flecsale/mesh
 )
@@ -58,9 +63,9 @@ cinch_install_headers(
 add_library( flecsale_mesh OBJECT ${mesh_SOURCES} )
 
 # get a relative path
-file(RELATIVE_PATH DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ${ALE_DATA_DIR})
+file(RELATIVE_PATH DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ${FleCSALE_DATA_DIR})
 
-cinch_add_unit(test_mesh
+mcinch_add_unit(test_mesh
     SOURCES 
       burton/test/burton_test_base.h
       burton/test/burton_create_test.h
@@ -75,6 +80,13 @@ cinch_add_unit(test_mesh
       burton/test/burton_io.cc
       burton/test/burton_voro.cc
       burton/test/burton_grad.cc
+
+      portage/test/portage_test_base.h
+      portage/test/portage_2d_test.h
+      portage/test/portage_3d_test.h
+    
+      portage/test/portage_2d.cc
+      portage/test/portage_3d.cc
 
       $<TARGET_OBJECTS:flecsale_mesh>
       $<TARGET_OBJECTS:flecsale_io>
@@ -107,4 +119,5 @@ cinch_add_unit(test_mesh
 
     LIBRARIES
       ${FleCSI_LIBRARIES}
+      ${PORTAGE_LIBRARY}
 )

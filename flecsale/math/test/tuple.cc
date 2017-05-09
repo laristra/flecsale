@@ -18,8 +18,8 @@
 #include <iostream>
 
 // explicitly use some stuff
-using namespace ale;
-using namespace ale::math;
+using namespace flecsale;
+using namespace flecsale::math;
 
 using std::make_tuple;
 

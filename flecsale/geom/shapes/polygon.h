@@ -13,7 +13,7 @@
 #include "flecsale/geom/shapes/triangle.h"
 #include "flecsale/math/general.h"
 
-namespace ale {
+namespace flecsale {
 namespace geom {
 namespace shapes {
 
@@ -730,4 +730,4 @@ public:
 
 } // namspeace shapes
 } // namespace geom
-} // namespace ale
+} // namespace flecsale

@@ -10,7 +10,7 @@
 #pragma once
 
 
-namespace ale {
+namespace flecsale {
 namespace geom {
 
 
@@ -108,4 +108,4 @@ midpoint( T && t )
 }
 
 } // namespace geom
-} // namespace ale
+} // namespace flecsale

@@ -24,8 +24,8 @@ using std::cout;
 using std::endl;
 using std::vector;
 
-using namespace ale;
-using namespace ale::geom;
+using namespace flecsale;
+using namespace flecsale::geom;
 
 //! the real type
 using real_t = common::real_t;

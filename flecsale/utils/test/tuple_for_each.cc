@@ -19,7 +19,7 @@
 using std::cout;
 using std::endl;
 using std::get;
-using ale::utils::tuple_for_each;
+using flecsale::utils::tuple_for_each;
 
 //=============================================================================
 //! \brief Test the tuple_zip function.

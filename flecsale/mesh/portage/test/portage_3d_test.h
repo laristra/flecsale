@@ -15,7 +15,7 @@
 #include "portage_test_base.h"
 
 // user includes
-#include "mesh/factory.h"
+#include "flecsale/mesh/factory.h"
 
 // some general using statements
 using std::vector;
@@ -35,9 +35,9 @@ public:
   using mesh_t = mesh_3d_t;
 
   //! \brief the portage mesh wrapper type
-  using portage_mesh_t = ale::mesh::portage_mesh_t<mesh_t>;
+  using portage_mesh_t = flecsale::mesh::portage_mesh_t<mesh_t>;
   //! \brief the portage state wrapper typename
-  using portage_state_t = ale::mesh::portage_state_t<mesh_t>;
+  using portage_state_t = flecsale::mesh::portage_state_t<mesh_t>;
   //! \brief The portage driver type
   using portage_1st_order_driver_t =
     Portage::Driver<
@@ -77,7 +77,7 @@ public:
   //---------------------------------------------------------------------------
   
   //! \brief some test tolerance
-  static constexpr real_t test_tolerance = 1000*ale::common::test_tolerance;
+  static constexpr real_t test_tolerance = 1000*flecsale::common::test_tolerance;
 
 
 

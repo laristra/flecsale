@@ -17,7 +17,7 @@
 // use python
 #include <Python.h>
 
-namespace ale {
+namespace flecsale {
 namespace utils {
 
 //! \brief The python char type.
@@ -286,6 +286,6 @@ auto python_call_function( PyObject * py_func, Args&&... args )
 
 
 } // namespace utils
-} // namespace ale
+} // namespace flecsale
 
 #endif // HAVE_PYTHON

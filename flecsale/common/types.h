@@ -15,7 +15,7 @@
 #include <cstddef> // for size_t
 #include <cstdint> // for types
 
-namespace ale {
+namespace flecsale {
 namespace common {
 
 //! function return values

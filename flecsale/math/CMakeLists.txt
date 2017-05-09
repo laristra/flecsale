@@ -13,7 +13,7 @@ set(math_HEADERS
   vector.h
 )
 
-cinch_add_unit(test_math
+mcinch_add_unit(test_math
     SOURCES 
       test/tuple.cc 
       test/vector.cc

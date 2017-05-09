@@ -38,7 +38,7 @@ auto parse_arguments(
     auto c = 
       getopt_long(argc, argv, short_options, long_options, &option_index);
     auto c_char = static_cast<char>(c);
-    auto c_str = ale::utils::to_string( c_char );
+    auto c_str = flecsale::utils::to_string( c_char );
 
     // Detect the end of the options.
     if (c == -1) break;

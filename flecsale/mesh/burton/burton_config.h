@@ -12,12 +12,13 @@
 // user includes
 #include "flecsale/common/types.h"
 #include "flecsale/geom/point.h"
+#include "flecsale/geom/shapes/geometric_shapes.h"
 #include "flecsale/math/vector.h"
 #include "flecsale/utils/fixed_vector.h"
 #include "flecsi/utils/bitfield.h"
 #include "flecsi/data/data.h"
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace burton {
 
@@ -68,11 +69,13 @@ struct burton_config_t {
   using tag_t = uint8_t;
   using tag_list_t = utils::fixed_vector< tag_t, N*N >;
 
+  //! \brief the shape type
+  using shape_t = geom::shapes::geometric_shapes_t;
 
 
 };
 
 } // namespace burton
 } // namespace mesh
-} // namespace ale
+} // namespace flecsale
 

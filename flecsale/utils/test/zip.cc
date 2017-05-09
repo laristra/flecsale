@@ -25,7 +25,7 @@ using std::vector;
 using std::array;
 using std::get;
 
-using namespace ale::utils;
+using namespace flecsale::utils;
 
 //=============================================================================
 //! \brief Test the "zip-like" iterator.

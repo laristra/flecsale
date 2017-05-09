@@ -36,7 +36,7 @@ public:
   //===========================================================================
   static void load(const std::string & file)
   {
-    auto ext = ale::utils::file_extension(file);
+    auto ext = flecsale::utils::file_extension(file);
     if ( ext == "lua" ) {
       load_lua(file);
     }
@@ -83,7 +83,7 @@ public:
       auto xmax = lua_try_access_as( mesh_input, "xmax", array_t<real_t> );
       make_mesh = [dims,xmin,xmax](const real_t &)
       {
-        return ale::mesh::box<mesh_t>( 
+        return flecsale::mesh::box<mesh_t>( 
           dims[0], dims[1], dims[2], 
           xmin[0], xmin[1], xmin[2], 
           xmax[0], xmax[1], xmax[2]
@@ -95,7 +95,7 @@ public:
       make_mesh = [file](const real_t &)
       {
         mesh_t m;
-        ale::mesh::read_mesh(file, m);
+        flecsale::mesh::read_mesh(file, m);
         return m;
       };
     }

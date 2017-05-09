@@ -16,7 +16,7 @@
 #include "flecsi/topology/mesh_types.h"
 
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace burton {
 
@@ -240,5 +240,5 @@ private:
 
 } // namespace burton
 } // namespace mesh
-} // namespace ale
+} // namespace flecsale
 

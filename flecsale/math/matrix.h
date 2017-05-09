@@ -15,7 +15,7 @@
 // system includes
  #include <cmath>
 
-namespace ale {
+namespace flecsale {
 namespace math {
 
 

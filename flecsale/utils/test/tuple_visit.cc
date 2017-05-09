@@ -18,7 +18,7 @@
 // using declarations
 using std::cout;
 using std::endl;
-using ale::utils::tuple_visit;
+using flecsale::utils::tuple_visit;
 
 //=============================================================================
 //! \brief Test the tuple_visit function.

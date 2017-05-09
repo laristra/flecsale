@@ -24,13 +24,13 @@ namespace apps {
 namespace hydro {
 
 // some namespace aliases
-namespace common= ale::common;
-namespace mesh  = ale::mesh;
-namespace math  = ale::math;
-namespace utils = ale::utils;
-namespace geom  = ale::geom;
-namespace eos   = ale::eos;
-namespace eqns  = ale::eqns;
+namespace common= flecsale::common;
+namespace mesh  = flecsale::mesh;
+namespace math  = flecsale::math;
+namespace utils = flecsale::utils;
+namespace geom  = flecsale::geom;
+namespace eos   = flecsale::eos;
+namespace eqns  = flecsale::eqns;
 
 // mesh and some underlying data types
 template <std::size_t N>

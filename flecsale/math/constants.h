@@ -11,7 +11,7 @@
 // user includes
 #include "flecsale/common/types.h"
 
-namespace ale {
+namespace flecsale {
 namespace math {
 
 //////////////////////////////////////////////////////////////////////////////

@@ -9,12 +9,12 @@ set(eqns_HEADERS
   lagrange_eqns.h
 )
 
-cinch_install_headers(
+mcinch_install_headers(
   FILES ${eqns_HEADERS}
   DESTINATION include/flecsale/eqns
 )
 
-cinch_add_unit( test_eqns
+mcinch_add_unit( test_eqns
   SOURCES 
     test/euler_eqns.cc
 )

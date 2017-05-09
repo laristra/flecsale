@@ -31,7 +31,7 @@
 #include <string>
 #include <vector>
 
-namespace ale {
+namespace flecsale {
 namespace io {
 namespace catalyst {
 

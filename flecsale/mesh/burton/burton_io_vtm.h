@@ -40,7 +40,7 @@
 #include <fstream>
 
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace burton {
 
@@ -578,4 +578,4 @@ static bool burton_vtm_registered =
 
 } // namespace burton
 } // namespace mesh
-} // namespace ale
+} // namespace flecsale

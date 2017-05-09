@@ -25,7 +25,7 @@
 #include "flecsi/topology/mesh_topology.h"
 #include "flecsale/mesh/burton/burton_config.h"
 
-namespace ale {
+namespace flecsale {
 namespace mesh {
 namespace burton {
 
@@ -356,4 +356,4 @@ struct burton_types_t<3> {
 
 } // namespace burton
 } // namespace mesh
-} // namespace ale
+} // namespace flecsale

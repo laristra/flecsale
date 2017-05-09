@@ -13,7 +13,7 @@
 // user includes
 #include "detail/tuple_for_each_impl.h"
 
-namespace ale {
+namespace flecsale {
 namespace utils {
 
 ////////////////////////////////////////////////////////////////////////////////

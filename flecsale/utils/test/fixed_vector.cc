@@ -16,7 +16,7 @@
 #include<iostream>
 
 // explicitly use some stuff
-using fixed_vector = ale::utils::fixed_vector<int, 5>;
+using fixed_vector = flecsale::utils::fixed_vector<int, 5>;
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Test the construction of fixed_vector's.
