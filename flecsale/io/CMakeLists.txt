@@ -19,3 +19,4 @@ mcinch_install_headers(
 )
 
 add_library(flecsale_io OBJECT ${io_SOURCES})
+set(FleCSALE_OBJECTS ${FleCSALE_OBJECTS} flecsale_io PARENT_SCOPE)

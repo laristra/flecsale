@@ -61,6 +61,7 @@ mcinch_install_headers(
 )
 
 add_library( flecsale_mesh OBJECT ${mesh_SOURCES} )
+set(FleCSALE_OBJECTS ${FleCSALE_OBJECTS} flecsale_mesh PARENT_SCOPE)
 
 # get a relative path
 file(RELATIVE_PATH DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ${FleCSALE_DATA_DIR})

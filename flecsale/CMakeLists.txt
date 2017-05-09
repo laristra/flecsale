@@ -3,10 +3,10 @@
 # All rights reserved.
 #------------------------------------------------------------------------------#
 
-#------------------------------------------------------------------------------#
-# Add public library headers
-#------------------------------------------------------------------------------#
+# create a list to append object libraries to
+set( FleCSALE_OBJECTS )
 
+# add the individual submodules
 add_subdirectory( common )
 add_subdirectory( eos )
 add_subdirectory( eqns )
@@ -17,27 +17,25 @@ add_subdirectory( math )
 add_subdirectory( mesh )
 add_subdirectory( utils )
 
-set(objects
-  flecsale_common
-  flecsale_eos
-  flecsale_eqns
-  flecsale_geom
-  flecsale_io
-  flecsale_linalg
-  flecsale_math
-  flecsale_mesh
-  flecsale_utils
+MESSAGE( STATUS ${FleCSALE_OBJECTS} )
+
+# in order to enable shared libraries, they need to be built using fPIC
+set_target_properties( 
+  ${FleCSALE_OBJECTS} PROPERTIES POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS}
 )
 
-set(valid_objects)
-foreach( obj ${objects} )
-  if ( TARGET ${obj} )
-    set(valid_objects ${valid_objects} $<TARGET_OBJECTS:${obj}>)
-  endif()
+# turn the list of target names into a list of objects
+set(objects)
+foreach( obj ${FleCSALE_OBJECTS} )
+  list(APPEND objects $<TARGET_OBJECTS:${obj}>)
 endforeach()
 
-add_library(flecsale ${valid_objects})
+
+# create the library and link it to thirparties
+add_library(flecsale ${objects})
 target_link_libraries( flecsale ${FleCSALE_LIBRARIES} )
+
+# install the library
 install( TARGETS flecsale DESTINATION lib)
 
 #~---------------------------------------------------------------------------~-#
