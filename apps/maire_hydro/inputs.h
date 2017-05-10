@@ -44,7 +44,7 @@ public:
   //! the vector type
   using vector_t = typename mesh_t::vector_t;
   //! the eos type
-  using eos_t = ale::eos::eos_base_t<real_t>;
+  using eos_t = flecsale::eos::eos_base_t<real_t>;
 
   //! a dimensioned array type helper
   template< typename T>
@@ -107,7 +107,7 @@ public:
   static auto load_lua(const std::string & file) 
   {
     // setup the python interpreter
-    auto lua_state = ale::utils::lua_t();
+    auto lua_state = flecsale::utils::lua_t();
     // load the test file
     lua_state.loadfile( file );
 
@@ -131,7 +131,7 @@ public:
     auto eos_input = lua_try_access( hydro_input, "eos" );
     auto eos_type = lua_try_access_as( eos_input, "type", std::string );
     if ( eos_type == "ideal_gas" ){
-      using ideal_gas_t = ale::eos::ideal_gas_t<real_t>;
+      using ideal_gas_t = flecsale::eos::ideal_gas_t<real_t>;
       auto g  = lua_try_access_as( eos_input, "gas_constant", real_t );
       auto cv = lua_try_access_as( eos_input, "specific_heat", real_t );
       eos = std::make_shared<ideal_gas_t>( g, cv );

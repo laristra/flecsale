@@ -476,7 +476,7 @@ int evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
           i++;
         }               
         // solve the system
-        ale::linalg::qr( A_view, b_view );
+        flecsale::linalg::qr( A_view, b_view );
         // copy the results back
         for ( int d=0; d<num_dims; ++d )
           vertex_velocity[vt][d] = b_view[d];

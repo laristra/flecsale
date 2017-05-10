@@ -4,12 +4,13 @@
 #~----------------------------------------------------------------------------~#
 
 add_executable( maire_hydro_3d
+  $<TARGET_OBJECTS:common> 
   inputs.cc
   driver.cc
   ${FLECSI_RUNTIME_DRIVER}
   ${FLECSI_RUNTIME_MAIN}
 )
-target_link_libraries( maire_hydro_3d common ${ALE_LIBRARIES} )
+target_link_libraries( maire_hydro_3d flecsale )
 
 if (LUA_FOUND) 
 
