@@ -17,8 +17,6 @@ add_subdirectory( math )
 add_subdirectory( mesh )
 add_subdirectory( utils )
 
-MESSAGE( STATUS ${FleCSALE_OBJECTS} )
-
 # in order to enable shared libraries, they need to be built using fPIC
 set_target_properties( 
   ${FleCSALE_OBJECTS} PROPERTIES POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS}
