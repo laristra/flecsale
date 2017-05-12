@@ -49,12 +49,12 @@ set(CMAKE_CXX_EXTENSIONS off)
 # Begin project setup
 #------------------------------------------------------------------------------#
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
 
 # set some global variables
 set( FleCSALE_LIBRARIES )
-set( FleCSALE_DATA_DIR "${CMAKE_SOURCE_DIR}/data" )  
-set( FleCSALE_TOOL_DIR "${CMAKE_SOURCE_DIR}/tools" )  
+set( FleCSALE_DATA_DIR "${PROJECT_SOURCE_DIR}/data" CACHE INTERNAL "")  
+set( FleCSALE_TOOL_DIR "${PROJECT_SOURCE_DIR}/tools" CACHE INTERNAL "")  
 
 #------------------------------------------------------------------------------#
 # Some precision setup
@@ -360,10 +360,14 @@ endif()
 list(APPEND FleCSALE_LIBRARIES ${FleCSI_LIBRARIES} )
 
 set(FLECSI_EXEC_DIR ${PROJECT_SOURCE_DIR}/flecsi/flecsi/execution)
-set(FLECSI_RUNTIME_MAIN ${FLECSI_EXEC_DIR}/runtime_main.cc)
+set(
+  FLECSI_RUNTIME_MAIN ${FLECSI_EXEC_DIR}/runtime_main.cc 
+  CACHE INTERNAL ""
+)
 
 set(FLECSI_RUNTIME_DRIVER 
   ${FLECSI_EXEC_DIR}/${FLECSI_RUNTIME_MODEL}/runtime_driver.cc
+  CACHE INTERNAL ""
 )
 add_definitions( -DFLECSI_RUNTIME_MODEL_${FLECSI_RUNTIME_MODEL} )
 

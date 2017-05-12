@@ -3,8 +3,11 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
+# required includes
 include(ProcessorCount)
 
+# get the scripts directory
+set(REGRESSION_CMAKE_DIR ${CMAKE_CURRENT_LIST_DIR} )
 
 #-------------------------------------------------------------------------------
 # This macro creates a regression test
@@ -14,7 +17,7 @@ function(create_regression_test)
 
     # the command to run to compare outputs
     set (TEST_COMMAND "${PYTHON_EXECUTABLE} ${FleCSALE_TOOL_DIR}/numdiff.py --verbose --absolute ${TEST_TOLERANCE}")
-  
+
     # parse the arguments
     set(options)
     set(oneValueArgs NAME COMPARE STANDARD THREADS)
@@ -52,7 +55,7 @@ function(create_regression_test)
     endif()    
   
     if ( NOT( NUM_PROCS LESS args_THREADS) )
-  
+ 
       # add the test
       add_test( 
         NAME ${args_NAME}
@@ -61,7 +64,7 @@ function(create_regression_test)
           -Dcompare_cmd=${TEST_COMMAND}
           -Doutput_blessed=${args_STANDARD}
           -Doutput_test=${args_COMPARE}
-          -P ${CMAKE_SOURCE_DIR}/cmake/run_test.cmake
+          -P ${REGRESSION_CMAKE_DIR}/run_test.cmake
       )
   
       # for openmp
