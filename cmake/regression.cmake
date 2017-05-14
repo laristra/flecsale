@@ -68,10 +68,8 @@ function(create_regression_test)
       )
   
       # for openmp
-      if ( ENABLE_OPENMP )
-        SET_TESTS_PROPERTIES( ${args_NAME}
-          PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=${args_THREADS}")
-      endif()
+      SET_TESTS_PROPERTIES( ${args_NAME}
+        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=${args_THREADS}")
       
     endif()
   
