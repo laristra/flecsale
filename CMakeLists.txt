@@ -13,6 +13,12 @@ include(CMakeDependentOption)
 
 project(FleCSALE)
 
+# enable fortran
+option( ENABLE_FORTRAN "Enable fortran support." OFF )
+if (ENABLE_FORTRAN)
+  enable_language(Fortran)
+endif()
+
 #------------------------------------------------------------------------------#
 # Include project-level CMake configuration file
 #------------------------------------------------------------------------------#
