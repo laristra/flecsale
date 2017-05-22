@@ -16,6 +16,7 @@ add_subdirectory( linalg )
 add_subdirectory( math )
 add_subdirectory( mesh )
 add_subdirectory( utils )
+add_subdirectory( fortran )
 
 # in order to enable shared libraries, they need to be built using fPIC
 set_target_properties( 

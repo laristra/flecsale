@@ -27,17 +27,6 @@ set(utils_HEADERS
   zip.h              detail/zip_impl.h
 )
 
-set(utils_LIBRARIES)
-if (PYTHON_LIBRARIES) 
-  list(APPEND utils_LIBRARIES ${PYTHON_LIBRARIES})
-endif()
-if (LUA_LIBRARIES) 
-  list(APPEND utils_LIBRARIES ${LUA_LIBRARIES})
-endif()
-if (Caliper_LIBRARIES) 
-  list(APPEND utils_LIBRARIES ${Caliper_LIBRARIES})
-endif()
-
 mcinch_add_unit(test_utils
     SOURCES 
       test/array_view.cc
@@ -54,6 +43,21 @@ mcinch_add_unit(test_utils
     INPUTS 
       test/lua_test.lua
       test/python_test.py
-    LIBRARIES
-      ${utils_LIBRARIES}
 )
+
+# make sure the test was actually made
+if (TARGET test_utils)
+  
+  # now link the necessary libraries
+  if (PYTHON_LIBRARIES) 
+    target_link_libraries(test_utils ${PYTHON_LIBRARIES})
+  endif()
+  if (LUA_LIBRARIES) 
+    target_link_libraries(test_utils ${LUA_LIBRARIES})
+  endif()
+  if (Caliper_LIBRARIES) 
+    target_link_libraries(test_utils ${Caliper_LIBRARIES})
+  endif()
+
+endif()
+

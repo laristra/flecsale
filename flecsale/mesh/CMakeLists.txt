@@ -64,24 +64,8 @@ add_library( flecsale_mesh OBJECT ${mesh_SOURCES} )
 set(FleCSALE_OBJECTS ${FleCSALE_OBJECTS} flecsale_mesh PARENT_SCOPE)
 
 # get a relative path
-file(RELATIVE_PATH DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ${FleCSALE_DATA_DIR})
-
-# the libraries used for this sub-module
-set( mesh_LIBRARIES ${FleCSI_LIBRARIES} )
-if ( PORTAGE_LIBRARIES )
-  list(APPEND mesh_LIBRARIES ${PORTAGE_LIBRARIES})
-endif()
-
-
 mcinch_add_unit(test_mesh
     SOURCES 
-      burton/test/burton_test_base.h
-      burton/test/burton_create_test.h
-      burton/test/burton_2d_test.h
-      burton/test/burton_3d_test.h
-      burton/test/burton_io_test.h
-      burton/test/burton_voro_test.h
-
       burton/test/burton_create.cc
       burton/test/burton_2d.cc
       burton/test/burton_3d.cc
@@ -89,10 +73,6 @@ mcinch_add_unit(test_mesh
       burton/test/burton_voro.cc
       burton/test/burton_grad.cc
 
-      portage/test/portage_test_base.h
-      portage/test/portage_2d_test.h
-      portage/test/portage_3d_test.h
-    
       portage/test/portage_2d.cc
       portage/test/portage_3d.cc
 
@@ -110,21 +90,30 @@ mcinch_add_unit(test_mesh
       burton/test/burton_create.faces.blessed
       burton/test/burton_create.minimal.blessed
       burton/test/burton_create.points.blessed
-      ${DATA_DIR}/meshes/2d/mixed/mixed.g
-      ${DATA_DIR}/meshes/2d/mixed/mixed.exo
-      ${DATA_DIR}/meshes/2d/mixed/mixed.vtu
-      ${DATA_DIR}/meshes/2d/mixed/mixed.vtm
-      ${DATA_DIR}/meshes/2d/mixed/mixed_0_0.vtu
-      ${DATA_DIR}/meshes/2d/mixed/mixed_1_0.vtu
-      ${DATA_DIR}/meshes/2d/mixed/mixed.vtk
-      ${DATA_DIR}/meshes/2d/voro/voro.g
-      ${DATA_DIR}/meshes/3d/box/box-hex.exo
-      ${DATA_DIR}/meshes/3d/box/box-hex.g
-      ${DATA_DIR}/meshes/3d/box/box-nfaced.exo
-      ${DATA_DIR}/meshes/3d/box/box-tet.exo
-      ${DATA_DIR}/meshes/3d/box/box-tet.g
-      ${DATA_DIR}/meshes/3d/voro/sedov-0_05cm.exo
-
-    LIBRARIES
-      ${mesh_LIBRARIES}
+      ${FleCSALE_DATA_DIR}/meshes/2d/mixed/mixed.g
+      ${FleCSALE_DATA_DIR}/meshes/2d/mixed/mixed.exo
+      ${FleCSALE_DATA_DIR}/meshes/2d/mixed/mixed.vtu
+      ${FleCSALE_DATA_DIR}/meshes/2d/mixed/mixed.vtm
+      ${FleCSALE_DATA_DIR}/meshes/2d/mixed/mixed_0_0.vtu
+      ${FleCSALE_DATA_DIR}/meshes/2d/mixed/mixed_1_0.vtu
+      ${FleCSALE_DATA_DIR}/meshes/2d/mixed/mixed.vtk
+      ${FleCSALE_DATA_DIR}/meshes/2d/voro/voro.g
+      ${FleCSALE_DATA_DIR}/meshes/3d/box/box-hex.exo
+      ${FleCSALE_DATA_DIR}/meshes/3d/box/box-hex.g
+      ${FleCSALE_DATA_DIR}/meshes/3d/box/box-nfaced.exo
+      ${FleCSALE_DATA_DIR}/meshes/3d/box/box-tet.exo
+      ${FleCSALE_DATA_DIR}/meshes/3d/box/box-tet.g
+      ${FleCSALE_DATA_DIR}/meshes/3d/voro/sedov-0_05cm.exo
 )
+
+# make sure the target was actually made
+if (TARGET test_mesh)
+  
+  # the libraries used for this sub-module
+  target_link_libraries(test_mesh ${FleCSI_LIBRARIES})
+  if ( PORTAGE_LIBRARIES )
+    target_link_libraries(test_mesh ${PORTAGE_LIBRARIES})
+  endif()
+
+endif()
+

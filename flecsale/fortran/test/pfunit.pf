@@ -1,0 +1,22 @@
+!~----------------------------------------------------------------------------~~
+! Copyright (c) 2017 Los Alamos National Laboratory, LLC
+! All rights reserved
+!~----------------------------------------------------------------------------~~
+
+!===============================================================================
+!> \file
+!> \brief Tests related to making sure pfunit works correctly.
+!===============================================================================
+
+!===============================================================================
+! \brief A simple test that makes sure pFunit works correctly.
+!===============================================================================
+@test
+subroutine testPFunit()
+  use pfunit_mod
+  implicit none
+
+  @assertEqual(3., 3.)
+
+end subroutine testPFunit
+
