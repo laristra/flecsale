@@ -55,7 +55,7 @@ set(mesh_SOURCES
   burton/burton_vertex.cc
 )
 
-mcinch_install_headers(
+cinch_install_headers(
   FILES ${mesh_HEADERS}
   DESTINATION include/flecsale/mesh
 )
@@ -64,7 +64,7 @@ add_library( flecsale_mesh OBJECT ${mesh_SOURCES} )
 set(FleCSALE_OBJECTS ${FleCSALE_OBJECTS} flecsale_mesh PARENT_SCOPE)
 
 # get a relative path
-mcinch_add_unit(test_mesh
+cinch_add_unit(test_mesh
     SOURCES 
       burton/test/burton_create.cc
       burton/test/burton_2d.cc

@@ -7,7 +7,7 @@
 # fortran-related utilities
 
 # add a simple fortran test
-mcinch_add_unit( test_pfunit
+cinch_add_unit( test_pfunit
   SOURCES 
     test/pfunit.pf
     test/testSuites.inc

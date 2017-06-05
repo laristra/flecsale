@@ -29,18 +29,21 @@ elseif(EXISTS ${CMAKE_SOURCE_DIR}/cinch)
   set(CINCH_SOURCE_DIR ${CMAKE_SOURCE_DIR}/cinch)
 endif()
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CINCH_SOURCE_DIR}/cmake")
+include(common_includes)
+include(install_headers)
 
 # This changes the Cinch default
 option(ENABLE_BOOST_PREPROCESSOR "Enable Boost.Preprocessor" ON)
 
-include(${CINCH_SOURCE_DIR}/cmake/modular-cinch-main.cmake)
-include(${CINCH_SOURCE_DIR}/cmake/modular-cinch-macros.cmake)
+# now load the extra functionality
+cinch_load_extras()
 
 #------------------------------------------------------------------------------#
 # Set the minimum Cinch version
 #------------------------------------------------------------------------------#
 
-cinch_minimum_required(1.0)
+cinch_minimum_required(2.0)
 
 #------------------------------------------------------------------------------#
 # Set the C++ standard
