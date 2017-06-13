@@ -108,12 +108,8 @@ cinch_add_unit(test_mesh
 
 # make sure the target was actually made
 if (TARGET test_mesh)
-  
-  # the libraries used for this sub-module
-  target_link_libraries(test_mesh ${FleCSI_LIBRARIES})
-  if ( PORTAGE_LIBRARIES )
-    target_link_libraries(test_mesh ${PORTAGE_LIBRARIES})
-  endif()
-
+  # the libraries used for this sub-module.
+  # link them all because there are quite a few of them.
+  target_link_libraries(test_mesh ${FleCSALE_LIBRARIES})
 endif()
 
