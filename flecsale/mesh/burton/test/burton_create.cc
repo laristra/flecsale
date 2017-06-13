@@ -280,8 +280,10 @@ TEST_F( burton_create, minimal ) {
   CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 
   // write m to a different file
+#ifdef HAVE_EXODUS
   auto name = output_prefix()+".exo";
   ASSERT_FALSE(write_mesh(name, mesh));
+#endif
 
 }
 
@@ -370,8 +372,10 @@ TEST_F( burton_create, points ) {
   CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 
   // write m to a different file
+#ifdef HAVE_EXODUS
   auto name = output_prefix()+".exo";
   ASSERT_FALSE(write_mesh(name, mesh));
+#endif
 
 }
 
@@ -476,8 +480,10 @@ TEST_F( burton_create, faces ) {
   CINCH_ASSERT(TRUE, CINCH_EQUAL_BLESSED( outfile.c_str() ));
 
   // write m to a different file
+#ifdef HAVE_EXODUS
   auto name = output_prefix()+".exo";
   ASSERT_FALSE(write_mesh(name, mesh));
+#endif
 
 }
 
