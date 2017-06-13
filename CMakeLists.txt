@@ -355,8 +355,8 @@ set(FLECSI_RUNTIME_MODEL "serial" CACHE STRING
 set_property(CACHE FLECSI_RUNTIME_MODEL
   PROPERTY STRINGS serial mpilegion legion mpi)
 
-find_package(FLECSI QUIET)
-if(NOT FLECSI_FOUND)
+find_package(FleCSI QUIET)
+if(NOT FleCSI_FOUND)
   add_subdirectory( flecsi )
   set( FleCSI_LIBRARIES flecsi )
   include_directories( flecsi )
@@ -368,14 +368,14 @@ else()
 endif()
 list(APPEND FleCSALE_LIBRARIES ${FleCSI_LIBRARIES} )
 
-set(FLECSI_EXEC_DIR ${PROJECT_SOURCE_DIR}/flecsi/flecsi/execution)
+set(FleCSI_EXEC_DIR ${PROJECT_SOURCE_DIR}/flecsi/flecsi/execution)
 set(
-  FLECSI_RUNTIME_MAIN ${FLECSI_EXEC_DIR}/runtime_main.cc 
+  FleCSI_RUNTIME_MAIN ${FleCSI_EXEC_DIR}/runtime_main.cc 
   CACHE INTERNAL ""
 )
 
-set(FLECSI_RUNTIME_DRIVER 
-  ${FLECSI_EXEC_DIR}/${FLECSI_RUNTIME_MODEL}/runtime_driver.cc
+set(FleCSI_RUNTIME_DRIVER 
+  ${FleCSI_EXEC_DIR}/${FLECSI_RUNTIME_MODEL}/runtime_driver.cc
   CACHE INTERNAL ""
 )
 add_definitions( -DFLECSI_RUNTIME_MODEL_${FLECSI_RUNTIME_MODEL} )
