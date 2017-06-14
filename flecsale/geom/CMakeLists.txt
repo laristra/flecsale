@@ -16,12 +16,12 @@ set(geom_HEADERS
   shapes/triangle.h
 )
 
-mcinch_install_headers(
+cinch_install_headers(
   FILES ${geom_HEADERS}
   DESTINATION include/flecsale/geom
 )
 
-mcinch_add_unit(test_geom
+cinch_add_unit(test_geom
     SOURCES 
       test/centroid.cc
       shapes/test/shapes.cc

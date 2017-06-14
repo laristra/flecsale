@@ -7,7 +7,7 @@ set(common_HEADERS
   types.h
 )
 
-mcinch_install_headers(
+cinch_install_headers(
   FILES ${common_HEADERS}
   DESTINATION include/flecsale/common
 )

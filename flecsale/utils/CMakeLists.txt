@@ -27,7 +27,7 @@ set(utils_HEADERS
   zip.h              detail/zip_impl.h
 )
 
-mcinch_add_unit(test_utils
+cinch_add_unit(test_utils
     SOURCES 
       test/array_view.cc
       test/caliper.cc

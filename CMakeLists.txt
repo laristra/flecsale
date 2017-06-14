@@ -29,18 +29,21 @@ elseif(EXISTS ${CMAKE_SOURCE_DIR}/cinch)
   set(CINCH_SOURCE_DIR ${CMAKE_SOURCE_DIR}/cinch)
 endif()
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CINCH_SOURCE_DIR}/cmake")
+include(common_includes)
+include(install_headers)
 
 # This changes the Cinch default
 option(ENABLE_BOOST_PREPROCESSOR "Enable Boost.Preprocessor" ON)
 
-include(${CINCH_SOURCE_DIR}/cmake/modular-cinch-main.cmake)
-include(${CINCH_SOURCE_DIR}/cmake/modular-cinch-macros.cmake)
+# now load the extra functionality
+cinch_load_extras()
 
 #------------------------------------------------------------------------------#
 # Set the minimum Cinch version
 #------------------------------------------------------------------------------#
 
-cinch_minimum_required(1.0)
+cinch_minimum_required(2.0)
 
 #------------------------------------------------------------------------------#
 # Set the C++ standard
@@ -352,8 +355,8 @@ set(FLECSI_RUNTIME_MODEL "serial" CACHE STRING
 set_property(CACHE FLECSI_RUNTIME_MODEL
   PROPERTY STRINGS serial mpilegion legion mpi)
 
-find_package(FLECSI QUIET)
-if(NOT FLECSI_FOUND)
+find_package(FleCSI QUIET)
+if(NOT FleCSI_FOUND)
   add_subdirectory( flecsi )
   set( FleCSI_LIBRARIES flecsi )
   include_directories( flecsi )
@@ -365,14 +368,14 @@ else()
 endif()
 list(APPEND FleCSALE_LIBRARIES ${FleCSI_LIBRARIES} )
 
-set(FLECSI_EXEC_DIR ${PROJECT_SOURCE_DIR}/flecsi/flecsi/execution)
+set(FleCSI_EXEC_DIR ${PROJECT_SOURCE_DIR}/flecsi/flecsi/execution)
 set(
-  FLECSI_RUNTIME_MAIN ${FLECSI_EXEC_DIR}/runtime_main.cc 
+  FleCSI_RUNTIME_MAIN ${FleCSI_EXEC_DIR}/runtime_main.cc 
   CACHE INTERNAL ""
 )
 
-set(FLECSI_RUNTIME_DRIVER 
-  ${FLECSI_EXEC_DIR}/${FLECSI_RUNTIME_MODEL}/runtime_driver.cc
+set(FleCSI_RUNTIME_DRIVER 
+  ${FleCSI_EXEC_DIR}/${FLECSI_RUNTIME_MODEL}/runtime_driver.cc
   CACHE INTERNAL ""
 )
 add_definitions( -DFLECSI_RUNTIME_MODEL_${FLECSI_RUNTIME_MODEL} )
