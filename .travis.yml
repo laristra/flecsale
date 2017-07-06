@@ -29,7 +29,7 @@ before_install:
  - git fetch --unshallow && git fetch --tags #for versioning
 
 script:
- - cp -vr docker ${HOME}/docker
+ - cp -vr docker/travis ${HOME}/docker
  - sed -i "1s/fedora/${DISTRO}/" ${HOME}/docker/Dockerfile
  - cd ../../
  - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker
