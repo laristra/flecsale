@@ -236,7 +236,7 @@ if(ENABLE_VTK AND NOT VTK_FOUND)
 endif()
 
 if(ENABLE_VTK OR ENABLE_SHAPO OR ENABLE_CATALYST)
-    include( ${VTK_CONFIG} )
+    #include( ${VTK_CONFIG} )
     include( ${VTK_USE_FILE} )
     add_definitions( -DHAVE_VTK )
     list(APPEND FleCSALE_LIBRARIES ${VTK_LIBRARIES} )
