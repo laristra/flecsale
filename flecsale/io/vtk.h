@@ -122,7 +122,7 @@ public :
   auto write_points( const C<T,Args...> & data, std::size_t npoints, std::size_t ndims )
   {
 
-    if ( data.size() == npoints*ndims )
+    if ( data.size() != npoints*ndims )
       raise_runtime_error( "dimension mismatch" );
 
     // points header
@@ -386,9 +386,8 @@ public :
 
 
     // header
-    file_ << "VECTOR " << name;
-    file_ << " " << type_map.at( typeid(T) );
-    file_ << "LOOKUP_TABLE default" << std::endl;
+    file_ << "VECTORS " << name;
+    file_ << " " << type_map.at( typeid(T) ) << std::endl;
   
 
     //--------------------------------------------------------------------------
