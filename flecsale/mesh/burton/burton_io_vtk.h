@@ -325,7 +325,7 @@ public:
         for ( int i=0; i<num_dims; i++ ) 
           vals[ num_dims*v.id() + i ] = vec[i];
       } // for
-      status = writer.write_field( label.c_str(), vals, num_dims );
+      status = writer.write_vector( label.c_str(), vals, num_dims );
       assert( status == 0 && "error with cell data" );
     } // for
 
@@ -376,7 +376,7 @@ public:
         for ( int i=0; i<num_dims; i++ ) 
           vals[ num_dims*c.id() + i ] = vec[i];
       } // for
-      status = writer.write_field( label.c_str(), vals, num_dims );
+      status = writer.write_vector( label.c_str(), vals, num_dims );
       assert( status == 0 && "error with cell data" );
     } // for
 

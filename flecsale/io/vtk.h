@@ -12,7 +12,8 @@
 
 // user includes
 #include "write_binary.h"
- #include "flecsale/common/types.h"
+#include "flecsale/common/types.h"
+#include "flecsale/utils/errors.h"
 
 // system includes
 #include <typeindex>
@@ -121,7 +122,8 @@ public :
   auto write_points( const C<T,Args...> & data, std::size_t npoints, std::size_t ndims )
   {
 
-    assert( data.size() == npoints*ndims && "dimension mismatch" );
+    if ( data.size() != npoints*ndims )
+      raise_runtime_error( "dimension mismatch" );
 
     // points header
     file_ << "POINTS " << npoints;
@@ -346,6 +348,79 @@ public :
       for (common::counter_t p=0; p<n; p++ ) {
         for (int d=0; d<ndims; d++ ) 
           file_ << data[cnt++] << " ";
+      }
+      
+    } // binary   
+    //--------------------------------------------------------------------------
+  
+    file_ << std::endl;
+    
+    // check for write errors
+    return !file_.good();
+               
+  }  
+
+
+  /*! *****************************************************************
+   * \brief Write vector data.
+   *
+   * For vector or other multi-dimensional fields, the data is stored
+   * in dimension-major format.
+   *
+   * \param [in] data  The field data to write.
+   * \param [in] ndims The number of dimensions the data has.
+   * \tparam C The container class the data is stored in.
+   * \tparam T  The type of data stored in the container.
+   * \tparam Args The rest of the args in the container.
+   * \return 0 for success, 1 otherwise.   
+   ********************************************************************/
+  template< 
+    template<typename,typename...> class C, 
+    typename T, typename... Args 
+  >
+  auto write_vector( const char* name, const C<T,Args...> & data, std::size_t ndims )
+  {
+    
+    if ( ndims > 3 )
+      raise_runtime_error( "only up to 3-dimensional vectors are supported" );
+
+
+    // header
+    file_ << "VECTORS " << name;
+    file_ << " " << type_map.at( typeid(T) ) << std::endl;
+  
+
+    //--------------------------------------------------------------------------
+    // write the data
+    if ( binary_ ) {
+
+      if ( isBigEndian() )
+        for (auto it = data.begin() ; it != data.end(); ) {
+          for ( int d = 0; d<ndims; ++d )
+            WriteBinary<T>( file_, *(it++) );
+          for ( int d = ndims; d<3; ++d )
+            WriteBinary<T>( file_, 0 );
+        }
+      else
+        for (auto it = data.begin() ; it != data.end(); ) {
+          for ( int d = 0; d<ndims; ++d )
+            WriteBinarySwap<T>( file_, *(it++) );
+          for ( int d = ndims; d<3; ++d )
+            WriteBinarySwap<T>( file_, 0 );
+        }
+    }
+    //--------------------------------------------------------------------------
+    // ascii
+    else {
+
+      auto n = data.size() / ndims;
+      std::size_t cnt = 0;
+      
+      for (common::counter_t p=0; p<n; p++ ) {
+        for (int d=0; d<ndims; d++ ) 
+          file_ << data[cnt++] << " ";
+        for (int d=ndims; d<3; d++ ) 
+          file_ << 0 << " ";
       }
       
     } // binary   
