@@ -10,6 +10,7 @@
 #ifdef HAVE_LUA
 
 // user includes
+#include "flecsale/common/constants.h"
 #include "flecsale/common/types.h"
 #include "flecsale/utils/lua_utils.h"
 

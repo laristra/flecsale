@@ -339,36 +339,18 @@ TEST_F(burton_3d, normals) {
     ASSERT_EQ( 1, mesh_.vertices( cn ).size() );
     ASSERT_EQ( 6, ws.size() );
 
-    for ( auto wg = ws.begin(); wg != ws.end(); ++wg ) {
-      // first edge
-      {
-        ASSERT_EQ( 1, mesh_.edges( *wg ).size() );
-        ASSERT_EQ( 1, mesh_.faces( *wg ).size() );
-        ASSERT_EQ( 1, mesh_.vertices( *wg ).size() );
-        ASSERT_EQ( 1, mesh_.corners( *wg ).size() );
-        auto fc = mesh_.faces(*wg).front();
-        auto n = (*wg)->facet_normal_right();
-        auto fx = fc->centroid();
-        auto cx = cl->centroid();
-        auto delta = fx - cx;
-        auto dot = dot_product( n, delta );
-        ASSERT_GT( dot, 0 );
-      }
-      // second edge
-      ++wg;
-      {
-        ASSERT_EQ( 1, mesh_.edges( *wg ).size() );
-        ASSERT_EQ( 1, mesh_.faces( *wg ).size() );
-        ASSERT_EQ( 1, mesh_.vertices( *wg ).size() );
-        ASSERT_EQ( 1, mesh_.corners( *wg ).size() );
-        auto fc = mesh_.faces(*wg).front();
-        auto n = (*wg)->facet_normal_left();
-        auto fx = fc->centroid();
-        auto cx = cl->centroid();
-        auto delta = fx - cx;
-        auto dot = dot_product( n, delta );
-        ASSERT_GT( dot, 0 );
-      }
+    for ( auto wg : ws ) {
+      ASSERT_EQ( 1, mesh_.edges( wg ).size() );
+      ASSERT_EQ( 1, mesh_.faces( wg ).size() );
+      ASSERT_EQ( 1, mesh_.vertices( wg ).size() );
+      ASSERT_EQ( 1, mesh_.corners( wg ).size() );
+      auto fc = mesh_.faces(wg).front();
+      auto n = wg->facet_normal();
+      auto fx = fc->centroid();
+      auto cx = cl->centroid();
+      auto delta = fx - cx;
+      auto dot = dot_product( n, delta );
+      ASSERT_GT( dot, 0 );
     } // wedges
 
   } // for
@@ -381,30 +363,15 @@ TEST_F(burton_3d, normals) {
 
     ASSERT_EQ( 0, ws.size()%2 );
 
-    for ( auto wg = ws.begin(); wg != ws.end(); ++wg ) {
-      // first edge
-      {
-        auto cl = mesh_.cells(*wg).front();
-        auto fc = mesh_.faces(*wg).front();
-        auto n = (*wg)->facet_normal_right();
-        auto fx = fc->centroid();
-        auto cx = cl->centroid();
-        auto delta = fx - cx;
-        auto dot = dot_product( n, delta );
-        ASSERT_GT( dot, 0 );
-      }
-      // second edge
-      ++wg;
-      {
-        auto cl = mesh_.cells(*wg).front();
-        auto fc = mesh_.faces(*wg).front();
-        auto n = (*wg)->facet_normal_left();
-        auto fx = fc->centroid();
-        auto cx = cl->centroid();
-        auto delta = fx - cx;
-        auto dot = dot_product( n, delta );
-        ASSERT_GT( dot, 0 );
-      }
+    for ( auto wg : ws ) {
+      auto cl = mesh_.cells(*wg).front();
+      auto fc = mesh_.faces(*wg).front();
+      auto n = wg->facet_normal();
+      auto fx = fc->centroid();
+      auto cx = cl->centroid();
+      auto delta = fx - cx;
+      auto dot = dot_product( n, delta );
+      ASSERT_GT( dot, 0 );
     } // wedges
 
   }

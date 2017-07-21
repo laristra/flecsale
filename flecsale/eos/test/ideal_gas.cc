@@ -16,6 +16,7 @@
 #include <vector>
 
 // user includes
+#include "flecsale/common/constants.h"
 #include "flecsale/common/types.h"
 #include "flecsale/eos/ideal_gas.h"
 #include "flecsale/utils/tasks.h"

@@ -9,18 +9,16 @@
 #pragma once
 
 // hydro includes
+#include "arguments.h"
 #include "types.h"
-#include "../common/exceptions.h"
-#include "../common/parse_arguments.h"
 
 // user includes
-#include <flecsale/mesh/mesh_utils.h>
+//#include <flecsale/mesh/mesh_utils.h>
 #include <flecsale/utils/time_utils.h>
 #include <flecsale/io/catalyst/adaptor.h>
 
 
 // system includes
-#include <getopt.h>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -28,62 +26,53 @@
 
 namespace apps {
 namespace hydro {
+  
+// type aliases
+using flux_data_t = flux_data__<mesh_t::num_dimensions>;
+
+// register the data client
+flecsi_register_data_client(mesh_t, meshes, mesh0);
+
+// create some field data.  Fields are registered as struct of arrays.
+// this allows us to access the data in different patterns.
+flecsi_register_field(mesh_t, hydro,  density,   mesh_t::real_t, dense, 2, cells);
+// flecsi_register_field(mesh_t, hydro, pressure,   mesh_t::real_t, dense, 1, cells);
+// flecsi_register_field(mesh_t, hydro, velocity, mesh_t::vector_t, dense, 2, cells);
+
+// flecsi_register_field(mesh_t, hydro, internal_energy, mesh_t::real_t, dense, 2, cells);
+// flecsi_register_field(mesh_t, hydro,     temperature, mesh_t::real_t, dense, 1, cells);
+// flecsi_register_field(mesh_t, hydro,     sound_speed, mesh_t::real_t, dense, 1, cells);
+
+// compute the fluxes.  here I am regestering a struct as the stored data
+// type since I will only ever be accesissing all the data at once.
+// flecsi_register_field(mesh_t, hydro, flux, flux_data_t, dense, 1, faces);
+
+// register the time step and set a cfl
+//flecsi_register_field( mesh_t, hydro, time_step, real_t, global, 1 );
+//flecsi_register_field( mesh_t, hydro, cfl, real_t, global, 1 );
+
+// Register the total energy
+//flecsi_register_field( mesh_t, hydro, sum_total_energy, real_t, global, 1 );
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
 ///////////////////////////////////////////////////////////////////////////////
-template< typename inputs_t >
 int driver(int argc, char** argv) 
 {
 
-
-  // set exceptions 
-  enable_exceptions();
+  return 0;
 
   //===========================================================================
   // Parse arguments
   //===========================================================================
+  
+  auto args = process_arguments( argc, argv );
+  // help has already been processed by the specialization init driver
 
-  // the usage stagement
-  auto print_usage = [&argv]() {
-    std::cout << "Usage: " << argv[0] 
-              << " [--file INPUT_FILE]"
-              << " [--catalyst PYTHON_SCRIPT]"
-              << " [--help]"
-              << std::endl << std::endl;
-    std::cout << "\t--file INPUT_FILE:\t Override the input file "
-              << "with INPUT_FILE." << std::endl;
-    std::cout << "\t--catalyst PYTHON_SCRIPT:\t Load catalyst with "
-              << "using PYTHON_SCRIPT." << std::endl;
-    std::cout << "\t--help:\t Print a help message." << std::endl;
-  };
-
-  // Define the options
-  struct option long_options[] =
-    {
-      {"help",           no_argument, 0, 'h'},
-      {"file",     required_argument, 0, 'f'},
-      {"catalyst", required_argument, 0, 'c'},
-      {0, 0, 0, 0}
-    };
-  const char * short_options = "hf:c:";
-
-  // parse the arguments
-  auto args = parse_arguments(argc, argv, long_options, short_options);
-
-  // process the simple ones
-  if ( args.count("h") ) {
-    print_usage();
-    return 0;
-  } 
-  else if ( args.count("?") ) {
-    print_usage();
-    return 1;
-  }
- 
   // get the input file
   auto input_file_name = 
-    args.count("f") ? args.at("f") : std::string();
+    args.count("i") ? args.at("i") : std::string();
 
   // override any inputs if need be
   if ( !input_file_name.empty() ) {
@@ -111,18 +100,19 @@ int driver(int argc, char** argv)
   //===========================================================================
 
   // make the mesh
-  auto mesh = inputs_t::make_mesh( /* solution time */ 0.0 );
+  // auto mesh = inputs_t::make_mesh( /* solution time */ 0.0 );
 
   // this is the mesh object
-  mesh.is_valid();
-  
+  // mesh.is_valid();
+ 
+  auto mesh = flecsi_get_client_handle(mesh_t, meshes, mesh0);
+ 
   cout << mesh;
 
   //===========================================================================
   // Some typedefs
   //===========================================================================
 
-  using mesh_t = decltype(mesh);
   using size_t = typename mesh_t::size_t;
   using real_t = typename mesh_t::real_t;
   using vector_t = typename mesh_t::vector_t; 
@@ -142,20 +132,8 @@ int driver(int argc, char** argv)
   auto tstart = utils::get_wall_time();
 
 
-  // type aliases
-  using eqns_t = eqns_t<mesh_t::num_dimensions>;
-  using flux_data_t = flux_data_t<mesh_t::num_dimensions>;
 
-  // create some field data.  Fields are registered as struct of arrays.
-  // this allows us to access the data in different patterns.
-  flecsi_register_data(mesh, hydro,  density,   real_t, dense, 2, cells);
-  flecsi_register_data(mesh, hydro, pressure,   real_t, dense, 1, cells);
-  flecsi_register_data(mesh, hydro, velocity, vector_t, dense, 2, cells);
-
-  flecsi_register_data(mesh, hydro, internal_energy, real_t, dense, 2, cells);
-  flecsi_register_data(mesh, hydro,     temperature, real_t, dense, 1, cells);
-  flecsi_register_data(mesh, hydro,     sound_speed, real_t, dense, 1, cells);
-
+#if 0
   // set these variables as persistent for plotting
   flecsi_get_accessor(mesh, hydro,  density,   real_t, dense, 0).attributes().set(persistent);
   flecsi_get_accessor(mesh, hydro, pressure,   real_t, dense, 0).attributes().set(persistent);
@@ -164,19 +142,27 @@ int driver(int argc, char** argv)
   flecsi_get_accessor(mesh, hydro, internal_energy, real_t, dense, 0).attributes().set(persistent);
   flecsi_get_accessor(mesh, hydro,     temperature, real_t, dense, 0).attributes().set(persistent);
   flecsi_get_accessor(mesh, hydro,     sound_speed, real_t, dense, 0).attributes().set(persistent);
+#endif
 
-  // compute the fluxes.  here I am regestering a struct as the stored data
-  // type since I will only ever be accesissing all the data at once.
-  flecsi_register_data(mesh, hydro, flux, flux_data_t, dense, 1, faces);
+  //===========================================================================
+  // Access what we need
+  //===========================================================================
+  
+  auto d  = flecsi_get_handle(mesh, hydro,  density,   real_t, dense, 0);
 
-  // register the time step and set a cfl
-  flecsi_register_data( mesh, hydro, time_step, real_t, global, 1 );
-  flecsi_register_data( mesh, hydro, cfl, real_t, global, 1 );
-  *flecsi_get_accessor( mesh, hydro, cfl, real_t, global, 0) = inputs_t::CFL;  
+#if 0
+  auto d0 = flecsi_get_handle(mesh, hydro,  density,   real_t, dense, 1);
+  auto v  = flecsi_get_handle(mesh, hydro, velocity, vector_t, dense, 0);
+  auto v0 = flecsi_get_handle(mesh, hydro, velocity, vector_t, dense, 1);
+  auto e  = flecsi_get_handle(mesh, hydro, internal_energy, real_t, dense, 0);
+  auto e0 = flecsi_get_handle(mesh, hydro, internal_energy, real_t, dense, 1);
 
-  // Register the total energy
-  flecsi_register_data( mesh, hydro, sum_total_energy, real_t, global, 1 );
+  auto p  = flecsi_get_handle(mesh, hydro,        pressure,   real_t, dense, 0);
+  auto T  = flecsi_get_handle(mesh, hydro,     temperature, real_t, dense, 0);
+  auto a  = flecsi_get_handle(mesh, hydro,     sound_speed, real_t, dense, 0);
 
+  auto F = flecsi_get_handle(mesh, hydro, flux, flux_data_t, dense, 0);
+#endif
 
   //===========================================================================
   // Initial conditions
@@ -184,8 +170,16 @@ int driver(int argc, char** argv)
   
   // now call the main task to set the ics.  Here we set primitive/physical 
   // quanties
-  flecsi_execute_task( initial_conditions_task, loc, single, mesh, inputs_t::ics );
-  
+  flecsi_execute_task( 
+    initial_conditions, 
+    single, 
+    mesh, 
+    inputs_t::ics,
+    d
+  );
+
+#if 0
+ 
   #ifdef HAVE_CATALYST
     auto insitu = io::catalyst::adaptor_t(catalyst_scripts);
     std::cout << "Catalyst on!" << std::endl;
@@ -369,6 +363,7 @@ int driver(int argc, char** argv)
   // now output the checksums
   mesh::checksum(mesh);
 
+#endif
 
   // success if you reached here
   return 0;

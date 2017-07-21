@@ -14,6 +14,7 @@
 #include "flecsale/geom/shapes/geometric_shapes.h"
 #include "flecsale/mesh/burton/burton_config.h"
 #include "flecsale/utils/errors.h"
+#include "flecsi/topology/mesh_storage.h"
 #include "flecsi/topology/mesh_types.h"
 
 namespace flecsale {
@@ -48,9 +49,6 @@ struct burton_element_t<2,1> :
   // Typedefs
   //============================================================================
 
-  //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
- 
   //! the mesh traits
   using config_t = burton_config_t<2>;
 
@@ -62,6 +60,13 @@ struct burton_element_t<2,1> :
 
   //! The domain of the entity
   static constexpr auto domain = 0;
+
+  //! the flecsi mesh topology storage type
+  using mesh_storage_t = 
+    flecsi::topology::mesh_storage_t<num_dimensions, num_domains>;
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = 
+    flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
 
   //! Type of floating point.
   using real_t = typename config_t::real_t;
@@ -111,33 +116,45 @@ struct burton_element_t<2,1> :
   point_list_t coordinates() const;
   
   //! the edge midpoint
-  point_t midpoint() const;
+  const auto & midpoint() const
+  { return midpoint_; }
 
   //! \brief in 2d, this doubles as a face, so the centroid is the same as
   //!    the midpoint
   //! \remark this is only enabled in 2d
-  point_t centroid() const;
+  const auto & centroid() const
+  { return midpoint_; }
 
   //! the edge length
-  real_t  length() const;
+  auto length() const
+  { return length_; }
 
   //! in 2d, this doubles as a face, so the area is the same as the length
   //! \remark this is only enabled in 2d
-  real_t area() const;
+  auto area() const
+  { return length_; }
 
   //! the edge normal
-  vector_t normal() const;
+  const auto & normal() const
+  { return normal_; }
 
   //! is this a boundary
   bool is_boundary() const;
 
+  //! return the bitfield flags
+  const auto & flags() const { return flags_; }
+  auto & flags() { return flags_; }
 
   //! get all entity tags
-  const tag_list_t & tags() const;
+  const tag_list_t & tags() const
+  { return tags_; }
+
   //! tag entity
-  void tag(const tag_t & tag);
-  //! does entity have a tag
-  bool has_tag(const tag_t & tag);
+  void tag(const tag_t & tag)
+  { tags_.push_back(tag); }
+
+  //! \brief update the mesh geometry
+  void update( void );
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
@@ -154,6 +171,16 @@ private:
   //! a reference to the mesh topology
   mesh_topology_base_t * mesh_ = nullptr;
 
+  //! the entity tags
+  tag_list_t tags_;
+
+  //! the entity flags
+  bitfield_t flags_;
+
+  //! the geometric information
+  real_t length_ = 0;
+  point_t midpoint_ = 0;
+  vector_t normal_ = 0;
 };
 
 
@@ -171,9 +198,6 @@ struct burton_element_t<3,1> :
   // Typedefs
   //============================================================================
 
-  //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
- 
   //! the mesh traits
   using config_t = burton_config_t<3>;
 
@@ -185,6 +209,13 @@ struct burton_element_t<3,1> :
 
   //! The domain of the entity
   static constexpr auto domain = 0;
+
+  //! the flecsi mesh topology storage type
+  using mesh_storage_t = 
+    flecsi::topology::mesh_storage_t<num_dimensions, num_domains>;
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = 
+    flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
 
   //! Type of floating point.
   using real_t = typename config_t::real_t;
@@ -231,20 +262,31 @@ struct burton_element_t<3,1> :
   point_list_t coordinates() const;
   
   //! the edge midpoint
-  point_t midpoint() const;
+  const auto & midpoint() const
+  { return midpoint_; }
 
   //! the edge length
-  real_t  length() const;
+  auto length() const
+  { return length_; }
+
+  //! return the bitfield flags
+  const auto & flags() const { return flags_; }
+  auto & flags() { return flags_; }
 
   //! is this a boundary
-  bool is_boundary() const;
+  bool is_boundary() const
+  { return flags_.test( config_t::bits::boundary ); }
 
   //! get all entity tags
-  const tag_list_t & tags() const;
+  const tag_list_t & tags() const
+  { return tags_; }
+
   //! tag entity
-  void tag(const tag_t & tag);
-  //! does entity have a tag
-  bool has_tag(const tag_t & tag);
+  void tag(const tag_t & tag)
+  { tags_.push_back(tag); }
+
+  //! \brief update the mesh geometry
+  void update( void ); 
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
@@ -260,6 +302,16 @@ private:
   
   //! a reference to the mesh topology
   mesh_topology_base_t * mesh_ = nullptr;
+
+  //! the entity tags
+  tag_list_t tags_;
+
+  //! the entity flags
+  bitfield_t flags_;
+
+  //! the geometric information
+  real_t length_ = 0;
+  point_t midpoint_ = 0;
 
 }; // struct burton_edge_t
 
@@ -284,9 +336,6 @@ struct burton_element_t<2,2>
   // Typedefs
   //============================================================================
 
-  //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
- 
   //! the mesh traits
   using config_t = burton_config_t<2>;
 
@@ -298,6 +347,13 @@ struct burton_element_t<2,2>
 
   //! The domain of the entity
   static constexpr auto domain = 0;
+
+  //! the flecsi mesh topology storage type
+  using mesh_storage_t = 
+    flecsi::topology::mesh_storage_t<num_dimensions, num_domains>;
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = 
+    flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
 
   //! Type of floating point.
   using real_t = typename config_t::real_t;
@@ -359,29 +415,32 @@ struct burton_element_t<2,2>
   point_list_t coordinates() const;
 
   //! the centroid
-  virtual point_t centroid() const 
-  { raise_runtime_error("you should never get here"); };
+  const auto & centroid() const 
+  { return centroid_; };
 
   //! the edge midpoint
-  virtual point_t midpoint() const
-  { raise_runtime_error("you should never get here"); };
+  const auto & midpoint() const
+  { return midpoint_; };
 
   //! the area of the element
-  virtual real_t area() const
-  { raise_runtime_error("you should never get here"); };
+  auto area() const
+  { return area_; };
 
   //! the area of the element
-  virtual real_t volume() const
-  { return area(); };
+  auto volume() const
+  { return area_; };
 
   //! the minimum length in the element
-  virtual real_t min_length() const;
+  auto min_length() const
+  { return min_length_; }
 
   //! set the region id
-  size_t & region();
+  auto & region()
+  { return region_; }
 
   //! get the region id
-  size_t region() const;
+  auto region() const
+  { return region_; }
 
 
   //! the element type
@@ -435,6 +494,9 @@ struct burton_element_t<2,2>
     id_t * entities ) 
   { raise_runtime_error("you should never get here"); };
 
+  //! \brief update the mesh geometry
+  virtual void update( void ) 
+  { raise_runtime_error("you should never get here"); };
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
@@ -457,6 +519,16 @@ private:
   //! a reference to the mesh topology
   mesh_topology_base_t * mesh_ = nullptr;
 
+  //! the region tag
+  size_t region_ = 0;
+
+protected:
+
+  //! the geometry informtation
+  real_t area_ = 0;
+  point_t midpoint_ = 0;
+  point_t centroid_ = 0;
+  real_t min_length_ = 0;
 };
 
 
@@ -473,9 +545,6 @@ struct burton_element_t<3,2>
   // Typedefs
   //============================================================================
 
-  //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
- 
   //! the mesh traits
   using config_t = burton_config_t<3>;
 
@@ -487,6 +556,13 @@ struct burton_element_t<3,2>
 
   //! The domain of the entity
   static constexpr auto domain = 0;
+
+  //! the flecsi mesh topology storage type
+  using mesh_storage_t = 
+    flecsi::topology::mesh_storage_t<num_dimensions, num_domains>;
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = 
+    flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
 
   //! Type of floating point.
   using real_t = typename config_t::real_t;
@@ -551,33 +627,35 @@ struct burton_element_t<3,2>
   bool is_boundary() const;
 
   //! get all entity tags
-  const tag_list_t & tags() const;
+  const tag_list_t & tags() const
+  { return tags_; }
+
   //! tag entity
-  void tag(const tag_t & tag);
-  //! does entity have a tag
-  bool has_tag(const tag_t & tag);
+  void tag(const tag_t & tag)
+  { tags_.push_back(tag); }
 
   //! the list of actual coordinates
   point_list_t coordinates( bool reverse = false ) const;
 
   //! the centroid
-  virtual point_t centroid() const 
-  { raise_runtime_error("you should never get here"); };
+  const auto & centroid() const
+  { return centroid_; }
 
   //! the midpoint used in tesselating the element
-  virtual point_t midpoint() const 
-  { raise_runtime_error("you should never get here"); };
+  const auto & midpoint() const 
+  { return midpoint_; }
 
   //! the normal
-  virtual vector_t normal() const 
-  { raise_runtime_error("you should never get here"); };
+  const auto & normal() const 
+  { return normal_; }
 
   //! the area of the element
-  virtual real_t area() const
-  { raise_runtime_error("you should never get here"); };
+  auto area() const
+  { return area_; }
 
   //! the minimum length in the element
-  virtual real_t min_length() const;
+  auto min_length() const
+  { return min_length_; }
 
   //! the element type
   virtual shape_t type() const
@@ -629,6 +707,10 @@ struct burton_element_t<3,2>
     id_t * entities )
   { raise_runtime_error("you should never get here"); };
 
+  //! \brief update the mesh geometry
+  virtual void update( void ) 
+  { raise_runtime_error("you should never get here"); };
+
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
   { 
@@ -649,6 +731,18 @@ private:
   
   //! a reference to the mesh topology
   mesh_topology_base_t * mesh_ = nullptr;
+
+  //! the entity tags
+  tag_list_t tags_;
+
+protected: 
+
+  //! the geometric information
+  real_t area_ = 0;
+  real_t min_length_ = 0;
+  vector_t normal_ = 0;
+  point_t centroid_ = 0;
+  point_t midpoint_ = 0;
 
 }; // class burton_element_t
 
@@ -674,9 +768,6 @@ struct burton_element_t<3,3>
   // Typedefs
   //============================================================================
 
-  //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
- 
   //! the mesh traits
   using config_t = burton_config_t<3>;
 
@@ -688,6 +779,13 @@ struct burton_element_t<3,3>
 
   //! The domain of the entity
   static constexpr auto domain = 0;
+
+  //! the flecsi mesh topology storage type
+  using mesh_storage_t = 
+    flecsi::topology::mesh_storage_t<num_dimensions, num_domains>;
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = 
+    flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
 
   //! Type of floating point.
   using real_t = typename config_t::real_t;
@@ -754,26 +852,29 @@ struct burton_element_t<3,3>
   point_list_t coordinates() const;
 
   //! the centroid
-  virtual point_t centroid() const 
-  { raise_runtime_error("you should never get here"); };
+  const auto & centroid() const 
+  { return centroid_; };
 
   //! the midpoint used in tesselating the element
-  virtual point_t midpoint() const 
-  { raise_runtime_error("you should never get here"); };
+  const auto & midpoint() const 
+  { return midpoint_; };
 
   //! the area of the element
-  virtual real_t volume() const
-  { raise_runtime_error("you should never get here"); };
+  auto volume() const
+  { return volume_; };
 
   //! the minimum length in the element
-  virtual real_t min_length() const;
+  auto min_length() const
+  { return min_length_; }
 
 
   //! set the region id
-  size_t & region();
+  size_t & region()
+  { return region_; }
 
   //! get the region id
-  size_t region() const;
+  size_t region() const
+  { return region_; }
 
   //! the element type
   virtual shape_t type() const
@@ -825,7 +926,10 @@ struct burton_element_t<3,3>
     const connectivity_t& domain_conn,
     id_t * entities )
   { raise_runtime_error("you should never get here"); };
- 
+
+  //! \brief update the mesh geometry
+  virtual void update( void ) 
+  { raise_runtime_error("you should never get here"); };
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
@@ -848,6 +952,17 @@ private:
   //! a reference to the mesh topology
   mesh_topology_base_t * mesh_ = nullptr;
 
+  //! the region tag
+  size_t region_ = 0;
+
+protected:
+
+  //! the geometry informtation
+  real_t volume_ = 0;
+  point_t centroid_ = 0;
+  point_t midpoint_ = 0;
+  real_t min_length_ = 0;
+
 }; // class burton_element_t
 
 
@@ -859,6 +974,39 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 using burton_cell_t = burton_element_t<N,N>;
+
+
+namespace detail {
+
+////////////////////////////////////////////////////////////////////////////////
+/// \brief compute the minimum length
+////////////////////////////////////////////////////////////////////////////////
+template< typename VS >
+inline auto min_length( VS && vs ) {
+
+  std::decay_t< decltype(vs[0]->coordinates()[0]) > len;
+  bool first = true;
+
+  // check each vertex combination
+  for ( auto vi : vs ) {
+    const auto & pi = vi->coordinates();
+    for ( auto vj : vs ) {
+      if ( vi == vj ) continue;
+      const auto & pj = vj->coordinates();
+      auto delta = pi - pj;
+      if ( first ) {
+        len = abs(delta);
+        first = false;
+      }
+      else {
+        len = std::min( abs(delta), len );
+      }
+    }
+  }
+
+  return len;
+}
+} // namespace detail
 
 } // namespace burton
 } // namespace mesh

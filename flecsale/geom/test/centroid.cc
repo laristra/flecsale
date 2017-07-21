@@ -15,6 +15,7 @@
 #include<vector>
 
 // user includes
+#include "flecsale/common/constants.h"
 #include "flecsale/common/types.h"
 #include "flecsale/geom/centroid.h"
 #include "flecsale/geom/point.h"

@@ -52,7 +52,6 @@ set(mesh_SOURCES
   burton/burton_tetrahedron.cc
   burton/burton_triangle.cc
   burton/burton_wedge.cc
-  burton/burton_vertex.cc
 )
 
 cinch_install_headers(

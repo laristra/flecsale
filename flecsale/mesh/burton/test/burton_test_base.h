@@ -9,6 +9,7 @@
 #pragma once
 
 // user includes
+#include "flecsale/common/constants.h"
 #include "flecsale/mesh/burton/burton.h"
 
 // system includes

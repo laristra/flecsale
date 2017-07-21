@@ -10,6 +10,7 @@
 #ifdef HAVE_PYTHON
 
 // user includes
+#include "flecsale/common/constants.h"
 #include "flecsale/common/types.h"
 
 // system includes

@@ -16,35 +16,21 @@ namespace burton {
 // 3D tetrahedron
 ////////////////////////////////////////////////////////////////////////////////
 
-// the centroid
-burton_tetrahedron_t::point_t burton_tetrahedron_t::centroid() const
+void burton_tetrahedron_t::update()
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::shapes::tetrahedron::centroid( 
-    vs[0]->coordinates(), vs[1]->coordinates(), 
-    vs[2]->coordinates(), vs[3]->coordinates() );
-}
-
-// the midpoint
-burton_tetrahedron_t::point_t burton_tetrahedron_t::midpoint() const
-{
-  auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::shapes::tetrahedron::midpoint( 
-    vs[0]->coordinates(), vs[1]->coordinates(), 
-    vs[2]->coordinates(), vs[3]->coordinates() );
-}
-
-
-// the area of the cell
-burton_tetrahedron_t::real_t burton_tetrahedron_t::volume() const
-{
-  auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::shapes::tetrahedron::volume( 
-    vs[0]->coordinates(), vs[1]->coordinates(), 
-    vs[2]->coordinates(), vs[3]->coordinates() );
+  const auto & v0 = vs[0]->coordinates();
+  const auto & v1 = vs[1]->coordinates();
+  const auto & v2 = vs[2]->coordinates();
+  const auto & v3 = vs[3]->coordinates();
+  centroid_ = 
+    geom::shapes::tetrahedron::centroid( v0, v1, v2, v3 );
+  midpoint_ = 
+    geom::shapes::tetrahedron::midpoint( v0, v1, v2, v3 );
+  volume_ = 
+    geom::shapes::tetrahedron::volume( v0, v1, v2, v3 );
+  min_length_ = detail::min_length( vs );
 }
 
 } // namespace

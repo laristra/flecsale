@@ -194,37 +194,13 @@ public:
     return *this;
   };
 
+  //! \brief Copy constructor for data client handle
+  burton_mesh_t(const burton_mesh_t& m, bool dummy) : base_t(m, dummy)
+  {
+  }
+
   //! Destructor
   virtual ~burton_mesh_t() {};
-
-  //============================================================================
-  //! \brief Return the size of an associated index space/
-  //! \param [in] index_space_id
-  //============================================================================
-  size_t indices( size_t index_space_id ) const override
-  {
-    switch(index_space_id) {
-      case attributes::vertices:
-        return base_t::num_entities(vertex_t::dimension);
-      case attributes::edges:
-        return base_t::num_entities(edge_t::dimension);
-      case attributes::faces:
-        return base_t::num_entities(face_t::dimension);
-      case attributes::cells:
-        return base_t::num_entities(cell_t::dimension);
-      case attributes::corners:
-        return 
-          base_t::template 
-            num_entities<corner_t::dimension, corner_t::domain>();
-      case attributes::wedges:
-        return 
-          base_t::template num_entities<wedge_t::dimension, wedge_t::domain>();
-      default:
-        raise_runtime_error("unknown index space");
-        return 0;
-    } // switch
-  } // indices
-
 
   //============================================================================
   // Accessors
@@ -232,17 +208,12 @@ public:
 
   //! \brief Return the time associated with the mesh
   auto time()
-  {
-    auto soln_time = flecsi_get_accessor(*this, mesh, time, real_t, global, 0 );
-    return *soln_time;
-  }
+  { return soln_time_; }
 
   //! \brief Set the time associated with the mesh
   //! \param [in] soln_time  The solution time.
   void set_time(real_t soln_time)
-  {
-    flecsi_get_accessor(*this, mesh, time, real_t, global, 0 ) = soln_time;
-  }
+  { soln_time_ = soln_time; }
 
 
   //! \brief Set the time associated with the mesh
@@ -250,26 +221,21 @@ public:
   //! \return The new solution time.
   auto increment_time(real_t delta_time)
   {
-    auto soln_time = flecsi_get_accessor(*this, mesh, time, real_t, global, 0 );
-    (*soln_time) += delta_time;
-    return *soln_time;
+    soln_time_ += delta_time;
+    return soln_time_;
   }
 
   //! \brief Return the time associated with the mesh
   auto time_step_counter()
-  {
-    auto step = flecsi_get_accessor(*this, mesh, time_step, size_t, global, 0 );
-    return *step;
-  }
+  { return time_step_; }
 
   //! \brief Increment the time step counter associated with the mesh
   //! \param [in] delta  The counter increment.
   //! \return The new counter value.
   auto increment_time_step_counter(size_t delta = 1)
   {
-    auto step = flecsi_get_accessor(*this, mesh, time_step, size_t, global, 0 );
-    (*step) += delta;
-    return *step;
+    time_step_ += delta;
+    return time_step_;
   }
 
   //============================================================================
@@ -544,19 +510,6 @@ public:
     return base_t::template entity_ids<face_t::dimension, face_t::domain>(e);
   }
 
-  //! \brief Return the precomputed areas for each face.
-  decltype(auto) face_areas() const 
-  {
-    return flecsi_get_accessor( *this, mesh, face_area, real_t, dense, 0 );
-  }
-
-  //! \brief Return the precomputed normals for each face.
-  decltype(auto) face_normals() const 
-  {
-    return flecsi_get_accessor( *this, mesh, face_normal, vector_t, dense, 0 );
-  }
-
-
   //============================================================================
   // Cell Interface
   //============================================================================
@@ -647,25 +600,6 @@ public:
     return cell_types;
   }
 
-  //! \brief Return the precomputed volumes for each cell.
-  decltype(auto) cell_volumes() const 
-  {
-    return flecsi_get_accessor( *this, mesh, cell_volume, real_t, dense, 0 );
-  }
-
-  //! \brief Return the precomputed centroids for each cell.
-  decltype(auto) cell_centroids() const 
-  {
-    return flecsi_get_accessor( *this, mesh, cell_centroid, vector_t, dense, 0 );
-  }
-
-  //! \brief Return the precomputed centroids for each cell.
-  decltype(auto) cell_min_lengths() const 
-  {
-    return flecsi_get_accessor( *this, mesh, cell_min_length, real_t, dense, 0 );
-  }
-
-
   //============================================================================
   // Wedge Interface
   //============================================================================
@@ -743,24 +677,6 @@ public:
   decltype(auto) wedge_ids(E * e) const
   {
     return base_t::template entity_ids<wedge_t::dimension, wedge_t::domain>(e);
-  }
-
-  //! \brief Return the precomputed facet normals for each wedge.
-  decltype(auto) wedge_facet_normals() const 
-  {
-    return flecsi_get_accessor( *this, mesh, wedge_facet_normal, vector_t, dense, 0 );
-  }
-
-  //! \brief Return the precomputed facet centroids for each wedge.
-  decltype(auto) wedge_facet_centroids() const 
-  {
-    return flecsi_get_accessor( *this, mesh, wedge_facet_centroid, vector_t, dense, 0 );
-  }
-
-  //! \brief Return the precomputed facet area for each wdge.
-  decltype(auto) wedge_facet_areas() const 
-  {
-    return flecsi_get_accessor( *this, mesh, wedge_facet_area, real_t, dense, 0 );
   }
 
   //============================================================================
@@ -852,18 +768,16 @@ public:
 
   //! \brief Return the number of regions in the burton mesh.
   //! \return The number of regions in the burton mesh.
-  size_t num_regions() const
+  auto num_regions() const
   {
-    auto n = flecsi_get_accessor(*this, mesh, num_regions, size_t, global, 0 );
-    return *n;
+    return num_regions_;
   }
 
   //! \brief set the number of regions in the burton mesh.
   //! \param [in]  n  The number of regions in the burton mesh.
   void set_num_regions(size_t n)
   {
-    auto n_acc = flecsi_get_accessor(*this, mesh, num_regions, size_t, global, 0 ) ;
-    *n_acc = n;
+    num_regions_ = n;
   }
 
 
@@ -1002,7 +916,6 @@ public:
   vertex_t * create_vertex(const point_t & pos)
   {
     auto v = base_t::template make<vertex_t>( *this );
-    base_t::template add_entity<vertex_t::dimension, vertex_t::domain>(v);
     v->coordinates() = pos;
 
     return v;
@@ -1035,63 +948,8 @@ public:
     base_t::template init<0>();
     base_t::template init_bindings<1>();
 
-    //mesh_.dump();
-
-#if 0
-    // make sure faces point from first to second cell
-    for(auto f : faces()) {
-      auto n = f->normal();
-      auto fx = f->centroid();
-      auto c = cells(f).front();
-      auto cx = c->centroid();
-      auto delta = fx - cx;
-      auto dot = dot_product( n, delta );
-      if ( dot < 0 ) {
-        std::cout << "reversing" << std::endl;
-        base_t::template reverse_entities<vertex_t::dimension, vertex_t::domain>(f);
-      }
-    } // for
-#endif
-
-    // register cell data
-    flecsi_register_data(*this, mesh, cell_volume, real_t, dense, 1, attributes::cells);
-    flecsi_register_data(*this, mesh, cell_centroid, vector_t, dense, 1, attributes::cells);
-    flecsi_register_data(*this, mesh, cell_min_length, real_t, dense, 1, attributes::cells);
-
-    // register face data
-    flecsi_register_data(*this, mesh, face_area, real_t, dense, 1, attributes::faces);
-    flecsi_register_data(*this, mesh, face_normal, vector_t, dense, 1, attributes::faces);
-    flecsi_register_data(*this, mesh, face_midpoint, vector_t, dense, 1, attributes::faces);
-
-    // register edge data
-    flecsi_register_data(*this, mesh, edge_midpoint, vector_t, dense, 1, attributes::edges);
-    
-    // register wedge data
-    flecsi_register_data(*this, mesh, wedge_facet_area, real_t, dense, 1, attributes::wedges);
-    flecsi_register_data(*this, mesh, wedge_facet_normal, vector_t, dense, 1, attributes::wedges);
-    flecsi_register_data(*this, mesh, wedge_facet_centroid, vector_t, dense, 1, attributes::wedges);
-    
-    // register time state
-    flecsi_register_data(*this, mesh, time, real_t, global, 1 );
-    flecsi_register_data(*this, mesh, time_step, size_t, global, 1 );
-
-    auto soln_time = flecsi_get_accessor(*this, mesh, time, real_t, global, 0);
-    auto step = flecsi_get_accessor(*this, mesh, time_step, size_t, global, 0);
-    *soln_time = 0;
-    *step = 0;
-
-    // register some flags for identifying boundarys and various other things
-    flecsi_register_data(*this, mesh, node_flags, bitfield_t, dense, 1, attributes::vertices);
-    flecsi_register_data(*this, mesh, edge_flags, bitfield_t, dense, 1, attributes::edges);
-
-    auto point_flags = flecsi_get_accessor(*this, mesh, node_flags, bitfield_t, dense, 0);
-    auto edge_flags = flecsi_get_accessor(*this, mesh, edge_flags, bitfield_t, dense, 0);
-
-    // register some flags for associating boundaries with entities
-    flecsi_register_data(*this, mesh, node_tags, tag_list_t, dense, 1, attributes::vertices);
-    flecsi_register_data(*this, mesh, edge_tags, tag_list_t, dense, 1, attributes::edges);
-    flecsi_register_data(*this, mesh, face_tags, tag_list_t, dense, 1, attributes::faces);
-    flecsi_register_data(*this, mesh, cell_tags, tag_list_t, dense, 1, attributes::cells);
+    soln_time_ = 0;
+    time_step_ = 0;
 
     // now set the boundary flags.
     for ( auto f : faces() ) {
@@ -1100,27 +958,19 @@ public:
         // point flags
         auto ps = vertices(f);
         for ( auto p : ps ) 
-          point_flags[ p ].setbit( bits::boundary );
+          p->flags().set( bits::boundary );
         // edge flags are only for 3d
         if ( num_dimensions == 3 ) {
           auto es = edges(f);
           for ( auto e : es ) 
-            edge_flags[e].setbit( bits::boundary );
+            e->flags().set( bits::boundary );
         } // dims
       } // is_boundary
     } // for
 
     // identify the cell regions
-    flecsi_register_data(*this, mesh, cell_region, size_t, dense, 1, attributes::cells);
-    flecsi_register_data(*this, mesh, num_regions, size_t, global, 1);
-
-    auto cell_region = flecsi_get_accessor(*this, mesh, cell_region, size_t, dense, 0);
-    auto num_regions = flecsi_get_accessor(*this, mesh, num_regions, size_t, global, 0);
-
-    *num_regions = 1;
-
-    for ( auto c : cells() )
-      cell_region[c] = 0;
+    num_regions_ = 1;
+    for ( auto c : cells() ) c->region() = 0;
 
     // update the geometry
     update_geometry();
@@ -1236,94 +1086,86 @@ public:
         }
       }
 
-      for ( auto wg = ws.begin(); wg != ws.end();  ) 
-        for ( auto i=0; i<2 && wg != ws.end(); i++, ++wg)
-        {
-          auto cls = cells( *wg );
-          auto fs = faces( *wg );
-          auto es = edges( *wg );
-          auto vs = vertices( *wg );
-          auto cns = corners( *wg );
-          if ( cls.size() != 1 ) {
-            #pragma omp critical
-            {          
-              ss << "Wedge " << (*wg).id() << " has " << cls.size() 
-                 << "/=1 cells" << std::endl;
-            }
+      for ( auto wg : ws  ) {
+        auto cls = cells( wg );
+        auto fs = faces( wg );
+        auto es = edges( wg );
+        auto vs = vertices( wg );
+        auto cns = corners( wg );
+        if ( cls.size() != 1 ) {
+          #pragma omp critical
+          {          
+            ss << "Wedge " << wg.id() << " has " << cls.size() 
+               << "/=1 cells" << std::endl;
           }
-          if ( fs.size() != 1 ) {
-            #pragma omp critical 
-            {           
-              ss << "Wedge " << (*wg).id() << " has " << fs.size() 
-                 << "/=1 faces" << std::endl;
-            }
+        }
+        if ( fs.size() != 1 ) {
+          #pragma omp critical 
+          {           
+            ss << "Wedge " << wg.id() << " has " << fs.size() 
+               << "/=1 faces" << std::endl;
           }
-          if ( es.size() != 1 ) {
-            #pragma omp critical 
-            {
-              ss << "Wedge " << (*wg).id() << " has " << es.size() 
-                 << "/=1 edges" << std::endl;
-            }
+        }
+        if ( es.size() != 1 ) {
+          #pragma omp critical 
+          {
+            ss << "Wedge " << wg.id() << " has " << es.size() 
+               << "/=1 edges" << std::endl;
           }
-          if ( vs.size() != 1 ) {
-            #pragma omp critical
-            {
-              ss << "Wedge " << (*wg).id() << " has " << vs.size() 
-                 << "/=1 vertices" << std::endl;
-            }
+        }
+        if ( vs.size() != 1 ) {
+          #pragma omp critical
+          {
+            ss << "Wedge " << wg.id() << " has " << vs.size() 
+               << "/=1 vertices" << std::endl;
           }
-          if ( cns.size() != 1 ) {
-            #pragma omp critical
-            {
-              ss << "Wedge " << (*wg).id() << " has " << cns.size() 
-                 << "/=1 corners" << std::endl;
-            }
+        }
+        if ( cns.size() != 1 ) {
+          #pragma omp critical
+          {
+            ss << "Wedge " << wg.id() << " has " << cns.size() 
+               << "/=1 corners" << std::endl;
           }
-          auto vert = vs.front();
-          auto cell = cls.front();
-          auto corn = cns.front();
-          if ( vert != vt ) {
-            #pragma omp critical
-            {
-              ss << "Wedge " << (*wg).id() << " has incorrect vertex " 
-                 << vert.id() << "!=" << vt.id() << std::endl;
-            }
+        }
+        auto vert = vs.front();
+        auto cell = cls.front();
+        auto corn = cns.front();
+        if ( vert != vt ) {
+          #pragma omp critical
+          {
+            ss << "Wedge " << wg.id() << " has incorrect vertex " 
+               << vert.id() << "!=" << vt.id() << std::endl;
           }
-          if ( cell != cl ) {
-            #pragma omp critical
-            {
-              ss << "Wedge " << (*wg).id() << " has incorrect cell " 
-                 << cell.id() << "!=" << cl.id() << std::endl;
-            }
+        }
+        if ( cell != cl ) {
+          #pragma omp critical
+          {
+            ss << "Wedge " << wg.id() << " has incorrect cell " 
+               << cell.id() << "!=" << cl.id() << std::endl;
           }
-          if ( corn != cn ) {
-            #pragma omp critical
-            {
-              ss << "Wedge " << (*wg).id() << " has incorrect corner " 
-                 << corn.id() << "!=" << cn.id() << std::endl;
-            }
+        }
+        if ( corn != cn ) {
+          #pragma omp critical
+          {
+            ss << "Wedge " << wg.id() << " has incorrect corner " 
+               << corn.id() << "!=" << cn.id() << std::endl;
           }
-          auto fc = fs.front();            
-          auto fx = fc->midpoint();
-          auto cx = cl->midpoint();
-          auto delta = fx - cx;
-          real_t dot;
-          if ( i == 0 ) {
-            auto n = (*wg)->facet_normal_right();
-            dot = dot_product( n, delta );
+        }
+        auto fc = fs.front();            
+        auto fx = fc->midpoint();
+        auto cx = cl->midpoint();
+        auto delta = fx - cx;
+        real_t dot;
+        auto n = wg->facet_normal();
+        dot = dot_product( n, delta );
+        if ( dot < 0 ) {
+          #pragma omp critical
+          {
+            ss << "Wedge " << wg.id() << " has opposite normal" 
+               << std::endl;
           }
-          else {
-            auto n = (*wg)->facet_normal_left();
-            dot = dot_product( n, delta );
-          }
-          if ( dot < 0 ) {
-            #pragma omp critical
-            {
-              ss << "Wedge " << (*wg).id() << " has opposite normal" 
-                 << std::endl;
-            }
-          }
-        } // wedges
+        }
+      } // wedges
       
     } // corners
 
@@ -1350,54 +1192,29 @@ public:
     auto num_edges = es.size();
     auto num_corners = cnrs.size();
 
-    // get all the data now so we can put everything in one parallel region
-    auto cell_center = flecsi_get_accessor(*this, mesh, cell_centroid, vector_t, dense, 0);
-    auto cell_volume = flecsi_get_accessor(*this, mesh, cell_volume, real_t, dense, 0);
-    auto cell_min_length = flecsi_get_accessor(*this, mesh, cell_min_length, real_t, dense, 0);
-
-    auto face_area = flecsi_get_accessor(*this, mesh, face_area, real_t, dense, 0);
-    auto face_norm = flecsi_get_accessor(*this, mesh, face_normal, vector_t, dense, 0);
-    auto face_midp = flecsi_get_accessor(*this, mesh, face_midpoint, vector_t, dense, 0); 
-
-    auto edge_midp = flecsi_get_accessor(*this, mesh, edge_midpoint, vector_t, dense, 0); 
-
-    auto wedge_facet_normal = flecsi_get_accessor(*this, mesh, wedge_facet_normal, vector_t, dense, 0);
-    auto wedge_facet_area = flecsi_get_accessor(*this, mesh, wedge_facet_area, real_t, dense, 0);
-    auto wedge_facet_centroid = flecsi_get_accessor(*this, mesh, wedge_facet_centroid, vector_t, dense, 0); 
-
-    //--------------------------------------------------------------------------
-    // compute cell parameters
-
     #pragma omp parallel
     {
 
-      #pragma omp for   nowait
-      for ( counter_t i=0; i<num_cells; i++ ) {
-        auto c = cs[i];
-        cell_volume[c] = c->volume();
-        cell_center[c] = c->centroid();
-        cell_min_length[c] = c->min_length();
-      } 
+      //--------------------------------------------------------------------------
+      // compute edge parameters
+
+      #pragma omp for nowait
+      for ( counter_t i=0; i<num_edges; i++ )
+        es[i]->midpoint();
 
       //--------------------------------------------------------------------------
       // compute face parameters
 
       #pragma omp for nowait
-      for ( counter_t i=0; i<num_faces; i++ ) {
-        auto f = fs[i];
-        face_area[f] = f->area();
-        face_norm[f] = f->normal() / face_area[f];
-        face_midp[f] = f->midpoint();
-      } 
+      for ( counter_t i=0; i<num_faces; i++ )
+        fs[i]->update();
 
       //--------------------------------------------------------------------------
-      // compute edge parameters
+      // compute cell parameters
 
       #pragma omp for
-      for ( counter_t i=0; i<num_edges; i++ ) {
-        auto e = es[i];
-        edge_midp[e] = e->midpoint();
-      } 
+      for ( counter_t i=0; i<num_cells; i++ ) 
+        cs[i]->update();
 
       //--------------------------------------------------------------------------
       // compute wedge parameters
@@ -1406,32 +1223,15 @@ public:
       for ( counter_t i=0; i<num_corners; ++i ) {
         auto cn = cnrs[i];
         auto ws = wedges(cn);
-        // both wedges SHOULD have the same vertex
-        const auto & v = vertices(cn).front()->coordinates();
         // first compute the normals
         for ( auto wit = ws.begin(); wit != ws.end(); ++wit ) 
         {
           // get the first wedge normal
-          {
-            const auto & e = edge_midp[ edges(*wit).front() ];
-            const auto & f = face_midp[ faces(*wit).front() ];
-            wedge_facet_normal[*wit] = wedge_t::facet_normal_right( v, e, f );
-          }
+          (*wit)->update( true );
           // move to next wedge
-          ++wit;
-          assert( wit != ws.end() );
+          assert( ++wit != ws.end() );
           // get the second wedge normal
-          {
-            const auto & e = edge_midp[ edges(*wit).front() ];
-            const auto & f = face_midp[ faces(*wit).front() ];
-            wedge_facet_normal[*wit] = wedge_t::facet_normal_left( v, e, f );
-          }
-        }
-        // now normalize the normals and compute other quantities
-        for ( auto w : ws) {
-          wedge_facet_area[w] = abs( wedge_facet_normal[w] );
-          wedge_facet_normal[w] /= wedge_facet_area[w];
-          wedge_facet_centroid[w] = w->facet_centroid();
+          (*wit)->update( false );
         }
       }
 
@@ -1550,7 +1350,6 @@ public:
       break;
     }
 
-    base_t::template add_entity<E::dimension, E::domain>( e );
     base_t::template init_entity<E::domain, E::dimension, vertex_t::dimension>( e, std::forward<V>(verts) );
     return e;
   } // create_cell
@@ -1578,7 +1377,6 @@ public:
       break;
     }
 
-    base_t::template add_entity<cell_t::dimension, cell_t::domain>(c);
     base_t::template init_cell<cell_t::domain>( c, std::forward<V>(verts) );
     return c;
   } // create_cell
@@ -1600,7 +1398,6 @@ public:
       break;
     }
 
-    base_t::template add_entity<cell_t::dimension, cell_t::domain>(c);
     base_t::template init_entity<cell_t::domain, cell_t::dimension, face_t::dimension>( c, std::forward<F>(faces) );
     return c;
   } // create_cell
@@ -1617,6 +1414,13 @@ public:
   std::vector< std::vector<vertex_t*> > vert_sets_;
   //@ }
 
+  //! the solution time
+  real_t soln_time_ = 0;
+  //! the time step counter
+  size_t time_step_ = 0;
+
+  //! the number of regions
+  size_t num_regions_ = 0;
 
 }; // class burton_mesh_t
 

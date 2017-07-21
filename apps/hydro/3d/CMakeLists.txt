@@ -4,7 +4,7 @@
 #~----------------------------------------------------------------------------~#
 
 add_executable( hydro_3d
-  $<TARGET_OBJECTS:common> 
+  $<TARGET_OBJECTS:apps_common> 
   inputs.cc
   driver.cc
   ${FleCSI_RUNTIME_DRIVER}

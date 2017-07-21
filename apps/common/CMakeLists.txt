@@ -1,3 +1,3 @@
 
 
-add_library( common OBJECT exceptions.cc )
+add_library( apps_common OBJECT exceptions.cc )

@@ -30,14 +30,19 @@ namespace utils = flecsale::utils;
 namespace geom  = flecsale::geom;
 namespace eos   = flecsale::eos;
 namespace eqns  = flecsale::eqns;
-namespace io    = flecsale::io;
+//namespace io    = flecsale::io;
+
+// the handle type
+template<typename T, size_t EP, size_t SP, size_t GP>
+using dense_handle__ =
+  flecsi::data::legion::dense_handle_t<T, EP, SP, GP>;
+
+template<typename DC, size_t PS>
+using client_handle__ = flecsi::data_client_handle__<DC, PS>;
 
 // mesh and some underlying data types
 template <std::size_t N>
-using mesh_t = typename mesh::burton::burton_mesh_t<N>;
-
-using mesh_2d_t = mesh_t<2>;
-using mesh_3d_t = mesh_t<3>;
+using mesh__ = typename mesh::burton::burton_mesh_t<N>;
 
 using size_t = common::size_t;
 using real_t = common::real_t;
@@ -45,10 +50,10 @@ using real_t = common::real_t;
 using eos_t = eos::eos_base_t<real_t>;
 
 template< std::size_t N >
-using eqns_t = typename eqns::euler_eqns_t<real_t, N>;
+using eqns__ = typename eqns::euler_eqns_t<real_t, N>;
 
 template< std::size_t N >
-using flux_data_t = typename eqns_t<N>::flux_data_t;
+using flux_data__ = typename eqns__<N>::flux_data_t;
 
 // explicitly use some other stuff
 using std::cout;
@@ -92,85 +97,6 @@ auto boundary_flux( U && state, V && norm )
   return 
     E::wall_flux( std::forward<U>(state), std::forward<V>(norm) ); 
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief A functor for accessing state in the mesh
-//! \tparam M  the mesh type
-////////////////////////////////////////////////////////////////////////////////
-template < typename M >
-class state_accessor 
-{
-public:
-
-  //! typedefs
-  using real_t = typename M::real_t;
-  using vector_t = typename M::vector_t;
-
-  //! \brief determine the type of accessor
-  //! \tparam T the data type we are accessing
-  template< typename T >
-  using accessor_t = 
-    decltype( flecsi_get_accessor( std::declval<M>(), hydro, var_name, T, dense, 0 ) );
-
-  //! \brief main constructor
-  //! \param [in]  mesh  the mesh object
-  constexpr state_accessor( M & mesh ) :
-    d( flecsi_get_accessor( mesh, hydro, density, real_t, dense, 0 ) ),
-    p( flecsi_get_accessor( mesh, hydro, pressure, real_t, dense, 0 ) ),
-    v( flecsi_get_accessor( mesh, hydro, velocity, vector_t, dense, 0 ) ),
-    e( flecsi_get_accessor( mesh, hydro, internal_energy, real_t, dense, 0 ) ),
-    t( flecsi_get_accessor( mesh, hydro, temperature, real_t, dense, 0 ) ),
-    a( flecsi_get_accessor( mesh, hydro, sound_speed, real_t, dense, 0 ) )
-  {}
-
-  //! \brief main accessor
-  //! \remark const version
-  //!
-  //! \tparam T the element type
-  //! \param [in] i  the element we are accessing
-  //! \return a tuple of references to all the state data
-  template< typename T >
-  constexpr auto operator()( T && i ) const 
-  {
-    using std::forward;
-    return std::forward_as_tuple( d[ forward<T>(i) ], 
-                                  v[ forward<T>(i) ], 
-                                  p[ forward<T>(i) ], 
-                                  e[ forward<T>(i) ], 
-                                  t[ forward<T>(i) ], 
-                                  a[ forward<T>(i) ] );
-  }
-
-  //! \brief main accessor
-  //! \remark non-const version
-  //!
-  //! \tparam T the element type
-  //! \param [in] i  the element we are accessing
-  //! \return a tuple of references to all the state data
-  template< typename T >
-  auto operator()( T && i ) 
-  {
-    using std::forward;
-    return std::forward_as_tuple( d[ forward<T>(i) ], 
-                                  v[ forward<T>(i) ], 
-                                  p[ forward<T>(i) ], 
-                                  e[ forward<T>(i) ], 
-                                  t[ forward<T>(i) ], 
-                                  a[ forward<T>(i) ] );
-  }
-
-private:
-
-  // private data
-  accessor_t<real_t>   d;
-  accessor_t<real_t>   p;
-  accessor_t<vector_t> v;
-  accessor_t<real_t>   e;
-  accessor_t<real_t>   t;
-  accessor_t<real_t>   a;
-       
-};
 
 } // namespace hydro
 } // namespace apps

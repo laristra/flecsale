@@ -8,6 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 // user includes
+#include "flecsale/common/constants.h"
 #include "flecsale/common/types.h"
 #include "flecsale/geom/shapes/hexahedron.h"
 #include "flecsale/geom/shapes/quadrilateral.h"

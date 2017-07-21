@@ -40,9 +40,6 @@ public:
   // Typedefs
   //============================================================================
 
-  //! the flecsi mesh topology type
-  using mesh_topology_base_t =  flecsi::topology::mesh_topology_base_t;
- 
   //! the mesh traits
   using config_t = burton_config_t<N>;
 
@@ -54,6 +51,13 @@ public:
 
   //! The domain of the entity
   static constexpr auto domain = 1;
+
+  //! the flecsi mesh topology storage type
+  using mesh_storage_t = 
+    flecsi::topology::mesh_storage_t<num_dimensions, num_domains>;
+  //! the flecsi mesh topology type
+  using mesh_topology_base_t = 
+    flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
 
   //! Type of floating point.
   using real_t = typename config_t::real_t;

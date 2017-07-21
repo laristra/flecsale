@@ -21,26 +21,17 @@ using burton_3d_polygon_t = burton_polygon_t<3>;
 ////////////////////////////////////////////////////////////////////////////////
 
 
-// the centroid
-burton_2d_polygon_t::point_t burton_2d_polygon_t::centroid() const
+void burton_2d_polygon_t::update()
 {
   auto coords = coordinates();
-  return geom::shapes::polygon<num_dimensions>::centroid( coords );
-}
+  centroid_ = geom::shapes::polygon<num_dimensions>::centroid( coords );
+  midpoint_ = geom::shapes::polygon<num_dimensions>::midpoint( coords );
+  area_ = geom::shapes::polygon<num_dimensions>::area( coords );
+  // now check min edge length
+  auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh()); 
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
+  min_length_ = detail::min_length( vs );
 
-// the midpoint
-burton_2d_polygon_t::point_t burton_2d_polygon_t::midpoint() const
-{
-  auto coords = coordinates();
-  return geom::shapes::polygon<num_dimensions>::midpoint( coords );
-}
-
-
-// the area of the cell
-burton_2d_polygon_t::real_t burton_2d_polygon_t::area() const
-{
-  auto coords = coordinates();
-  return geom::shapes::polygon<num_dimensions>::area( coords );
 }
 
 
@@ -49,34 +40,18 @@ burton_2d_polygon_t::real_t burton_2d_polygon_t::area() const
 ////////////////////////////////////////////////////////////////////////////////
 
 
-// the centroid
-burton_3d_polygon_t::point_t burton_3d_polygon_t::centroid() const
+void burton_3d_polygon_t::update()
 {
   auto coords = coordinates();
-  return geom::shapes::polygon<num_dimensions>::centroid( coords );
+  centroid_ = geom::shapes::polygon<num_dimensions>::centroid( coords );
+  midpoint_ = geom::shapes::polygon<num_dimensions>::midpoint( coords );
+  area_ = geom::shapes::polygon<num_dimensions>::area( coords );
+  normal_ = geom::shapes::polygon<num_dimensions>::normal( coords );
+  // now check min edge length
+  auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
+  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
+  min_length_ = detail::min_length( vs );
 }
-
-// the midpoint
-burton_3d_polygon_t::point_t burton_3d_polygon_t::midpoint() const
-{
-  auto coords = coordinates();
-  return geom::shapes::polygon<num_dimensions>::midpoint( coords );
-}
-
-// the normal
-burton_3d_polygon_t::vector_t burton_3d_polygon_t::normal() const
-{
-  auto coords = coordinates();
-  return geom::shapes::polygon<num_dimensions>::normal( coords );
-}
-
-// the area of the cell
-burton_3d_polygon_t::real_t burton_3d_polygon_t::area() const
-{
-  auto coords = coordinates();
-  return geom::shapes::polygon<num_dimensions>::area( coords );
-}
-
 
 } // namespace
 } // namespace

@@ -51,18 +51,12 @@ public:
   // Accessors / Modifiers
   //============================================================================
 
-  //! the centroid
-  point_t centroid() const override;
-
-  //! the midpoint
-  point_t midpoint() const override;
-
-  //! the area of the cell
-  real_t area() const override;
-
   //! the cell type
   shape_t type() const override 
   { return geom::shapes::polygon<num_dimensions>::shape; };
+
+  //! update goemtry
+  void update() override;
 
   //----------------------------------------------------------------------------
   //! \brief create_entities function for burton_polygonal_cell_t.
@@ -179,17 +173,8 @@ public:
   // Accessors / Modifiers
   //============================================================================
 
-  //! the centroid
-  point_t centroid() const override;
-
-  //! the midpoint
-  point_t midpoint() const override;
-
-  //! the normal
-  vector_t normal() const override;
-
-  //! the area of the cell
-  real_t area() const override;
+  //! update goemtry
+  void update() override;
 
   //! the cell type
   shape_t type() const override 

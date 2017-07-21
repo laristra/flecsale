@@ -16,8 +16,7 @@ namespace burton {
 // 3D polyhedron
 ////////////////////////////////////////////////////////////////////////////////
 
-// the centroid
-burton_polyhedron_t::point_t burton_polyhedron_t::centroid() const
+void burton_polyhedron_t::update()
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto fs = msh->template entities<  face_t::dimension,   face_t::domain>(this);
@@ -27,26 +26,9 @@ burton_polyhedron_t::point_t burton_polyhedron_t::centroid() const
     auto reverse = (cs[0] != this); // FIXME: reverse
     poly.insert( f->coordinates(reverse) );
   }
-  return poly.centroid();
-}
-
-// the midpoint
-burton_polyhedron_t::point_t burton_polyhedron_t::midpoint() const
-{
-  auto coords = coordinates();
-  return geom::shapes::polyhedron<point_t>::midpoint( coords );
-}
-
-
-// the area of the cell
-burton_polyhedron_t::real_t burton_polyhedron_t::volume() const
-{
-  auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
-  auto fs = msh->template entities<  face_t::dimension,   face_t::domain>(this);
-  geom::shapes::polyhedron<point_t> poly;     
-  for ( auto f : fs ) 
-    poly.insert( f->coordinates() );
-  return poly.volume();
+  centroid_ = poly.centroid();
+  midpoint_ = poly.midpoint();
+  volume_ = poly.volume();
 }
 
 

@@ -74,7 +74,7 @@ OPTION (DOUBLE_PRECISION "Use double precision reals"  ON)
 
 if( DOUBLE_PRECISION ) 
   message(STATUS "Note: Double precision build activated.")
-  add_definitions( -DDOUBLE_PRECISION )
+  add_definitions( -DFleCSALE_DOUBLE_PRECISION )
   SET (TEST_TOLERANCE 1.0e-14 CACHE STRING "The testing tolerance" )
 else()
   message(STATUS "Note: Single precision build activated.")
@@ -89,7 +89,7 @@ option( USE_64BIT_IDS "Type of integer to use for ids" ON )
 
 if( USE_64BIT_IDS ) 
   message(STATUS "Note: using 64 bit integer ids.")
-  add_definitions( -DUSE_64BIT_IDS )
+  add_definitions( -DFleCSALE_USE_64BIT_IDS )
 else()
   message(STATUS "Note: using 32 bit integer ids.")
 endif()
@@ -345,6 +345,66 @@ if(ENABLE_PORTAGE)
   list( APPEND FleCSALE_LIBRARIES ${PORTAGE_LIBRARY} )
 endif()
 
+#------------------------------------------------------------------------------#
+# Legion / MPI
+#------------------------------------------------------------------------------#
+
+find_package(Legion)
+
+if (Legion_FOUND) 
+  include_directories(${Legion_INCLUDE_DIRS})
+  add_definitions( -DLEGION_CMAKE )
+endif()
+
+find_package(MPI)
+
+if (MPI_FOUND) 
+  include_directories(${MPI_C_INCLUDE_PATH})
+  add_definitions(-DENABLE_MPI)
+endif()
+
+#------------------------------------------------------------------------------#
+# Enable partitioning with METIS
+#------------------------------------------------------------------------------#
+
+find_package(METIS 5.1)
+
+if(MPI_FOUND)
+  # Counter-intuitive variable: set to TRUE to disable test
+  set(PARMETIS_TEST_RUNS TRUE)
+  find_package(ParMETIS 4.0)
+endif()
+
+option(ENABLE_COLORING
+  "Enable partitioning (uses metis/parmetis or scotch)." OFF)
+
+if(ENABLE_COLORING)
+
+  set(COLORING_LIBRARIES)
+
+  if(METIS_FOUND)
+    list(APPEND COLORING_LIBRARIES ${METIS_LIBRARIES})
+    include_directories(${METIS_INCLUDE_DIRS})
+    set(ENABLE_METIS TRUE)
+    add_definitions(-DENABLE_METIS)
+  endif()
+
+  if(PARMETIS_FOUND)
+    list(APPEND COLORING_LIBRARIES ${PARMETIS_LIBRARIES})
+    include_directories(${PARMETIS_INCLUDE_DIRS})
+    set(ENABLE_PARMETIS TRUE)
+    add_definitions(-DENABLE_PARMETIS)
+  endif()
+
+  if(NOT COLORING_LIBRARIES)
+    MESSAGE(FATAL_ERROR
+      "You need parmetis to enable partitioning" )
+  endif()
+
+  add_definitions(-DENABLE_COLORING)
+
+endif()
+
 
 #------------------------------------------------------------------------------#
 # Add subprojects
@@ -370,7 +430,7 @@ list(APPEND FleCSALE_LIBRARIES ${FleCSI_LIBRARIES} )
 
 set(FleCSI_EXEC_DIR ${PROJECT_SOURCE_DIR}/flecsi/flecsi/execution)
 set(
-  FleCSI_RUNTIME_MAIN ${FleCSI_EXEC_DIR}/runtime_main.cc 
+  FleCSI_RUNTIME_MAIN ${FleCSI_EXEC_DIR}/${FLECSI_RUNTIME_MODEL}/runtime_main.cc 
   CACHE INTERNAL ""
 )
 
@@ -378,7 +438,7 @@ set(FleCSI_RUNTIME_DRIVER
   ${FleCSI_EXEC_DIR}/${FLECSI_RUNTIME_MODEL}/runtime_driver.cc
   CACHE INTERNAL ""
 )
-add_definitions( -DFLECSI_RUNTIME_MODEL_${FLECSI_RUNTIME_MODEL} )
+#add_definitions( -DFLECSI_RUNTIME_MODEL_${FLECSI_RUNTIME_MODEL} )
 
 #------------------------------------------------------------------------------#
 # Add library targets

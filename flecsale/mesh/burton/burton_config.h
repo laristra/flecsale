@@ -15,8 +15,10 @@
 #include "flecsale/geom/shapes/geometric_shapes.h"
 #include "flecsale/math/vector.h"
 #include "flecsale/utils/fixed_vector.h"
-#include "flecsi/utils/bitfield.h"
 #include "flecsi/data/data.h"
+
+// system includes
+#include<bitset>
 
 namespace flecsale {
 namespace mesh {
@@ -42,7 +44,7 @@ struct burton_config_t {
   using const_string_t = flecsi::utils::const_string_t;
 
   //! the bitfield type
-  using bitfield_t = flecsi::utils::bitfield_t;
+  using bitfield_t = std::bitset<8>;
 
   //! A type used for loop indexing.
   using counter_t = long long;

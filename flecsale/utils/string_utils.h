@@ -106,6 +106,19 @@ std::string file_extension(const std::string & str)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief Remove the extension from a filename
+//! \param [in] str  the input string
+//! \return the name without extension
+////////////////////////////////////////////////////////////////////////////////
+inline
+std::string remove_extension(const std::string & str) {
+    auto lastdot = str.find_last_of(".");
+    if (lastdot == std::string::npos) return str;
+    return str.substr(0, lastdot); 
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 //! \brief split a string using a list of delimeters
 //! \param [in] str  the input string
 //! \param [in] delim  the list of delimeters

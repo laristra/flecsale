@@ -12,6 +12,10 @@
 // hydro includes
 #include "types.h"
 
+// flecsi includes
+#include <flecsi/execution/context.h>
+#include <flecsi/execution/execution.h>
+
 // system includes
 #include <iomanip>
 
@@ -25,23 +29,19 @@ namespace hydro {
 //! \param [in]     ics  the initial conditions to set
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T, typename F >
-int initial_conditions( T & mesh, F && ics ) {
+int initial_conditions( 
+  client_handle__<mesh_t, flecsi::dro>  mesh,
+  inputs_t::ics_function_t ics, 
+  dense_handle__<mesh_t::real_t, flecsi::dwd, flecsi::dno, flecsi::dno> d 
+) {
 
   // type aliases
-  using counter_t = typename T::counter_t;
-  using real_t = typename T::real_t;
-  using vector_t = typename T::vector_t;
+  using counter_t = mesh_t::counter_t;
+  using real_t = mesh_t::real_t;
+  using vector_t = mesh_t::vector_t;
 
   // get the current time
-  auto soln_time = mesh.time();
-
-  // get the collection accesor
-  auto d = flecsi_get_accessor( mesh, hydro, density,    real_t, dense, 0 );
-  auto p = flecsi_get_accessor( mesh, hydro, pressure,   real_t, dense, 0 );
-  auto v = flecsi_get_accessor( mesh, hydro, velocity, vector_t, dense, 0 );
-
-  auto xc = flecsi_get_accessor( mesh, mesh, cell_centroid, vector_t, dense, 0 );
+  //auto soln_time = mesh.time();
 
   auto cs = mesh.cells();
   auto num_cells = cs.size();
@@ -50,12 +50,14 @@ int initial_conditions( T & mesh, F && ics ) {
   //#pragma omp parallel for
   for ( counter_t i=0; i<num_cells; i++ ) {
     auto c = cs[i];
-    std::tie( d[c], v[c], p[c] ) = std::forward<F>(ics)( xc[c], soln_time );
+    //std::tie( d[c], v[c], p[c] ) = std::forward<F>(ics)( xc[c], soln_time );
+    d(c) = 0;
   }
 
   return 0;
 }
 
+#if 0
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task for updating the state using pressure.
@@ -513,6 +515,21 @@ int output( T & mesh,
   
   return 0;
 }
+
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+// TASK REGISTRATION
+////////////////////////////////////////////////////////////////////////////////
+
+flecsi_register_task(initial_conditions, loc, single);
+//flecsi_register_task(update_state_from_pressure_task, loc, single);
+//flecsi_register_task(update_state_from_energy_task, loc, single);
+//flecsi_register_task(evaluate_time_step_task, loc, single);
+//flecsi_register_task(evaluate_fluxes_task, loc, single);
+//flecsi_register_task(apply_update_task, loc, single);
+//flecsi_register_task(save_solution_task, loc, single);
+//flecsi_register_task(restore_solution_task, loc, single);
 
 } // namespace hydro
 } // namespace apps

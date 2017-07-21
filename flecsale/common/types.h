@@ -25,21 +25,21 @@ enum return_t {
 };
 
 //! real precision type
-#ifdef DOUBLE_PRECISION
+#ifdef FleCSALE_DOUBLE_PRECISION
 using real_t = double;
 #else
 using real_t = float;
 #endif
 
 //! type of integer ids to use
-#ifdef USE_64BIT_IDS
+#ifdef FleCSALE_USE_64BIT_IDS
 using index_t = uint64_t;
 #else
 using index_t = uint32_t;
 #endif
 
 //! type of integer data to use
-#ifdef DOUBLE_PRECISION
+#ifdef FleCSALE_DOUBLE_PRECISION
 using integer_t = int64_t;
 #else
 using integer_t = int32_t;
@@ -50,9 +50,6 @@ using std::size_t;
 
 //! a counter type
 using counter_t = long long;
-
-//! the test tolerance 
-static constexpr real_t test_tolerance = TEST_TOLERANCE;
 
 } // namespace
 } // namespace

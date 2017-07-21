@@ -8,20 +8,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 // hydro includes
-#include "inputs.h"
 #include "types.h"
-#include "../tasks.h"
-#include "../driver.h"
+#include "../specialization_init.h"
 
 namespace flecsi {
 namespace execution {
 
 ///////////////////////////////////////////////////////////////////////////////
-//! \brief A sample test of the hydro solver
+//! \brief The specialization initialization driver.
 ///////////////////////////////////////////////////////////////////////////////
-void driver(int argc, char** argv) 
+void specialization_tlt_init(int argc, char** argv) 
 {
-  apps::hydro::driver( argc, argv );
+  apps::hydro::specialization_tlt_init( argc, argv );
 }
 
 } // namespace

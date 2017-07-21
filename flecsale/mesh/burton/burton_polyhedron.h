@@ -49,14 +49,8 @@ public:
   // Accessors / Modifiers
   //============================================================================
 
-  //! the centroid
-  point_t centroid() const override;
-
-  //! the midpoint
-  point_t midpoint() const override;
-
-  //! the area of the cell
-  real_t volume() const override;
+  //! update geometric information
+  virtual void update() override;
 
   //! the cell type
   shape_t type() const override 

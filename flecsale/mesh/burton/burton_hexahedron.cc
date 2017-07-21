@@ -16,41 +16,25 @@ namespace burton {
 // 3D hexahedron
 ////////////////////////////////////////////////////////////////////////////////
 
-// the centroid
-burton_hexahedron_t::point_t burton_hexahedron_t::centroid() const
+void burton_hexahedron_t::update()
 {
   auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
   auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::shapes::hexahedron::centroid( 
-    vs[0]->coordinates(), vs[1]->coordinates(), 
-    vs[2]->coordinates(), vs[3]->coordinates(),
-    vs[4]->coordinates(), vs[5]->coordinates(),
-    vs[6]->coordinates(), vs[7]->coordinates() );
-}
-
-// the midpoint
-burton_hexahedron_t::point_t burton_hexahedron_t::midpoint() const
-{
-  auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::shapes::hexahedron::midpoint( 
-    vs[0]->coordinates(), vs[1]->coordinates(), 
-    vs[2]->coordinates(), vs[3]->coordinates(),
-    vs[4]->coordinates(), vs[5]->coordinates(),
-    vs[6]->coordinates(), vs[7]->coordinates() );
-}
-
-
-// the area of the cell
-burton_hexahedron_t::real_t burton_hexahedron_t::volume() const
-{
-  auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh()); 
-  auto vs = msh->template entities<vertex_t::dimension, vertex_t::domain>(this);
-  return geom::shapes::hexahedron::volume( 
-    vs[0]->coordinates(), vs[1]->coordinates(), 
-    vs[2]->coordinates(), vs[3]->coordinates(),
-    vs[4]->coordinates(), vs[5]->coordinates(),
-    vs[6]->coordinates(), vs[7]->coordinates() );
+  const auto & v0 = vs[0]->coordinates();
+  const auto & v1 = vs[1]->coordinates();
+  const auto & v2 = vs[2]->coordinates();
+  const auto & v3 = vs[3]->coordinates();
+  const auto & v4 = vs[4]->coordinates();
+  const auto & v5 = vs[5]->coordinates();
+  const auto & v6 = vs[6]->coordinates();
+  const auto & v7 = vs[7]->coordinates();
+  centroid_ = 
+    geom::shapes::hexahedron::centroid( v0, v1, v2, v3, v4, v5, v6, v7 );
+  midpoint_ = 
+    geom::shapes::hexahedron::midpoint( v0, v1, v2, v3, v4, v5, v6, v7 );
+  volume_ = 
+    geom::shapes::hexahedron::volume( v0, v1, v2, v3, v4, v5, v6, v7 );
+  min_length_ = detail::min_length( vs );
 }
 
 } // namespace
