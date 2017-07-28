@@ -10,6 +10,7 @@
 #pragma once
 
 // user includes
+#include <flecsale/common/constants.h>
 #include <flecsale/common/types.h>
 #include <flecsale/eqns/euler_eqns.h>
 #include <flecsale/eqns/flux.h>
@@ -30,7 +31,6 @@ namespace utils = flecsale::utils;
 namespace geom  = flecsale::geom;
 namespace eos   = flecsale::eos;
 namespace eqns  = flecsale::eqns;
-//namespace io    = flecsale::io;
 
 // the handle type
 template<typename T, size_t EP, size_t SP, size_t GP>
@@ -73,6 +73,9 @@ enum class mode_t
 {
   normal, retry, restart, quit
 };
+
+//! a trivially copyable character array
+using char_array_t = std::array<char, common::max_char_length>;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief alias the flux function

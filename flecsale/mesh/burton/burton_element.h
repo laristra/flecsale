@@ -392,11 +392,12 @@ struct burton_element_t<2,2>
   //============================================================================
 
   //! Constructor
-  burton_element_t(mesh_topology_base_t & mesh) : mesh_(&mesh) 
+  burton_element_t(mesh_topology_base_t & mesh, shape_t shape) 
+    : mesh_(&mesh), shape_(shape)
   {};
 
   // Destructor
-  virtual ~burton_element_t() {}
+  ~burton_element_t() {}
 
   // dissallow copying
   burton_element_t( burton_element_t & ) = delete;
@@ -444,8 +445,8 @@ struct burton_element_t<2,2>
 
 
   //! the element type
-  virtual shape_t type() const
-  { raise_runtime_error("you should never get here"); };
+  auto shape() const
+  { return shape_; };
 
 
   //----------------------------------------------------------------------------
@@ -463,11 +464,13 @@ struct burton_element_t<2,2>
   //! \return A pair with a) the number of vertex collections making up the
   //!   entity and b) the number of vertices per collection.
   //----------------------------------------------------------------------------
-  virtual std::vector<size_t> create_entities(
-    const id_t & cell, size_t dim,
+  std::vector<size_t>
+  create_entities(
+    const id_t & cell,
+    size_t dim,
     const connectivity_t& conn,
-    id_t * entities ) 
-  { raise_runtime_error("you should never get here"); };
+    id_t * entities 
+  ); 
 
   //----------------------------------------------------------------------------
   //! \brief create_bound_entities binds mesh entities across domains.
@@ -487,16 +490,19 @@ struct burton_element_t<2,2>
   //! \return A pair with a) the number of entity collections making up the
   //!   binding and b) the number of entities per collection.
   //----------------------------------------------------------------------------
-  virtual std::vector<size_t> create_bound_entities(
-    size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id,
+  static 
+  std::vector<size_t>
+  create_bound_entities(
+    size_t from_domain, 
+    size_t to_domain, 
+    size_t dim, 
+    const id_t & cell_id,
     const connectivity_t& primal_conn,
     const connectivity_t& domain_conn,
-    id_t * entities ) 
-  { raise_runtime_error("you should never get here"); };
+    id_t * entities ); 
 
   //! \brief update the mesh geometry
-  virtual void update( void ) 
-  { raise_runtime_error("you should never get here"); };
+  void update( void ); 
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
@@ -510,11 +516,11 @@ struct burton_element_t<2,2>
     return mesh_; 
   }
 
+private:
+
   //============================================================================
   // Private Data
   //============================================================================
-  
-private:
   
   //! a reference to the mesh topology
   mesh_topology_base_t * mesh_ = nullptr;
@@ -522,13 +528,14 @@ private:
   //! the region tag
   size_t region_ = 0;
 
-protected:
-
   //! the geometry informtation
   real_t area_ = 0;
   point_t midpoint_ = 0;
   point_t centroid_ = 0;
   real_t min_length_ = 0;
+
+  // the shape parameter
+  shape_t shape_ = shape_t::none;
 };
 
 
@@ -603,11 +610,12 @@ struct burton_element_t<3,2>
   //============================================================================
 
   //! Constructor
-  burton_element_t(mesh_topology_base_t & mesh) : mesh_(&mesh) 
+  burton_element_t(mesh_topology_base_t & mesh, shape_t shape) 
+    : mesh_(&mesh), shape_(shape)
   {};
 
   //! Destructor
-  virtual ~burton_element_t() {}
+  ~burton_element_t() {}
 
   //! dissallow copying
   burton_element_t( burton_element_t & ) = delete;
@@ -658,8 +666,8 @@ struct burton_element_t<3,2>
   { return min_length_; }
 
   //! the element type
-  virtual shape_t type() const
-  { raise_runtime_error("you should never get here"); };
+  auto shape() const
+  { return shape_; };
 
   //----------------------------------------------------------------------------
   //! \brief create_entities is a function that creates entities
@@ -676,7 +684,7 @@ struct burton_element_t<3,2>
   //! \return A pair with a) the number of vertex collections making up the
   //!   entity and b) the number of vertices per collection.
   //----------------------------------------------------------------------------
-  virtual std::vector<size_t> create_entities(
+  std::vector<size_t> create_entities(
     const id_t & cell, size_t dim,
     const connectivity_t& conn,
     id_t * entities ) 
@@ -700,7 +708,7 @@ struct burton_element_t<3,2>
   //! \return A pair with a) the number of entity collections making up the
   //!   binding and b) the number of entities per collection.
   //----------------------------------------------------------------------------
-  virtual std::vector<id_t> create_bound_entities(
+  std::vector<id_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell_id,
     const connectivity_t& primal_conn,
     const connectivity_t& domain_conn,
@@ -708,8 +716,7 @@ struct burton_element_t<3,2>
   { raise_runtime_error("you should never get here"); };
 
   //! \brief update the mesh geometry
-  virtual void update( void ) 
-  { raise_runtime_error("you should never get here"); };
+  void update( void ); 
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
@@ -735,14 +742,15 @@ private:
   //! the entity tags
   tag_list_t tags_;
 
-protected: 
-
   //! the geometric information
   real_t area_ = 0;
   real_t min_length_ = 0;
   vector_t normal_ = 0;
   point_t centroid_ = 0;
   point_t midpoint_ = 0;
+
+  // the shape parameter
+  shape_t shape_ = shape_t::none;
 
 }; // class burton_element_t
 
@@ -829,11 +837,12 @@ struct burton_element_t<3,3>
   //============================================================================
 
   //! Constructor
-  burton_element_t(mesh_topology_base_t & mesh) : mesh_(&mesh)
+  burton_element_t(mesh_topology_base_t & mesh, shape_t shape) 
+    : mesh_(&mesh), shape_(shape)
   {}
 
   //! Destructor
-  virtual ~burton_element_t() {}
+  ~burton_element_t() {}
 
   //! dissallow copying
   burton_element_t( burton_element_t & ) = delete;
@@ -877,8 +886,8 @@ struct burton_element_t<3,3>
   { return region_; }
 
   //! the element type
-  virtual shape_t type() const
-  { raise_runtime_error("you should never get here"); };
+  auto type() const
+  { return shape_; };
 
 
   //----------------------------------------------------------------------------
@@ -896,7 +905,7 @@ struct burton_element_t<3,3>
   //! \return A pair with a) the number of vertex collections making up the
   //!   entity and b) the number of vertices per collection.
   //----------------------------------------------------------------------------
-  virtual std::vector<size_t> create_entities(
+  std::vector<size_t> create_entities(
     const id_t & cell, size_t dim,
     const connectivity_t& conn,
     id_t * entities )
@@ -920,7 +929,7 @@ struct burton_element_t<3,3>
   //! \return A pair with a) the number of entity collections making up the
   //!   binding and b) the number of entities per collection.
   //----------------------------------------------------------------------------
-  virtual std::vector<size_t> create_bound_entities(
+  std::vector<size_t> create_bound_entities(
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell,
     const connectivity_t& primal_conn,
     const connectivity_t& domain_conn,
@@ -928,8 +937,7 @@ struct burton_element_t<3,3>
   { raise_runtime_error("you should never get here"); };
 
   //! \brief update the mesh geometry
-  virtual void update( void ) 
-  { raise_runtime_error("you should never get here"); };
+  void update( void ); 
 
   //! \brief reset the mesh pointer
   void reset(mesh_topology_base_t & mesh) 
@@ -955,13 +963,14 @@ private:
   //! the region tag
   size_t region_ = 0;
 
-protected:
-
   //! the geometry informtation
   real_t volume_ = 0;
   point_t centroid_ = 0;
   point_t midpoint_ = 0;
   real_t min_length_ = 0;
+
+  // the shape parameter
+  shape_t shape_ = shape_t::none;
 
 }; // class burton_element_t
 
@@ -974,39 +983,6 @@ protected:
 ////////////////////////////////////////////////////////////////////////////////
 template< std::size_t N >
 using burton_cell_t = burton_element_t<N,N>;
-
-
-namespace detail {
-
-////////////////////////////////////////////////////////////////////////////////
-/// \brief compute the minimum length
-////////////////////////////////////////////////////////////////////////////////
-template< typename VS >
-inline auto min_length( VS && vs ) {
-
-  std::decay_t< decltype(vs[0]->coordinates()[0]) > len;
-  bool first = true;
-
-  // check each vertex combination
-  for ( auto vi : vs ) {
-    const auto & pi = vi->coordinates();
-    for ( auto vj : vs ) {
-      if ( vi == vj ) continue;
-      const auto & pj = vj->coordinates();
-      auto delta = pi - pj;
-      if ( first ) {
-        len = abs(delta);
-        first = false;
-      }
-      else {
-        len = std::min( abs(delta), len );
-      }
-    }
-  }
-
-  return len;
-}
-} // namespace detail
 
 } // namespace burton
 } // namespace mesh

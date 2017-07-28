@@ -17,7 +17,6 @@
 #include "flecsi/coloring/parmetis_colorer.h"
 #include "flecsi/execution/execution.h"
 #include "flecsi/io/exodus_definition.h"
-#include "flecsale/common/constants.h"
 
 // system includes
 #include <iostream>
@@ -28,8 +27,168 @@ clog_register_tag(coloring);
 namespace apps {
 namespace hydro {
   
-//! a trivially copyable character array
-using char_array_t = std::array<char, common::max_char_length>;
+////////////////////////////////////////////////////////////////////////////////
+//! Build the list of exclusve, shared and ghost entities
+////////////////////////////////////////////////////////////////////////////////
+template < 
+  int entity_dim,
+  typename MD, 
+  typename COMM,
+  typename CLOSURE_SET,
+  typename ENTITY_MAP,
+  typename INTERSECTION_MAP,
+  typename INDEX_COLOR,
+  typename COLOR_INFO,
+  int DIM = MD::dimension()
+>
+auto color_entity(
+  const MD & md, 
+  COMM * communicator,
+  const CLOSURE_SET & closure, 
+  const ENTITY_MAP & remote_info_map,
+  const ENTITY_MAP & shared_cells_map,
+  const INTERSECTION_MAP & closure_intersection_map,
+  INDEX_COLOR & entities, 
+  COLOR_INFO & entity_color_info
+) {
+
+  // some compile time constants
+  constexpr auto cell_dim = DIM;
+  
+  // some type aliases
+  using entity_info_t = flecsi::coloring::entity_info_t;
+
+  // info about the mpi communicator
+  auto comm_size = communicator->size();
+  auto rank = communicator->rank();
+
+  // Form the entity closure
+  auto entity_closure = 
+    flecsi::topology::entity_closure<cell_dim, entity_dim>(md, closure);
+
+  // Assign entity ownership
+  std::vector<std::set<size_t>> entity_requests(comm_size);
+  std::set<entity_info_t> entity_info;
+
+  {
+    size_t offset(0);
+    for(auto i: entity_closure) {
+
+      // Get the set of cells that reference this entity.
+      auto referencers = 
+        flecsi::topology::entity_referencers<cell_dim, entity_dim>(md, i);
+
+      {
+        clog_tag_guard(coloring);
+        clog_container_one(info, i << " referencers", referencers, clog::space);
+      } // guard
+
+      size_t min_rank(std::numeric_limits<size_t>::max());
+      std::set<size_t> shared_entities;
+
+      // Iterate the direct referencers to assign entity ownership.
+      for(auto c: referencers) {
+
+        // Check the remote info map to see if this cell is
+        // off-color. If it is, compare it's rank for
+        // the ownership logic below.
+        if(remote_info_map.find(c) != remote_info_map.end()) {
+          min_rank = std::min(min_rank, remote_info_map.at(c).rank);
+          shared_entities.insert(remote_info_map.at(c).rank);
+        }
+        else {
+          // If the referencing cell isn't in the remote info map
+          // it is a local cell.
+
+          // Add our rank to compare for ownership.
+          min_rank = std::min(min_rank, size_t(rank));
+
+          // If the local cell is shared, we need to add all of
+          // the ranks that reference it.
+          if(shared_cells_map.find(c) != shared_cells_map.end()) 
+            shared_entities.insert( 
+              shared_cells_map.at(c).shared.begin(),
+              shared_cells_map.at(c).shared.end()
+            );
+        } // if
+
+        // Iterate through the closure intersection map to see if the
+        // indirect reference is part of another rank's closure, i.e.,
+        // that it is an indirect dependency.
+        for(auto ci: closure_intersection_map) 
+          if(ci.second.find(c) != ci.second.end()) 
+            shared_entities.insert(ci.first);
+      } // for
+
+      if(min_rank == rank) {
+        // This is a entity that belongs to our rank.
+        auto entry = entity_info_t(i, rank, offset++, shared_entities);
+        entity_info.insert( entry );
+      }
+      else {
+        // Add remote entity to the request for offset information.
+        entity_requests[min_rank].insert(i);
+      } // if
+    } // for
+  } // scope
+
+  auto entity_offset_info =
+    communicator->get_entity_info(entity_info, entity_requests);
+
+  // Vertices index coloring.
+  for(auto i: entity_info) {
+    // if it belongs to other colors, its a shared entity
+    if(i.shared.size()) {
+      entities.shared.insert(i);
+      // Collect all colors with whom we require communication
+      // to send shared information.
+      entity_color_info.shared_users = 
+        flecsi::utils::set_union(entity_color_info.shared_users, i.shared);
+    }
+    // otherwise, its exclusive
+    else 
+      entities.exclusive.insert(i);
+  } // for
+
+  {
+    size_t r(0);
+    for(auto i: entity_requests) {
+
+      auto offset(entity_offset_info[r].begin());
+      for(auto s: i) {
+        entities.ghost.insert(entity_info_t(s, r, *offset));
+        // Collect all colors with whom we require communication
+        // to receive ghost information.
+        entity_color_info.ghost_owners.insert(r);
+        // increment counter
+        ++offset;
+      } // for
+
+      ++r;
+    } // for
+  } // scope
+
+  {
+    clog_tag_guard(coloring);
+    clog_container_one(
+      info, 
+      "exclusive entities("<<entity_dim<<")", 
+      entities.exclusive, 
+      clog::newline
+    );
+    clog_container_one(
+      info, "shared entities("<<entity_dim<<")", entities.shared, clog::newline
+    );
+    clog_container_one(
+      info, "ghost entities("<<entity_dim<<")" , entities.ghost, clog::newline
+    );
+  } // guard
+
+  
+  entity_color_info.exclusive = entities.exclusive.size();
+  entity_color_info.shared = entities.shared.size();
+  entity_color_info.ghost = entities.ghost.size();
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief the main cell coloring driver
@@ -52,14 +211,10 @@ void partition_mesh( char_array_t filename )
   auto filename_string = std::string( filename.data() );
   exodus_definition_t md( filename_string );
 
-  // get info about the mpi communicator
-  int comm_size;
-  int rank;
-  MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
   // Create a communicator instance to get neighbor information.
-  auto communicator = std::make_shared<flecsi::coloring::mpi_communicator_t>();
+  auto communicator = std::make_unique<flecsi::coloring::mpi_communicator_t>();
+  auto comm_size = communicator->size();
+  auto rank = communicator->rank();
 
   //----------------------------------------------------------------------------
   // Cell Coloring
@@ -74,7 +229,7 @@ void partition_mesh( char_array_t filename )
   auto dcrs = flecsi::coloring::make_dcrs(md);
 
   // Create a colorer instance to generate the primary coloring.
-  auto colorer = std::make_shared<flecsi::coloring::parmetis_colorer_t>();
+  auto colorer = std::make_unique<flecsi::coloring::parmetis_colorer_t>();
 
   // Create the primary coloring.
   cells.primary = colorer->color(dcrs);
@@ -93,7 +248,7 @@ void partition_mesh( char_array_t filename )
   // through vertex intersections (specified by last argument "1").
   // To specify edge or face intersections, use 2 (edges) or 3 (faces).
   auto closure = 
-    flecsi::topology::entity_closure<cell_dim, cell_dim, thru_dim>(
+    flecsi::topology::entity_neighbors<cell_dim, cell_dim, thru_dim>(
       md, cells.primary
     );
 
@@ -125,7 +280,7 @@ void partition_mesh( char_array_t filename )
   // we actually need information about the ownership of these indices
   // so that we can deterministically assign rank ownership to vertices.
   auto nearest_neighbor_closure =
-    flecsi::topology::entity_closure<cell_dim, cell_dim, thru_dim>(
+    flecsi::topology::entity_neighbors<cell_dim, cell_dim, thru_dim>(
       md, nearest_neighbors
     );
 
@@ -215,6 +370,11 @@ void partition_mesh( char_array_t filename )
     clog_container_one(info, "ghost cells ", cells.ghost, clog::newline);
   } // guard
   
+  // store the sizes of each set
+  cell_color_info.exclusive = cells.exclusive.size();
+  cell_color_info.shared = cells.shared.size();
+  cell_color_info.ghost = cells.ghost.size();
+
   //----------------------------------------------------------------------------
   // Create some maps for easy lookups when determining the other dependent
   // closures.
@@ -245,126 +405,38 @@ void partition_mesh( char_array_t filename )
   //----------------------------------------------------------------------------
   // Vertex Closure
   //----------------------------------------------------------------------------
-    
-  // Form the vertex closure
-  auto vertex_closure = flecsi::topology::vertex_closure<cell_dim>(md, closure);
-
-  // Assign vertex ownership
-  std::vector<std::set<size_t>> vertex_requests(comm_size);
-  std::set<entity_info_t> vertex_info;
-
-  {
-    size_t offset(0);
-    for(auto i: vertex_closure) {
-
-      // Get the set of cells that reference this vertex.
-      auto referencers = flecsi::topology::vertex_referencers<cell_dim>(md, i);
-
-      {
-        clog_tag_guard(coloring);
-        clog_container_one(info, i << " referencers", referencers, clog::space);
-      } // guard
-
-      size_t min_rank(std::numeric_limits<size_t>::max());
-      std::set<size_t> shared_vertices;
-
-      // Iterate the direct referencers to assign vertex ownership.
-      for(auto c: referencers) {
-
-        // Check the remote info map to see if this cell is
-        // off-color. If it is, compare it's rank for
-        // the ownership logic below.
-        if(remote_info_map.find(c) != remote_info_map.end()) {
-          min_rank = std::min(min_rank, remote_info_map[c].rank);
-          shared_vertices.insert(remote_info_map[c].rank);
-        }
-        else {
-          // If the referencing cell isn't in the remote info map
-          // it is a local cell.
-
-          // Add our rank to compare for ownership.
-          min_rank = std::min(min_rank, size_t(rank));
-
-          // If the local cell is shared, we need to add all of
-          // the ranks that reference it.
-          if(shared_cells_map.find(c) != shared_cells_map.end()) 
-            shared_vertices.insert( 
-              shared_cells_map[c].shared.begin(),
-              shared_cells_map[c].shared.end()
-            );
-        } // if
-
-        // Iterate through the closure intersection map to see if the
-        // indirect reference is part of another rank's closure, i.e.,
-        // that it is an indirect dependency.
-        for(auto ci: closure_intersection_map) 
-          if(ci.second.find(c) != ci.second.end()) 
-            shared_vertices.insert(ci.first);
-      } // for
-
-      if(min_rank == rank) {
-        // This is a vertex that belongs to our rank.
-        auto entry = entity_info_t(i, rank, offset++, shared_vertices);
-        vertex_info.insert( entry );
-      }
-      else {
-        // Add remote vertex to the request for offset information.
-        vertex_requests[min_rank].insert(i);
-      } // if
-    } // for
-  } // scope
-
-  auto vertex_offset_info =
-    communicator->get_entity_info(vertex_info, vertex_requests);
-
-  // Vertices index coloring.
+  
   flecsi::coloring::index_coloring_t vertices;
   flecsi::coloring::coloring_info_t vertex_color_info;
 
-  for(auto i: vertex_info) {
-    // if it belongs to other colors, its a shared vertex
-    if(i.shared.size()) {
-      vertices.shared.insert(i);
-      // Collect all colors with whom we require communication
-      // to send shared information.
-      vertex_color_info.shared_users = 
-        flecsi::utils::set_union(vertex_color_info.shared_users, i.shared);
-    }
-    // otherwise, its exclusive
-    else 
-      vertices.exclusive.insert(i);
-  } // for
+  color_entity<0>( 
+    md, 
+    communicator.get(), 
+    closure, 
+    remote_info_map, 
+    shared_cells_map,
+    closure_intersection_map,
+    vertices, 
+    vertex_color_info 
+  );
 
-  {
-    size_t r(0);
-    for(auto i: vertex_requests) {
+  //----------------------------------------------------------------------------
+  // Edge Closure
+  //----------------------------------------------------------------------------
+  
+  flecsi::coloring::index_coloring_t edges;
+  flecsi::coloring::coloring_info_t edge_color_info;
 
-      auto offset(vertex_offset_info[r].begin());
-      for(auto s: i) {
-        vertices.ghost.insert(entity_info_t(s, r, *offset));
-        // Collect all colors with whom we require communication
-        // to receive ghost information.
-        vertex_color_info.ghost_owners.insert(r);
-        // increment counter
-        ++offset;
-      } // for
-
-      ++r;
-    } // for
-  } // scope
-
-  {
-    clog_tag_guard(coloring);
-    clog_container_one(
-      info, "exclusive vertices ", vertices.exclusive, clog::newline
-    );
-    clog_container_one(
-      info, "shared vertices ", vertices.shared, clog::newline
-    );
-    clog_container_one(
-      info, "ghost vertices ", vertices.ghost, clog::newline
-    );
-  } // guard
+  color_entity<1>( 
+    md, 
+    communicator.get(), 
+    closure, 
+    remote_info_map, 
+    shared_cells_map,
+    closure_intersection_map,
+    edges, 
+    edge_color_info 
+  );
 
 
   //----------------------------------------------------------------------------
@@ -374,15 +446,6 @@ void partition_mesh( char_array_t filename )
   // Get the context instance.
   auto & context = flecsi::execution::context_t::instance();
 
-  // store the sizes of each set
-  cell_color_info.exclusive = cells.exclusive.size();
-  cell_color_info.shared = cells.shared.size();
-  cell_color_info.ghost = cells.ghost.size();
-  
-  vertex_color_info.exclusive = vertices.exclusive.size();
-  vertex_color_info.shared = vertices.shared.size();
-  vertex_color_info.ghost = vertices.ghost.size();
-
   {
     clog_tag_guard(coloring);
     clog(info) << cell_color_info << std::endl << std::flush;
@@ -390,12 +453,15 @@ void partition_mesh( char_array_t filename )
   } // gaurd
 
   // Gather the coloring info from all colors
-  auto cell_coloring_info = communicator->get_coloring_info(cell_color_info);
+  auto cell_coloring_info = 
+    communicator->gather_coloring_info(cell_color_info);
+  auto edge_coloring_info =
+    communicator->gather_coloring_info(edge_color_info);
   auto vertex_coloring_info =
-    communicator->get_coloring_info(vertex_color_info);
+    communicator->gather_coloring_info(vertex_color_info);
 
   {
-    clog_tag_guard(coloring_output);
+    clog_tag_guard(coloring);
     clog(info) << "vertex input coloring info color " 
                << rank << vertex_color_info << std::endl;
     for(auto ci: vertex_coloring_info) 
@@ -404,13 +470,90 @@ void partition_mesh( char_array_t filename )
   }
 
   // Add colorings to the context.
-  context.add_coloring(0, cells, cell_coloring_info);
-  context.add_coloring(1, vertices, vertex_coloring_info);
+  using index_spaces = mesh_t::index_spaces_t;
+
+  context.add_coloring(index_spaces::vertices, vertices, vertex_coloring_info);
+  context.add_coloring(index_spaces::edges, edges, edge_coloring_info);
+  context.add_coloring(index_spaces::cells, cells, cell_coloring_info);
+    
+  //----------------------------------------------------------------------------
+  // Add adjacency information
+  //----------------------------------------------------------------------------
+  
+  // create the starting index
+  size_t index = index_spaces::vertices_to_edges;
+
+  // create a master list of all entities
+  std::vector< std::vector<size_t> > entity_ids(num_dims+1);
+
+  auto num_verts = 
+    vertices.exclusive.size() + vertices.shared.size() + vertices.ghost.size();
+  auto num_edges =
+    edges.exclusive.size() + edges.shared.size() + edges.ghost.size();
+  auto num_cells =
+    cells.exclusive.size() + cells.shared.size() + cells.ghost.size();
+
+  entity_ids[0].reserve( num_verts );
+  entity_ids[1].reserve( num_edges );
+  entity_ids[2].reserve( num_cells );
+
+  for ( auto v : vertices.exclusive ) entity_ids[0].push_back(v.id);
+  for ( auto v : vertices.shared    ) entity_ids[0].push_back(v.id);
+  for ( auto v : vertices.ghost     ) entity_ids[0].push_back(v.id);
+
+  for ( auto e : edges.exclusive ) entity_ids[1].push_back(e.id);
+  for ( auto e : edges.shared    ) entity_ids[1].push_back(e.id);
+  for ( auto e : edges.ghost     ) entity_ids[1].push_back(e.id);
+
+  for ( auto c : cells.exclusive ) entity_ids[2].push_back(c.id);
+  for ( auto c : cells.shared    ) entity_ids[2].push_back(c.id);
+  for ( auto c : cells.ghost     ) entity_ids[2].push_back(c.id);
+
+  // loop over each dimension and determine the adjacency sizes
+  for ( int from_dim = 0; from_dim<=num_dims; ++from_dim ) {
+   
+    // the master list of all entity ids
+    auto & from_ids = entity_ids[from_dim];
+
+    // remove duplicate entries from the master lists
+    std::sort( from_ids.begin(), from_ids.end() );
+    from_ids.erase( 
+      std::unique( from_ids.begin(), from_ids.end() ), 
+      from_ids.end() 
+    );
+
+    for ( int to_dim = 0; to_dim<=num_dims; ++to_dim ) {
+
+      // skip the case where both dimensions are the same
+      if ( from_dim == to_dim ) continue;
+
+      // populate the adjacency information
+      flecsi::coloring::adjacency_info_t ai;
+      ai.index_space = index++;
+      ai.from_index_space = from_dim;
+      ai.to_index_space = to_dim;
+      ai.color_sizes.resize(comm_size);
+  
+      // loop over all cells and count the number of adjacencies
+      size_t cnt = 0;
+      for ( auto c : from_ids )
+        cnt += md.entities(from_dim, to_dim, c).size();
+
+      // gather the results
+      ai.color_sizes = communicator->gather_sizes( cnt );
+    
+      // add the result to the context
+      context.add_adjacency(ai);
+
+    }
+  }
 
   //----------------------------------------------------------------------------
   // output the result
   //----------------------------------------------------------------------------
-  
+
+  // some aliases
+  using point_t = mesh_t::point_t; 
   using exodus_t = flecsi::io::exodus_base__<num_dims, real_t>;
   
   //------------------------------------
@@ -458,7 +601,7 @@ void partition_mesh( char_array_t filename )
   std::vector<real_t> vertex_coord( num_nodes * num_dims );
   
   for ( size_t i=0; i<num_nodes; ++i ) {
-    const auto & vert = md.vertex(i);
+    const auto & vert = md.vertex<point_t>(i);
     for ( int d=0; d<num_dims; ++d ) 
       vertex_coord[ d*num_nodes + i ] = vert[d];
   }
@@ -539,11 +682,100 @@ void partition_mesh( char_array_t filename )
 
 } // somerhing
 
+////////////////////////////////////////////////////////////////////////////////
+/// \brief the main mesh initialization driver
+////////////////////////////////////////////////////////////////////////////////
+void initialize_mesh( 
+  client_handle__<mesh_t, flecsi::dwd> mesh, 
+  char_array_t filename
+) {
+  clog(info) << "INIT MESH TASK" << std::endl;
+
+  // some constant expressions
+  constexpr auto num_dims = mesh_t::num_dimensions;
+  
+  // alias some types
+  using real_t = mesh_t::real_t;
+  using exodus_definition_t = flecsi::io::exodus_definition__<num_dims, real_t>;
+  using point_t = typename mesh_t::point_t;
+  using vertex_t = typename mesh_t::vertex_t;
+  using cell_t = typename mesh_t::cell_t;
+  
+  //----------------------------------------------------------------------------
+  // Get context information
+  //----------------------------------------------------------------------------
+
+  // get the context
+  auto & context = flecsi::execution::context_t::instance();
+  auto rank = context.color();
+
+  // get the entity maps
+  auto & vertex_map = context.index_map( mesh_t::index_spaces_t::vertices );
+  auto & reverse_vertex_map = 
+    context.reverse_index_map( mesh_t::index_spaces_t::vertices );
+
+  auto & cell_map = context.index_map( mesh_t::index_spaces_t::cells );
+  
+  //----------------------------------------------------------------------------
+  // Load the mesh
+  //----------------------------------------------------------------------------
+  
+  auto filename_string = std::string( filename.data() );
+  exodus_definition_t md( filename_string );
+
+  //----------------------------------------------------------------------------
+  // create the vertices
+  //----------------------------------------------------------------------------
+
+  std::vector< vertex_t * > vertices;
+  vertices.reserve( vertex_map.size() );
+
+  for(auto & vm: vertex_map) { 
+    // get the point
+    const auto & p = md.vertex<point_t>( vm.second );
+    // now create it
+    auto v = mesh.create_vertex( p );
+    vertices.emplace_back(v);
+  } // for vertices
+
+  std::cout << "vertices: " << vertices.size() << std::endl;
+  
+  //----------------------------------------------------------------------------
+  // create the cells
+  //----------------------------------------------------------------------------
+
+  for(auto & cm: cell_map) { 
+    // get the list of vertices
+    auto vs = 
+      md.entities( cell_t::dimension, vertex_t::dimension, cm.second );
+    // create a list of vertex pointers
+    std::vector< vertex_t * > elem_vs( vs.size() );
+    // transform the list of vertices to mesh ids
+    std::transform(
+      vs.begin(),
+      vs.end(),
+      elem_vs.begin(),
+      [&](auto v) { return vertices[ reverse_vertex_map[v] ]; }
+    );
+    // create the cell
+    auto c = mesh.create_cell( elem_vs ); 
+  }
+
+  std::cout << "cells: " << cell_map.size() << std::endl;
+  
+  //----------------------------------------------------------------------------
+  // initialize the mesh
+  //----------------------------------------------------------------------------
+  
+  mesh.init(); 
+
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Task Registration
 ///////////////////////////////////////////////////////////////////////////////
 flecsi_register_mpi_task(partition_mesh);
+flecsi_register_task(initialize_mesh, loc, single);
   
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -566,8 +798,6 @@ int specialization_tlt_init(int argc, char ** argv)
   // process the simple ones
   if ( args.count("h") )
     return 0;
-  else if ( args.count("?") ) 
-    return 1;
  
   // get the input file
   auto mesh_file_name = 
@@ -594,6 +824,39 @@ int specialization_tlt_init(int argc, char ** argv)
   
   return 0;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//! \brief The specialization initialization driver
+///////////////////////////////////////////////////////////////////////////////
+int specialization_spmd_init(int argc, char ** argv)
+{
+  //===========================================================================
+  // Parse arguments
+  //===========================================================================
+  
+  auto args = process_arguments( argc, argv );
+  // Assume arguments are sanitized
+  
+  // get the input file
+  auto mesh_file_name = 
+    args.count("m") ? args.at("m") : std::string();
+  
+  // need to put the filename into a statically sized character array
+  char_array_t filename;
+  strcpy( filename.data(), mesh_file_name.c_str() );
+  
+  //===========================================================================
+  // Load the mesh
+  //===========================================================================
+
+  // get a mesh handle and call the initialization task
+  auto mesh_handle = flecsi_get_client_handle(mesh_t, meshes, mesh0);
+  auto f1 = flecsi_execute_task(initialize_mesh, single, mesh_handle, filename);
+  f1.wait();
+
+  return 0;
+}
+
 
 } // namespace
 } // namespace

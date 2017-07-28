@@ -35,6 +35,11 @@ include(install_headers)
 
 # This changes the Cinch default
 option(ENABLE_BOOST_PREPROCESSOR "Enable Boost.Preprocessor" ON)
+option(
+  ENABLE_BOOST_PROGRAM_OPTIONS
+  "Enable Boost program options for command-line flags"
+  ON
+)
 
 # now load the extra functionality
 cinch_load_extras()
@@ -321,11 +326,20 @@ endif()
 # Boost - Right now, only used by portage
 #------------------------------------------------------------------------------#
 
-find_package(Boost QUIET)
+if (ENABLE_BOOST_PROGRAM_OPTIONS)
+  find_package(Boost COMPONENTS program_options REQUIRED)
+else()
+  find_package(Boost QUIET)
+endif()
 
 if(Boost_FOUND)
   message(STATUS "Boost location: ${Boost_INCLUDE_DIRS}")
   include_directories( ${Boost_INCLUDE_DIRS} )
+endif()
+
+if (ENABLE_BOOST_PROGRAM_OPTIONS)
+  list(APPEND FleCSALE_LIBRARIES ${Boost_LIBRARIES} )
+  add_definitions( -DENABLE_BOOST_PROGRAM_OPTIONS )
 endif()
 
 #------------------------------------------------------------------------------#
@@ -438,7 +452,15 @@ set(FleCSI_RUNTIME_DRIVER
   ${FleCSI_EXEC_DIR}/${FLECSI_RUNTIME_MODEL}/runtime_driver.cc
   CACHE INTERNAL ""
 )
-#add_definitions( -DFLECSI_RUNTIME_MODEL_${FLECSI_RUNTIME_MODEL} )
+
+# Get the compiler defines and includes
+get_directory_property(_defines DIRECTORY flecsi COMPILE_DEFINITIONS)
+
+# Create list of compiler definitions for command
+list(REMOVE_DUPLICATES _defines)
+foreach(def ${_defines})
+  add_definitions(-D${def})
+endforeach()
 
 #------------------------------------------------------------------------------#
 # Add library targets

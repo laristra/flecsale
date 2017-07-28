@@ -22,5 +22,13 @@ void specialization_tlt_init(int argc, char** argv)
   apps::hydro::specialization_tlt_init( argc, argv );
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//! \brief The specialization initialization driver.
+///////////////////////////////////////////////////////////////////////////////
+void specialization_spmd_init(int argc, char** argv) 
+{
+  apps::hydro::specialization_spmd_init( argc, argv );
+}
+
 } // namespace
 } // namespace

@@ -72,7 +72,9 @@ public:
   //============================================================================
 
   //! Constructor
-  burton_vertex_t(mesh_topology_base_t & mesh) : mesh_(&mesh) 
+  template< typename...ARGS >
+  burton_vertex_t(mesh_topology_base_t & mesh, ARGS &&... args) 
+    : mesh_(&mesh), coordinates_{ std::forward<ARGS>(args)... }
   {}
 
   // dissallow copying
@@ -130,7 +132,7 @@ private:
   mesh_topology_base_t * mesh_ = nullptr;
   
   //! the coordinates of the vertex
-  point_t coordinates_;
+  point_t coordinates_ = 0;
 
   //! the entity tags
   tag_list_t tags_;

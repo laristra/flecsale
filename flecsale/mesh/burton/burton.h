@@ -9,7 +9,6 @@
 #pragma once
 
 // user includes
-#include "flecsi/io/io.h"
 #include "flecsale/mesh/burton/burton_mesh.h"
 
 
@@ -43,36 +42,5 @@ using burton_mesh_2d_t = burton_mesh_t<2>;
 using burton_mesh_3d_t = burton_mesh_t<3>;
 
 }
-}
-}
-
-//! \brief Expose attributes and attachement sites to all namspaces.
-//! This is horrible but it has to be done other wise users need to 
-//! write stuff like flecsi_has_attribute_at( flecsale::mesh::burton::persistent,
-//! flecsale::mesh::burton::vertex ).
-using namespace flecsale::mesh::burton::attributes;
-
-////////////////////////////////////////////////////////////////////////////////
-// Delayed includes
-////////////////////////////////////////////////////////////////////////////////
-
-// #include "flecsale/mesh/burton/burton_io_exodus.h"
-// #include "flecsale/mesh/burton/burton_io_tecplot.h"
-// #include "flecsale/mesh/burton/burton_io_vtk.h"
-// #include "flecsale/mesh/burton/burton_io_vtu.h"
-// #include "flecsale/mesh/burton/burton_io_vtm.h"
-
-////////////////////////////////////////////////////////////////////////////////
-// load some things
-////////////////////////////////////////////////////////////////////////////////
-
-namespace flecsale {
-namespace mesh {
-
-//! \brief bring write/read mesh into the flecsale::mesh namespace
-using flecsi::io::write_mesh;
-//! \brief bring write/read mesh into the flecsale::mesh namespace
-using flecsi::io::read_mesh;
-
 }
 }

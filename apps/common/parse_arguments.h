@@ -30,6 +30,9 @@ static auto parse_arguments(
 
   std::map<std::string, std::string> key_value_pair;
 
+  // reset getopts global variable
+  optind = 0;
+
   while (1) {
     
     // getopt_long stores the option index here.
@@ -56,6 +59,10 @@ static auto parse_arguments(
 
 
   }
+
+  // make sure it 
+  if (optind > argc) 
+   raise_runtime_error( "Expected argument after options" );
 
   return key_value_pair;
 }

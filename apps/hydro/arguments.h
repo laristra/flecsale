@@ -55,8 +55,7 @@ inline auto process_arguments(int argc, char** argv)
   auto args = parse_arguments(argc, argv, long_options, short_options);
   
   // process the simple ones
-  if ( args.count("h") || args.count("?") )
-    print_usage();
+  if ( args.count("h") ) print_usage();
 
   return args;
 }

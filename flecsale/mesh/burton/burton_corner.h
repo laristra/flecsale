@@ -18,12 +18,6 @@ namespace flecsale {
 namespace mesh {
 namespace burton {
 
-
-
-//! forward decares
-template< std::size_t N >
-class burton_wedge_t;
-
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The burton_corner_t type provides an interface for managing and
 //!   geometry and state associated with mesh corners.
@@ -58,27 +52,6 @@ public:
   //! the flecsi mesh topology type
   using mesh_topology_base_t = 
     flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
-
-  //! Type of floating point.
-  using real_t = typename config_t::real_t;
-
-  //! Type containing coordinates of a vertex.
-  using point_t = typename config_t::point_t;
-
-  //! Type vector type.
-  using vector_t = typename config_t::vector_t;
-
-  //! the base vertex type
-  using vertex_t = burton_vertex_t<num_dimensions>;
-
-  //! the base edge type
-  using edge_t = burton_edge_t<num_dimensions>;
-
-  //! the base edge type
-  using face_t = burton_face_t<num_dimensions>;
-
-  //! the base cell type
-  using cell_t = burton_cell_t<num_dimensions>;
 
   //============================================================================
   // Constructors

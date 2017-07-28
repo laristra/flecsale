@@ -35,7 +35,16 @@ flecsi_register_data_client(mesh_t, meshes, mesh0);
 
 // create some field data.  Fields are registered as struct of arrays.
 // this allows us to access the data in different patterns.
-flecsi_register_field(mesh_t, hydro,  density,   mesh_t::real_t, dense, 2, cells);
+flecsi_register_field(
+  mesh_t, 
+  hydro,  
+  density,   
+  mesh_t::real_t, 
+  dense, 
+  2, 
+  mesh_t::index_spaces_t::cells
+);
+
 // flecsi_register_field(mesh_t, hydro, pressure,   mesh_t::real_t, dense, 1, cells);
 // flecsi_register_field(mesh_t, hydro, velocity, mesh_t::vector_t, dense, 2, cells);
 
@@ -61,53 +70,36 @@ flecsi_register_field(mesh_t, hydro,  density,   mesh_t::real_t, dense, 2, cells
 int driver(int argc, char** argv) 
 {
 
-  return 0;
-
   //===========================================================================
   // Parse arguments
   //===========================================================================
   
   auto args = process_arguments( argc, argv );
-  // help has already been processed by the specialization init driver
-
-  // get the input file
-  auto input_file_name = 
-    args.count("i") ? args.at("i") : std::string();
-
-  // override any inputs if need be
-  if ( !input_file_name.empty() ) {
-    std::cout << "Using input file \"" << input_file_name << "\"." 
-              << std::endl;
-    inputs_t::load( input_file_name );
-  }
-
-  // get the catalyst arguments
-  auto catalyst_args = 
-    args.count("c") ? args.at("c") : std::string();
-  // split them up into a list
-  auto catalyst_scripts = utils::split( catalyst_args, {';'} );
+  // Assume arguments are sanitized
   
-  if ( !catalyst_args.empty() ) {
-    std::cout << "Using catalyst args \"" << catalyst_args << "\"." 
-              << std::endl;
-  }
-
-
-
+  // get the input file
+  auto mesh_filename = 
+    args.count("m") ? args.at("m") : std::string();
+  
+  // need to put the filename into a statically sized character array
+  auto mesh_basename = utils::basename( mesh_filename );
 
   //===========================================================================
   // Mesh Setup
   //===========================================================================
 
-  // make the mesh
-  // auto mesh = inputs_t::make_mesh( /* solution time */ 0.0 );
-
-  // this is the mesh object
-  // mesh.is_valid();
- 
+  // get the client handle 
   auto mesh = flecsi_get_client_handle(mesh_t, meshes, mesh0);
  
-  cout << mesh;
+  // cout << mesh;
+  
+  // output the mesh
+  char_array_t prefix;
+  strcpy( prefix.data(), mesh_basename.c_str() );
+  auto f1 = flecsi_execute_task(output, single, mesh, prefix);
+  f1.wait();
+
+#if 0
 
   //===========================================================================
   // Some typedefs
@@ -133,7 +125,6 @@ int driver(int argc, char** argv)
 
 
 
-#if 0
   // set these variables as persistent for plotting
   flecsi_get_accessor(mesh, hydro,  density,   real_t, dense, 0).attributes().set(persistent);
   flecsi_get_accessor(mesh, hydro, pressure,   real_t, dense, 0).attributes().set(persistent);

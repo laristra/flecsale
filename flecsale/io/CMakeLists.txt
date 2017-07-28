@@ -5,6 +5,7 @@
 
 set(io_HEADERS
   catalyst/adaptor.h
+  io_exodus.h
   write_binary.h
   vtk.h
 )

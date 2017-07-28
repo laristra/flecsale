@@ -6,12 +6,6 @@
 set(mesh_HEADERS
   burton/burton.h
 
-  burton/burton_io_exodus.h
-  burton/burton_io_tecplot.h
-  burton/burton_io_vtk.h
-  burton/burton_io_vtm.h
-  burton/burton_io_vtu.h
-
   burton/burton_config.h
   burton/burton_mesh.h
   burton/burton_mesh_topology.h
@@ -21,14 +15,6 @@ set(mesh_HEADERS
   burton/burton_element.h
   burton/burton_vertex.h
   burton/burton_wedge.h
-
-  burton/burton_triangle.h
-  burton/burton_quadrilateral.h
-  burton/burton_polygon.h
-
-  burton/burton_tetrahedron.h
-  burton/burton_hexahedron.h
-  burton/burton_polyhedron.h
 
   factory.h
   mesh_utils.h
@@ -45,12 +31,6 @@ set(mesh_HEADERS
 
 set(mesh_SOURCES
   burton/burton_element.cc
-  burton/burton_hexahedron.cc
-  burton/burton_polygon.cc
-  burton/burton_polyhedron.cc
-  burton/burton_quadrilateral.cc
-  burton/burton_tetrahedron.cc
-  burton/burton_triangle.cc
   burton/burton_wedge.cc
 )
 

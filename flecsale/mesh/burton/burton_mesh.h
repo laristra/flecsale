@@ -30,24 +30,11 @@ namespace burton {
 namespace attributes {
   
 ////////////////////////////////////////////////////////////////////////////////
-/// \brief The burton mesh index spaces.
-////////////////////////////////////////////////////////////////////////////////
-enum index_spaces_t : size_t {
-  vertices,
-  edges,
-  faces,
-  cells,
-  corners,
-  wedges,
-};
-
-////////////////////////////////////////////////////////////////////////////////
 /// \brief Attributes for flecsi.
 ////////////////////////////////////////////////////////////////////////////////
 enum data_attributes_t : size_t {
   persistent
 };
-
 
 } // namespace attributes
 
@@ -120,6 +107,9 @@ public:
   //! Corner type.
   using corner_t = typename types_t::corner_t;
 
+  //! the index spaces type
+  using index_spaces_t = typename types_t::index_spaces_t;
+
   //! \brief The locations of different bits that we set as flags
   using bits = typename config_t::bits;
 
@@ -141,39 +131,8 @@ public:
   burton_mesh_t & operator=(const burton_mesh_t &) = default;
 
   //! \brief Copy constructor
-  burton_mesh_t(const burton_mesh_t &src) {
 
-    std::vector<vertex_t*> vs;
-
-    init_parameters( src.num_vertices() );
-
-    // create vertices
-    for ( auto v : src.vertices() ) {
-      auto vert = create_vertex( v->coordinates() );
-      vs.emplace_back( std::move(vert) );
-    }
-
-    // create cells
-    for ( auto c : src.cells() ) {
-      auto verts = src.vertices( c );
-      auto n = verts.size();
-      std::vector<vertex_t*> elem_vs( n );
-      for ( auto i=0; i<n; i++ ) elem_vs[i] = vs[ verts[i].id() ];
-        create_cell( elem_vs );   
-    } // for
-
-    // initialize everything
-    init();
-
-    // get the source cells
-    auto src_cells = src.cells();
-
-    // override the region ids
-    auto num_reg = src.num_regions();
-    for ( auto c : cells() ) 
-      c->region() = src_cells[c.id()]->region();
-    set_num_regions( num_reg );
-  }
+  burton_mesh_t(const burton_mesh_t &src) = default;
 
   //! \brief allow move construction
   burton_mesh_t( burton_mesh_t && ) = default;
@@ -188,8 +147,11 @@ public:
     for ( auto e : edges() ) e->reset( *this );
     for ( auto f : faces() ) f->reset( *this );
     for ( auto c : cells() ) c->reset( *this );
+#pragma message("DISABLED CORNERS AND WEDGES")
+#if 0
     for ( auto c : corners() ) c->reset( *this );
     for ( auto w : wedges() ) w->reset( *this );
+#endif
     // return mesh
     return *this;
   };
@@ -913,14 +875,13 @@ public:
   //! \param[in] pos The position (coordinates) for the vertex.
   //!
   //! \return Pointer to a vertex created at \e pos.
-  vertex_t * create_vertex(const point_t & pos)
+  template< typename... ARGS >
+  vertex_t * create_vertex( ARGS &&... args )
   {
-    auto v = base_t::template make<vertex_t>( *this );
-    v->coordinates() = pos;
-
+    auto v = 
+      base_t::template make<vertex_t>( *this, std::forward<ARGS>(args)... );
     return v;
   }
-
 
   //============================================================================
   // Mesh Creation
@@ -1028,6 +989,9 @@ public:
 
     if ( bad_face ) return raise_or_return( ss );
 
+
+#pragma message("DISABLED CORNERS AND WEDGES")
+#if 0
 
     //--------------------------------------------------------------------------
     // check all the corners and wedges
@@ -1171,7 +1135,7 @@ public:
 
 
     if ( bad_corner ) return raise_or_return( ss );
-
+#endif
 
     return true;
 
@@ -1219,6 +1183,9 @@ public:
       //--------------------------------------------------------------------------
       // compute wedge parameters
 
+#pragma message("DISABLED CORNERS AND WEDGES")
+#if 0
+
       #pragma omp for
       for ( counter_t i=0; i<num_corners; ++i ) {
         auto cn = cnrs[i];
@@ -1234,6 +1201,7 @@ public:
           (*wit)->update( false );
         }
       }
+#endif
 
     } // end omp parallel
 
@@ -1246,6 +1214,10 @@ public:
   template< typename P >
   tag_t install_boundary( P && p ) 
   {
+    std::vector< std::vector<face_t*> >   face_sets_;
+    std::vector< std::vector<edge_t*> >   edge_sets_;
+    std::vector< std::vector<vertex_t*> > vert_sets_;
+
     // increment the boundary face storage
     auto this_bnd = face_sets_.size();
     auto num_bnd = this_bnd + 1;
@@ -1300,6 +1272,7 @@ public:
     return this_bnd;
   }
 
+#if 0
   //============================================================================
   //! \brief Get the set of tagged vertices associated with a specific id
   //! \praram [in] id  The tag to lookup.
@@ -1309,6 +1282,7 @@ public:
   {
     return vert_sets_[ id ];
   }
+#endif
 
   //============================================================================
   // Operators
@@ -1336,20 +1310,20 @@ public:
     
     E * e = nullptr;
 
+    auto cell_type = shape_t::polygon;
+
     switch ( verts.size() ) {
     case (1,2):
       raise_runtime_error( "can't have <3 vertices" );
     case (3):
-      e = base_t::template make< burton_triangle_t<num_dimensions> >(*this);
+      cell_type = shape_t::triangle;
       break;
     case (4):
-      e = base_t::template make< burton_quadrilateral_t<num_dimensions> >(*this);
-      break;
-    default:
-      e = base_t::template make< burton_polygon_t<num_dimensions> >(*this);
+      cell_type = shape_t::quadrilateral;
       break;
     }
 
+    e = base_t::template make<cell_t>(*this, cell_type);
     base_t::template init_entity<E::domain, E::dimension, vertex_t::dimension>( e, std::forward<V>(verts) );
     return e;
   } // create_cell
@@ -1362,22 +1336,25 @@ public:
   {
     
     cell_t * c = nullptr;
+    
+    auto cell_type = shape_t::none;
 
     switch ( verts.size() ) {
     case (1,2,3):
       raise_runtime_error( "can't have <4 vertices" );
     case (4):
-      c = base_t::template make< burton_tetrahedron_t >(*this);
+      cell_type = shape_t::tetrahedron;
       break;
     case (8):
-      c = base_t::template make< burton_hexahedron_t >(*this);
+      cell_type = shape_t::hexahedron;
       break;
     default:
       raise_runtime_error( "can't build polyhedron from vertices alone" );      
-      break;
     }
 
+    c = base_t::template make< cell_t >(*this, cell_type);
     base_t::template init_cell<cell_t::domain>( c, std::forward<V>(verts) );
+
     return c;
   } // create_cell
 
@@ -1393,11 +1370,9 @@ public:
     switch ( faces.size() ) {
     case (1,2,3):
       raise_runtime_error( "can't have <4 vertices" );
-    default:
-      c = base_t::template make< burton_polyhedron_t >( *this, std::forward<F>(faces) );
-      break;
     }
 
+    c = base_t::template make< cell_t >( *this, shape_t::polyhedron );
     base_t::template init_entity<cell_t::domain, cell_t::dimension, face_t::dimension>( c, std::forward<F>(faces) );
     return c;
   } // create_cell
@@ -1407,11 +1382,7 @@ public:
   // Private Data 
   //============================================================================
 
-  //! \brief Tagged sets 
   //@ {
-  std::vector< std::vector<face_t*> >   face_sets_;
-  std::vector< std::vector<edge_t*> >   edge_sets_;
-  std::vector< std::vector<vertex_t*> > vert_sets_;
   //@ }
 
   //! the solution time

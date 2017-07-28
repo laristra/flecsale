@@ -13,6 +13,7 @@
 #include "types.h"
 
 // flecsi includes
+#include <flecsale/io/io_exodus.h>
 #include <flecsi/execution/context.h>
 #include <flecsi/execution/execution.h>
 
@@ -518,6 +519,33 @@ int output( T & mesh,
 
 #endif
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+/// \brief output the solution
+////////////////////////////////////////////////////////////////////////////////
+void output( 
+  client_handle__<mesh_t, flecsi::dro> mesh, 
+  char_array_t prefix
+) {
+  clog(info) << "OUTPUT MESH TASK" << std::endl;
+ 
+  // get the context
+  auto & context = flecsi::execution::context_t::instance();
+  auto rank = context.color();
+
+  // figure out this ranks file name
+  auto prefix_string = std::string( prefix.data() );
+  std::stringstream output_filename;
+  output_filename << prefix_string;
+  output_filename << "_rank";
+  output_filename << std::setfill('0') << std::setw(6) << rank;
+  output_filename << ".exo";
+
+  // now outut the mesh
+  flecsale::io::io_exodus__<mesh_t>::write( output_filename.str(), mesh );
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // TASK REGISTRATION
 ////////////////////////////////////////////////////////////////////////////////
@@ -530,6 +558,7 @@ flecsi_register_task(initial_conditions, loc, single);
 //flecsi_register_task(apply_update_task, loc, single);
 //flecsi_register_task(save_solution_task, loc, single);
 //flecsi_register_task(restore_solution_task, loc, single);
+flecsi_register_task(output, loc, single);
 
 } // namespace hydro
 } // namespace apps

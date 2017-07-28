@@ -10,10 +10,6 @@
 #pragma once
 
 // user includes
-#include "flecsi/io/io_base.h"
-#include "flecsale/mesh/burton/burton_mesh.h"
-
-
 #ifdef HAVE_EXODUS
 #  include <exodusII.h>
 #endif
@@ -28,16 +24,15 @@
 
 
 namespace flecsale {
-namespace mesh {
-namespace burton {
+namespace io {
 
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief provides base functionality for exodus writer
 /// \tparam N  The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N >
-class burton_io_exodus_base {
+template< typename MESH >
+class io_exodus__ {
 
 public:
 
@@ -46,7 +41,7 @@ public:
   //============================================================================
 
   //! the mesh type
-  using mesh_t = burton_mesh_t<N>;
+  using mesh_t = MESH;
 
   // other useful types
   using    size_t = typename mesh_t::size_t;
@@ -70,6 +65,7 @@ public:
   //! \param [in] mode  The mode to open the file in.
   //! \return The exodus handle for the open file.
   //============================================================================
+  static
   auto open( const std::string &name, std::ios_base::openmode mode ) 
   {
    
@@ -82,6 +78,9 @@ public:
     // size of floating point variables used in app.
     int CPU_word_size = sizeof(real_t);
 
+    // the file id
+    int exoid = -1;
+
     if ( (mode & std::ios_base::in) == std::ios_base::in ) 
     {
 
@@ -91,9 +90,9 @@ public:
       float version;
       
       // open the file
-      exoid_ = ex_open(
+      exoid = ex_open(
         name.c_str(), EX_READ, &CPU_word_size, &IO_word_size, &version);
-      assert(exoid_ >= 0);
+      assert(exoid >= 0);
       
     }
     else if ( (mode & std::ios_base::out) == std::ios_base::out ) 
@@ -106,22 +105,22 @@ public:
       int cmode = EX_CLOBBER;
 
       // create file
-      exoid_ =
+      exoid =
         ex_create(name.c_str(), cmode, &CPU_word_size, &IO_word_size);
-      assert(exoid_ >= 0);
+      assert(exoid >= 0);
 
     }
 
-    return exoid_;
+    return exoid;
   }
 
 
   //============================================================================
   //! \brief close the file once completed reading or writing
   //============================================================================
-  auto close() 
+  static auto close(int exoid) 
   {
-    auto status = ex_close(exoid_);
+    auto status = ex_close(exoid);
     return status;   
   }
 
@@ -130,7 +129,8 @@ public:
   //! \brief write the coordinates of the mesh to file.
   //! \return the status of the file
   //============================================================================
-  auto write_point_coords( mesh_t & m ) 
+  static
+  auto write_point_coords( int exoid, mesh_t & m ) 
   { 
     
     // mesh statistics
@@ -149,7 +149,7 @@ public:
 
     // write the coordinates to the file
     auto status = ex_put_coord( 
-      exoid_, coord.data(), coord.data()+num_nodes, coord.data()+2*num_nodes );
+      exoid, coord.data(), coord.data()+num_nodes, coord.data()+2*num_nodes );
     assert(status == 0);
   
     // write the coordinate names
@@ -157,7 +157,7 @@ public:
     coord_names[0] = "x";
     coord_names[1] = "y";
     coord_names[2] = "z";
-    status = ex_put_coord_names(exoid_, (char **)coord_names);
+    status = ex_put_coord_names(exoid, (char **)coord_names);
     assert(status == 0);
 
     return status;
@@ -168,8 +168,9 @@ public:
   //! \brief read the coordinates of the mesh from a file.
   //! \return the status of the file
   //============================================================================
+  static 
   auto read_point_coords( 
-    mesh_t & m, size_t num_nodes, std::vector<vertex_t *> & vs ) 
+    int exoid, mesh_t & m, size_t num_nodes, std::vector<vertex_t *> & vs ) 
   { 
     // mesh statistics
     constexpr auto num_dims = mesh_t::num_dimensions;
@@ -185,7 +186,7 @@ public:
     std::vector<ex_real_t> coord( num_dims * num_nodes );
     
     auto status = ex_get_coord( 
-      exoid_, coord.data(), coord.data()+num_nodes, coord.data()+2*num_nodes);
+      exoid, coord.data(), coord.data()+num_nodes, coord.data()+2*num_nodes);
     assert(status == 0);
 
     // put nodes into mesh
@@ -204,7 +205,7 @@ public:
   }
     
 
-
+#if 0
   //============================================================================
   //! \brief write field data to the file
   //! \param [in] m  The mesh to extract field data from.
@@ -434,47 +435,10 @@ public:
     return status;
 
   }
-
-  //============================================================================
-  //! Private Data
-  //============================================================================
-private:
-
-
-  //!> the file id
-  int exoid_ = -1;
+#endif 
 
 #endif
 
-};
-
-////////////////////////////////////////////////////////////////////////////////
-/// \brief This is the general templated type for writing and reading from 
-///        exodus files.
-///
-/// \tparam N  The number of mesh dimensions.
-////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N >
-class burton_io_exodus_t {};
-
-
-////////////////////////////////////////////////////////////////////////////////
-/// \brief This is the two-dimensional mesh reader and writer based on the 
-///        Exodus format.
-///
-/// io_base_t provides registrations of the exodus file extensions.
-////////////////////////////////////////////////////////////////////////////////
-template<>
-class burton_io_exodus_t<2> : 
-    public flecsi::io::io_base_t< burton_mesh_t<2> >, burton_io_exodus_base<2>
-{
-
-public:
-
-  //============================================================================
-  //! \brief Default constructor
-  //============================================================================
-  burton_io_exodus_t() = default;
 
   //============================================================================
   //! \brief Implementation of exodus mesh read for burton specialization.
@@ -484,10 +448,15 @@ public:
   //!
   //! \return Exodus error code. 0 on success.
   //============================================================================
-  int read( const std::string &name, mesh_t &m) override
+  template<
+    bool Enabled = (mesh_t::num_dimensions == 2),
+    typename = std::enable_if_t< Enabled >
+  >
+  static int read( const std::string &name, mesh_t &m) 
   {
 
-#ifdef HAVE_EXODUS
+#if 0
+//#ifdef HAVE_EXODUS
 
     std::cout << "Reading mesh from: " << name << std::endl;
 
@@ -660,10 +629,7 @@ public:
   //!  \return Exodus error code. 0 on success.
   //============================================================================
 
-  //FIXME: should allow for const mesh_t &
-  //int io_exodus_t::write(
-  //    const std::string &name, const mesh_t &m) {
-  int write( const std::string &name, mesh_t &m ) override
+  static int write( const std::string &name, mesh_t &m ) 
   {
 
 #ifdef HAVE_EXODUS
@@ -686,7 +652,7 @@ public:
     constexpr auto num_dims = mesh_t::num_dimensions;
     auto num_nodes = m.num_vertices();
     auto num_elem = m.num_cells();
-    auto num_elem_blk = m.num_regions();
+    auto num_elem_blk = 1;
     auto num_node_sets = 0;
     auto num_side_sets = 0;
 
@@ -699,7 +665,7 @@ public:
     // Point Coordinates
     //--------------------------------------------------------------------------
     
-    status = write_point_coords( m );
+    status = write_point_coords( exoid, m );
     assert( status == 0 );
 
 
@@ -708,7 +674,7 @@ public:
     //--------------------------------------------------------------------------
 
     // get the regions
-    auto region_cells = m.regions();
+    // auto region_cells = m.regions();
 
 
     // loop over element blocks
@@ -718,7 +684,7 @@ public:
       auto elem_blk_id = iblk+1;
 
       // get the elements in this block
-      const auto & elem_this_blk = region_cells[iblk];
+      const auto & elem_this_blk = m.cells();
       auto num_elem_this_blk = elem_this_blk.size();
             
       // count how many vertices there are in this block
@@ -769,14 +735,14 @@ public:
     //--------------------------------------------------------------------------
     // write field data
     //--------------------------------------------------------------------------
-    status = write_fields( m );
-    assert( status == 0 );
+    //status = write_fields( m );
+    //assert( status == 0 );
 
 
     //--------------------------------------------------------------------------
     // final step
     //--------------------------------------------------------------------------
-    status = close();
+    status = close( exoid );
 
     return status;
 
@@ -795,7 +761,7 @@ public:
 }; // struct io_exodus_t
 
 
-
+#if 0
 
 
 
@@ -806,17 +772,11 @@ public:
 /// io_base_t provides registrations of the exodus file extensions.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
-class burton_io_exodus_t<3> : 
-    public flecsi::io::io_base_t< burton_mesh_t<3> >, burton_io_exodus_base<3>
+class burton_io_exodus_t<3> : public burton_io_exodus_base<3>
 
 {
 
 public:
-
-  //============================================================================
-  //! \brief Default constructor
-  //============================================================================
-  burton_io_exodus_t() = default;
 
 
   //============================================================================
@@ -827,10 +787,11 @@ public:
   //!
   //! \return Exodus error code. 0 on success.
   //============================================================================
-  int read( const std::string &name, mesh_t &m) override
+  static int read( const std::string &name, mesh_t &m) 
   {
 
-#ifdef HAVE_EXODUS
+#if 0
+//#ifdef HAVE_EXODUS
 
     std::cout << "Reading mesh from: " << name << std::endl;
 
@@ -1116,11 +1077,7 @@ public:
   //!
   //!  \return Exodus error code. 0 on success.
   //============================================================================
-
-  //FIXME: should allow for const mesh_t &
-  //int io_exodus_t::write(
-  //    const std::string &name, const mesah_t &m) {
-  int write( const std::string &name, mesh_t &m ) override
+  static int write( const std::string &name, mesh_t &m ) override
   {
 
 #ifdef HAVE_EXODUS
@@ -1316,8 +1273,8 @@ public:
     //--------------------------------------------------------------------------
     // write field data
     //--------------------------------------------------------------------------
-    status = write_fields( m );
-    assert( status == 0 );
+    //status = write_fields( m );
+    //assert( status == 0 );
 
 
     //--------------------------------------------------------------------------
@@ -1364,49 +1321,7 @@ private:
 
 }; // struct io_exodus_t
 
+#endif
 
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief Create a burton_io_exodus_t and return a pointer to the base class.
-//!
-//! \tparam N  The number of mesh dimensions.
-//!
-//! \return Pointer to io_base_t base class of io_exodus_t.
-////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N >
-inline flecsi::io::io_base_t< burton_mesh_t<N> > * create_io_exodus()
-{
-  return new burton_io_exodus_t<N>;
-} // create_io_exodus
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-//! Register file extension "g" with factory.
-////////////////////////////////////////////////////////////////////////////////
-//! @{
-static bool burton_2d_exodus_g_registered =                 
-  flecsi::io::io_factory_t< burton_mesh_t<2> >::instance().registerType(
-    "g", create_io_exodus<2> );
-
-static bool burton_3d_exodus_g_registered =                 
-  flecsi::io::io_factory_t< burton_mesh_t<3> >::instance().registerType(
-    "g", create_io_exodus<3> );
-//! @}
-
-////////////////////////////////////////////////////////////////////////////////
-//! Register file extension "exo" with factory.
-////////////////////////////////////////////////////////////////////////////////
-//! @{
-static bool burton_2d_exodus_exo_registered =
-  flecsi::io::io_factory_t< burton_mesh_t<2> >::instance().registerType(
-    "exo", create_io_exodus<2> );
-
-static bool burton_3d_exodus_exo_registered =
-  flecsi::io::io_factory_t< burton_mesh_t<3> >::instance().registerType(
-    "exo", create_io_exodus<3> );
-//! @}
-
-} // namespace burton
-} // namespace mesh
+} // namespace io
 } // namespace flecsale

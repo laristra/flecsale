@@ -20,11 +20,6 @@ namespace mesh {
 namespace burton {
 
 
-//! forward decares
-template< std::size_t N >
-class burton_corner_t;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The burton_wedge_t type provides an interface for managing and
 //!   geometry and state associated with mesh wedges.
