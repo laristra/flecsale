@@ -509,23 +509,29 @@ void partition_mesh( char_array_t filename )
   for ( auto c : cells.shared    ) entity_ids[2].push_back(c.id);
   for ( auto c : cells.ghost     ) entity_ids[2].push_back(c.id);
 
+  // remove duplicate entries from the master lists
+  for ( auto & ids : entity_ids ) {
+    std::sort( ids.begin(), ids.end() );
+    auto last = std::unique( ids.begin(), ids.end() );
+    if ( last != ids.end() )
+      clog_error( "duplicate entries in exclusive/shared/ghost" );
+  }
+
   // loop over each dimension and determine the adjacency sizes
   for ( int from_dim = 0; from_dim<=num_dims; ++from_dim ) {
    
     // the master list of all entity ids
-    auto & from_ids = entity_ids[from_dim];
-
-    // remove duplicate entries from the master lists
-    std::sort( from_ids.begin(), from_ids.end() );
-    from_ids.erase( 
-      std::unique( from_ids.begin(), from_ids.end() ), 
-      from_ids.end() 
-    );
+    const auto & from_ids = entity_ids[from_dim];
 
     for ( int to_dim = 0; to_dim<=num_dims; ++to_dim ) {
 
       // skip the case where both dimensions are the same
       if ( from_dim == to_dim ) continue;
+
+      // the master list of all entity ids
+      const auto & to_ids = entity_ids[to_dim];
+      const auto to_ids_begin = to_ids.begin();
+      const auto to_ids_end = to_ids.end();
 
       // populate the adjacency information
       flecsi::coloring::adjacency_info_t ai;
@@ -536,9 +542,18 @@ void partition_mesh( char_array_t filename )
   
       // loop over all cells and count the number of adjacencies
       size_t cnt = 0;
-      for ( auto c : from_ids )
-        cnt += md.entities(from_dim, to_dim, c).size();
-
+      for ( auto c : from_ids ) {
+        // get the attached sub entitites
+        const auto & ids = md.entities(from_dim, to_dim, c);
+        // we need to make sure they are in this colors master
+        // list though
+        for ( auto v : ids ) {
+          auto it = std::lower_bound( to_ids_begin, to_ids_end, v );
+          if ( it != to_ids_end && *it == v ) 
+            cnt++;
+        }
+      }
+  
       // gather the results
       ai.color_sizes = communicator->gather_sizes( cnt );
     
@@ -564,7 +579,7 @@ void partition_mesh( char_array_t filename )
   auto output_prefix = utils::remove_extension( basename );
   std::stringstream output_filename;
   output_filename << output_prefix;
-  output_filename << "_rank";
+  output_filename << "-partition_rank";
   output_filename << std::setfill('0') << std::setw(6) << rank;
   output_filename << ".exo";
 

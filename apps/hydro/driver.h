@@ -94,10 +94,13 @@ int driver(int argc, char** argv)
   // cout << mesh;
   
   // output the mesh
-  char_array_t prefix;
-  strcpy( prefix.data(), mesh_basename.c_str() );
-  auto f1 = flecsi_execute_task(output, single, mesh, prefix);
+  auto prefix = utils::remove_extension( mesh_basename );
+  char_array_t prefix_char;
+  strcpy( prefix_char.data(), prefix.c_str() );
+  auto f1 = flecsi_execute_task(output, single, mesh, prefix_char);
   f1.wait();
+
+  return 0;
 
 #if 0
 
