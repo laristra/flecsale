@@ -74,7 +74,7 @@ void python_set_program_name( std::string name )
   Py_SetProgramName( const_cast<char*>(name.c_str()) );
 #elif ( PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 5 )
   auto name_wstr = utils::to_wstring(name.c_str());
-  Py_SetProgramName( name_wstr );
+  Py_SetProgramName( const_cast<wchar_t*>(name_wstr.c_str()) );
 #else
   auto program = Py_DecodeLocale(name.c_str(), NULL);
   if (!program) 
