@@ -95,7 +95,7 @@ struct burton_element_t<2,1> :
   //============================================================================
 
   // the constructor
-  burton_element_t(mesh_topology_base_t & mesh) : mesh_(&mesh) {}
+  burton_element_t() = default;
 
   // dissallow copying
   burton_element_t( burton_element_t & ) = delete;
@@ -112,9 +112,6 @@ struct burton_element_t<2,1> :
   //! the list of vertices
   auto vertices() const;
 
-  //! the list of actual coordinates
-  point_list_t coordinates() const;
-  
   //! the edge midpoint
   const auto & midpoint() const
   { return midpoint_; }
@@ -139,7 +136,8 @@ struct burton_element_t<2,1> :
   { return normal_; }
 
   //! is this a boundary
-  bool is_boundary() const;
+  bool is_boundary() const
+  { return flags_.test( config_t::bits::boundary ); }
 
   //! return the bitfield flags
   const auto & flags() const { return flags_; }
@@ -154,22 +152,13 @@ struct burton_element_t<2,1> :
   { tags_.push_back(tag); }
 
   //! \brief update the mesh geometry
-  void update( void );
-
-  //! \brief reset the mesh pointer
-  void reset(mesh_topology_base_t & mesh) 
-  { 
-    mesh_ = &mesh; 
-  }
+  void update( const mesh_topology_base_t * mesh );
 
   //============================================================================
   // Private Data
   //============================================================================
   
 private:
-  
-  //! a reference to the mesh topology
-  mesh_topology_base_t * mesh_ = nullptr;
 
   //! the entity tags
   tag_list_t tags_;
@@ -244,7 +233,7 @@ struct burton_element_t<3,1> :
   //============================================================================
 
   // the constructor
-  burton_element_t(mesh_topology_base_t & mesh) : mesh_(&mesh) {}
+  burton_element_t() = default;
 
   // dissallow copying
   burton_element_t( burton_element_t & ) = delete;
@@ -258,9 +247,6 @@ struct burton_element_t<3,1> :
   // Accessors / Modifiers
   //============================================================================
 
-  //! the list of actual coordinates
-  point_list_t coordinates() const;
-  
   //! the edge midpoint
   const auto & midpoint() const
   { return midpoint_; }
@@ -286,13 +272,7 @@ struct burton_element_t<3,1> :
   { tags_.push_back(tag); }
 
   //! \brief update the mesh geometry
-  void update( void ); 
-
-  //! \brief reset the mesh pointer
-  void reset(mesh_topology_base_t & mesh) 
-  { 
-    mesh_ = &mesh; 
-  }
+  void update( const mesh_topology_base_t * mesh ); 
 
   //============================================================================
   // Private Data
@@ -300,9 +280,6 @@ struct burton_element_t<3,1> :
   
 private:
   
-  //! a reference to the mesh topology
-  mesh_topology_base_t * mesh_ = nullptr;
-
   //! the entity tags
   tag_list_t tags_;
 
@@ -392,12 +369,11 @@ struct burton_element_t<2,2>
   //============================================================================
 
   //! Constructor
-  burton_element_t(mesh_topology_base_t & mesh, shape_t shape) 
-    : mesh_(&mesh), shape_(shape)
+  burton_element_t(shape_t shape) : shape_(shape)
   {};
 
   // Destructor
-  ~burton_element_t() {}
+  ~burton_element_t() = default;
 
   // dissallow copying
   burton_element_t( burton_element_t & ) = delete;
@@ -411,9 +387,6 @@ struct burton_element_t<2,2>
   //============================================================================
   // Accessors / Modifiers
   //============================================================================
-
-  //! the list of actual coordinates
-  point_list_t coordinates() const;
 
   //! the centroid
   const auto & centroid() const 
@@ -502,19 +475,7 @@ struct burton_element_t<2,2>
     id_t * entities ); 
 
   //! \brief update the mesh geometry
-  void update( void ); 
-
-  //! \brief reset the mesh pointer
-  void reset(mesh_topology_base_t & mesh) 
-  { 
-    mesh_ = &mesh; 
-  }
-
-  //! \brief reset the mesh pointer
-  const mesh_topology_base_t * mesh() const
-  { 
-    return mesh_; 
-  }
+  void update( const mesh_topology_base_t * mesh ); 
 
 private:
 
@@ -522,9 +483,6 @@ private:
   // Private Data
   //============================================================================
   
-  //! a reference to the mesh topology
-  mesh_topology_base_t * mesh_ = nullptr;
-
   //! the region tag
   size_t region_ = 0;
 
@@ -585,6 +543,9 @@ struct burton_element_t<3,2>
   //! Type vector type.
   using vector_t = typename config_t::vector_t;
 
+  //! The bitfield.
+  using bitfield_t = typename config_t::bitfield_t;
+
   //! the flecsi id type
   using id_t = flecsi::utils::id_t;
 
@@ -610,12 +571,11 @@ struct burton_element_t<3,2>
   //============================================================================
 
   //! Constructor
-  burton_element_t(mesh_topology_base_t & mesh, shape_t shape) 
-    : mesh_(&mesh), shape_(shape)
+  burton_element_t(shape_t shape) : shape_(shape)
   {};
 
   //! Destructor
-  ~burton_element_t() {}
+  ~burton_element_t() = default;
 
   //! dissallow copying
   burton_element_t( burton_element_t & ) = delete;
@@ -630,9 +590,13 @@ struct burton_element_t<3,2>
   // Accessors / Modifiers
   //============================================================================
 
-
   //! is this a boundary
-  bool is_boundary() const;
+  bool is_boundary() const
+  { return flags_.test( config_t::bits::boundary ); }
+  
+  //! return the bitfield flags
+  const auto & flags() const { return flags_; }
+  auto & flags() { return flags_; }
 
   //! get all entity tags
   const tag_list_t & tags() const
@@ -641,9 +605,6 @@ struct burton_element_t<3,2>
   //! tag entity
   void tag(const tag_t & tag)
   { tags_.push_back(tag); }
-
-  //! the list of actual coordinates
-  point_list_t coordinates( bool reverse = false ) const;
 
   //! the centroid
   const auto & centroid() const
@@ -687,8 +648,7 @@ struct burton_element_t<3,2>
   std::vector<size_t> create_entities(
     const id_t & cell, size_t dim,
     const connectivity_t& conn,
-    id_t * entities ) 
-  { raise_runtime_error("you should never get here"); };
+    id_t * entities ); 
 
   //----------------------------------------------------------------------------
   //! \brief create_bound_entities binds mesh entities across domains.
@@ -713,22 +673,14 @@ struct burton_element_t<3,2>
     const connectivity_t& primal_conn,
     const connectivity_t& domain_conn,
     id_t * entities )
-  { raise_runtime_error("you should never get here"); };
+  { 
+    raise_implemented_error(
+      "burton_3d_face_t::create_bound_entities has not been implemented"
+    );
+  }
 
   //! \brief update the mesh geometry
-  void update( void ); 
-
-  //! \brief reset the mesh pointer
-  void reset(mesh_topology_base_t & mesh) 
-  { 
-    mesh_ = &mesh; 
-  }
-
-  //! \brief reset the mesh pointer
-  const mesh_topology_base_t * mesh() const
-  { 
-    return mesh_; 
-  }
+  void update( const mesh_topology_base_t * mesh ); 
 
   //============================================================================
   // Private Data
@@ -736,11 +688,11 @@ struct burton_element_t<3,2>
   
 private:
   
-  //! a reference to the mesh topology
-  mesh_topology_base_t * mesh_ = nullptr;
-
   //! the entity tags
   tag_list_t tags_;
+  
+  //! the entity flags
+  bitfield_t flags_;
 
   //! the geometric information
   real_t area_ = 0;
@@ -837,12 +789,11 @@ struct burton_element_t<3,3>
   //============================================================================
 
   //! Constructor
-  burton_element_t(mesh_topology_base_t & mesh, shape_t shape) 
-    : mesh_(&mesh), shape_(shape)
+  burton_element_t(shape_t shape) : shape_(shape)
   {}
 
   //! Destructor
-  ~burton_element_t() {}
+  ~burton_element_t() = default;
 
   //! dissallow copying
   burton_element_t( burton_element_t & ) = delete;
@@ -856,9 +807,6 @@ struct burton_element_t<3,3>
   //============================================================================
   // Accessors / Modifiers
   //============================================================================
-
-  //! the list of actual coordinates
-  point_list_t coordinates() const;
 
   //! the centroid
   const auto & centroid() const 
@@ -908,8 +856,7 @@ struct burton_element_t<3,3>
   std::vector<size_t> create_entities(
     const id_t & cell, size_t dim,
     const connectivity_t& conn,
-    id_t * entities )
-  { raise_runtime_error("you should never get here"); };
+    id_t * entities );
 
   //----------------------------------------------------------------------------
   //! \brief create_bound_entities binds mesh entities across domains.
@@ -933,23 +880,10 @@ struct burton_element_t<3,3>
     size_t from_domain, size_t to_domain, size_t dim, const id_t & cell,
     const connectivity_t& primal_conn,
     const connectivity_t& domain_conn,
-    id_t * entities )
-  { raise_runtime_error("you should never get here"); };
+    id_t * entities );
 
   //! \brief update the mesh geometry
-  void update( void ); 
-
-  //! \brief reset the mesh pointer
-  void reset(mesh_topology_base_t & mesh) 
-  { 
-    mesh_ = &mesh; 
-  }
-
-  //! \brief reset the mesh pointer
-  const mesh_topology_base_t * mesh() const
-  { 
-    return mesh_; 
-  }
+  void update( const mesh_topology_base_t * mesh ); 
 
   //============================================================================
   // Private Data
@@ -957,9 +891,6 @@ struct burton_element_t<3,3>
   
 private:
   
-  //! a reference to the mesh topology
-  mesh_topology_base_t * mesh_ = nullptr;
-
   //! the region tag
   size_t region_ = 0;
 

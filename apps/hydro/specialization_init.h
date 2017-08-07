@@ -208,7 +208,7 @@ void partition_mesh( char_array_t filename )
   using entity_info_t = flecsi::coloring::entity_info_t;
   
   // load the mesh
-  auto filename_string = std::string( filename.data() );
+  auto filename_string = filename.str();
   exodus_definition_t md( filename_string );
 
   // Create a communicator instance to get neighbor information.
@@ -577,14 +577,13 @@ void partition_mesh( char_array_t filename )
   // figure out this ranks file name
   auto basename = utils::basename( filename_string );
   auto output_prefix = utils::remove_extension( basename );
-  std::stringstream output_filename;
-  output_filename << output_prefix;
-  output_filename << "-partition_rank";
-  output_filename << std::setfill('0') << std::setw(6) << rank;
-  output_filename << ".exo";
+  auto output_filename = output_prefix + "-partition_rank" +
+    apps::common::zero_padded(rank) + ".exo";
 
   // open the exodus file
-  auto exoid = exodus_t::open( output_filename.str(), std::ios_base::out );
+  if ( rank == 0 )
+    std::cout << "Writing mesh to: " << output_filename << std::endl;
+  auto exoid = exodus_t::open( output_filename, std::ios_base::out );
 
   //------------------------------------
   // Set exodus parameters
@@ -701,7 +700,7 @@ void partition_mesh( char_array_t filename )
 /// \brief the main mesh initialization driver
 ////////////////////////////////////////////////////////////////////////////////
 void initialize_mesh( 
-  client_handle__<mesh_t, flecsi::dwd> mesh, 
+  client_handle_w__<mesh_t> mesh, 
   char_array_t filename
 ) {
   clog(info) << "INIT MESH TASK" << std::endl;
@@ -735,7 +734,7 @@ void initialize_mesh(
   // Load the mesh
   //----------------------------------------------------------------------------
   
-  auto filename_string = std::string( filename.data() );
+  auto filename_string = filename.str();
   exodus_definition_t md( filename_string );
 
   //----------------------------------------------------------------------------
@@ -753,8 +752,6 @@ void initialize_mesh(
     vertices.emplace_back(v);
   } // for vertices
 
-  std::cout << "vertices: " << vertices.size() << std::endl;
-  
   //----------------------------------------------------------------------------
   // create the cells
   //----------------------------------------------------------------------------
@@ -775,14 +772,31 @@ void initialize_mesh(
     // create the cell
     auto c = mesh.create_cell( elem_vs ); 
   }
-
-  std::cout << "cells: " << cell_map.size() << std::endl;
   
   //----------------------------------------------------------------------------
   // initialize the mesh
   //----------------------------------------------------------------------------
   
   mesh.init(); 
+
+  //----------------------------------------------------------------------------
+  // Some debug
+  //----------------------------------------------------------------------------
+  
+  // figure out this ranks file name
+  auto basename = utils::basename( filename_string );
+  auto output_prefix = utils::remove_extension( basename );
+  auto output_filename = output_prefix + "-connectivity_rank" +
+    apps::common::zero_padded(rank) + ".txt";
+
+  // dump to file
+  if ( rank == 0 )
+    std::cout << "Dumping connectivity to: " << output_filename << std::endl;
+  std::ofstream file( output_filename );
+  mesh.dump( file );
+
+  // close file
+  file.close();
 
 }
 
@@ -802,7 +816,7 @@ int specialization_tlt_init(int argc, char ** argv)
   clog(info) << "In specialization top-level-task init" << std::endl;
   
   // set exceptions 
-  enable_exceptions();
+  apps::common::enable_exceptions();
 
   //===========================================================================
   // Parse arguments
@@ -815,12 +829,12 @@ int specialization_tlt_init(int argc, char ** argv)
     return 0;
  
   // get the input file
-  auto mesh_file_name = 
+  auto mesh_filename_string = 
     args.count("m") ? args.at("m") : std::string();
 
   // override any inputs if need be
-  if ( !mesh_file_name.empty() )
-    std::cout << "Using mesh file \"" << mesh_file_name << "\"." 
+  if ( !mesh_filename_string.empty() )
+    std::cout << "Using mesh file \"" << mesh_filename_string << "\"." 
               << std::endl;
   else
     raise_runtime_error( "No mesh file provided" );
@@ -832,10 +846,10 @@ int specialization_tlt_init(int argc, char ** argv)
   clog(info) << "Partitioning mesh" << std::endl;
   
   // need to put the filename into a statically sized character array
-  char_array_t filename;
-  strcpy( filename.data(), mesh_file_name.c_str() );
+  auto mesh_filename = utils::to_trivial_string( mesh_filename_string );
 
-  flecsi_execute_mpi_task(partition_mesh, filename);
+  // execute the mpi task to partition the mesh
+  flecsi_execute_mpi_task(partition_mesh, mesh_filename);
   
   return 0;
 }
@@ -853,12 +867,11 @@ int specialization_spmd_init(int argc, char ** argv)
   // Assume arguments are sanitized
   
   // get the input file
-  auto mesh_file_name = 
+  auto mesh_filename_string = 
     args.count("m") ? args.at("m") : std::string();
   
   // need to put the filename into a statically sized character array
-  char_array_t filename;
-  strcpy( filename.data(), mesh_file_name.c_str() );
+  auto mesh_filename = utils::to_trivial_string( mesh_filename_string );
   
   //===========================================================================
   // Load the mesh
@@ -866,7 +879,8 @@ int specialization_spmd_init(int argc, char ** argv)
 
   // get a mesh handle and call the initialization task
   auto mesh_handle = flecsi_get_client_handle(mesh_t, meshes, mesh0);
-  auto f1 = flecsi_execute_task(initialize_mesh, single, mesh_handle, filename);
+  auto f1 = 
+    flecsi_execute_task(initialize_mesh, single, mesh_handle, mesh_filename);
   f1.wait();
 
   return 0;

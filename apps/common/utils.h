@@ -4,28 +4,26 @@
  *~-------------------------------------------------------------------------~~*/
 ////////////////////////////////////////////////////////////////////////////////
 /// \file
-/// \brief Some utilities for exception handling.
+/// \brief Some commonly used utilities.
 ////////////////////////////////////////////////////////////////////////////////
-
+#pragma once
 
 // system includes
-#ifdef _GNU_SOURCE
-#  include <fenv.h>
-#endif
+#include <sstream>
 
 namespace apps {
 namespace common {
 
 ///////////////////////////////////////////////////////////////////////////////
-// enable exceptions
+//! \brief Tack on an iteration number to a string
 ///////////////////////////////////////////////////////////////////////////////
-void enable_exceptions(void) {
-
-  // enable exceptions
-#if defined(_GNU_SOURCE) && !defined(NDEBUG)
-  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
-#endif
-
+static auto zero_padded( 
+  std::size_t n, std::size_t padding = 6 
+)
+{
+  std::stringstream ss;
+  ss << std::setw( padding ) << std::setfill( '0' ) << n;
+  return ss.str();;
 }
 
 } // namespace

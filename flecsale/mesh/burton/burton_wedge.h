@@ -55,6 +55,9 @@ public:
   using mesh_topology_base_t = 
     flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
 
+  //! The bitfield.
+  using bitfield_t = typename config_t::bitfield_t;
+
   //! Type of floating point.
   using real_t = typename config_t::real_t;
 
@@ -81,7 +84,7 @@ public:
   //============================================================================
 
   // default constructor
-  burton_wedge_t(mesh_topology_base_t & mesh) : mesh_(&mesh) {};
+  burton_wedge_t() = default;
 
   // dissallow copying
   burton_wedge_t( burton_wedge_t & ) = delete;
@@ -97,7 +100,7 @@ public:
 
   //! \brief update the wedge geometry
   //! \param [in] is_right  This wedge is the right orientation when true.
-  void update( bool is_right );
+  void update( const mesh_topology_base_t * mesh, bool is_right );
 
   //! \brief Get the cell facet normal for the wedge.
   //! \return Cell facet normal vector.
@@ -116,18 +119,19 @@ public:
   const auto & facet_midpoint() const
   { return facet_centroid_; }
   
-
-  //! \brief reset the mesh pointer
-  //! \param [in] mesh The new mesh to point to.
-  void reset(mesh_topology_base_t & mesh) 
-  { 
-    mesh_ = &mesh;
-  }
-
+  //! return the bitfield flags
+  const auto & flags() const { return flags_; }
+  auto & flags() { return flags_; }
 
   //! \brief Is this wedge on the boundary.
   //! \return true if on boundary.
-  bool is_boundary() const;
+  auto is_boundary() const
+  { return flags_.test( config_t::bits::boundary ); }
+  
+  //! \brief set whether this element is on the boundary
+  //! \param [in] is_boundary  True if on the boundary.
+  void set_boundary( bool is_boundary )
+  { flags_.set(config_t::bits::boundary, is_boundary); }
 
   //============================================================================
   // Private Data
@@ -135,13 +139,15 @@ public:
 
  private:
 
-  //! a reference to the mesh topology
-  mesh_topology_base_t * mesh_ = nullptr;
-
-  //! geometric information
+  //! centroid of the outer facetn
   point_t facet_centroid_ = 0;
+  //! the normal of the outer facet
   vector_t facet_normal_ = 0;
+  //! the area of the outer facet
   real_t facet_area_ = 0;
+  //! the entity flags
+  bitfield_t flags_;
+
 
 };
 

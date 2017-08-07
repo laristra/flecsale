@@ -58,7 +58,7 @@ public:
   //============================================================================
 
   //! default constructor
-  burton_corner_t(mesh_topology_base_t & mesh) {};
+  burton_corner_t() = default;
 
   // dissallow copying
   burton_corner_t( burton_corner_t & ) = delete;
@@ -67,13 +67,6 @@ public:
   // dissallow moving
   burton_corner_t( burton_corner_t && ) = delete;
   burton_corner_t & operator=( burton_corner_t && ) = delete;
-
-  //============================================================================
-  // Accessors / Modifiers
-  //============================================================================
-
-  //! \brief reset the mesh pointer
-  void reset(mesh_topology_base_t & mesh) { }
 
 
 };

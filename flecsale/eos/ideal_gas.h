@@ -91,28 +91,28 @@ public:
 
   //! \brief return the density
   //! \return the density
-  real_t get_ref_density( void ) const override
+  real_t get_ref_density( void ) const // override
   { 
     return density_; 
   }
 
   //! \brief return the internal energy
   //! \return the internal energy
-  real_t get_ref_internal_energy( void ) const override
+  real_t get_ref_internal_energy( void ) const // override
   { 
     return internal_energy_; 
   }
 
   //! \brief return the reference temperature
   //! \return the reference temperature
-  real_t get_ref_temperature( void ) const override
+  real_t get_ref_temperature( void ) const // override
   { 
     return compute_temperature_de( density_, internal_energy_ ); 
   }
 
   //! \brief return the reference pressure
   //! \return the reference pressure
-  real_t get_ref_pressure( void ) const override
+  real_t get_ref_pressure( void ) const // override
   { 
     return compute_pressure_de( density_, internal_energy_ ); 
   }
@@ -121,7 +121,7 @@ public:
   //! \brief set the reference state via density and energy
   //! \param[in] density the density to set
   //! \param[in] internal_energy the internal energy to set
-  void set_ref_state_de( real_t density, real_t internal_energy ) override
+  void set_ref_state_de( real_t density, real_t internal_energy ) // override
   { 
     assert( density > 0 );
     assert( internal_energy > 0 );
@@ -133,7 +133,7 @@ public:
   //! \brief set the reference state via density and temperature
   //! \param[in] density the density to set
   //! \param[in] temperature the temperature to set
-  void set_ref_state_dt( real_t density, real_t temperature ) override
+  void set_ref_state_dt( real_t density, real_t temperature ) // override
   { 
     assert( density > 0 );
     assert( temperature > 0 );
@@ -145,7 +145,7 @@ public:
   //! \brief set the reference state via density and pressure
   //! \param[in] density the density to set
   //! \param[in] pressure the pressure to set
-  void set_ref_state_dp( real_t density, real_t pressure ) override
+  void set_ref_state_dp( real_t density, real_t pressure ) // override
   { 
     assert( density > 0 );
     assert( pressure > 0 );
@@ -158,7 +158,7 @@ public:
   //! \brief set the reference state via pressure and temperature
   //! \param[in] pressure the pressure to set
   //! \param[in] temperature the temperature to set
-  void set_ref_state_tp( real_t pressure, real_t temperature ) override
+  void set_ref_state_tp( real_t pressure, real_t temperature ) // override
   { 
     assert( pressure > 0 );
     assert( temperature > 0 );
@@ -178,7 +178,7 @@ public:
   real_t compute_internal_energy_dp( 
     real_t density, 
     real_t pressure 
-  ) const override
+  ) const // override
   { 
     return pressure / ( density*(gamma_-1.0) ); 
   }
@@ -193,7 +193,7 @@ public:
   real_t compute_pressure_de( 
     real_t density, 
     real_t internal_energy 
-  ) const override
+  ) const // override
   { 
     return (gamma_-1.0) * density * internal_energy; 
   }
@@ -206,7 +206,7 @@ public:
   real_t compute_sound_speed_de( 
     real_t density, 
     real_t internal_energy 
-  ) const override
+  ) const // override
   {
     assert( internal_energy>0.0 );
     return std::sqrt( gamma_ * (gamma_-1.0) * internal_energy );
@@ -220,7 +220,7 @@ public:
   real_t compute_temperature_de( 
     real_t density, 
     real_t internal_energy 
-  ) const override
+  ) const // override
   { 
     return internal_energy / specific_heat_v_; 
   }
@@ -231,7 +231,7 @@ public:
   //! \param[in] density the density
   //! \param[in] pressure the pressure
   //! \return the effective gamma
-  real_t compute_gamma_dp( real_t density, real_t pressure ) const override
+  real_t compute_gamma_dp( real_t density, real_t pressure ) const // override
   { 
     return gamma_; 
   }
@@ -244,7 +244,7 @@ public:
   real_t compute_gamma_de( 
     real_t density, 
     real_t internal_energy 
-  ) const override
+  ) const // override
   { 
     return gamma_; 
   }

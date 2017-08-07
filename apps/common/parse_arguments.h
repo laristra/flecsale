@@ -18,6 +18,10 @@
 #include <map>
 #include <string>
 
+namespace apps {
+namespace common {
+
+
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief Parse the argument list
 ///////////////////////////////////////////////////////////////////////////////
@@ -67,3 +71,5 @@ static auto parse_arguments(
   return key_value_pair;
 }
 
+} // namespace
+} // namespace

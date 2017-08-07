@@ -52,7 +52,8 @@ inline auto process_arguments(int argc, char** argv)
   const char * short_options = "hi:m:c:";
 
   // parse the arguments
-  auto args = parse_arguments(argc, argv, long_options, short_options);
+  auto args =
+    apps::common::parse_arguments(argc, argv, long_options, short_options);
   
   // process the simple ones
   if ( args.count("h") ) print_usage();

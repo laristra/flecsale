@@ -120,6 +120,9 @@ public:
   //! Shape data type.
   using shape_t = typename config_t::shape_t;
 
+  using ownership_t = flecsi::partition_t;
+
+
   //============================================================================
   // Constructors
   //============================================================================
@@ -137,29 +140,9 @@ public:
   //! \brief allow move construction
   burton_mesh_t( burton_mesh_t && ) = default;
 
-  //! \brief move assignment
-  burton_mesh_t & operator=(burton_mesh_t && other)
-  {
-    // call the base type operator to move the data
-    base_t::operator=(std::move(other));
-    // reset each entity mesh pointer
-    for ( auto v : vertices() ) v->reset( *this );
-    for ( auto e : edges() ) e->reset( *this );
-    for ( auto f : faces() ) f->reset( *this );
-    for ( auto c : cells() ) c->reset( *this );
-#pragma message("DISABLED CORNERS AND WEDGES")
-#if 0
-    for ( auto c : corners() ) c->reset( *this );
-    for ( auto w : wedges() ) w->reset( *this );
-#endif
-    // return mesh
-    return *this;
-  };
-
   //! \brief Copy constructor for data client handle
   burton_mesh_t(const burton_mesh_t& m, bool dummy) : base_t(m, dummy)
-  {
-  }
+  {}
 
   //! Destructor
   virtual ~burton_mesh_t() {};
@@ -168,37 +151,6 @@ public:
   // Accessors
   //============================================================================
 
-  //! \brief Return the time associated with the mesh
-  auto time()
-  { return soln_time_; }
-
-  //! \brief Set the time associated with the mesh
-  //! \param [in] soln_time  The solution time.
-  void set_time(real_t soln_time)
-  { soln_time_ = soln_time; }
-
-
-  //! \brief Set the time associated with the mesh
-  //! \param [in] delta_time  The solution time increment.
-  //! \return The new solution time.
-  auto increment_time(real_t delta_time)
-  {
-    soln_time_ += delta_time;
-    return soln_time_;
-  }
-
-  //! \brief Return the time associated with the mesh
-  auto time_step_counter()
-  { return time_step_; }
-
-  //! \brief Increment the time step counter associated with the mesh
-  //! \param [in] delta  The counter increment.
-  //! \return The new counter value.
-  auto increment_time_step_counter(size_t delta = 1)
-  {
-    time_step_ += delta;
-    return time_step_;
-  }
 
   //============================================================================
   // Vertex Interface
@@ -206,10 +158,18 @@ public:
 
   //! \brief Return number of vertices in the burton mesh.
   //! \return The number of vertices in the burton mesh.
-  size_t num_vertices() const
+  auto num_vertices() const
   {
     return 
       base_t::template num_entities<vertex_t::dimension, vertex_t::domain>();
+  }
+
+  auto num_vertices( ownership_t subset ) const
+  {
+    return 
+    base_t::template num_entities<vertex_t::dimension, vertex_t::domain>(
+      subset
+    );
   }
 
   //! \brief Return all vertices in the burton mesh.
@@ -218,6 +178,13 @@ public:
   decltype(auto) vertices() const 
   { 
     return base_t::template entities<vertex_t::dimension, vertex_t::domain>(); 
+  }
+
+  decltype(auto) vertices( ownership_t subset ) const 
+  { 
+    return base_t::template entities<vertex_t::dimension, vertex_t::domain>(
+      subset
+    ); 
   }
 
   //! \brief Return vertices associated with entity instance of type \e E.
@@ -336,11 +303,24 @@ public:
     return base_t::template num_entities<edge_t::dimension, edge_t::domain>();
   }
 
+  size_t num_edges(ownership_t subset) const
+  {
+    return base_t::template num_entities<edge_t::dimension, edge_t::domain>(
+      subset
+    );
+  }
+
   //! \brief Return all edges in the burton mesh.
   //! \return Return all edges in the burton mesh as a sequence for use, e.g., 
   //!         in range based for loops.
-  decltype(auto) edges() const { 
+  decltype(auto) edges() const
+  { 
     return base_t::template entities<edge_t::dimension, 0>(); 
+  }
+
+  decltype(auto) edges( ownership_t subset ) const 
+  { 
+    return base_t::template entities<edge_t::dimension, 0>(subset); 
   }
 
   //! \brief Return edges for entity \e e in domain \e M.
@@ -404,6 +384,13 @@ public:
     return base_t::template num_entities<face_t::dimension, face_t::domain>();
   } // num_faces
 
+  size_t num_faces(ownership_t subset) const
+  {
+    return base_t::template num_entities<face_t::dimension, face_t::domain>(
+      subset
+    );
+  } // num_faces
+
   //! \brief Return all faces in the burton mesh.
   //!
   //! \return Return all faces in the burton mesh as a sequence for use, e.g.,
@@ -411,6 +398,13 @@ public:
   decltype(auto) faces() const
   {
     return base_t::template entities<face_t::dimension, face_t::domain>();
+  }
+
+  decltype(auto) faces(ownership_t subset) const
+  {
+    return base_t::template entities<face_t::dimension, face_t::domain>(
+      subset
+    );
   }
 
   //! \brief Return all faces in the burton mesh.
@@ -483,6 +477,13 @@ public:
     return base_t::template num_entities<cell_t::dimension, cell_t::domain>();
   }
 
+  size_t num_cells(ownership_t subset) const
+  {
+    return base_t::template num_entities<cell_t::dimension, cell_t::domain>(
+      subset
+    );
+  }
+
   //! \brief Return all cells in the burton mesh.
   //!
   //! \return Return all cells in the burton mesh as a sequence for use, e.g.,
@@ -490,6 +491,13 @@ public:
   decltype(auto) cells() const
   {
     return base_t::template entities<cell_t::dimension, cell_t::domain>();
+  }
+
+  decltype(auto) cells(ownership_t subset) const
+  {
+    return base_t::template entities<cell_t::dimension, cell_t::domain>(
+      subset
+    );
   }
 
   //! \brief Return all cells in the burton mesh.
@@ -732,16 +740,8 @@ public:
   //! \return The number of regions in the burton mesh.
   auto num_regions() const
   {
-    return num_regions_;
+    return 1;
   }
-
-  //! \brief set the number of regions in the burton mesh.
-  //! \param [in]  n  The number of regions in the burton mesh.
-  void set_num_regions(size_t n)
-  {
-    num_regions_ = n;
-  }
-
 
   //! \brief Return the number of regions in the burton mesh.
   //! \param [in]  n  The number of regions in the burton mesh.
@@ -879,7 +879,7 @@ public:
   vertex_t * create_vertex( ARGS &&... args )
   {
     auto v = 
-      base_t::template make<vertex_t>( *this, std::forward<ARGS>(args)... );
+      base_t::template make<vertex_t>( std::forward<ARGS>(args)... );
     return v;
   }
 
@@ -909,11 +909,8 @@ public:
     base_t::template init<0>();
     base_t::template init_bindings<1>();
 
-    soln_time_ = 0;
-    time_step_ = 0;
-
     // now set the boundary flags.
-    for ( auto f : faces() ) {
+    for ( auto f : faces( ownership_t::owned ) ) {
       // if there is only one cell, it is a boundary
       if ( f->is_boundary() ) {
         // point flags
@@ -930,12 +927,10 @@ public:
     } // for
 
     // identify the cell regions
-    num_regions_ = 1;
     for ( auto c : cells() ) c->region() = 0;
 
     // update the geometry
     update_geometry();
-
   }
 
 
@@ -1164,21 +1159,23 @@ public:
 
       #pragma omp for nowait
       for ( counter_t i=0; i<num_edges; i++ )
-        es[i]->midpoint();
+        es[i]->update( this );
 
       //--------------------------------------------------------------------------
       // compute face parameters
 
-      #pragma omp for nowait
-      for ( counter_t i=0; i<num_faces; i++ )
-        fs[i]->update();
+      if ( num_dimensions == 3 ) {
+        #pragma omp for nowait
+        for ( counter_t i=0; i<num_faces; i++ )
+          fs[i]->update( this );
+      }
 
       //--------------------------------------------------------------------------
       // compute cell parameters
 
       #pragma omp for
       for ( counter_t i=0; i<num_cells; i++ ) 
-        cs[i]->update();
+        cs[i]->update( this );
 
       //--------------------------------------------------------------------------
       // compute wedge parameters
@@ -1323,7 +1320,7 @@ public:
       break;
     }
 
-    e = base_t::template make<cell_t>(*this, cell_type);
+    e = base_t::template make<cell_t>(cell_type);
     base_t::template init_entity<E::domain, E::dimension, vertex_t::dimension>( e, std::forward<V>(verts) );
     return e;
   } // create_cell
@@ -1352,7 +1349,7 @@ public:
       raise_runtime_error( "can't build polyhedron from vertices alone" );      
     }
 
-    c = base_t::template make< cell_t >(*this, cell_type);
+    c = base_t::template make< cell_t >(cell_type);
     base_t::template init_cell<cell_t::domain>( c, std::forward<V>(verts) );
 
     return c;
@@ -1372,26 +1369,11 @@ public:
       raise_runtime_error( "can't have <4 vertices" );
     }
 
-    c = base_t::template make< cell_t >( *this, shape_t::polyhedron );
+    c = base_t::template make< cell_t >( shape_t::polyhedron );
     base_t::template init_entity<cell_t::domain, cell_t::dimension, face_t::dimension>( c, std::forward<F>(faces) );
     return c;
   } // create_cell
 
-
-  //============================================================================
-  // Private Data 
-  //============================================================================
-
-  //@ {
-  //@ }
-
-  //! the solution time
-  real_t soln_time_ = 0;
-  //! the time step counter
-  size_t time_step_ = 0;
-
-  //! the number of regions
-  size_t num_regions_ = 0;
 
 }; // class burton_mesh_t
 

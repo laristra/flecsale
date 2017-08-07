@@ -73,8 +73,8 @@ public:
 
   //! Constructor
   template< typename...ARGS >
-  burton_vertex_t(mesh_topology_base_t & mesh, ARGS &&... args) 
-    : mesh_(&mesh), coordinates_{ std::forward<ARGS>(args)... }
+  burton_vertex_t(ARGS &&... args) 
+    : coordinates_{ std::forward<ARGS>(args)... }
   {}
 
   // dissallow copying
@@ -116,20 +116,11 @@ public:
   void tag(const tag_t & tag)
   { tags_.push_back(tag); }
 
-  //! \brief reset the mesh pointer
-  void reset(mesh_topology_base_t & mesh) 
-  { 
-    mesh_ = &mesh; 
-  }
-
   //============================================================================
   // Private Data
   //============================================================================
   
 private:
-  
-  //! a reference to the mesh topology
-  mesh_topology_base_t * mesh_ = nullptr;
   
   //! the coordinates of the vertex
   point_t coordinates_ = 0;

@@ -179,7 +179,7 @@ struct burton_types_t<2> {
     case 0:
       switch(D) {
       case 1:
-        return mesh->template make<edge_t>(*mesh);
+        return mesh->template make<edge_t>();
       default:
         raise_logic_error("invalid topological dimension");
       }
@@ -344,7 +344,7 @@ struct burton_types_t<3> {
     case (4):
       face_type = shape_t::quadrilateral;
     }
-    return mesh->template make<cell_t>(*mesh, face_type);
+    return mesh->template make<cell_t>(face_type);
   }
 
   //============================================================================
@@ -363,7 +363,7 @@ struct burton_types_t<3> {
     case 0:
       switch(D) {
       case 1:
-        return mesh->template make<edge_t>(*mesh);
+        return mesh->template make<edge_t>();
       case 2:
         return create_face(mesh, num_vertices);
       default:
@@ -373,9 +373,9 @@ struct burton_types_t<3> {
     case 1:
       switch(D) {
       case 0:
-        return mesh->template make<corner_t>(*mesh);
+        return mesh->template make<corner_t>();
       case 1:
-        return mesh->template make<wedge_t>(*mesh);
+        return mesh->template make<wedge_t>();
       default:
         raise_logic_error("invalid topological dimension");
       }

@@ -27,9 +27,6 @@
 namespace apps {
 namespace hydro {
   
-// type aliases
-using flux_data_t = flux_data__<mesh_t::num_dimensions>;
-
 // register the data client
 flecsi_register_data_client(mesh_t, meshes, mesh0);
 
@@ -41,34 +38,82 @@ flecsi_register_field(
   density,   
   mesh_t::real_t, 
   dense, 
-  2, 
+  1, 
   mesh_t::index_spaces_t::cells
 );
 
-// flecsi_register_field(mesh_t, hydro, pressure,   mesh_t::real_t, dense, 1, cells);
-// flecsi_register_field(mesh_t, hydro, velocity, mesh_t::vector_t, dense, 2, cells);
+flecsi_register_field(
+  mesh_t, 
+  hydro, 
+  velocity,
+  mesh_t::vector_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::cells
+);
 
-// flecsi_register_field(mesh_t, hydro, internal_energy, mesh_t::real_t, dense, 2, cells);
-// flecsi_register_field(mesh_t, hydro,     temperature, mesh_t::real_t, dense, 1, cells);
-// flecsi_register_field(mesh_t, hydro,     sound_speed, mesh_t::real_t, dense, 1, cells);
+flecsi_register_field(
+  mesh_t, 
+  hydro,
+  internal_energy,
+  mesh_t::real_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::cells
+);
 
-// compute the fluxes.  here I am regestering a struct as the stored data
+flecsi_register_field(
+  mesh_t, 
+  hydro, 
+  pressure,
+  mesh_t::real_t, 
+  dense, 
+  1, 
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t,
+  hydro,
+  temperature,
+  mesh_t::real_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t,
+  hydro,
+  sound_speed,
+  mesh_t::real_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::cells
+);
+
+// Here I am regestering a struct as the stored data
 // type since I will only ever be accesissing all the data at once.
-// flecsi_register_field(mesh_t, hydro, flux, flux_data_t, dense, 1, faces);
-
-// register the time step and set a cfl
-//flecsi_register_field( mesh_t, hydro, time_step, real_t, global, 1 );
-//flecsi_register_field( mesh_t, hydro, cfl, real_t, global, 1 );
-
-// Register the total energy
-//flecsi_register_field( mesh_t, hydro, sum_total_energy, real_t, global, 1 );
-
+flecsi_register_field(
+  mesh_t, 
+  hydro, 
+  flux, 
+  flux_data_t, 
+  dense, 
+  1,
+  mesh_t::index_spaces_t::edges
+);
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
 ///////////////////////////////////////////////////////////////////////////////
 int driver(int argc, char** argv) 
 {
+
+
+  // get the context
+  auto & context = flecsi::execution::context_t::instance();
+  auto rank = context.color();
 
   //===========================================================================
   // Parse arguments
@@ -84,26 +129,21 @@ int driver(int argc, char** argv)
   // need to put the filename into a statically sized character array
   auto mesh_basename = utils::basename( mesh_filename );
 
+  // figure out an output prefix, this will be used later
+  auto prefix = utils::remove_extension( mesh_basename );
+
   //===========================================================================
   // Mesh Setup
   //===========================================================================
+
+  // start a clock
+  auto tstart = utils::get_wall_time();
 
   // get the client handle 
   auto mesh = flecsi_get_client_handle(mesh_t, meshes, mesh0);
  
   // cout << mesh;
   
-  // output the mesh
-  auto prefix = utils::remove_extension( mesh_basename );
-  char_array_t prefix_char;
-  strcpy( prefix_char.data(), prefix.c_str() );
-  auto f1 = flecsi_execute_task(output, single, mesh, prefix_char);
-  f1.wait();
-
-  return 0;
-
-#if 0
-
   //===========================================================================
   // Some typedefs
   //===========================================================================
@@ -116,52 +156,32 @@ int driver(int argc, char** argv)
   constexpr auto epsilon = std::numeric_limits<real_t>::epsilon();
   const auto machine_zero = std::sqrt(epsilon);
 
-  // the maximum number of retries
-  constexpr int max_retries = 5;
-
-  //===========================================================================
-  // Field Creation
-  //===========================================================================
-
-  // start the timer
-  auto tstart = utils::get_wall_time();
-
-
-
-  // set these variables as persistent for plotting
-  flecsi_get_accessor(mesh, hydro,  density,   real_t, dense, 0).attributes().set(persistent);
-  flecsi_get_accessor(mesh, hydro, pressure,   real_t, dense, 0).attributes().set(persistent);
-  flecsi_get_accessor(mesh, hydro, velocity, vector_t, dense, 0).attributes().set(persistent);
-
-  flecsi_get_accessor(mesh, hydro, internal_energy, real_t, dense, 0).attributes().set(persistent);
-  flecsi_get_accessor(mesh, hydro,     temperature, real_t, dense, 0).attributes().set(persistent);
-  flecsi_get_accessor(mesh, hydro,     sound_speed, real_t, dense, 0).attributes().set(persistent);
-#endif
-
   //===========================================================================
   // Access what we need
   //===========================================================================
   
   auto d  = flecsi_get_handle(mesh, hydro,  density,   real_t, dense, 0);
-
-#if 0
-  auto d0 = flecsi_get_handle(mesh, hydro,  density,   real_t, dense, 1);
+  //auto d0 = flecsi_get_handle(mesh, hydro,  density,   real_t, dense, 1);
   auto v  = flecsi_get_handle(mesh, hydro, velocity, vector_t, dense, 0);
-  auto v0 = flecsi_get_handle(mesh, hydro, velocity, vector_t, dense, 1);
+  //auto v0 = flecsi_get_handle(mesh, hydro, velocity, vector_t, dense, 1);
   auto e  = flecsi_get_handle(mesh, hydro, internal_energy, real_t, dense, 0);
-  auto e0 = flecsi_get_handle(mesh, hydro, internal_energy, real_t, dense, 1);
+  //auto e0 = flecsi_get_handle(mesh, hydro, internal_energy, real_t, dense, 1);
 
   auto p  = flecsi_get_handle(mesh, hydro,        pressure,   real_t, dense, 0);
   auto T  = flecsi_get_handle(mesh, hydro,     temperature, real_t, dense, 0);
   auto a  = flecsi_get_handle(mesh, hydro,     sound_speed, real_t, dense, 0);
 
   auto F = flecsi_get_handle(mesh, hydro, flux, flux_data_t, dense, 0);
-#endif
 
   //===========================================================================
   // Initial conditions
   //===========================================================================
-  
+ 
+  // the solution time starts at zero
+  real_t soln_time{0};  
+  size_t time_cnt{0}; 
+
+
   // now call the main task to set the ics.  Here we set primitive/physical 
   // quanties
   flecsi_execute_task( 
@@ -169,170 +189,136 @@ int driver(int argc, char** argv)
     single, 
     mesh, 
     inputs_t::ics,
-    d
+    inputs_t::eos,
+    soln_time,
+    d, v, e, p, T, a
   );
 
-#if 0
- 
   #ifdef HAVE_CATALYST
     auto insitu = io::catalyst::adaptor_t(catalyst_scripts);
     std::cout << "Catalyst on!" << std::endl;
   #endif
 
-  // Update the EOS
-  flecsi_execute_task( 
-    update_state_from_pressure_task, loc, single, mesh, inputs_t::eos.get() 
-  );
-
   //===========================================================================
   // Pre-processing
   //===========================================================================
 
-
   // now output the solution
-  if (inputs_t::output_freq > 0)
-    output(mesh, inputs_t::prefix, inputs_t::postfix, 1);
+  auto has_output = (inputs_t::output_freq > 0);
+  if (has_output) {
+    auto name = prefix + "_" + apps::common::zero_padded( 0 ) + ".exo";
+    auto name_char = utils::to_trivial_string( name );
+    auto f =
+      flecsi_execute_task(output, single, mesh, name_char, d, v, e, p, T, a);
+    f.wait();
+  }
+
+
+  // dump connectivity
+  {
+    auto name = utils::to_trivial_string( prefix+".txt" );
+    auto f = flecsi_execute_task(print, single, mesh, name);
+    f.wait();
+  }
 
   //===========================================================================
   // Residual Evaluation
   //===========================================================================
 
-  // get the current time
-  auto soln_time = mesh.time();
-  auto time_cnt  = mesh.time_step_counter();
+  // Get the legion runtime and context.  In the furture, legion will not be 
+  // exposed to the user
+  auto legion_runtime = Legion::Runtime::get_runtime();
+  auto legion_context = Legion::Runtime::get_context();
 
-  // get an accessor for the time step
-  auto time_step = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );   
+  auto & min_reduction = 
+    flecsi::execution::context_t::instance().min_reduction();
 
-  // a counter for this session
-  size_t num_steps = 0; 
-
-  for ( size_t num_retries = 0;
+  for ( 
+    size_t num_steps = 0;
     (num_steps < inputs_t::max_steps && soln_time < inputs_t::final_time); 
     ++num_steps 
   ) {   
 
-    // store the initial solution, only if this isnt a retry
-    if (num_retries == 0)
-      flecsi_execute_task( save_solution_task, loc, single, mesh );
-
-    // compute the time step
-    flecsi_execute_task( evaluate_time_step_task, loc, single, mesh );
- 
-    // access the computed time step and make sure its not too large
-    *time_step = std::min( *time_step, inputs_t::final_time - soln_time );       
-
     //-------------------------------------------------------------------------
-    // try a timestep
+    // compute the time step
+    
+    auto local_future = flecsi_execute_task( 
+      evaluate_time_step, single, mesh, d, v, e, p, T, a
+    );
 
-    // compute the fluxes
-    flecsi_execute_task( evaluate_fluxes_task, loc, single, mesh );
+    local_future.defer_dynamic_collective_arrival(
+      legion_runtime, legion_context, min_reduction
+    );
+    
+    min_reduction = 
+      legion_runtime->advance_dynamic_collective(legion_context, min_reduction);
 
-    // reset the time stepping mode
-    auto mode = mode_t::normal;
+    auto global_future = legion_runtime->get_dynamic_collective_result(
+      legion_context, min_reduction
+    );
 
-    // wrap the stage update in a do loop, so it can be re-executed
-    do {
+    auto time_step = global_future.get_result<real_t>();
+    time_step *= inputs_t::CFL;
 
-      // output the time step
+    // access the computed time step and make sure its not too large
+    time_step = std::min( time_step, inputs_t::final_time - soln_time );       
+
+    // output the time step
+    if ( rank == 0 ) {
       cout << std::string(80, '=') << endl;
       auto ss = cout.precision();
       cout.setf( std::ios::scientific );
       cout.precision(6);
       cout << "|  " << "Step:" << std::setw(10) << time_cnt+1
-           << "  |  Time:" << std::setw(17) << soln_time + (*time_step)
-           << "  |  Step Size:" << std::setw(17) << *time_step
+           << "  |  Time:" << std::setw(17) << soln_time + time_step
+           << "  |  Step Size:" << std::setw(17) << time_step
            << "  |" << std::endl;
       cout.unsetf( std::ios::scientific );
       cout.precision(ss);
+    }
 
-      // Loop over each cell, scattering the fluxes to the cell
-      auto err = 
-        flecsi_execute_task( 
-          apply_update_task, loc, single, mesh, machine_zero, true 
-        );
-      auto update_flag = err.get();
-
-
-      // dump the current errored solution to a file
-      if ( update_flag != solution_error_t::ok && inputs_t::output_freq > 0)
-        output(mesh, inputs_t::prefix+"-error", inputs_t::postfix, 1);
-
-      // if we got an unphysical solution, half the time step and try again
-      if ( update_flag == solution_error_t::unphysical ) {
-        // Print a message that we are retrying
-        std::cout << "Unphysical solution detected, halfing timestep..." << std::endl;
-        // half time step
-        *time_step *= 0.5;
-        // indicate that we are retrying
-        mode = mode_t::retry;
-      }
-
-      // if there was variance, retry the solution again
-      else if (update_flag == solution_error_t::variance) {
-        // Print a message that we are retrying
-        std::cout << "Variance in solution detected, retrying..." << std::endl;
-        // roll the counter back
-        --num_steps;
-        // set the flag to restart
-        mode = mode_t::restart;
-      }
-
-      // if there is no error, just break
-      else {
-        mode = mode_t::normal;
-        break;
-      }
-
-
-      // if we are retrying or restarting, restore the original solution
-      if (mode==mode_t::retry || mode==mode_t::restart) {
-        // restore the initial solution
-        flecsi_execute_task( restore_solution_task, loc, single, mesh );
-        // don't retry forever
-        if ( ++num_retries > max_retries ) {
-          // Print a message we are exiting
-          std::cout << "Too many retries, exiting..." << std::endl;
-          // flag that we want to quit
-          mode = mode_t::quit;
-        }
-      }
-
-
-    } while ( mode==mode_t::retry );
-
-    // end timestep
     //-------------------------------------------------------------------------
+    // try a timestep
+    
+    // compute the fluxes
+    auto f1 = 
+      flecsi_execute_task( evaluate_fluxes, single, mesh, d, v, e, p, T, a, F );
+    f1.wait();
 
-    // if a restart is detected, restart the whole iteration loop
-    if (mode==mode_t::restart) continue;
-
-    // Update derived solution quantities
-    flecsi_execute_task( 
-      update_state_from_energy_task, loc, single, mesh, inputs_t::eos.get() 
+    // Loop over each cell, scattering the fluxes to the cell
+    auto f2 = flecsi_execute_task( 
+      apply_update, single, mesh, inputs_t::eos, time_step, F, d, v, e, p, T, a
     );
+    f2.wait();
 
-    // now we can quit after the solution has been reset to the previous step's
-    if (mode==mode_t::quit) break;
+    //-------------------------------------------------------------------------
+    // Post-process
+    
+    // update time
+    soln_time += time_step;
+    time_cnt++;
 
-    #ifdef HAVE_CATALYST
+#ifdef HAVE_CATALYST
     if (!catalyst_scripts.empty()) {
       auto vtk_grid = mesh::to_vtk( mesh );
       insitu.process( 
         vtk_grid, soln_time, num_steps, (num_steps==inputs_t::max_steps-1)
       );
     }
-    #endif
-
-    // update time
-    soln_time = mesh.increment_time( *time_step );
-    time_cnt = mesh.increment_time_step_counter();
+#endif
 
     // now output the solution
-    output(mesh, inputs_t::prefix, inputs_t::postfix, inputs_t::output_freq);
+    if ( has_output && 
+        (time_cnt % inputs_t::output_freq != 0 || 
+         num_steps==inputs_t::max_steps-1)  
+      ) 
+    {
+      auto name = prefix + "_" + apps::common::zero_padded( time_cnt ) + ".exo";
+      auto name_char = utils::to_trivial_string( name );
+      auto f = flecsi_execute_task(output, single, mesh, name_char, d, v, e, p, T, a);
+      f.wait();
+    }
 
-    // reset the number of retrys if we eventually made it through a time step
-    num_retries  = 0;
 
   }
 
@@ -340,13 +326,9 @@ int driver(int argc, char** argv)
   // Post-process
   //===========================================================================
     
-  // now output the solution
-  if ( (inputs_t::output_freq > 0) && (time_cnt % inputs_t::output_freq != 0) )
-    output(mesh, inputs_t::prefix, inputs_t::postfix, 1);
-
   cout << "Final solution time is " 
        << std::scientific << std::setprecision(2) << soln_time
-       << " after " << num_steps << " steps." << std::endl;
+       << " after " << time_cnt << " steps." << std::endl;
 
   
   auto tdelta = utils::get_wall_time() - tstart;
@@ -354,10 +336,6 @@ int driver(int argc, char** argv)
             << tdelta << "s." << std::endl;
 
 
-  // now output the checksums
-  mesh::checksum(mesh);
-
-#endif
 
   // success if you reached here
   return 0;

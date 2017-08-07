@@ -37,8 +37,8 @@ template<> real_t base_t::final_time = 0.2;
 template<> size_t base_t::max_steps = 1e6;
 
 // the equation of state
-template<> std::shared_ptr<eos_t> base_t::eos = 
-  std::make_shared< flecsale::eos::ideal_gas_t<real_t> >( 
+template<> eos_t base_t::eos = 
+  flecsale::eos::ideal_gas_t<real_t>( 
     /* gamma */ 1.4, /* cv */ 1.0 
   ); 
 
@@ -49,7 +49,7 @@ inputs_t::ics_function_t base_t::ics =
   {
     real_t d, p;
     vector_t v(0);
-    if ( x[0] < 0 && x[1] < 0 ) {
+    if ( /*x[0] < 0 &&*/ x[1] < 0 ) {
       d = 0.125;
       p = 0.1;
     }

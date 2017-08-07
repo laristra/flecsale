@@ -21,9 +21,10 @@ using burton_3d_wedge_t = burton_wedge_t<3>;
 // left and right facet normals for 2d wedge
 ////////////////////////////////////////////////////////////////////////////////
 template<>
-void burton_2d_wedge_t::update(bool is_right)
+void burton_2d_wedge_t::update(const mesh_topology_base_t * mesh, bool is_right)
 {
-  auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
+  using math::abs;
+  auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh); 
   auto vs = msh->template entities<vertex_t::dimension, domain, vertex_t::domain>(this);
   auto es = msh->template entities<edge_t::dimension, domain, edge_t::domain>(this);
   assert( vs.size() == 1 );
@@ -34,25 +35,20 @@ void burton_2d_wedge_t::update(bool is_right)
     facet_normal_ = { e[1] - v[1], v[0] - e[0] };
   else
     facet_normal_ = { v[1] - e[1], e[0] - v[0] };
+  facet_area_ = abs(facet_normal_);
+  facet_normal_ /= facet_area_;
   facet_centroid_ = 0.5 * ( e + v );
-}
-
-template<>
-bool burton_2d_wedge_t::is_boundary() const
-{
-  auto msh = static_cast<const burton_2d_mesh_topology_t *>(mesh_); 
-  auto es = msh->template entities<edge_t::dimension, domain, edge_t::domain>(this);
-  assert( es.size() == 1 );
-  return es.front()->is_boundary();
+  set_boundary( es.front()->is_boundary() );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // left and right facet normals for 3d wedge
 ////////////////////////////////////////////////////////////////////////////////
 template<>
-void burton_3d_wedge_t::update(bool is_right)
+void burton_3d_wedge_t::update(const mesh_topology_base_t * mesh, bool is_right)
 {
-  auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
+  using math::abs;
+  auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh); 
   auto vs = msh->template entities<vertex_t::dimension, domain, vertex_t::domain>(this);
   auto es = msh->template entities<edge_t::dimension, domain, edge_t::domain>(this);
   auto fs = msh->template entities<face_t::dimension, domain, face_t::domain>(this);
@@ -66,16 +62,10 @@ void burton_3d_wedge_t::update(bool is_right)
     facet_normal_ = geom::shapes::triangle<num_dimensions>::normal( v, f, e );
   else 
     facet_normal_ = geom::shapes::triangle<num_dimensions>::normal( v, e, f );
+  facet_area_ = abs(facet_normal_);
+  facet_normal_ /= facet_area_;
   facet_centroid_ = geom::shapes::triangle<num_dimensions>::centroid( v, f, e );
-}
-
-template<>
-bool burton_3d_wedge_t::is_boundary() const
-{
-  auto msh = static_cast<const burton_3d_mesh_topology_t *>(mesh_); 
-  auto fs = msh->template entities<face_t::dimension, domain, face_t::domain>(this);
-  assert( fs.size() == 1 );
-  return fs.front()->is_boundary();
+  set_boundary( fs.front()->is_boundary() );
 }
 
 } // namespace burton

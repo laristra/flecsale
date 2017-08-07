@@ -92,7 +92,10 @@ public:
       // open the file
       exoid = ex_open(
         name.c_str(), EX_READ, &CPU_word_size, &IO_word_size, &version);
-      assert(exoid >= 0);
+      if ( exoid < 0 ) 
+        raise_runtime_error( 
+          "Problem opening exodus file, ex_open() returned " << exoid 
+        );
       
     }
     else if ( (mode & std::ios_base::out) == std::ios_base::out ) 
@@ -107,7 +110,10 @@ public:
       // create file
       exoid =
         ex_create(name.c_str(), cmode, &CPU_word_size, &IO_word_size);
-      assert(exoid >= 0);
+      if ( exoid < 0 ) 
+        raise_runtime_error( 
+          "Problem writing exodus file, ex_create() returned " << exoid
+        );
 
     }
 
@@ -118,10 +124,13 @@ public:
   //============================================================================
   //! \brief close the file once completed reading or writing
   //============================================================================
-  static auto close(int exoid) 
+  static void close(int exoid) 
   {
     auto status = ex_close(exoid);
-    return status;   
+    if ( status ) 
+      raise_runtime_error( 
+        "Problem closing exodus file, ex_close() returned " << exoid 
+      );
   }
 
 
@@ -130,7 +139,7 @@ public:
   //! \return the status of the file
   //============================================================================
   static
-  auto write_point_coords( int exoid, mesh_t & m ) 
+  void write_point_coords( int exoid, mesh_t & m ) 
   { 
     
     // mesh statistics
@@ -150,7 +159,11 @@ public:
     // write the coordinates to the file
     auto status = ex_put_coord( 
       exoid, coord.data(), coord.data()+num_nodes, coord.data()+2*num_nodes );
-    assert(status == 0);
+    if (status)
+      raise_runtime_error(
+        "Problem putting vertex coordinates to exodus file, " <<
+        " ex_put_coord() returned " << status
+      );
   
     // write the coordinate names
     const char *coord_names[3];
@@ -158,9 +171,11 @@ public:
     coord_names[1] = "y";
     coord_names[2] = "z";
     status = ex_put_coord_names(exoid, (char **)coord_names);
-    assert(status == 0);
-
-    return status;
+    if (status)
+      raise_runtime_error(
+        "Problem putting coordinate names to exodus file, " <<
+        " ex_put_coord_names() returned " << status
+      );
 
   }
 
@@ -169,7 +184,7 @@ public:
   //! \return the status of the file
   //============================================================================
   static 
-  auto read_point_coords( 
+  void read_point_coords( 
     int exoid, mesh_t & m, size_t num_nodes, std::vector<vertex_t *> & vs ) 
   { 
     // mesh statistics
@@ -187,7 +202,11 @@ public:
     
     auto status = ex_get_coord( 
       exoid, coord.data(), coord.data()+num_nodes, coord.data()+2*num_nodes);
-    assert(status == 0);
+    if (status)
+      raise_runtime_error(
+        "Problem getting vertex coordinates from exodus file, " <<
+        " ex_get_coord() returned " << status 
+      );
 
     // put nodes into mesh
     for (counter_t i = 0; i < num_nodes; ++i) {
@@ -200,18 +219,17 @@ public:
       vs.push_back(v);
     } // for
 
-    return status;
-
   }
     
 
-#if 0
   //============================================================================
   //! \brief write field data to the file
   //! \param [in] m  The mesh to extract field data from.
   //! \return the status of the file
   //============================================================================
-  auto write_fields( mesh_t & m ) 
+  template< typename T >
+  static
+  void write_fields( int exoid, mesh_t & m, const T & f ) 
   { 
 
     int status;
@@ -234,6 +252,45 @@ public:
     auto validate_string = []( auto && str ) {
       return std::forward<decltype(str)>(str);
     };
+
+    //--------------------------------------------------------------------------
+    // hard coded data
+    //--------------------------------------------------------------------------
+
+    int num_var = 1;
+    int var_id = 1;
+    int elem_blk_id = 1;
+
+    // put the number of element fields
+    status = ex_put_var_param(exoid, "e", num_var);
+    if (status)
+      raise_runtime_error(
+        "Problem writing variable number, " <<
+        " ex_put_var_param() returned " << status 
+      );
+
+    // fill element variable names array
+    auto label = validate_string( f.label() );
+    status = ex_put_var_name(exoid, "e", var_id, "density");
+    if (status)
+      raise_runtime_error(
+        "Problem writing variable name, " <<
+        " ex_put_var_name() returned " << status 
+      );
+
+    size_t cid = 0;
+    std::vector<ex_real_t> tmp(m.num_cells()); 
+    for(auto c: m.cells()) tmp[cid++] = f(c);
+    status = ex_put_elem_var(
+      exoid, time_step, var_id, elem_blk_id, tmp.size(), tmp.data()
+    );
+    if (status)
+      raise_runtime_error(
+        "Problem writing variable data, " <<
+        " ex_put_elem_var() returned " << status 
+      );
+
+#if 0
 
     //--------------------------------------------------------------------------
     // nodal data
@@ -432,10 +489,9 @@ public:
     status = ex_put_time(exoid_, time_step, &soln_time );
     assert(status == 0);
 
-    return status;
+#endif 
 
   }
-#endif 
 
 #endif
 
@@ -629,8 +685,12 @@ public:
   //!  \return Exodus error code. 0 on success.
   //============================================================================
 
-  static int write( const std::string &name, mesh_t &m ) 
-  {
+  template< typename T >
+  static void write(
+    const std::string &name,
+    mesh_t &m,
+    T * const d = nullptr
+  ) {
 
 #ifdef HAVE_EXODUS
 
@@ -659,14 +719,17 @@ public:
     // initialize the file.
     auto status = ex_put_init(exoid, "Exodus II output from flecsi.", num_dims,
                               num_nodes, num_elem, num_elem_blk, num_node_sets, num_side_sets);
-    assert(status == 0);
+    if ( status )
+      raise_runtime_error( 
+        "Problem putting exodus file parameters, ex_put_init_ext() returned " 
+        << status 
+      );
 
     //--------------------------------------------------------------------------
     // Point Coordinates
     //--------------------------------------------------------------------------
     
-    status = write_point_coords( exoid, m );
-    assert( status == 0 );
+    write_point_coords( exoid, m );
 
 
     //--------------------------------------------------------------------------
@@ -703,7 +766,11 @@ public:
         num_nodes_this_blk, num_edges_per_elem, num_faces_per_elem, 
         num_attr_per_elem
       );
-      assert(status == 0);
+    if (status)
+      raise_runtime_error(
+        "Problem writing block to exodus file, " <<
+        " ex_put_block() returned " << status 
+      );
 
       // build the connectivitiy list
       vector<ex_index_t> elem_nodes( num_nodes_this_blk );
@@ -723,35 +790,40 @@ public:
         exoid, EX_ELEM_BLOCK, elem_blk_id, elem_nodes.data(), 
         nullptr, nullptr
       );
-      assert(status == 0);
+      if (status)
+        raise_runtime_error(
+          "Problem writing block connectivity to exodus file, " <<
+          " ex_put_conn() returned " << status 
+        );
         
       // write counts
       status = ex_put_entity_count_per_polyhedra(
         exoid, EX_ELEM_BLOCK, elem_blk_id, elem_node_counts.data() 
       );
+      if (status)
+        raise_runtime_error(
+          "Problem writing block counts to exodus file, " <<
+          " ex_put_entity_count_per_polyhedra() returned " << status 
+        );
 
     } // block
 
     //--------------------------------------------------------------------------
     // write field data
     //--------------------------------------------------------------------------
-    //status = write_fields( m );
-    //assert( status == 0 );
+    if ( d ) 
+      write_fields( exoid, m, *d );
 
 
     //--------------------------------------------------------------------------
     // final step
     //--------------------------------------------------------------------------
-    status = close( exoid );
-
-    return status;
+    close( exoid );
 
 
 #else
 
     std::cerr << "FLECSI not build with exodus support." << std::endl;
-
-    return 0;
 
 #endif
 
@@ -1131,8 +1203,7 @@ public:
     // Point Coordinates
     //--------------------------------------------------------------------------
     
-    status = write_point_coords( m );
-    assert( status == 0 );
+    write_point_coords( m );
 
 
 
@@ -1280,7 +1351,7 @@ public:
     //--------------------------------------------------------------------------
     // final step
     //--------------------------------------------------------------------------
-    status = close();
+    close();
 
     return status;
 

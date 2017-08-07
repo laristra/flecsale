@@ -10,15 +10,16 @@
 #pragma once
 
 // user includes
-#include <flecsale/common/constants.h>
 #include <flecsale/common/types.h>
 #include <flecsale/eqns/euler_eqns.h>
 #include <flecsale/eqns/flux.h>
 #include <flecsale/eos/ideal_gas.h>
 #include <flecsale/math/general.h>
+#include <flecsale/utils/trivial_string.h>
 
 #include <flecsale/mesh/burton/burton.h>
 
+#include "../common/utils.h"
 
 namespace apps {
 namespace hydro {
@@ -33,12 +34,24 @@ namespace eos   = flecsale::eos;
 namespace eqns  = flecsale::eqns;
 
 // the handle type
-template<typename T, size_t EP, size_t SP, size_t GP>
-using dense_handle__ =
-  flecsi::data::legion::dense_handle_t<T, EP, SP, GP>;
+template<typename T>
+using dense_handle_w__ =
+  flecsi::data::legion::dense_handle_t<T, flecsi::wo, flecsi::wo, flecsi::ro>;
 
-template<typename DC, size_t PS>
-using client_handle__ = flecsi::data_client_handle__<DC, PS>;
+template<typename T>
+using dense_handle_rw__ =
+  flecsi::data::legion::dense_handle_t<T, flecsi::rw, flecsi::rw, flecsi::ro>;
+
+template<typename T>
+using dense_handle_r__ =
+  flecsi::data::legion::dense_handle_t<T, flecsi::ro, flecsi::ro, flecsi::ro>;
+
+template<typename DC>
+using client_handle_w__ = flecsi::data_client_handle__<DC, flecsi::wo>;
+
+template<typename DC>
+using client_handle_r__ = flecsi::data_client_handle__<DC, flecsi::ro>;
+
 
 // mesh and some underlying data types
 template <std::size_t N>
@@ -47,7 +60,7 @@ using mesh__ = typename mesh::burton::burton_mesh_t<N>;
 using size_t = common::size_t;
 using real_t = common::real_t;
 
-using eos_t = eos::eos_base_t<real_t>;
+using eos_t = eos::ideal_gas_t<real_t>;
 
 template< std::size_t N >
 using eqns__ = typename eqns::euler_eqns_t<real_t, N>;
@@ -75,7 +88,7 @@ enum class mode_t
 };
 
 //! a trivially copyable character array
-using char_array_t = std::array<char, common::max_char_length>;
+using char_array_t = utils::trivial_string_t;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief alias the flux function
@@ -99,6 +112,17 @@ auto boundary_flux( U && state, V && norm )
 { 
   return 
     E::wall_flux( std::forward<U>(state), std::forward<V>(norm) ); 
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Pack data into a tuple
+//! Change the called function to alter the flux evaluation.
+////////////////////////////////////////////////////////////////////////////////
+template< typename T, typename...ARGS >
+decltype(auto) pack( T && loc, ARGS&&... args )
+{ 
+  return 
+    std::forward_as_tuple( std::forward<ARGS>(args)(std::forward<T>(loc))... ); 
 }
 
 } // namespace hydro

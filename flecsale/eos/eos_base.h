@@ -34,6 +34,7 @@ public:
   // \brief the real type
   using real_t = T;
 
+#if 0
 
   //============================================================================
   // Public member functions that are part of the common interface
@@ -135,6 +136,7 @@ public:
     real_t internal_energy 
   ) const = 0;
 
+#endif
 };
 
 } // namespace
