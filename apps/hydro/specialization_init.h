@@ -336,7 +336,8 @@ void partition_mesh( char_array_t filename )
     size_t offset(0);
     for(auto i: std::get<0>(cell_nn_info)) {
       // get the entity info
-      auto entry = entity_info_t(primary_indices_map[offset], rank, offset, i);
+      auto entry =
+        entity_info_t(primary_indices_map.at(offset), rank, offset, i);
       // if it belongs to other colors, its a shared cell
       if(i.size()) {
         cells.shared.insert(entry);
@@ -477,7 +478,7 @@ void partition_mesh( char_array_t filename )
   context.add_coloring(index_spaces::cells, cells, cell_coloring_info);
     
   //----------------------------------------------------------------------------
-  // Add adjacency information
+  // add adjacency information
   //----------------------------------------------------------------------------
   
   // create the starting index
@@ -562,6 +563,47 @@ void partition_mesh( char_array_t filename )
 
     }
   }
+
+
+  //----------------------------------------------------------------------------
+  // add intermediate mappings
+  //
+  // These are needed so that entities that are implicitly created by
+  // mesh.init<>() maintain consistent orderings that match the pre-computed
+  // colorings.
+  //----------------------------------------------------------------------------
+  
+  std::unordered_map<size_t, std::vector<size_t>> edge_to_vertex_map;
+
+  for ( auto e : entity_ids[1] ) { 
+    auto vs = md.entities( 
+      mesh_t::edge_t::dimension, mesh_t::vertex_t::dimension, e
+    );
+    edge_to_vertex_map.emplace( e, std::move(vs) ); 
+  }
+
+
+  if ( rank == 0 ) {
+    for ( auto m : edge_to_vertex_map ) {
+      std::cout << " edge " << m.first << " ";
+      if ( edges.exclusive.count(m.first) ) 
+        std::cout << "(excl)";
+      else if ( edges.shared.count(m.first) )
+        std::cout << "(shar)";
+      else if ( edges.ghost.count(m.first) )
+        std::cout << "(ghos)";
+      else
+        assert( false && "should not be here" );
+      std::cout << " : ";
+      for ( auto v : m.second )
+        std::cout << v << " ";
+      std::cout << endl;
+    }
+  }
+
+  context.add_intermediate_map(
+    mesh_t::edge_t::dimension, mesh_t::edge_t::domain, edge_to_vertex_map
+  );
 
   //----------------------------------------------------------------------------
   // output the result
@@ -744,6 +786,7 @@ void initialize_mesh(
   std::vector< vertex_t * > vertices;
   vertices.reserve( vertex_map.size() );
 
+  std::cout << "Color " << rank << std::endl;
   for(auto & vm: vertex_map) { 
     // get the point
     const auto & p = md.vertex<point_t>( vm.second );
@@ -762,22 +805,28 @@ void initialize_mesh(
       md.entities( cell_t::dimension, vertex_t::dimension, cm.second );
     // create a list of vertex pointers
     std::vector< vertex_t * > elem_vs( vs.size() );
+    if ( rank == 0 ) {
+      std::cout << "Creating cell " << cm.second  << " with verts : "; 
+      for ( auto v : vs ) std::cout << v << ", ";
+      std::cout << std::endl;
+    }
     // transform the list of vertices to mesh ids
     std::transform(
       vs.begin(),
       vs.end(),
       elem_vs.begin(),
-      [&](auto v) { return vertices[ reverse_vertex_map[v] ]; }
+      [&](auto v) { return vertices[ reverse_vertex_map.at(v) ]; }
     );
     // create the cell
     auto c = mesh.create_cell( elem_vs ); 
   }
-  
+ 
   //----------------------------------------------------------------------------
   // initialize the mesh
   //----------------------------------------------------------------------------
   
   mesh.init(); 
+  mesh.is_valid();
 
   //----------------------------------------------------------------------------
   // Some debug

@@ -961,24 +961,40 @@ public:
     //--------------------------------------------------------------------------
     // make sure face normal points out from first cell
     bool bad_face = false;
-    auto fs = faces();
-    auto num_faces = fs.size();
     
-    #pragma omp parallel for reduction( || : bad_face )
-    for( counter_t fid=0; fid<num_faces; ++fid ) {
-      auto f = fs[fid];
+  auto & context = flecsi::execution::context_t::instance();
+  auto rank = context.color();
+  auto & vertex_map = context.index_map( index_spaces_t::vertices );
+  auto & face_map = context.index_map( index_spaces_t::edges );
+  auto & cell_map = context.index_map( index_spaces_t::cells );
+
+
+    for( auto f : faces(flecsi::owned) ) {
       auto n = f->normal();
       auto fx = f->midpoint();
       auto c = cells(f).front();
       auto cx = c->midpoint();
       auto delta = fx - cx;
       auto dot = dot_product( n, delta );      
+#if 0
+        std::cout << "Checking face " << face_map.at(f.id())  << " verts : "; 
+        for ( auto v : vertices(f) ) std::cout << vertex_map.at(v.id()) << ", ";
+        std::cout << std::endl;
+        std::cout << "Checking face " << f.id()  << " verts : "; 
+        for ( auto v : vertices(f) ) std::cout << v.id() << ", ";
+        std::cout << std::endl;
+      std::cout << "normal = " << n << std::endl;
+      std::cout << "midpnt = " << fx << std::endl;
+      for ( auto cl : cells(f) )
+        std::cout << " has cell " << cell_map.at(cl.id()) << " with local id " << cl.id() << std::endl;
+      std::cout << "centroid = " << cx << std::endl;
+      std::cout << "centroid = " << cells(f).back()->midpoint() << std::endl;
+      std::cout << dot << std::endl;
+#endif
       if ( dot < 0 ) {
         bad_face = bad_face || true;
-        #pragma omp critical
-        {
-          ss << "Face " << f.id() << " has opposite normal" << std::endl;
-        }
+        std::cout << "Face " << f.id() << " has opposite normal" << std::endl;
+        abort();
       }
     } 
 

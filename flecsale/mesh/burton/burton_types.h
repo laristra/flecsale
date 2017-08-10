@@ -94,6 +94,9 @@ struct burton_types_t<2> {
   //! the index spaces type
   using index_spaces_t = attributes::index_spaces_t;
 
+  //! the id type
+  using id_t = flecsi::utils::id_t;
+
   //============================================================================
   // Define basic types.
   //============================================================================
@@ -172,7 +175,7 @@ struct burton_types_t<2> {
   template<size_t M, size_t D>
   static constexpr 
   mesh_entity_base_t *
-  create_entity(mesh_topology_base_t* mesh, size_t num_vertices) 
+  create_entity(mesh_topology_base_t* mesh, size_t num_vertices, const id_t & id) 
   {
     switch(M){
       //---------- Primal Mesh ----------//
