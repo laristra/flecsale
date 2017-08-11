@@ -976,21 +976,6 @@ public:
       auto cx = c->midpoint();
       auto delta = fx - cx;
       auto dot = dot_product( n, delta );      
-#if 0
-        std::cout << "Checking face " << face_map.at(f.id())  << " verts : "; 
-        for ( auto v : vertices(f) ) std::cout << vertex_map.at(v.id()) << ", ";
-        std::cout << std::endl;
-        std::cout << "Checking face " << f.id()  << " verts : "; 
-        for ( auto v : vertices(f) ) std::cout << v.id() << ", ";
-        std::cout << std::endl;
-      std::cout << "normal = " << n << std::endl;
-      std::cout << "midpnt = " << fx << std::endl;
-      for ( auto cl : cells(f) )
-        std::cout << " has cell " << cell_map.at(cl.id()) << " with local id " << cl.id() << std::endl;
-      std::cout << "centroid = " << cx << std::endl;
-      std::cout << "centroid = " << cells(f).back()->midpoint() << std::endl;
-      std::cout << dot << std::endl;
-#endif
       if ( dot < 0 ) {
         bad_face = bad_face || true;
         std::cout << "Face " << f.id() << " has opposite normal" << std::endl;

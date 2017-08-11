@@ -161,31 +161,6 @@ void evaluate_fluxes(
   dense_handle_w__<flux_data_t> flux
 ) {
 
-  auto & cont = flecsi::execution::context_t::instance();
-  auto rank = cont.color();
-  auto & vertex_map = cont.index_map( mesh_t::index_spaces_t::vertices );
-  auto & edge_map = cont.index_map( mesh_t::index_spaces_t::edges );
-  
-#if 0
-  if ( rank == 0 ) {
-    for ( auto e : mesh.edges(flecsi::owned) ) {
-      std::cout << " edge " << edge_map.at(e.id())  << " : ";
-      if ( edges.exclusive.count(m.first) ) 
-        std::cout << "(excl)";
-      else if ( edges.shared.count(m.first) )
-        std::cout << "(shar)";
-      else if ( edges.ghost.count(m.first) )
-        std::cout << "(ghos)";
-      else
-        assert( false && "should not be here" );
-      std::cout << " : ";
-      for ( auto v : e.vertices(m )
-        std::cout << v << " ";
-      std::cout << endl;
-    }
-  }
-#endif
-
   // type aliases
   using eqns_t = eqns__< mesh_t::num_dimensions >;
   
@@ -208,18 +183,11 @@ void evaluate_fluxes(
     } 
     // boundary cell
     else {
-      //std::cout << "boundary cell" << std::endl;
       flux(f) = boundary_flux<eqns_t>( w_left, f->normal() );
     }
    
     // scale the flux by the face area
     flux(f) *= f->area();
-
-    //std::cout << flux(f) << std::endl;
-    //for ( auto v : mesh.vertices(f) ) 
-    //  std::cout << v.id() << ", ";
-    //std::cout << std::endl;
-
 
   } // for
   //----------------------------------------------------------------------------
@@ -251,19 +219,11 @@ void apply_update(
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
 
-  std::cout << "applying updates" << std::endl;
-  auto & cont = flecsi::execution::context_t::instance();
-  auto rank = cont.color();
-  auto & cell_map = cont.index_map( mesh_t::index_spaces_t::cells );
-
   for ( auto c : mesh.cells( flecsi::owned ) )
   {
 
     // initialize the update
     flux_data_t delta_u( 0 );
-
-    if ( rank == 1 )
-    std::cout << " Cell " << cell_map.at(c.id()) << " on rank " << rank << std::endl;
 
     // loop over each connected edge
     for ( auto f : mesh.faces(c) ) {
@@ -278,13 +238,8 @@ void apply_update(
       else
         delta_u += flux(f);
 
-    if ( rank == 1 )
-      std::cout << " adding flux : " << flux(f) << std::endl;
-
     } // edge
 
-    if ( rank == 1 )
-    std::cout << delta_u << std::endl;
     // now compute the final update
     delta_u *= delta_t/c->volume();
 

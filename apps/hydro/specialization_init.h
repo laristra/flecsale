@@ -582,25 +582,6 @@ void partition_mesh( char_array_t filename )
     edge_to_vertex_map.emplace( e, std::move(vs) ); 
   }
 
-
-  if ( rank == 0 ) {
-    for ( auto m : edge_to_vertex_map ) {
-      std::cout << " edge " << m.first << " ";
-      if ( edges.exclusive.count(m.first) ) 
-        std::cout << "(excl)";
-      else if ( edges.shared.count(m.first) )
-        std::cout << "(shar)";
-      else if ( edges.ghost.count(m.first) )
-        std::cout << "(ghos)";
-      else
-        assert( false && "should not be here" );
-      std::cout << " : ";
-      for ( auto v : m.second )
-        std::cout << v << " ";
-      std::cout << endl;
-    }
-  }
-
   context.add_intermediate_map(
     mesh_t::edge_t::dimension, mesh_t::edge_t::domain, edge_to_vertex_map
   );
@@ -786,7 +767,6 @@ void initialize_mesh(
   std::vector< vertex_t * > vertices;
   vertices.reserve( vertex_map.size() );
 
-  std::cout << "Color " << rank << std::endl;
   for(auto & vm: vertex_map) { 
     // get the point
     const auto & p = md.vertex<point_t>( vm.second );
@@ -805,11 +785,6 @@ void initialize_mesh(
       md.entities( cell_t::dimension, vertex_t::dimension, cm.second );
     // create a list of vertex pointers
     std::vector< vertex_t * > elem_vs( vs.size() );
-    if ( rank == 0 ) {
-      std::cout << "Creating cell " << cm.second  << " with verts : "; 
-      for ( auto v : vs ) std::cout << v << ", ";
-      std::cout << std::endl;
-    }
     // transform the list of vertices to mesh ids
     std::transform(
       vs.begin(),
