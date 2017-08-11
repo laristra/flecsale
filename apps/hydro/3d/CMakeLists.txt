@@ -3,14 +3,22 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
+MESSAGE( STATUS ${FleCSI_RUNTIME_DRIVER} )
 add_executable( hydro_3d
   $<TARGET_OBJECTS:apps_common> 
-  inputs.cc
   driver.cc
+  inputs.cc
+  specialization_init.cc
   ${FleCSI_RUNTIME_DRIVER}
   ${FleCSI_RUNTIME_MAIN}
 )
 target_link_libraries( hydro_3d flecsale )
+target_compile_definitions( 
+  hydro_3d
+  PRIVATE
+    FLECSI_ENABLE_SPECIALIZATION_TLT_INIT
+    FLECSI_ENABLE_SPECIALIZATION_SPMD_INIT
+)
 
 if (LUA_FOUND)
 

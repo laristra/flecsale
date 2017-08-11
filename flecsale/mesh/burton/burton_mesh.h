@@ -120,6 +120,7 @@ public:
   //! Shape data type.
   using shape_t = typename config_t::shape_t;
 
+  //! the ownership ( exclusive, shared, ghost ) types
   using ownership_t = flecsi::partition_t;
 
 
@@ -1383,6 +1384,26 @@ public:
 // External Class Definitions
 ////////////////////////////////////////////////////////////////////////////////
 
+#if 0
+//! Maps dimension-to-dimension connectivity to an index space id
+template<>
+inline
+burton_mesh_t<2>::size_t burton_mesh_t<2>::index_space_map[3][3] =
+  {
+    // row
+    100,
+    index_spaces_t::vertices_to_edges,
+    index_spaces_t::vertices_to_cells,
+    // row 
+    index_spaces_t::edges_to_vertices,
+    100,
+    index_spaces_t::edges_to_cells,
+    // row
+    index_spaces_t::cells_to_vertices,
+    index_spaces_t::cells_to_edges,
+    100
+  };
+#endif
 
 //==============================================================================
 // Friends

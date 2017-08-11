@@ -14,7 +14,6 @@
 #include "flecsale/geom/shapes/geometric_shapes.h"
 #include "flecsale/mesh/burton/burton_config.h"
 #include "flecsale/utils/errors.h"
-#include "flecsi/topology/mesh_storage.h"
 #include "flecsi/topology/mesh_types.h"
 
 namespace flecsale {
@@ -61,12 +60,8 @@ struct burton_element_t<2,1> :
   //! The domain of the entity
   static constexpr auto domain = 0;
 
-  //! the flecsi mesh topology storage type
-  using mesh_storage_t = 
-    flecsi::topology::mesh_storage_t<num_dimensions, num_domains>;
   //! the flecsi mesh topology type
-  using mesh_topology_base_t = 
-    flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
+  using mesh_topology_base_t = typename config_t::mesh_topology_base_t;
 
   //! Type of floating point.
   using real_t = typename config_t::real_t;
@@ -199,12 +194,8 @@ struct burton_element_t<3,1> :
   //! The domain of the entity
   static constexpr auto domain = 0;
 
-  //! the flecsi mesh topology storage type
-  using mesh_storage_t = 
-    flecsi::topology::mesh_storage_t<num_dimensions, num_domains>;
   //! the flecsi mesh topology type
-  using mesh_topology_base_t = 
-    flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
+  using mesh_topology_base_t = typename config_t::mesh_topology_base_t;
 
   //! Type of floating point.
   using real_t = typename config_t::real_t;
@@ -325,12 +316,8 @@ struct burton_element_t<2,2>
   //! The domain of the entity
   static constexpr auto domain = 0;
 
-  //! the flecsi mesh topology storage type
-  using mesh_storage_t = 
-    flecsi::topology::mesh_storage_t<num_dimensions, num_domains>;
   //! the flecsi mesh topology type
-  using mesh_topology_base_t = 
-    flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
+  using mesh_topology_base_t = typename config_t::mesh_topology_base_t;
 
   //! Type of floating point.
   using real_t = typename config_t::real_t;
@@ -347,10 +334,10 @@ struct burton_element_t<2,2>
   using vector_t = typename config_t::vector_t;
 
   //! the flecsi id type
-  using id_t = flecsi::utils::id_t;
+  using id_t = typename config_t::id_t;
 
   //! The flecsi domain connectivity type.
-  using connectivity_t = flecsi::topology::domain_connectivity<num_dimensions>;
+  using connectivity_t = typename config_t::connectivity_t;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
@@ -522,12 +509,8 @@ struct burton_element_t<3,2>
   //! The domain of the entity
   static constexpr auto domain = 0;
 
-  //! the flecsi mesh topology storage type
-  using mesh_storage_t = 
-    flecsi::topology::mesh_storage_t<num_dimensions, num_domains>;
   //! the flecsi mesh topology type
-  using mesh_topology_base_t = 
-    flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
+  using mesh_topology_base_t = typename config_t::mesh_topology_base_t;
 
   //! Type of floating point.
   using real_t = typename config_t::real_t;
@@ -547,10 +530,10 @@ struct burton_element_t<3,2>
   using bitfield_t = typename config_t::bitfield_t;
 
   //! the flecsi id type
-  using id_t = flecsi::utils::id_t;
+  using id_t = typename config_t::id_t;
 
   //! The flecsi domain connectivity type.
-  using connectivity_t = flecsi::topology::domain_connectivity<num_dimensions>;
+  using connectivity_t = typename config_t::connectivity_t;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;
@@ -740,12 +723,8 @@ struct burton_element_t<3,3>
   //! The domain of the entity
   static constexpr auto domain = 0;
 
-  //! the flecsi mesh topology storage type
-  using mesh_storage_t = 
-    flecsi::topology::mesh_storage_t<num_dimensions, num_domains>;
   //! the flecsi mesh topology type
-  using mesh_topology_base_t = 
-    flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
+  using mesh_topology_base_t = typename config_t::mesh_topology_base_t;
 
   //! Type of floating point.
   using real_t = typename config_t::real_t;
@@ -760,11 +739,11 @@ struct burton_element_t<3,3>
   //! Type vector type.
   using vector_t = typename config_t::vector_t;
 
-  // the flecsi id type
-  using id_t = flecsi::utils::id_t;
+  //! the flecsi id type
+  using id_t = typename config_t::id_t;
 
   //! The flecsi domain connectivity type.
-  using connectivity_t = flecsi::topology::domain_connectivity<num_dimensions>;
+  using connectivity_t = typename config_t::connectivity_t;
 
   //! the base vertex type
   using vertex_t = burton_vertex_t<num_dimensions>;

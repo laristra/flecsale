@@ -481,9 +481,6 @@ void partition_mesh( char_array_t filename )
   // add adjacency information
   //----------------------------------------------------------------------------
   
-  // create the starting index
-  size_t index = index_spaces::vertices_to_edges;
-
   // create a master list of all entities
   std::vector< std::vector<size_t> > entity_ids(num_dims+1);
 
@@ -536,7 +533,7 @@ void partition_mesh( char_array_t filename )
 
       // populate the adjacency information
       flecsi::coloring::adjacency_info_t ai;
-      ai.index_space = index++;
+      ai.index_space = mesh_t::index_spaces_t::map[ from_dim ][ to_dim ];
       ai.from_index_space = from_dim;
       ai.to_index_space = to_dim;
       ai.color_sizes.resize(comm_size);

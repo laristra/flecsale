@@ -64,8 +64,7 @@ public:
 
     // set the ics function
     auto ics_func = lua_try_access( hydro_input, "ics" );
-    ics = 
-      [ics_func]( const vector_t & x, const real_t & t )
+    ics = [ics_func]( const vector_t & x, const real_t & t )
       {
         real_t d, p;
         vector_t v(0);

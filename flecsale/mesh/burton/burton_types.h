@@ -18,39 +18,11 @@
 #include "flecsale/mesh/burton/burton_wedge.h"
 
 #include "flecsi/topology/mesh.h"
-#include "flecsi/topology/mesh_topology.h"
 #include "flecsale/mesh/burton/burton_config.h"
 
 namespace flecsale {
 namespace mesh {
 namespace burton {
-
-//! This namespace is used to expose enumerations and types.
-namespace attributes {
-  
-////////////////////////////////////////////////////////////////////////////////
-/// \brief The burton mesh index spaces.
-////////////////////////////////////////////////////////////////////////////////
-struct index_spaces_t {
-  enum index_spaces : size_t {
-    // the main index spaces
-    vertices,
-    edges,
-    cells,
-    corners,
-    wedges,
-    // index spaces for connectivity
-    vertices_to_edges,
-    vertices_to_cells,
-    edges_to_vertices,
-    edges_to_cells,
-    cells_to_vertices,
-    cells_to_edges,
-  };
-};
-
-} // namespace attributes
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief A collection of type information needed to specialize the flecsi
@@ -81,21 +53,64 @@ struct burton_types_t<2> {
   //! The number of domains in burton mesh picked up from burton_config_t.
   static constexpr size_t num_domains = config_t::num_domains;
 
-  //! the flecsi mesh topology storage type
-  using mesh_storage_t = 
-    flecsi::topology::mesh_storage_t<num_dimensions, num_domains>;
   //! the flecsi mesh topology type
-  using mesh_topology_base_t = 
-    flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
+  using mesh_topology_base_t = typename config_t::mesh_topology_base_t;
 
   //! the base type for the entities
-  using mesh_entity_base_t = flecsi::topology::mesh_entity_base_t<num_domains>;
-
-  //! the index spaces type
-  using index_spaces_t = attributes::index_spaces_t;
+  using mesh_entity_base_t = typename config_t::mesh_entity_base_t;
 
   //! the id type
   using id_t = flecsi::utils::id_t;
+
+  //============================================================================
+  //! \brief The burton mesh index spaces.
+  //============================================================================
+  struct index_spaces_t {
+
+    //! The individual enumeration of the index spaces
+    enum index_spaces : size_t {
+      // the main index spaces
+      vertices,
+      edges,
+      faces = edges,
+      cells,
+      corners,
+      wedges,
+      // index spaces for connectivity
+      vertices_to_edges,
+      vertices_to_faces = vertices_to_edges,
+      vertices_to_cells,
+      edges_to_vertices,
+      edges_to_cells,
+      faces_to_vertices = edges_to_vertices,
+      faces_to_cells = edges_to_cells,
+      cells_to_vertices,
+      cells_to_edges,
+      cells_to_faces = cells_to_edges,
+      // index spaces that are not used
+      edges_to_faces = 100,
+      faces_to_edges = 100
+    };
+
+    //! Maps dimension-to-dimension connectivity to an index space id
+    static constexpr size_t map[3][3] = {
+      // row
+      100,
+      vertices_to_edges,
+      vertices_to_cells,
+      // row
+      edges_to_vertices,
+      100,
+      edges_to_cells,
+      // row
+      cells_to_vertices,
+      cells_to_edges,
+      100
+    };
+
+
+  };
+ 
 
   //============================================================================
   // Define basic types.
@@ -182,7 +197,7 @@ struct burton_types_t<2> {
     case 0:
       switch(D) {
       case 1:
-        return mesh->template make<edge_t>();
+        return mesh->template make<edge_t>(id);
       default:
         raise_logic_error("invalid topological dimension");
       }
@@ -191,7 +206,7 @@ struct burton_types_t<2> {
     case 1:
       switch(D) {
       case 0:
-        return mesh->template make<corner_t>(*mesh);
+        /return mesh->template make<corner_t>(*mesh);
       case 1:
         return mesh->template make<wedge_t>(*mesh);
       default:
@@ -202,10 +217,11 @@ struct burton_types_t<2> {
     default:
       raise_logic_error("invalid domain");
     }
+    // should never get here
+    return nullptr;
   }
   
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief A collection of type information needed to specialize the flecsi
@@ -230,19 +246,72 @@ struct burton_types_t<3> {
   //! the shape type
   using shape_t = config_t::shape_t;
 
-  //! the flecsi mesh topology storage type
-  using mesh_storage_t = 
-    flecsi::topology::mesh_storage_t<num_dimensions, num_domains>;
   //! the flecsi mesh topology type
-  using mesh_topology_base_t = 
-    flecsi::topology::mesh_topology_base_t< mesh_storage_t >;
+  using mesh_topology_base_t = typename config_t::mesh_topology_base_t;
   
-  // the base type for the entities
-  using mesh_entity_base_t = flecsi::topology::mesh_entity_base_t<num_domains>;
+  //! the base type for the entities
+  using mesh_entity_base_t = typename config_t::mesh_entity_base_t;
 
-  //! the index spaces type
-  using index_spaces_t = attributes::index_spaces_t;
-  
+  //! the id type
+  using id_t = flecsi::utils::id_t;
+
+  //============================================================================
+  //! \brief The burton mesh index spaces.
+  //============================================================================
+  struct index_spaces_t {
+
+    //! The individual enumeration of the index spaces
+    enum index_spaces : size_t {
+      // the main index spaces
+      vertices,
+      edges,
+      faces,
+      cells,
+      corners,
+      wedges,
+      // index spaces for connectivity
+      vertices_to_edges,
+      vertices_to_faces,
+      vertices_to_cells,
+      edges_to_vertices,
+      edges_to_faces,
+      edges_to_cells,
+      faces_to_vertices,
+      faces_to_edges,
+      faces_to_cells,
+      cells_to_vertices,
+      cells_to_edges,
+      cells_to_faces,
+    };
+
+    //! Maps dimension-to-dimension connectivity to an index space id
+    static constexpr size_t map[4][4] = {
+      // row
+      100,
+      vertices_to_edges,
+      vertices_to_faces,
+      vertices_to_cells,
+      // row
+      edges_to_vertices,
+      100,
+      edges_to_faces,
+      edges_to_cells,
+      // row
+      faces_to_vertices,
+      faces_to_edges,
+      100,
+      faces_to_cells,
+      // row
+      cells_to_vertices,
+      cells_to_edges,
+      cells_to_faces,
+      100
+    };
+
+
+  };
+ 
+
   //============================================================================
   // Define basic types.
   //============================================================================
@@ -268,44 +337,37 @@ struct burton_types_t<3> {
   //============================================================================
   // Specify mesh parameterizations.
   //============================================================================
-
-  //! Convenience type
-  template<size_t D>
-  using domain_ = flecsi::topology::domain_<D>;
-
-  //! Convenience type
-  template<size_t I>
-  using index_space_ = flecsi::topology::index_space_<I>;
-
+  
   //! Definitions of burton mesh entities and their domain.
-  using entity_types =
-      std::tuple<
-        std::tuple<index_space_<0>, domain_<0>, vertex_t>,
-        std::tuple<index_space_<1>, domain_<0>, edge_t>,
-        std::tuple<index_space_<2>, domain_<0>, face_t>,
-        std::tuple<index_space_<3>, domain_<0>, cell_t>,
-        std::tuple<index_space_<4>, domain_<1>, wedge_t>,
-        std::tuple<index_space_<5>, domain_<1>, corner_t>
-      >;
+  flecsi_register_entity_types(
+    flecsi_entity_type( index_spaces_t::vertices, 0, vertex_t ),
+    flecsi_entity_type( index_spaces_t::edges, 0, edge_t ),
+    flecsi_entity_type( index_spaces_t::faces, 0, face_t ),
+    flecsi_entity_type( index_spaces_t::cells, 0, cell_t )
+    //flecsi_entity_type( attributes::wedges, 1, wedge_t ),
+    //flecsi_entity_type( attributes::corners, 1, corner_t )
+  );
+
 
   //! Connectivities are adjacencies of entities within a single domain.
-  using connectivities =
-    std::tuple<
-      std::tuple<index_space_<6>, domain_<0>, vertex_t, edge_t>,
-      std::tuple<index_space_<7>, domain_<0>, vertex_t, face_t>,
-      std::tuple<index_space_<8>, domain_<0>, vertex_t, cell_t>,
-      std::tuple<index_space_<9>, domain_<0>, edge_t, vertex_t>,
-      std::tuple<index_space_<10>, domain_<0>, edge_t, face_t>,
-      std::tuple<index_space_<11>, domain_<0>, edge_t, cell_t>,
-      std::tuple<index_space_<12>, domain_<0>, face_t, vertex_t>,
-      std::tuple<index_space_<13>, domain_<0>, face_t, edge_t>,
-      std::tuple<index_space_<14>, domain_<0>, face_t, cell_t>,
-      std::tuple<index_space_<15>, domain_<0>, cell_t, vertex_t>,
-      std::tuple<index_space_<16>, domain_<0>, cell_t, face_t>,
-      std::tuple<index_space_<17>, domain_<0>, cell_t, edge_t>
-      >;
+  flecsi_register_connectivities(
+    flecsi_connectivity( index_spaces_t::vertices_to_edges, 0, vertex_t, edge_t ),
+    flecsi_connectivity( index_spaces_t::vertices_to_faces, 0, vertex_t, face_t ),
+    flecsi_connectivity( index_spaces_t::vertices_to_cells, 0, vertex_t, cell_t ),
+    flecsi_connectivity( index_spaces_t::edges_to_vertices, 0, edge_t, vertex_t ),
+    flecsi_connectivity( index_spaces_t::edges_to_faces,    0, edge_t,   face_t ),
+    flecsi_connectivity( index_spaces_t::edges_to_cells,    0, edge_t,   cell_t ),
+    flecsi_connectivity( index_spaces_t::faces_to_vertices, 0, edge_t, vertex_t ),
+    flecsi_connectivity( index_spaces_t::faces_to_edges,    0, edge_t,   edge_t ),
+    flecsi_connectivity( index_spaces_t::faces_to_cells,    0, edge_t,   cell_t ),
+    flecsi_connectivity( index_spaces_t::cells_to_vertices, 0, cell_t, vertex_t ),
+    flecsi_connectivity( index_spaces_t::cells_to_faces,    0, cell_t,   face_t ),
+    flecsi_connectivity( index_spaces_t::cells_to_edges,    0, cell_t,   edge_t )
+  );
 
   //! Bindings are adjacencies of entities across two domains.
+  flecsi_register_bindings();
+#if 0
   using bindings =
       std::tuple<
         // corners
@@ -330,14 +392,16 @@ struct burton_types_t<3> {
         std::tuple<index_space_<34>, domain_<1>, domain_<1>,  wedge_t,  corner_t>,
         std::tuple<index_space_<35>, domain_<1>, domain_<1>,  corner_t, wedge_t>
       >;
- 
+#endif
+
   //============================================================================
   //! \brief depending upon the dimension/number of verices, create different 
   //!   types of face entities
   //============================================================================  
   static
   mesh_entity_base_t *
-  create_face(mesh_topology_base_t* mesh, size_t num_vertices) {
+  create_face(mesh_topology_base_t* mesh, size_t num_vertices, const id_t & id)
+  {
     auto face_type = shape_t::polygon;
     switch(num_vertices) {
     case (1,2):
@@ -347,8 +411,9 @@ struct burton_types_t<3> {
     case (4):
       face_type = shape_t::quadrilateral;
     }
-    return mesh->template make<cell_t>(face_type);
+    return mesh->template make<face_t>(id, face_type);
   }
+
 
   //============================================================================
   //! \brief depending upon the dimension/number of verices, create different 
@@ -357,21 +422,22 @@ struct burton_types_t<3> {
   //! \tparam D The dimensional index.
   //============================================================================
   template<size_t M, size_t D>
-  static constexpr
+  static constexpr 
   mesh_entity_base_t *
-  create_entity(mesh_topology_base_t* mesh, size_t num_vertices)
-  {   
+  create_entity(mesh_topology_base_t* mesh, size_t num_vertices, const id_t & id) 
+  {
     switch(M){
       //---------- Primal Mesh ----------//
     case 0:
       switch(D) {
       case 1:
-        return mesh->template make<edge_t>();
+        return mesh->template make<edge_t>(id);
       case 2:
-        return create_face(mesh, num_vertices);
+        return create_face( mesh, num_vertices, id );
       default:
         raise_logic_error("invalid topological dimensions");
       }
+#if 0
       //---------- Dual Mesh ----------//
     case 1:
       switch(D) {
@@ -383,6 +449,7 @@ struct burton_types_t<3> {
         raise_logic_error("invalid topological dimension");
       }
       //---------- Error ----------//
+#endif
     default:
       raise_logic_error("invalid domain");
     }

@@ -31,6 +31,7 @@ set(mesh_HEADERS
 
 set(mesh_SOURCES
   burton/burton_element.cc
+  burton/burton_types.cc
   burton/burton_wedge.cc
 )
 

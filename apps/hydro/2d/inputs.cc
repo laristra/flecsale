@@ -49,7 +49,7 @@ inputs_t::ics_function_t base_t::ics =
   {
     real_t d, p;
     vector_t v(0);
-    if ( /*x[0] < 0 &&*/ x[1] < 0 ) {
+    if ( x[0] < 0 && x[1] < 0 ) {
       d = 0.125;
       p = 0.1;
     }
