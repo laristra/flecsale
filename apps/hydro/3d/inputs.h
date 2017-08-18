@@ -14,6 +14,7 @@
 #include <flecsale/mesh/burton/burton.h>
 #include <flecsale/mesh/factory.h>
 #include <flecsale/utils/lua_utils.h>
+#include <flecsale/utils/string_utils.h>
 
 // system includes
 #include <string>

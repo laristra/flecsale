@@ -966,7 +966,7 @@ public:
   auto & context = flecsi::execution::context_t::instance();
   auto rank = context.color();
   auto & vertex_map = context.index_map( index_spaces_t::vertices );
-  auto & face_map = context.index_map( index_spaces_t::edges );
+  auto & face_map = context.index_map( index_spaces_t::faces );
   auto & cell_map = context.index_map( index_spaces_t::cells );
 
 
@@ -976,7 +976,16 @@ public:
       auto c = cells(f).front();
       auto cx = c->midpoint();
       auto delta = fx - cx;
-      auto dot = dot_product( n, delta );      
+      auto dot = dot_product( n, delta );
+      // std::cout << "Checking face with mid " << face_map[ f.id() ] << std::endl;
+      // std::cout << "With cells : ";
+      // for ( auto cl : cells(f) ) std::cout << cell_map[ cl.id() ] << ", ";
+      // std::cout << std::endl;
+      // std::cout << "And vertices : ";
+      // for ( auto cl : cells(f) ) std::cout << cell_map[ cl.id() ] << ", ";
+      // std::cout << std::endl;
+      // std::cout << "Face has midpoint " << fx << std::endl;
+      // std::cout << std::endl;
       if ( dot < 0 ) {
         bad_face = bad_face || true;
         std::cout << "Face " << f.id() << " has opposite normal" << std::endl;
@@ -1322,8 +1331,10 @@ public:
       break;
     }
 
-    e = base_t::template make<cell_t>(cell_type);
-    base_t::template init_entity<E::domain, E::dimension, vertex_t::dimension>( e, std::forward<V>(verts) );
+    e = base_t::template make<E>(cell_type);
+    base_t::template init_entity<E::domain, E::dimension, vertex_t::dimension>(
+      e, std::forward<V>(verts)
+    );
     return e;
   } // create_cell
 
@@ -1372,7 +1383,9 @@ public:
     }
 
     c = base_t::template make< cell_t >( shape_t::polyhedron );
-    base_t::template init_entity<cell_t::domain, cell_t::dimension, face_t::dimension>( c, std::forward<F>(faces) );
+    base_t::template init_entity<
+      cell_t::domain, cell_t::dimension, face_t::dimension
+    >( c, std::forward<F>(faces) );
     return c;
   } // create_cell
 

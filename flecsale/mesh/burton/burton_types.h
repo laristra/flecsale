@@ -92,8 +92,16 @@ struct burton_types_t<2> {
       faces_to_edges = 100
     };
 
+    //! Maps an entity dimension to an index space id
+    static constexpr size_t entity_map[3] = {
+      vertices,
+      edges,
+      cells,
+    };
+
+
     //! Maps dimension-to-dimension connectivity to an index space id
-    static constexpr size_t map[3][3] = {
+    static constexpr size_t connectivity_map[3][3] = {
       // row
       100,
       vertices_to_edges,
@@ -284,8 +292,17 @@ struct burton_types_t<3> {
       cells_to_faces,
     };
 
+    //! Maps an entity dimension to an index space id
+    static constexpr size_t entity_map[4] = {
+      vertices,
+      edges,
+      faces,
+      cells,
+    };
+
+
     //! Maps dimension-to-dimension connectivity to an index space id
-    static constexpr size_t map[4][4] = {
+    static constexpr size_t connectivity_map[4][4] = {
       // row
       100,
       vertices_to_edges,
@@ -357,9 +374,9 @@ struct burton_types_t<3> {
     flecsi_connectivity( index_spaces_t::edges_to_vertices, 0, edge_t, vertex_t ),
     flecsi_connectivity( index_spaces_t::edges_to_faces,    0, edge_t,   face_t ),
     flecsi_connectivity( index_spaces_t::edges_to_cells,    0, edge_t,   cell_t ),
-    flecsi_connectivity( index_spaces_t::faces_to_vertices, 0, edge_t, vertex_t ),
-    flecsi_connectivity( index_spaces_t::faces_to_edges,    0, edge_t,   edge_t ),
-    flecsi_connectivity( index_spaces_t::faces_to_cells,    0, edge_t,   cell_t ),
+    flecsi_connectivity( index_spaces_t::faces_to_vertices, 0, face_t, vertex_t ),
+    flecsi_connectivity( index_spaces_t::faces_to_edges,    0, face_t,   edge_t ),
+    flecsi_connectivity( index_spaces_t::faces_to_cells,    0, face_t,   cell_t ),
     flecsi_connectivity( index_spaces_t::cells_to_vertices, 0, cell_t, vertex_t ),
     flecsi_connectivity( index_spaces_t::cells_to_faces,    0, cell_t,   face_t ),
     flecsi_connectivity( index_spaces_t::cells_to_edges,    0, cell_t,   edge_t )

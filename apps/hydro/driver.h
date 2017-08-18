@@ -101,7 +101,7 @@ flecsi_register_field(
   flux_data_t, 
   dense, 
   1,
-  mesh_t::index_spaces_t::edges
+  mesh_t::index_spaces_t::faces
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -307,10 +307,13 @@ int driver(int argc, char** argv)
     }
 #endif
 
+
     // now output the solution
     if ( has_output && 
-        (time_cnt % inputs_t::output_freq != 0 || 
-         num_steps==inputs_t::max_steps-1)  
+        (time_cnt % inputs_t::output_freq == 0 || 
+         num_steps==inputs_t::max_steps-1 ||
+         std::abs(soln_time-inputs_t::final_time) < epsilon
+        )  
       ) 
     {
       auto name = prefix + "_" + apps::common::zero_padded( time_cnt ) + ".exo";

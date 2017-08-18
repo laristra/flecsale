@@ -11,6 +11,8 @@
 #include "inputs.h"
 
 #include <flecsale/eos/ideal_gas.h>
+#include <flecsale/math/constants.h>
+#include <flecsale/math/general.h>
 
 namespace apps {
 namespace hydro {
@@ -23,6 +25,25 @@ using vector_t = inputs_t::vector_t;
 using string = std::string;
 using eos_t = inputs_t::eos_t;
 
+//=============================================================================
+// These constants are not part of the input class, they are globally scoped
+// within this translation unit only.
+//=============================================================================
+
+// the value of gamma
+const real_t gamma = 1.4;
+
+// compute a radial size
+const real_t delta_r = .1;
+
+// and a representative volume
+// - 1/8-th the volume of a sphere
+const real_t vol = math::pi * math::cube(delta_r) / 6.;
+
+//=============================================================================
+// Now set the inputs.
+//=============================================================================
+
 // the case prefix
 template<> string base_t::prefix = "shock_box_3d";
 template<> string base_t::postfix = "dat";
@@ -32,30 +53,27 @@ template<> size_t base_t::output_freq = 100;
 
 // the CFL and final solution time
 template<> real_t base_t::CFL = 1.0/3.0;
-template<> real_t base_t::final_time = 0.2;
+template<> real_t base_t::final_time = 1.0;
 template<> size_t base_t::max_steps = 1e6;
 
 // the equation of state
 template<> eos_t base_t::eos = 
   flecsale::eos::ideal_gas_t<real_t>( 
-    /* gamma */ 1.4, /* cv */ 1.0 
+    /* gamma */ gamma, /* cv */ 1.0 
   ); 
 
 // this is a lambda function to set the initial conditions
 template<>
 inputs_t::ics_function_t base_t::ics = 
-  []( const vector_t & x, const real_t & )
+  [g=gamma]( const vector_t & x, const real_t & )
   {
-    real_t d, p;
-    vector_t v(0);
-    if ( x[0] < 0 && x[1] < 0 && x[2] < 0 ) {
-      d = 0.125;
-      p = 0.1;
-    }
-    else {
-      d = 1.0;
-      p = 1.0;
-    }    
+    constexpr real_t e0 = 0.106384;
+    real_t d = 1.0;
+    vector_t v = 0;
+    real_t p = 1.e-6;
+    auto r = sqrt( x[0]*x[0] + x[1]*x[1] + x[2]*x[2] );
+    if ( r < delta_r + std::numeric_limits<real_t>::epsilon() )
+      p = (g - 1) * d * e0 / vol;
     return std::make_tuple( d, v, p );
   };
 

@@ -14,6 +14,7 @@
 
 // flecsi includes
 #include <flecsale/io/io_exodus.h>
+#include <flecsale/utils/string_utils.h>
 #include <flecsi/execution/context.h>
 #include <flecsi/execution/execution.h>
 
