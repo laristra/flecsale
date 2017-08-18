@@ -329,15 +329,19 @@ int driver(int argc, char** argv)
   // Post-process
   //===========================================================================
     
-  cout << "Final solution time is " 
-       << std::scientific << std::setprecision(2) << soln_time
-       << " after " << time_cnt << " steps." << std::endl;
-
-  
   auto tdelta = utils::get_wall_time() - tstart;
-  std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
-            << tdelta << "s." << std::endl;
 
+  if ( rank == 0 ) {
+
+    cout << "Final solution time is " 
+         << std::scientific << std::setprecision(2) << soln_time
+         << " after " << time_cnt << " steps." << std::endl;
+
+    
+    std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
+              << tdelta << "s." << std::endl;
+
+  }
 
 
   // success if you reached here
