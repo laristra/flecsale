@@ -29,7 +29,7 @@ template<> string base_t::prefix = "shock_box_2d";
 template<> string base_t::postfix = "dat";
 
 // output frequency
-template<> size_t base_t::output_freq = 100;
+template<> size_t base_t::output_freq = 1e6;
 
 // the CFL and final solution time
 template<> real_t base_t::CFL = 1.0/2.0;
