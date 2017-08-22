@@ -225,11 +225,6 @@ int driver(int argc, char** argv)
   // Residual Evaluation
   //===========================================================================
 
-  // Get the legion runtime and context.  In the furture, legion will not be 
-  // exposed to the user
-  auto legion_runtime = Legion::Runtime::get_runtime();
-  auto legion_context = Legion::Runtime::get_context();
-
   auto & min_reduction = 
     flecsi::execution::context_t::instance().min_reduction();
 
@@ -246,6 +241,13 @@ int driver(int argc, char** argv)
       evaluate_time_step, single, mesh, d, v, e, p, T, a
     );
 
+#if FLECSI_RUNTIME_MODEL == FLECSI_RUNTIME_MODEL_legion 
+#if 0
+    // Get the legion runtime and context.  In the furture, legion will not be 
+    // exposed to the user
+    auto legion_runtime = Legion::Runtime::get_runtime();
+    auto legion_context = Legion::Runtime::get_context();
+
     local_future.defer_dynamic_collective_arrival(
       legion_runtime, legion_context, min_reduction
     );
@@ -259,6 +261,14 @@ int driver(int argc, char** argv)
 
     auto time_step = global_future.get_result<real_t>();
     time_step *= inputs_t::CFL;
+#endif
+    auto time_step =
+	flecsi::execution::context_t::instance().reduce_min(local_future);
+    time_step *= inputs_t::CFL;
+#elif FLECSI_RUNTIME_MODEL == FLECSI_RUNTIME_MODEL_mpi
+    auto time_step = flecsi::execution::context_t::instance().reduce_min();
+    time_step *= inputs_t::CFL; 
+#endif
 
     // access the computed time step and make sure its not too large
     time_step = std::min( time_step, inputs_t::final_time - soln_time );       
@@ -270,7 +280,7 @@ int driver(int argc, char** argv)
       cout.setf( std::ios::scientific );
       cout.precision(6);
       cout << "|  " << "Step:" << std::setw(10) << time_cnt+1
-           << "  |  Time:" << std::setw(17) << soln_time + time_step
+          << "  |  Time:" << std::setw(17) << soln_time + time_step
            << "  |  Step Size:" << std::setw(17) << time_step
            << "  |" << std::endl;
       cout.unsetf( std::ios::scientific );
