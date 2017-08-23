@@ -640,8 +640,8 @@ burton_3d_cell_t::create_bound_entities(
     //------------------------------------------------------------------------
     // Wedges
     //
-    // Each corner has 6 vertices.  There is an even/odd ordering so we 
-    // no which way to compute normals.  So edges are defined in pairs
+    // There is an even/odd ordering so we 
+    // know which way to compute normals.  So edges are defined in pairs
     //
   case 1: {
 

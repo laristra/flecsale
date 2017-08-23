@@ -29,7 +29,7 @@ namespace burton {
 //!   low-level mesh infrastructure for ALE methods.
 //! \tparam N  The number of mesh dimensions.
 ////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N >
+template< std::size_t N, bool Include_Corners = false >
 struct burton_types_t {};
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,7 +38,8 @@ struct burton_types_t {};
 //! \remark This is the two-dimensional version.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
-struct burton_types_t<2> {
+struct burton_types_t<2> 
+{
 
   //============================================================================
   // Define local traits to satisfy mesh_topology requirements.
@@ -88,32 +89,37 @@ struct burton_types_t<2> {
       cells_to_edges,
       cells_to_faces = cells_to_edges,
       // index spaces that are not used
-      edges_to_faces = 100,
-      faces_to_edges = 100
+      edges_to_faces = 7777,
+      faces_to_edges = 7777
     };
 
     //! Maps an entity dimension to an index space id
-    static constexpr size_t entity_map[3] = {
+    static constexpr size_t entity_map[2][3] = {
+      // domain
       vertices,
       edges,
       cells,
+      // domain
+      corners,
+      wedges,
+      7777
     };
 
 
     //! Maps dimension-to-dimension connectivity to an index space id
     static constexpr size_t connectivity_map[3][3] = {
       // row
-      100,
+      7777,
       vertices_to_edges,
       vertices_to_cells,
       // row
       edges_to_vertices,
-      100,
+      7777,
       edges_to_cells,
       // row
       cells_to_vertices,
       cells_to_edges,
-      100
+      7777
     };
 
 
@@ -150,9 +156,9 @@ struct burton_types_t<2> {
   flecsi_register_entity_types(
     flecsi_entity_type( index_spaces_t::vertices, 0, vertex_t ),
     flecsi_entity_type( index_spaces_t::edges, 0, edge_t ),
-    flecsi_entity_type( index_spaces_t::cells, 0, cell_t )
-    //flecsi_entity_type( attributes::wedges, 1, wedge_t ),
-    //flecsi_entity_type( attributes::corners, 1, corner_t )
+    flecsi_entity_type( index_spaces_t::cells, 0, cell_t ),
+    flecsi_entity_type( index_spaces_t::corners, 1, corner_t ),
+    flecsi_entity_type( index_spaces_t::wedges, 1, wedge_t )
   );
 
 
@@ -189,6 +195,7 @@ struct burton_types_t<2> {
   );
 #endif
 
+
   //============================================================================
   //! \brief depending upon the dimension/number of verices, create different 
   //!   types of entities
@@ -209,18 +216,16 @@ struct burton_types_t<2> {
       default:
         raise_logic_error("invalid topological dimension");
       }
-#if 0
       //---------- Dual Mesh ----------//
     case 1:
       switch(D) {
       case 0:
-        /return mesh->template make<corner_t>(*mesh);
+        return mesh->template make<corner_t>();
       case 1:
-        return mesh->template make<wedge_t>(*mesh);
+        return mesh->template make<wedge_t>();
       default:
         raise_logic_error("invalid topological dimension");
       }
-#endif
       //---------- Error ----------//
     default:
       raise_logic_error("invalid domain");
@@ -231,12 +236,14 @@ struct burton_types_t<2> {
   
 };
 
+
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief A collection of type information needed to specialize the flecsi
 //!   low-level mesh infrastructure for ALE methods.
 ////////////////////////////////////////////////////////////////////////////////
 template<>
-struct burton_types_t<3> {
+struct burton_types_t<3>
+{
 
   //============================================================================
   // Define local traits to satisfy mesh_topology requirements.
@@ -293,36 +300,42 @@ struct burton_types_t<3> {
     };
 
     //! Maps an entity dimension to an index space id
-    static constexpr size_t entity_map[4] = {
+    static constexpr size_t entity_map[2][4] = {
+      // domain
       vertices,
       edges,
       faces,
       cells,
+      // domain
+      corners,
+      wedges,
+      7777,
+      7777
     };
 
 
     //! Maps dimension-to-dimension connectivity to an index space id
     static constexpr size_t connectivity_map[4][4] = {
       // row
-      100,
+      7777,
       vertices_to_edges,
       vertices_to_faces,
       vertices_to_cells,
       // row
       edges_to_vertices,
-      100,
+      7777,
       edges_to_faces,
       edges_to_cells,
       // row
       faces_to_vertices,
       faces_to_edges,
-      100,
+      7777,
       faces_to_cells,
       // row
       cells_to_vertices,
       cells_to_edges,
       cells_to_faces,
-      100
+      7777
     };
 
 

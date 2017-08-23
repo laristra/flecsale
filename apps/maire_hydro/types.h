@@ -16,9 +16,11 @@
 #include <flecsale/eos/ideal_gas.h>
 #include <flecsale/math/general.h>
 #include <flecsale/math/matrix.h>
+#include <flecsale/utils/trivial_string.h>
 
 #include <flecsale/mesh/burton/burton.h>
 
+#include "../common/utils.h"
 
 namespace apps {
 namespace hydro {
@@ -32,26 +34,43 @@ namespace geom  = flecsale::geom;
 namespace eos   = flecsale::eos;
 namespace eqns  = flecsale::eqns;
 
+// the handle type
+template<typename T>
+using dense_handle_w__ =
+  flecsi::data::legion::dense_handle_t<T, flecsi::wo, flecsi::wo, flecsi::ro>;
+
+template<typename T>
+using dense_handle_rw__ =
+  flecsi::data::legion::dense_handle_t<T, flecsi::rw, flecsi::rw, flecsi::ro>;
+
+template<typename T>
+using dense_handle_r__ =
+  flecsi::data::legion::dense_handle_t<T, flecsi::ro, flecsi::ro, flecsi::ro>;
+
+template<typename DC>
+using client_handle_w__ = flecsi::data_client_handle__<DC, flecsi::wo>;
+
+template<typename DC>
+using client_handle_r__ = flecsi::data_client_handle__<DC, flecsi::ro>;
+
+
 // mesh and some underlying data types
 template <std::size_t N>
-using mesh_t = typename mesh::burton::burton_mesh_t<N>;
-
-using mesh_2d_t = mesh_t<2>;
-using mesh_3d_t = mesh_t<3>;
+using mesh__ = typename mesh::burton::burton_mesh_t<N>;
 
 using size_t = common::size_t;
 using real_t = common::real_t;
 
 template< std::size_t N >
-using matrix_t = math::matrix< real_t, N, N >; 
+using matrix__ = math::matrix< real_t, N, N >; 
 
-using eos_t = eos::eos_base_t<real_t>;
+using eos_t = eos::ideal_gas_t<real_t>;
+
+template< std::size_t N >
+using eqns__ = typename eqns::lagrange_eqns_t<real_t, N>;
 
 template<std::size_t N>
-using eqns_t = eqns::lagrange_eqns_t<real_t, N>;
-
-template<std::size_t N>
-using flux_data_t = typename eqns_t<N>::flux_data_t;
+using flux_data__ = typename eqns__<N>::flux_data_t;
 
 // explicitly use some other stuff
 using std::cout;
@@ -72,6 +91,8 @@ enum class mode_t
   normal, retry, restart, quit
 };
 
+//! a trivially copyable character array
+using char_array_t = utils::trivial_string_t;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief A general boundary condition type.
@@ -142,7 +163,7 @@ boundary_condition_t<N> * make_boundary_condition( const std::string & str )
 
 
 //! \brief a type for storing boundary tags
-using tag_t = mesh_2d_t::tag_t;
+using tag_t = mesh__<2>::tag_t;
 
 //! \brief a map for storing links between boundary conditions and tags
 template< std::size_t N >
@@ -152,90 +173,16 @@ using boundary_map_t = std::map< tag_t, boundary_condition_t<N> * >;
 using eos_map_t = std::map< tag_t, eos_t * >;
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief A functor for accessing state in the mesh
-//! \tparam M  the mesh type
+//! \brief Pack data into a tuple
+//! Change the called function to alter the flux evaluation.
 ////////////////////////////////////////////////////////////////////////////////
-template < typename M >
-class cell_state_accessor 
-{
-public:
-  
-  //! some type aliases
-  using real_t = typename M::real_t;
-  using vector_t = typename M::vector_t;
+template< typename T, typename...ARGS >
+decltype(auto) pack( T && loc, ARGS&&... args )
+{ 
+  return 
+    std::forward_as_tuple( std::forward<ARGS>(args)(std::forward<T>(loc))... ); 
+}
 
-  //! \brief determine the type of accessor
-  //! \tparam T the data type we are accessing
-  template< typename T >
-  using accessor_t = 
-    decltype( flecsi_get_accessor( std::declval<M>(), hydro, var_name, T, dense, 0 ) );
-
-  //! \brief main constructor
-  //! \param [in]  mesh  the mesh object
-  constexpr cell_state_accessor( M & mesh ) :
-    m( flecsi_get_accessor( mesh, hydro, cell_mass, real_t, dense, 0 ) ),
-    V( flecsi_get_accessor( mesh, hydro, cell_volume, real_t, dense, 0 ) ),
-    p( flecsi_get_accessor( mesh, hydro, cell_pressure, real_t, dense, 0 ) ),
-    v( flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 ) ),
-    d( flecsi_get_accessor( mesh, hydro, cell_density, real_t, dense, 0 ) ),
-    e( flecsi_get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 0 ) ),
-    t( flecsi_get_accessor( mesh, hydro, cell_temperature, real_t, dense, 0 ) ),
-    a( flecsi_get_accessor( mesh, hydro, cell_sound_speed, real_t, dense, 0 ) )
-  {}
-
-  //! \brief main accessor
-  //! \remark const version
-  //!
-  //! \tparam T the element type
-  //! \param [in] i  the element we are accessing
-  //! \return a tuple of references to all the state data
-  template< typename T >
-  constexpr auto operator()( T && i ) const 
-  {
-    using std::forward;
-    return std::forward_as_tuple( V[ forward<T>(i) ], 
-                                  m[ forward<T>(i) ], 
-                                  v[ forward<T>(i) ], 
-                                  p[ forward<T>(i) ], 
-                                  d[ forward<T>(i) ], 
-                                  e[ forward<T>(i) ], 
-                                  t[ forward<T>(i) ], 
-                                  a[ forward<T>(i) ] );
-  }
-
-  //! \brief main accessor
-  //! \remark non-const version
-  //!
-  //! \tparam T the element type
-  //! \param [in] i  the element we are accessing
-  //! \return a tuple of references to all the state data
-  template< typename T >
-  auto operator()( T && i ) 
-  {
-    using std::forward;
-    return std::forward_as_tuple( V[ forward<T>(i) ], 
-                                  m[ forward<T>(i) ], 
-                                  v[ forward<T>(i) ], 
-                                  p[ forward<T>(i) ], 
-                                  d[ forward<T>(i) ], 
-                                  e[ forward<T>(i) ], 
-                                  t[ forward<T>(i) ], 
-                                  a[ forward<T>(i) ] );
-  }
-
-private:
-
-  // private data
-  accessor_t<real_t>   m;
-  accessor_t<real_t>   V;
-  accessor_t<real_t>   p;
-  accessor_t<vector_t> v;
-  accessor_t<real_t>   d;
-  accessor_t<real_t>   e;
-  accessor_t<real_t>   t;
-  accessor_t<real_t>   a;
-       
-};
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief A class to make setting the cfl easy

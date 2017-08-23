@@ -7,18 +7,15 @@
 /// \brief Simple tests related to solving full hydro solutions.
 ///////////////////////////////////////////////////////////////////////////////
 
-// hydro incdludes
+// hydro includes
+#include "arguments.h"
 #include "types.h"
-#include "../common/exceptions.h"
-#include "../common/parse_arguments.h"
 
 // user includes
-#include <flecsale/eos/ideal_gas.h>
-#include <flecsale/mesh/mesh_utils.h>
+//#include <flecsale/mesh/mesh_utils.h>
 #include <flecsale/utils/time_utils.h>
 
 // system includes
-#include <getopt.h>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -26,83 +23,191 @@
 
 namespace apps {
 namespace hydro {
+  
+// register the data client
+flecsi_register_data_client(mesh_t, meshes, mesh0);
+
+// create some field data.  Fields are registered as struct of arrays.
+// this allows us to access the data in different patterns.
+
+// The cell state
+flecsi_register_field(
+  mesh_t, 
+  hydro,  
+  cell_volume,
+  mesh_t::real_t, 
+  dense, 
+  1, 
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t, 
+  hydro,  
+  cell_mass,
+  mesh_t::real_t, 
+  dense, 
+  1, 
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t, 
+  hydro, 
+  cell_pressure,
+  mesh_t::real_t, 
+  dense, 
+  1, 
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t, 
+  hydro, 
+  cell_velocity,
+  mesh_t::vector_t,
+  dense,
+  2,
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t, 
+  hydro,  
+  cell_density,   
+  mesh_t::real_t, 
+  dense, 
+  2, 
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t, 
+  hydro,
+  cell_internal_energy,
+  mesh_t::real_t,
+  dense,
+  2,
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t,
+  hydro,
+  cell_temperature,
+  mesh_t::real_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t,
+  hydro,
+  cell_sound_speed,
+  mesh_t::real_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::cells
+);
+
+// node state
+flecsi_register_field(
+  mesh_t,
+  hydro,
+  node_coordinates,
+  mesh_t::vector_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::vertices
+);
+
+flecsi_register_field(
+  mesh_t,
+  hydro,
+  node_velocity,
+  mesh_t::vector_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::vertices
+);
+
+// solver state
+flecsi_register_field(
+  mesh_t,
+  hydro,
+  cell_residual,
+  flux_data_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t,
+  hydro,
+  corner_normal,
+  mesh_t::vector_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::corners
+);
+
+flecsi_register_field(
+  mesh_t,
+  hydro,
+  corner_force,
+  mesh_t::vector_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::corners
+);
+  
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
 ///////////////////////////////////////////////////////////////////////////////
-template< typename inputs_t >
 int driver(int argc, char** argv) 
 {
 
 
-  // set exceptions 
-  enable_exceptions();
+  // get the context
+  auto & context = flecsi::execution::context_t::instance();
+  auto rank = context.color();
 
   //===========================================================================
   // Parse arguments
   //===========================================================================
-
-  // the usage stagement
-  auto print_usage = [&argv]() {
-    std::cout << "Usage: " << argv[0] 
-              << " [--file INPUT_FILE]"
-              << " [--help]"
-              << std::endl << std::endl;
-    std::cout << "\t--file INPUT_FILE:\t Override the input file "
-              << "with INPUT_FILE." << std::endl;
-    std::cout << "\t--help:\t Print a help message." << std::endl;
-  };
-
-  // Define the options
-  struct option long_options[] =
-    {
-      {"help",       no_argument, 0, 'h'},
-      {"file", required_argument, 0, 'f'},
-      {0, 0, 0, 0}
-    };
-  const char * short_options = "hf:";
-
-  // parse the arguments
-  auto args = parse_arguments(argc, argv, long_options, short_options);
-
-  // process the simple ones
-  if ( args.count("h") ) {
-    print_usage();
-    return 0;
-  } 
-  else if ( args.count("?") ) {
-    print_usage();
-    return 1;
-  }
- 
+  
+  auto args = process_arguments( argc, argv );
+  // Assume arguments are sanitized
+  
   // get the input file
-  auto input_file_name = 
-    args.count("f") ? args.at("f") : std::string();
+  auto mesh_filename = 
+    args.count("m") ? args.at("m") : std::string();
+  
+  // need to put the filename into a statically sized character array
+  auto mesh_basename = utils::basename( mesh_filename );
 
-  // override any inputs if need be
-  if ( !input_file_name.empty() ) {
-    std::cout << "Using input file \"" << input_file_name << "\"." 
-              << std::endl;
-    inputs_t::load( input_file_name );
-  }
+  // figure out an output prefix, this will be used later
+  auto prefix = utils::remove_extension( mesh_basename );
 
   //===========================================================================
   // Mesh Setup
   //===========================================================================
 
-  // make the mesh
-  auto mesh = inputs_t::make_mesh( /* solution time */ 0.0 );
+  // start a clock
+  auto tstart = utils::get_wall_time();
 
-  // this is the mesh object
-  mesh.is_valid();
+  // get the client handle 
+  auto mesh = flecsi_get_client_handle(mesh_t, meshes, mesh0);
+ 
+  // cout << mesh;
   
-  cout << mesh;
-
   //===========================================================================
   // Some typedefs
   //===========================================================================
 
-  using mesh_t = decltype(mesh);
   using size_t = typename mesh_t::size_t;
   using real_t = typename mesh_t::real_t;
   using vector_t = typename mesh_t::vector_t; 
@@ -111,76 +216,44 @@ int driver(int argc, char** argv)
   constexpr auto epsilon = std::numeric_limits<real_t>::epsilon();
   const auto machine_zero = std::sqrt(epsilon);
 
-  // the maximum number of retries
-  constexpr int max_retries = 5;
-
   // the time stepping stage coefficients
   std::vector<real_t> stages = {0.5, 1.0};
+  
+  // the solution time starts at zero
+  real_t soln_time{0};  
+  size_t time_cnt{0}; 
 
   //===========================================================================
-  // Field Creation
+  // Access what we need
   //===========================================================================
 
-  // start the timer
-  auto tstart = utils::get_wall_time();
+  // cell data
+  auto Vc = flecsi_get_handle(mesh, hydro, cell_volume,     real_t, dense, 0);
+  auto Mc = flecsi_get_handle(mesh, hydro, cell_mass,       real_t, dense, 0);
+  auto pc = flecsi_get_handle(mesh, hydro, cell_pressure,   real_t, dense, 0);
+  auto uc = flecsi_get_handle(mesh, hydro, cell_velocity, vector_t, dense, 0);
 
-  // type aliases
-  using matrix_t = matrix_t< mesh_t::num_dimensions >;
-  using flux_data_t = flux_data_t< mesh_t::num_dimensions >;
-
-  // create some field data.  Fields are registered as struct of arrays.
-  // this allows us to access the data in different patterns.
-  flecsi_register_data(mesh, hydro, cell_volume,     real_t, dense, 1, cells);
-  flecsi_register_data(mesh, hydro, cell_mass,       real_t, dense, 1, cells);
-  flecsi_register_data(mesh, hydro, cell_pressure,   real_t, dense, 1, cells);
-  flecsi_register_data(mesh, hydro, cell_velocity, vector_t, dense, 2, cells);
-
-  flecsi_register_data(mesh, hydro, cell_density,         real_t, dense, 2, cells);
-  flecsi_register_data(mesh, hydro, cell_internal_energy, real_t, dense, 2, cells);
-  flecsi_register_data(mesh, hydro, cell_temperature,     real_t, dense, 1, cells);
-  flecsi_register_data(mesh, hydro, cell_sound_speed,     real_t, dense, 1, cells);
+  auto dc = flecsi_get_handle(mesh, hydro, cell_density,         real_t, dense, 0);
+  auto ec = flecsi_get_handle(mesh, hydro, cell_internal_energy, real_t, dense, 0);
+  auto Tc = flecsi_get_handle(mesh, hydro, cell_temperature,     real_t, dense, 0);
+  auto ac = flecsi_get_handle(mesh, hydro, cell_sound_speed,     real_t, dense, 0);
 
   // node state
-  flecsi_register_data(mesh, hydro, node_coordinates, vector_t, dense, 1, vertices);
-  flecsi_register_data(mesh, hydro, node_velocity, vector_t, dense, 1, vertices);
+  auto xn = flecsi_get_handle(mesh, hydro, node_coordinates, vector_t, dense, 0);
+  auto un = flecsi_get_handle(mesh, hydro, node_velocity, vector_t, dense, 0);
 
   // solver state
-  flecsi_register_data(mesh, hydro, cell_residual, flux_data_t, dense, 1, cells);
-
-  flecsi_register_data(mesh, hydro, corner_normal, vector_t, dense, 1, corners);
-  flecsi_register_data(mesh, hydro, corner_force, vector_t, dense, 1, corners);
+  auto dUdt = flecsi_get_handle(mesh, hydro, cell_residual, flux_data_t, dense, 0);
+  auto nc = flecsi_get_handle(mesh, hydro, corner_normal, vector_t, dense, 0);
+  auto Fc = flecsi_get_handle(mesh, hydro, corner_force, vector_t, dense, 0);
   
-  // register the time step and set a cfl
-  flecsi_register_data( mesh, hydro, time_step, real_t, global, 1 );
-  flecsi_register_data( mesh, hydro, cfl, time_constants_t, global, 1 );
-  
-  *flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 ) = inputs_t::initial_time_step;
-  *flecsi_get_accessor( mesh, hydro, cfl, time_constants_t, global, 0 ) = inputs_t::CFL;
-
-  // Register the total energy
-  flecsi_register_data( mesh, hydro, sum_total_energy, real_t, global, 1 );
-
-  // set the persistent variables, i.e. the ones that will be plotted
-  flecsi_get_accessor(mesh, hydro, cell_mass,       real_t, dense, 0).attributes().set(persistent);
-  flecsi_get_accessor(mesh, hydro, cell_pressure,   real_t, dense, 0).attributes().set(persistent);
-  flecsi_get_accessor(mesh, hydro, cell_velocity, vector_t, dense, 0).attributes().set(persistent);
-
-  flecsi_get_accessor(mesh, hydro, cell_density,         real_t, dense, 0).attributes().set(persistent);
-  flecsi_get_accessor(mesh, hydro, cell_internal_energy, real_t, dense, 0).attributes().set(persistent);
-  flecsi_get_accessor(mesh, hydro, cell_temperature,     real_t, dense, 0).attributes().set(persistent);
-  flecsi_get_accessor(mesh, hydro, cell_sound_speed,     real_t, dense, 0).attributes().set(persistent);
-
-  flecsi_get_accessor(mesh, hydro, node_velocity, vector_t, dense, 0).attributes().set(persistent);
-
 
   //===========================================================================
   // Boundary Conditions
   //===========================================================================
   
-  // get the current time
-  auto soln_time = mesh.time();
-  auto time_cnt  = mesh.time_step_counter();
 
+#if 0
   // the boundary mapper
   boundary_map_t< mesh_t::num_dimensions > boundaries;
 
@@ -201,7 +274,7 @@ int driver(int argc, char** argv)
     );
     boundaries.emplace( bc_key, bc_type );
   }
-
+#endif
 
   //===========================================================================
   // Initial conditions
@@ -209,12 +282,14 @@ int driver(int argc, char** argv)
   
   // now call the main task to set the ics.  Here we set primitive/physical 
   // quanties
-  flecsi_execute_task( initial_conditions_task, loc, single, mesh, inputs_t::ics );
-  
-
-  // Update the EOS
   flecsi_execute_task( 
-    update_state_from_pressure_task, loc, single, mesh, inputs_t::eos.get()
+    initial_conditions, 
+    single, 
+    mesh, 
+    inputs_t::ics,
+    inputs_t::eos,
+    soln_time,
+    Vc, Mc, uc, pc, dc, ec, Tc, ac
   );
 
 
@@ -222,10 +297,26 @@ int driver(int argc, char** argv)
   // Pre-processing
   //===========================================================================
 
+#if 0
+
   // now output the solution
-  if ( inputs_t::output_freq > 0 )
-    output(mesh, inputs_t::prefix, inputs_t::postfix, 1);
-  
+  auto has_output = (inputs_t::output_freq > 0);
+  if (has_output) {
+    auto name = prefix + "_" + apps::common::zero_padded( 0 ) + ".exo";
+    auto name_char = utils::to_trivial_string( name );
+    auto f =
+      flecsi_execute_task(output, single, mesh, name_char, d, v, e, p, T, a);
+    f.wait();
+  }
+
+
+
+  // dump connectivity
+  {
+    auto name = utils::to_trivial_string( prefix+".txt" );
+    auto f = flecsi_execute_task(print, single, mesh, name);
+    f.wait();
+  }
 
   //===========================================================================
   // Residual Evaluation
@@ -436,24 +527,24 @@ int driver(int argc, char** argv)
   //===========================================================================
   // Post-process
   //===========================================================================
-    
-  // now output the solution
-  if ( (inputs_t::output_freq > 0) && (time_cnt % inputs_t::output_freq != 0) )
-    output(mesh, inputs_t::prefix, inputs_t::postfix, 1);
 
-  cout << "Final solution time is " 
-       << std::scientific << std::setprecision(6) << soln_time
-       << " after " << num_steps << " steps." << std::endl;
-
-  
   auto tdelta = utils::get_wall_time() - tstart;
-  std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
-            << tdelta << "s." << std::endl;
-  
-  // now output the checksums
-  mesh::checksum(mesh);
 
-  // success
+  if ( rank == 0 ) {
+
+    cout << "Final solution time is " 
+         << std::scientific << std::setprecision(2) << soln_time
+         << " after " << time_cnt << " steps." << std::endl;
+
+    
+    std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
+              << tdelta << "s." << std::endl;
+
+  }
+
+#endif
+
+  // success if you reached here
   return 0;
 
 }

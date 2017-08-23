@@ -24,7 +24,7 @@
 
 namespace apps {
 namespace hydro {
-  
+
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief the main cell coloring driver
 ////////////////////////////////////////////////////////////////////////////////
@@ -32,13 +32,17 @@ void partition_mesh( char_array_t filename )
 {
   // set some compile time constants 
   constexpr auto num_dims = mesh_t::num_dimensions;
+  constexpr auto num_domains = mesh_t::num_domains;
   constexpr auto cell_dim = num_dims;
   constexpr auto thru_dim = 0;
 
   // make some type aliases
   using real_t = mesh_t::real_t;
+  using size_t = mesh_t::size_t;
   using exodus_definition_t = flecsi::io::exodus_definition__<num_dims, real_t>;
   using entity_info_t = flecsi::coloring::entity_info_t;
+  using corner_t = mesh_t::corner_t;
+  using wedge_t = mesh_t::wedge_t;
   
   // load the mesh
   auto filename_string = filename.str();
@@ -51,18 +55,18 @@ void partition_mesh( char_array_t filename )
 
 
   // create a vector of colorings and color info for each dimensional entity
-  std::vector< flecsi::coloring::index_coloring_t > 
-    entities( num_dims+1 );
-  std::vector< flecsi::coloring::coloring_info_t >
-    entity_color_info( num_dims+1 );
+  std::map< size_t, std::map< size_t, flecsi::coloring::index_coloring_t > > 
+    entities;
+  std::map< size_t, std::map< size_t,  flecsi::coloring::coloring_info_t > > 
+    entity_color_info;
 
   //----------------------------------------------------------------------------
   // Cell Coloring
   //----------------------------------------------------------------------------
     
   // Cells index coloring.
-  auto & cells = entities[ num_dims ];
-  auto & cell_color_info = entity_color_info[ num_dims ];
+  auto & cells = entities[0][ num_dims ];
+  auto & cell_color_info = entity_color_info[0][ num_dims ];
  
   // Create the dCRS representation for the distributed colorer.
   // This essentialy makes the graph of the dual mesh.
@@ -82,7 +86,7 @@ void partition_mesh( char_array_t filename )
   // Compute the dependency closure of the primary cell coloring
   // through vertex intersections (specified by last argument "1").
   // To specify edge or face intersections, use 2 (edges) or 3 (faces).
-  auto closure = 
+  auto cells_plus_halo = 
     flecsi::topology::entity_neighbors<cell_dim, cell_dim, thru_dim>(
       mesh_def, cells.primary
     );
@@ -90,8 +94,8 @@ void partition_mesh( char_array_t filename )
   // Subtracting out the initial set leaves just the nearest
   // neighbors. This is similar to the image of the adjacency
   // graph of the initial indices.
-  auto nearest_neighbors = 
-    flecsi::utils::set_difference(closure, cells.primary);
+  auto halo_cells = 
+    flecsi::utils::set_difference(cells_plus_halo, cells.primary);
 
   //----------------------------------------------------------------------------
   // Find one more layer of ghost cells now, these are needed to get some corner
@@ -102,20 +106,20 @@ void partition_mesh( char_array_t filename )
   // here we add the next nearest neighbors. For most mesh types
   // we actually need information about the ownership of these indices
   // so that we can deterministically assign rank ownership to vertices.
-  auto nearest_neighbor_closure =
+  auto halo_neightbors =
     flecsi::topology::entity_neighbors<cell_dim, cell_dim, thru_dim>(
-      mesh_def, nearest_neighbors
+      mesh_def, halo_cells
     );
 
   // Subtracting out the closure leaves just the
   // next nearest neighbors.
-  auto next_nearest_neighbors =
-    flecsi::utils::set_difference(nearest_neighbor_closure, closure);
+  auto second_halo_cells =
+    flecsi::utils::set_difference(halo_neightbors, cells_plus_halo);
 
   // The union of the nearest and next-nearest neighbors gives us all
   // of the cells that might reference a vertex that we need.
-  auto all_neighbors = 
-    flecsi::utils::set_union(nearest_neighbors, next_nearest_neighbors);
+  auto two_halo_cells = 
+    flecsi::utils::set_union(halo_cells, second_halo_cells);
 
   //----------------------------------------------------------------------------
   // Find exclusive, shared, and ghost cells..
@@ -125,7 +129,7 @@ void partition_mesh( char_array_t filename )
   // dependencies. This also gives information about the ranks
   // that access our shared cells.
   auto cell_nn_info =
-    communicator->get_primary_info(cells.primary, nearest_neighbors);
+    communicator->get_primary_info(cells.primary, halo_cells);
 
   // Create a map version of the local info for lookups below.
   std::unordered_map<size_t, size_t> primary_indices_map;
@@ -185,7 +189,7 @@ void partition_mesh( char_array_t filename )
   // dependencies. This information will be necessary for determining
   // shared vertices.
   auto cell_all_info = 
-    communicator->get_primary_info(cells.primary, all_neighbors);
+    communicator->get_primary_info(cells.primary, two_halo_cells);
 
   // Create a map version of the remote info for lookups below.
   std::unordered_map<size_t, entity_info_t> remote_info_map;
@@ -196,25 +200,61 @@ void partition_mesh( char_array_t filename )
   // neighbors of other ranks. This map of sets will only be populated
   // with intersections that are non-empty
   auto closure_intersection_map =
-    communicator->get_intersection_info(nearest_neighbors);
+    communicator->get_intersection_info(halo_cells);
 
   //----------------------------------------------------------------------------
-  // The Closures of other entities
+  // Identify exclusive, shared, and ghost for other entities
   //----------------------------------------------------------------------------
   
   for ( int i=0; i<num_dims; ++i ) {
     apps::common::color_entity( 
       communicator.get(), 
-      closure, 
+      cells_plus_halo, 
       remote_info_map, 
       shared_cells_map,
       closure_intersection_map,
       mesh_def.entities(num_dims, i),
       mesh_def.entities(i, num_dims),
-      entities[i], 
-      entity_color_info[i]
+      entities[0][i], 
+      entity_color_info[0][i]
     );
   }
+
+  //----------------------------------------------------------------------------
+  // Identify exclusive, shared and ghost for corners and wedges
+  //----------------------------------------------------------------------------
+  
+  auto corners = apps::common::make_corners( mesh_def );
+  const auto & cells_to_corners = corners.first;
+  const auto & corners_to_cells = corners.second;
+
+  apps::common::color_entity( 
+    communicator.get(), 
+    cells_plus_halo, 
+    remote_info_map, 
+    shared_cells_map,
+    closure_intersection_map,
+    cells_to_corners,
+    corners_to_cells,
+    entities[ corner_t::domain ][ corner_t::dimension ], 
+    entity_color_info[ corner_t::domain ][ corner_t::dimension ]
+  );
+
+  auto wedges = apps::common::make_wedges( mesh_def );
+  const auto & cells_to_wedges = wedges.first;
+  const auto & wedges_to_cells = wedges.second;
+
+  apps::common::color_entity( 
+    communicator.get(), 
+    cells_plus_halo, 
+    remote_info_map, 
+    shared_cells_map,
+    closure_intersection_map,
+    cells_to_wedges,
+    wedges_to_cells,
+    entities[ wedge_t::domain ][ wedge_t::dimension ], 
+    entity_color_info[ wedge_t::domain ][ wedge_t::dimension ]
+  );
 
 
   //----------------------------------------------------------------------------
@@ -228,14 +268,25 @@ void partition_mesh( char_array_t filename )
   auto & context = flecsi::execution::context_t::instance();
 
   // Gather the coloring info from all colors
-  for ( int i=0; i<num_dims+1; ++i ) {
-    auto coloring_info = 
-      communicator->gather_coloring_info(entity_color_info[i]);
-    context.add_coloring( 
-      index_spaces::entity_map[0][i], entities[i], coloring_info
-    );
+  for ( int dom=0; dom<num_domains; ++dom ) {
+      // skip empty slots
+      if ( entities.count(dom) == 0 || entity_color_info.count(dom) == 0 ) 
+        continue;
+    for ( int dim=0; dim<num_dims+1; ++dim ) {
+      // skip empty slots
+      if ( entities.at(dom).count(dim) == 0 || 
+           entity_color_info.at(dom).count(dim) == 0 ) 
+        continue;
+      auto coloring_info = 
+        communicator->gather_coloring_info(entity_color_info.at(dom).at(dim));
+      context.add_coloring( 
+        index_spaces::entity_map[dom][dim],
+        entities.at(dom).at(dim),
+        coloring_info
+      );
+    }
   }
-    
+
   //----------------------------------------------------------------------------
   // add adjacency information
   //----------------------------------------------------------------------------
@@ -245,7 +296,7 @@ void partition_mesh( char_array_t filename )
   // create a master list of all entities
   for ( int i=0; i<num_dims+1; ++i ) {
 
-    const auto & these_entities = entities[i];
+    const auto & these_entities = entities.at(0).at(i);
     auto & these_ids = entity_ids[i];
 
     auto num_entities = 
@@ -361,7 +412,7 @@ void partition_mesh( char_array_t filename )
   };
 
   // get a reference to the vertices
-  const auto & vertices = entities[0];
+  const auto & vertices = entities[0][0];
 
   // open the exodus file
   if ( rank == 0 )
@@ -386,7 +437,6 @@ void partition_mesh( char_array_t filename )
 
 
 } // somerhing
-
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief the main mesh initialization driver

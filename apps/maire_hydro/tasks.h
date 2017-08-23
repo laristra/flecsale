@@ -12,14 +12,18 @@
 // hydro includes
 #include "types.h"
 
+#include <flecsale/io/io_exodus.h>
 #include <flecsale/linalg/qr.h>
 #include <flecsale/utils/algorithm.h>
 #include <flecsale/utils/array_view.h>
 #include <flecsale/utils/filter_iterator.h>
+#include <flecsale/utils/string_utils.h>
+#include <flecsi/execution/context.h>
+#include <flecsi/execution/execution.h>
 
 // system includes
- #include <iomanip>
- 
+#include <iomanip>
+
 namespace apps {
 namespace hydro {
 
@@ -30,44 +34,43 @@ namespace hydro {
 //! \param [in]     ics  the initial conditions to set
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T, typename F >
-int initial_conditions( T & mesh, F && ics ) {
+void initial_conditions( 
+  client_handle_r__<mesh_t>  mesh,
+  inputs_t::ics_function_t ics, 
+  eos_t eos,
+  mesh_t::real_t soln_time,
+  dense_handle_w__<mesh_t::real_t> V,
+  dense_handle_w__<mesh_t::real_t> M,
+  dense_handle_w__<mesh_t::vector_t> v,
+  dense_handle_w__<mesh_t::real_t> p,
+  dense_handle_w__<mesh_t::real_t> d,
+  dense_handle_w__<mesh_t::real_t> e,
+  dense_handle_w__<mesh_t::real_t> T,
+  dense_handle_w__<mesh_t::real_t> a
+) {
 
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using real_t = typename T::real_t;
-  using vector_t = typename T::vector_t;
-
-  // get the current time
-  auto soln_time = mesh.time();
-
-  // get the collection accesor
-  auto M = flecsi_get_accessor( mesh, hydro, cell_mass,       real_t, dense, 0 );
-  auto V = flecsi_get_accessor( mesh, hydro, cell_volume,     real_t, dense, 0 );
-  auto p = flecsi_get_accessor( mesh, hydro, cell_pressure,   real_t, dense, 0 );
-  auto v = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
-
-  auto cell_xc = mesh.cell_centroids();
-  auto cell_vol = mesh.cell_volumes();
-
-  auto cs = mesh.cells();
-  auto num_cells = cs.size();
+  using eqns_t = eqns__< mesh_t::num_dimensions >;
 
   // This doesn't work with lua input
   // #pragma omp parallel for
-  for ( counter_t i=0; i<num_cells; ++i ) {
-    auto c = cs[i];
+  for ( auto c : mesh.cells( flecsi::owned ) ) {
     // now copy the state to flexi
-    real_t d;
-    std::tie( d, v[c], p[c] ) = std::forward<F>(ics)( cell_xc[c], soln_time );
+    real_t den;
+    std::tie( den, v(c), p(c) ) = ics( c->centroid(), soln_time );
     // set mass and volume now
-    M[c] = d*cell_vol[c];
-    V[c] = cell_vol[c];
+    const auto & cell_vol = c->volume();
+    M(c) = den*cell_vol;
+    V(c) = cell_vol;
+    // now update the rest of the state
+    eqns_t::update_state_from_pressure( 
+      pack( c, V, M, v, p, d, e, T, a ),
+      eos
+    );
   }
 
-  return 0;
 }
 
+#if 0
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task for setting initial conditions
@@ -920,6 +923,14 @@ int output( T & mesh,
   return 0;
 }
 
+#endif
+
+
+////////////////////////////////////////////////////////////////////////////////
+// TASK REGISTRATION
+////////////////////////////////////////////////////////////////////////////////
+
+flecsi_register_task(initial_conditions, loc, single);
 
 } // namespace hydro
 } // namespace apps

@@ -78,8 +78,8 @@ template<> real_t base_t::initial_time_step = 1.e-5;
 template<> size_t base_t::max_steps = 20;
 
 // the equation of state
-template<> std::shared_ptr<eos_t> base_t::eos = 
-  std::make_shared< flecsale::eos::ideal_gas_t<real_t> >( 
+template<> eos_t base_t::eos = 
+  flecsale::eos::ideal_gas_t<real_t>( 
     /* gamma */ 1.4, /* cv */ 1.0 
   ); 
 

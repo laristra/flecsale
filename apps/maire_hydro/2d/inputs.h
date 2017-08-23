@@ -94,7 +94,7 @@ public:
       make_mesh = [file](const real_t &)
       {
         mesh_t m;
-        flecsale::mesh::read_mesh(file, m);
+        //flecsale::mesh::read_mesh(file, m);
         return m;
       };
     }

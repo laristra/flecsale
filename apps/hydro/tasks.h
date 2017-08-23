@@ -260,122 +260,6 @@ void apply_update(
   
 }
 
-#if 0
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to save the coordinates
-//!
-//! \param [in,out] mesh the mesh object
-//! \return 0 for success
-////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int save_solution( T & mesh ) {
-
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using real_t = typename T::real_t;
-  using vector_t = typename T::vector_t;
-
-  // access what we need
-  auto rho  = flecsi_get_accessor( mesh, hydro, density, real_t, dense, 0 );
-  auto rho0 = flecsi_get_accessor( mesh, hydro, density, real_t, dense, 1 );
-
-  auto vel  = flecsi_get_accessor( mesh, hydro, velocity, vector_t, dense, 0 );
-  auto vel0 = flecsi_get_accessor( mesh, hydro, velocity, vector_t, dense, 1 );
-
-  auto ener  = flecsi_get_accessor( mesh, hydro, internal_energy, real_t, dense, 0 );
-  auto ener0 = flecsi_get_accessor( mesh, hydro, internal_energy, real_t, dense, 1 );
-
-  // Loop over cells
-  auto cs = mesh.cells();
-  auto num_cells = cs.size();
-
-  #pragma omp parallel for
-  for ( counter_t i=0; i<num_cells; i++ ) {
-    auto c = cs[i];
-    rho0[c] = rho[c];
-    vel0[c] = vel[c];
-    ener0[c] = ener[c];
-  }
-
-  return 0;
-
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to restore the coordinates
-//!
-//! \param [in,out] mesh the mesh object
-//! \return 0 for success
-////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int restore_solution( T & mesh ) {
-
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using real_t = typename T::real_t;
-  using vector_t = typename T::vector_t;
-
-  // access what we need
-  auto rho  = flecsi_get_accessor( mesh, hydro, density, real_t, dense, 0 );
-  auto rho0 = flecsi_get_accessor( mesh, hydro, density, real_t, dense, 1 );
-
-  auto vel  = flecsi_get_accessor( mesh, hydro, velocity, vector_t, dense, 0 );
-  auto vel0 = flecsi_get_accessor( mesh, hydro, velocity, vector_t, dense, 1 );
-
-  auto ener  = flecsi_get_accessor( mesh, hydro, internal_energy, real_t, dense, 0 );
-  auto ener0 = flecsi_get_accessor( mesh, hydro, internal_energy, real_t, dense, 1 );
-
-  // Loop over cells
-  auto cs = mesh.cells();
-  auto num_cells = cs.size();
-
-  #pragma omp parallel for
-  for ( counter_t i=0; i<num_cells; i++ ) {
-    auto c = cs[i];
-    rho[c] = rho0[c];
-    vel[c] = vel0[c];
-    ener[c] = ener0[c];
-  }
-
-  return 0;
-
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief Output the solution.
-//!
-//! \param [in] mesh the mesh object
-//! \return 0 for success
-////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int output( T & mesh, 
-                const std::string & prefix, 
-                const std::string & postfix, 
-                size_t output_freq ) 
-{
-
-  if ( output_freq < 1 ) return 0;
-
-  auto cnt = mesh.time_step_counter();
-  if ( cnt % output_freq != 0 ) return 0;
-
-  std::stringstream ss;
-  ss << prefix;
-  ss << std::setw( 7 ) << std::setfill( '0' ) << cnt++;
-  ss << "."+postfix;
-  
-  mesh::write_mesh( ss.str(), mesh );
-  
-  return 0;
-}
-
-#endif
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief output the solution
@@ -444,13 +328,9 @@ void print(
 ////////////////////////////////////////////////////////////////////////////////
 
 flecsi_register_task(initial_conditions, loc, single);
-//flecsi_register_task(update_state_from_pressure_task, loc, single);
-//flecsi_register_task(update_state_from_energy_task, loc, single);
 flecsi_register_task(evaluate_time_step, loc, single);
 flecsi_register_task(evaluate_fluxes, loc, single);
 flecsi_register_task(apply_update, loc, single);
-//flecsi_register_task(save_solution_task, loc, single);
-//flecsi_register_task(restore_solution_task, loc, single);
 flecsi_register_task(output, loc, single);
 flecsi_register_task(print, loc, single);
 

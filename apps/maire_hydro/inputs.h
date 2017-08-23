@@ -11,7 +11,6 @@
 // user includes
 #include "types.h"
 
-#include <flecsale/eos/eos_base.h>
 #include <flecsale/eos/ideal_gas.h>
 #include <flecsale/mesh/burton/burton.h>
 #include <flecsale/utils/lua_utils.h>
@@ -36,7 +35,7 @@ public:
   static constexpr auto num_dimensions = N;
  
   //! the mesh type
-  using mesh_t = typename apps::hydro::mesh_t<num_dimensions>; 
+  using mesh_t = typename apps::hydro::mesh__<num_dimensions>; 
   //! the size type
   using size_t = typename mesh_t::size_t;
   //! the real type
@@ -44,7 +43,7 @@ public:
   //! the vector type
   using vector_t = typename mesh_t::vector_t;
   //! the eos type
-  using eos_t = flecsale::eos::eos_base_t<real_t>;
+  using eos_t = apps::hydro::eos_t;
 
   //! a dimensioned array type helper
   template< typename T>
@@ -87,7 +86,7 @@ public:
   //! \}
 
   //! \brief the equation of state
-  static std::shared_ptr<eos_t> eos;
+  static eos_t eos;
 
   //! \brief this is a lambda function to set the initial conditions
   static ics_function_t ics;
@@ -134,7 +133,7 @@ public:
       using ideal_gas_t = flecsale::eos::ideal_gas_t<real_t>;
       auto g  = lua_try_access_as( eos_input, "gas_constant", real_t );
       auto cv = lua_try_access_as( eos_input, "specific_heat", real_t );
-      eos = std::make_shared<ideal_gas_t>( g, cv );
+      eos = ideal_gas_t( g, cv );
     }
     else {
       raise_implemented_error("Unknown eos type \""<<eos_type<<"\"");

@@ -64,6 +64,8 @@ public:
 
   //! \brief the number of dimensions
   static constexpr auto num_dimensions = config_t::num_dimensions;
+  //! \brief the number of domains
+  static constexpr auto num_domains = config_t::num_domains;
 
   //! a compile string type
   using const_string_t = typename config_t::const_string_t;
