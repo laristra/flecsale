@@ -56,7 +56,7 @@ using client_handle_r__ = flecsi::data_client_handle__<DC, flecsi::ro>;
 
 // mesh and some underlying data types
 template <std::size_t N>
-using mesh__ = typename mesh::burton::burton_mesh_t<N>;
+using mesh__ = typename mesh::burton::burton_mesh_t<N, true>;
 
 using size_t = common::size_t;
 using real_t = common::real_t;

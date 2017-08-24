@@ -244,8 +244,8 @@ int driver(int argc, char** argv)
 
   // solver state
   auto dUdt = flecsi_get_handle(mesh, hydro, cell_residual, flux_data_t, dense, 0);
-  auto nc = flecsi_get_handle(mesh, hydro, corner_normal, vector_t, dense, 0);
-  auto Fc = flecsi_get_handle(mesh, hydro, corner_force, vector_t, dense, 0);
+  auto npc = flecsi_get_handle(mesh, hydro, corner_normal, vector_t, dense, 0);
+  auto Fpc = flecsi_get_handle(mesh, hydro, corner_force, vector_t, dense, 0);
   
 
   //===========================================================================
@@ -297,7 +297,6 @@ int driver(int argc, char** argv)
   // Pre-processing
   //===========================================================================
 
-#if 0
 
   // now output the solution
   auto has_output = (inputs_t::output_freq > 0);
@@ -305,7 +304,9 @@ int driver(int argc, char** argv)
     auto name = prefix + "_" + apps::common::zero_padded( 0 ) + ".exo";
     auto name_char = utils::to_trivial_string( name );
     auto f =
-      flecsi_execute_task(output, single, mesh, name_char, d, v, e, p, T, a);
+      flecsi_execute_task(
+        output, single, mesh, name_char, dc, uc, ec, pc, Tc, ac
+      );
     f.wait();
   }
 
@@ -322,43 +323,38 @@ int driver(int argc, char** argv)
   // Residual Evaluation
   //===========================================================================
 
-  // get the time step accessor
-  auto time_step = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );   
+  // Get the legion runtime and context.  In the furture, legion will not be 
+  // exposed to the user
+  auto legion_runtime = Legion::Runtime::get_runtime();
+  auto legion_context = Legion::Runtime::get_context();
 
-  // a counter for this session
-  size_t num_steps = 0; 
+  auto & min_reduction = 
+    flecsi::execution::context_t::instance().min_reduction();
 
   for (
-    size_t num_retries = 0;
+    size_t num_steps = 0;
     (num_steps < inputs_t::max_steps && soln_time < inputs_t::final_time); 
     ++num_steps 
   ) {   
-
-    //--------------------------------------------------------------------------
-    // Begin Time step
-    //--------------------------------------------------------------------------
-
-    // Save solution at n=0
-    if (num_retries == 0) {
-      flecsi_execute_task( save_coordinates_task, loc, single, mesh );
-      flecsi_execute_task( save_solution_task, loc, single, mesh );
-    }
-
-    // keep the old time step
-    real_t time_step_old = time_step;
 
     //--------------------------------------------------------------------------
     // Predictor step : Evaluate Forces at n=0
     //--------------------------------------------------------------------------
 
     // estimate the nodal velocity at n=0
-    flecsi_execute_task( estimate_nodal_state_task, loc, single, mesh );
+    flecsi_execute_task( estimate_nodal_state, single, mesh, uc, un );
 
     // compute the nodal velocity at n=0
     flecsi_execute_task( 
-      evaluate_nodal_state_task, loc, single, mesh, boundaries
+      evaluate_nodal_state,
+      single,
+      mesh,
+      soln_time,
+      Vc, Mc, uc, pc, dc, ec, Tc, ac,
+      un, npc, Fpc
     );
 
+#if 0
     // compute the fluxes
     flecsi_execute_task( evaluate_residual_task, loc, single, mesh );
 
@@ -521,6 +517,24 @@ int driver(int argc, char** argv)
     // if we got through a whole cycle, reset the retry counter
     num_retries = 0;
 
+#endif
+
+    // now output the solution
+    if ( has_output && 
+        (time_cnt % inputs_t::output_freq == 0 || 
+         num_steps==inputs_t::max_steps-1 ||
+         std::abs(soln_time-inputs_t::final_time) < epsilon
+        )  
+      ) 
+    {
+      auto name = prefix + "_" + apps::common::zero_padded( time_cnt ) + ".exo";
+      auto name_char = utils::to_trivial_string( name );
+      auto f = flecsi_execute_task(
+        output, single, mesh, name_char, dc, uc, ec, pc, Tc, ac
+      );
+      f.wait();
+    }
+
   }
 
 
@@ -542,7 +556,6 @@ int driver(int argc, char** argv)
 
   }
 
-#endif
 
   // success if you reached here
   return 0;

@@ -79,45 +79,6 @@ void initial_conditions(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T, typename EOS >
-int update_state_from_pressure( T & mesh, const EOS * eos ) {
-
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using eqns_t = eqns_t<T::num_dimensions>;
-
-  // access the data we need
-  auto cell_state = cell_state_accessor<T>( mesh );
-  auto ener0 = flecsi_get_accessor( mesh, hydro, sum_total_energy, real_t, global, 0 );
-
-  auto cs = mesh.cells();
-  auto num_cells = cs.size();
-
-  real_t ener(0);
-
-  #pragma omp parallel for reduction(+:ener)
-  for ( counter_t i=0; i<num_cells; ++i ) {
-    auto c = cs[i];
-    auto u = cell_state(c);
-    eqns_t::update_state_from_pressure( u, *eos );
-    // sum total energy
-    auto et = eqns_t::total_energy(u);
-    auto m  = eqns_t::mass(u);
-    ener += m * et;
-  }
-
-  *ener0 = ener;
-
-  return 0;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task for setting initial conditions
-//!
-//! \param [in,out] mesh the mesh object
-//! \return 0 for success
-////////////////////////////////////////////////////////////////////////////////
-template< typename T, typename EOS >
 int update_state_from_energy( T & mesh, const EOS * eos ) {
 
   // type aliases
@@ -236,55 +197,52 @@ int evaluate_time_step( T & mesh, std::string & limit_string )
 
 }
 
+#endif 
+
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to compute nodal quantities
 //!
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int estimate_nodal_state( T & mesh ) {
+void estimate_nodal_state( 
+  client_handle_r__<mesh_t>  mesh,
+  dense_handle_r__<mesh_t::vector_t> cell_vel,
+  dense_handle_w__<mesh_t::vector_t> vertex_vel
+) {
 
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using vector_t = typename T::vector_t;
-
-  // access what we need
-  auto cell_vel = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
-  auto vertex_vel = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
-
-  //----------------------------------------------------------------------------
-  // Loop over each vertex
-  auto vs = mesh.vertices();
-  auto num_verts = vs.size();
-
-  #pragma omp parallel for
-  for ( counter_t i=0; i<num_verts; ++i ) {
-    auto v = vs[i];
-    vertex_vel[v] = 0.;
-    auto cells = mesh.cells(v);
-    for ( auto c : cells ) vertex_vel[v] += cell_vel[c];
-    vertex_vel[v] /= cells.size();
+  for ( auto v : mesh.vertices( flecsi::owned ) ) {
+    vertex_vel(v) = 0.;
+    const auto & cells = mesh.cells(v);
+    for ( auto c : cells ) vertex_vel(v) += cell_vel(c);
+    vertex_vel(v) /= cells.size();
   } // vertex
-  //----------------------------------------------------------------------------
-
-  return 0;
 
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to compute nodal quantities
 //!
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T, typename BC >
-int evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
+void evaluate_nodal_state( 
+  client_handle_r__<mesh_t>  mesh,
+  mesh_t::real_t soln_time,
+  dense_handle_w__<mesh_t::real_t> Vc,
+  dense_handle_w__<mesh_t::real_t> Mc,
+  dense_handle_w__<mesh_t::vector_t> uc,
+  dense_handle_w__<mesh_t::real_t> pc,
+  dense_handle_w__<mesh_t::real_t> dc,
+  dense_handle_w__<mesh_t::real_t> ec,
+  dense_handle_w__<mesh_t::real_t> Tc,
+  dense_handle_w__<mesh_t::real_t> ac,
+  dense_handle_w__<mesh_t::vector_t> un,
+  dense_handle_w__<mesh_t::vector_t> npc,
+  dense_handle_w__<mesh_t::vector_t> Fpc
+) {
 
   // type aliases
-  using counter_t = typename T::counter_t;
-  using size_t = typename T::size_t;
   using real_t = typename T::real_t;
   using vector_t = typename T::vector_t;
   using matrix_t = matrix_t< T::num_dimensions >; 
@@ -292,33 +250,16 @@ int evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
   using eqns_t = eqns_t<T::num_dimensions>;
 
   // get the number of dimensions and create a matrix
-  constexpr size_t dims = T::num_dimensions;
-  
-  // access what we need
-  auto cell_state = cell_state_accessor<T>( mesh );
-  auto vertex_velocity = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
+  constexpr auto num_dims = T::num_dimensions;
 
-  auto wedge_facet_normal = mesh.wedge_facet_normals();
-  auto wedge_facet_area = mesh.wedge_facet_areas(); 
-  auto wedge_facet_centroid = mesh.wedge_facet_centroids();
 
-  auto npc = flecsi_get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
-  auto Fpc = flecsi_get_accessor( mesh, hydro, corner_force, vector_t, dense, 0 );
-
-  // get the current time
-  auto soln_time = mesh.time();
 
   //----------------------------------------------------------------------------
   // Loop over each vertex
   //----------------------------------------------------------------------------
 
-  auto vs = mesh.vertices();
-  auto num_verts = vs.size();
-
-  #pragma omp parallel for schedule(dynamic)
-  for ( counter_t i=0; i<num_verts; ++i ) {
-
-    auto vt = vs[i];
+  for ( auto vt : mesh.vertices( flecsi::owned ) ) {
+#if 0
 
     // create the final matrix the point
     matrix_t Mp(0);
@@ -516,12 +457,15 @@ int evaluate_nodal_state( T & mesh, const BC & boundary_map ) {
 
     }
 
+#endif
+
   } // vertex
   //----------------------------------------------------------------------------
 
-  return 0;
-   
+
 }
+
+#if 0
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to sum the forces and comput the cell changes
@@ -893,37 +837,69 @@ int restore_solution( T & mesh ) {
 
 }
 
+#endif
+
+
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Output the solution
-//!
-//! \param [in] mesh the mesh object
-//! \return 0 for success
+/// \brief output the solution
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int output( T & mesh, 
-                const std::string & prefix, 
-                const std::string & postfix, 
-                size_t output_freq ) 
-{
+void output( 
+  client_handle_r__<mesh_t> mesh, 
+  char_array_t filename,
+  dense_handle_r__<mesh_t::real_t> d,
+  dense_handle_r__<mesh_t::vector_t> v,
+  dense_handle_r__<mesh_t::real_t> e,
+  dense_handle_r__<mesh_t::real_t> p,
+  dense_handle_r__<mesh_t::real_t> T,
+  dense_handle_r__<mesh_t::real_t> a
+) {
+  clog(info) << "OUTPUT MESH TASK" << std::endl;
+ 
+  // get the context
+  auto & context = flecsi::execution::context_t::instance();
+  auto rank = context.color();
 
-  if ( output_freq < 1 ) return 0;
+  // figure out this ranks file name
+  auto name_and_ext = utils::split_extension( filename.str() );
+  auto output_filename = 
+    name_and_ext.first + "_rank" + apps::common::zero_padded(rank) +
+    "." + name_and_ext.second;
 
-  auto cnt = mesh.time_step_counter();
-  if ( cnt % output_freq != 0 ) return 0;
-
-  std::stringstream ss;
-  ss << prefix;
-  ss << std::setw( 7 ) << std::setfill( '0' ) << cnt++;
-  ss << "."+postfix;
-  
-  cout << endl;
-  mesh::write_mesh( ss.str(), mesh );
-  cout << endl;
-  
-  return 0;
+  // now outut the mesh
+  flecsale::io::io_exodus__<mesh_t>::write(
+    output_filename, mesh, &d //, v, e, p, T, a
+  );
 }
 
-#endif
+////////////////////////////////////////////////////////////////////////////////
+/// \brief output the solution
+////////////////////////////////////////////////////////////////////////////////
+void print( 
+  client_handle_r__<mesh_t> mesh,
+  char_array_t filename
+) {
+
+  // get the context
+  auto & context = flecsi::execution::context_t::instance();
+  auto rank = context.color();
+
+  clog(info) << "PRINT MESH ON RANK " << rank << std::endl;
+ 
+  // figure out this ranks file name
+  auto name_and_ext = utils::split_extension( filename.str() );
+  auto output_filename = 
+    name_and_ext.first + "_rank" + apps::common::zero_padded(rank) +
+    "." + name_and_ext.second;
+
+  // dump to file
+  std::cout << "Dumping connectivity to: " << output_filename << std::endl;
+  std::ofstream file( output_filename );
+  mesh.dump( file );
+
+  // close file
+  file.close();
+  
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -931,6 +907,10 @@ int output( T & mesh,
 ////////////////////////////////////////////////////////////////////////////////
 
 flecsi_register_task(initial_conditions, loc, single);
+flecsi_register_task(estimate_nodal_state, loc, single);
+flecsi_register_task(evaluate_nodal_state, loc, single);
+flecsi_register_task(output, loc, single);
+flecsi_register_task(print, loc, single);
 
 } // namespace hydro
 } // namespace apps

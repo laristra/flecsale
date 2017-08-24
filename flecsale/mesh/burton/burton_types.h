@@ -29,7 +29,7 @@ namespace burton {
 //!   low-level mesh infrastructure for ALE methods.
 //! \tparam N  The number of mesh dimensions.
 ////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N, bool Include_Corners = false >
+template< std::size_t N, bool Include_Extras = false >
 struct burton_types_t {};
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -37,8 +37,7 @@ struct burton_types_t {};
 //!   low-level mesh infrastructure for ALE methods.
 //! \remark This is the two-dimensional version.
 ////////////////////////////////////////////////////////////////////////////////
-template<>
-struct burton_types_t<2> 
+struct burton_2d_types_base
 {
 
   //============================================================================
@@ -148,9 +147,87 @@ struct burton_types_t<2>
   //! Type for burton mesh wedges.
   using wedge_t = burton_wedge_t<num_dimensions>;
 
+
   //============================================================================
-  // Specify mesh parameterizations.
+  //! \brief depending upon the dimension/number of verices, create different 
+  //!   types of entities
+  //! \tparam M The domain index.
+  //! \tparam D The dimensional index.
   //============================================================================
+  template<size_t M, size_t D>
+  static constexpr 
+  mesh_entity_base_t *
+  create_entity(mesh_topology_base_t* mesh, size_t num_vertices, const id_t & id) 
+  {
+    switch(M){
+      //---------- Primal Mesh ----------//
+    case 0:
+      switch(D) {
+      case 1:
+        return mesh->template make<edge_t>(id);
+      default:
+        raise_logic_error("invalid topological dimension");
+      }
+      //---------- Dual Mesh ----------//
+    case 1:
+      switch(D) {
+      case 0:
+        return mesh->template make<corner_t>();
+      case 1:
+        return mesh->template make<wedge_t>();
+      default:
+        raise_logic_error("invalid topological dimension");
+      }
+      //---------- Error ----------//
+    default:
+      raise_logic_error("invalid domain");
+    }
+    // should never get here
+    return nullptr;
+  }
+  
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief A collection of type information needed to specialize the flecsi
+//!   low-level mesh infrastructure for ALE methods.
+//! \remark This is the two-dimensional version.
+////////////////////////////////////////////////////////////////////////////////
+template<>
+struct burton_types_t<2, false> : public burton_2d_types_base
+{
+
+  //! Definitions of burton mesh entities and their domain.
+  flecsi_register_entity_types(
+    flecsi_entity_type( index_spaces_t::vertices, 0, vertex_t ),
+    flecsi_entity_type( index_spaces_t::edges, 0, edge_t ),
+    flecsi_entity_type( index_spaces_t::cells, 0, cell_t )
+  );
+
+
+  //! Connectivities are adjacencies of entities within a single domain.
+  flecsi_register_connectivities(
+    flecsi_connectivity( index_spaces_t::vertices_to_edges, 0, vertex_t, edge_t ),
+    flecsi_connectivity( index_spaces_t::vertices_to_cells, 0, vertex_t, cell_t ),
+    flecsi_connectivity( index_spaces_t::edges_to_vertices, 0, edge_t, vertex_t ),
+    flecsi_connectivity( index_spaces_t::edges_to_cells,    0, edge_t, cell_t ),
+    flecsi_connectivity( index_spaces_t::cells_to_vertices, 0, cell_t, vertex_t ),
+    flecsi_connectivity( index_spaces_t::cells_to_edges,    0, cell_t, edge_t )
+  );
+
+  //! Bindings are adjacencies of entities across two domains.
+  flecsi_register_bindings();
+
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief A collection of type information needed to specialize the flecsi
+//!   low-level mesh infrastructure for ALE methods.
+//! \remark This is the two-dimensional version.
+////////////////////////////////////////////////////////////////////////////////
+template<>
+struct burton_types_t<2, true> : public burton_2d_types_base
+{
 
   //! Definitions of burton mesh entities and their domain.
   flecsi_register_entity_types(
@@ -195,45 +272,6 @@ struct burton_types_t<2>
   );
 #endif
 
-
-  //============================================================================
-  //! \brief depending upon the dimension/number of verices, create different 
-  //!   types of entities
-  //! \tparam M The domain index.
-  //! \tparam D The dimensional index.
-  //============================================================================
-  template<size_t M, size_t D>
-  static constexpr 
-  mesh_entity_base_t *
-  create_entity(mesh_topology_base_t* mesh, size_t num_vertices, const id_t & id) 
-  {
-    switch(M){
-      //---------- Primal Mesh ----------//
-    case 0:
-      switch(D) {
-      case 1:
-        return mesh->template make<edge_t>(id);
-      default:
-        raise_logic_error("invalid topological dimension");
-      }
-      //---------- Dual Mesh ----------//
-    case 1:
-      switch(D) {
-      case 0:
-        return mesh->template make<corner_t>();
-      case 1:
-        return mesh->template make<wedge_t>();
-      default:
-        raise_logic_error("invalid topological dimension");
-      }
-      //---------- Error ----------//
-    default:
-      raise_logic_error("invalid domain");
-    }
-    // should never get here
-    return nullptr;
-  }
-  
 };
 
 
@@ -241,8 +279,7 @@ struct burton_types_t<2>
 //! \brief A collection of type information needed to specialize the flecsi
 //!   low-level mesh infrastructure for ALE methods.
 ////////////////////////////////////////////////////////////////////////////////
-template<>
-struct burton_types_t<3>
+struct burton_3d_types_base
 {
 
   //============================================================================
@@ -365,66 +402,6 @@ struct burton_types_t<3>
   using wedge_t = burton_wedge_t<num_dimensions>;
 
   //============================================================================
-  // Specify mesh parameterizations.
-  //============================================================================
-  
-  //! Definitions of burton mesh entities and their domain.
-  flecsi_register_entity_types(
-    flecsi_entity_type( index_spaces_t::vertices, 0, vertex_t ),
-    flecsi_entity_type( index_spaces_t::edges, 0, edge_t ),
-    flecsi_entity_type( index_spaces_t::faces, 0, face_t ),
-    flecsi_entity_type( index_spaces_t::cells, 0, cell_t )
-    //flecsi_entity_type( attributes::wedges, 1, wedge_t ),
-    //flecsi_entity_type( attributes::corners, 1, corner_t )
-  );
-
-
-  //! Connectivities are adjacencies of entities within a single domain.
-  flecsi_register_connectivities(
-    flecsi_connectivity( index_spaces_t::vertices_to_edges, 0, vertex_t, edge_t ),
-    flecsi_connectivity( index_spaces_t::vertices_to_faces, 0, vertex_t, face_t ),
-    flecsi_connectivity( index_spaces_t::vertices_to_cells, 0, vertex_t, cell_t ),
-    flecsi_connectivity( index_spaces_t::edges_to_vertices, 0, edge_t, vertex_t ),
-    flecsi_connectivity( index_spaces_t::edges_to_faces,    0, edge_t,   face_t ),
-    flecsi_connectivity( index_spaces_t::edges_to_cells,    0, edge_t,   cell_t ),
-    flecsi_connectivity( index_spaces_t::faces_to_vertices, 0, face_t, vertex_t ),
-    flecsi_connectivity( index_spaces_t::faces_to_edges,    0, face_t,   edge_t ),
-    flecsi_connectivity( index_spaces_t::faces_to_cells,    0, face_t,   cell_t ),
-    flecsi_connectivity( index_spaces_t::cells_to_vertices, 0, cell_t, vertex_t ),
-    flecsi_connectivity( index_spaces_t::cells_to_faces,    0, cell_t,   face_t ),
-    flecsi_connectivity( index_spaces_t::cells_to_edges,    0, cell_t,   edge_t )
-  );
-
-  //! Bindings are adjacencies of entities across two domains.
-  flecsi_register_bindings();
-#if 0
-  using bindings =
-      std::tuple<
-        // corners
-        std::tuple<index_space_<18>, domain_<0>, domain_<1>,   cell_t, corner_t>,
-        std::tuple<index_space_<19>, domain_<0>, domain_<1>,   face_t, corner_t>,
-        std::tuple<index_space_<20>, domain_<0>, domain_<1>,   edge_t, corner_t>,
-        std::tuple<index_space_<21>, domain_<0>, domain_<1>, vertex_t, corner_t>,
-        std::tuple<index_space_<22>, domain_<1>, domain_<0>, corner_t,   cell_t>,
-        std::tuple<index_space_<23>, domain_<1>, domain_<0>, corner_t,   face_t>,
-        std::tuple<index_space_<24>, domain_<1>, domain_<0>, corner_t,   edge_t>,
-        std::tuple<index_space_<25>, domain_<1>, domain_<0>, corner_t, vertex_t>,
-        // wedges
-        std::tuple<index_space_<26>, domain_<0>, domain_<1>,   cell_t,  wedge_t>,
-        std::tuple<index_space_<27>, domain_<0>, domain_<1>,   face_t,  wedge_t>,
-        std::tuple<index_space_<28>, domain_<0>, domain_<1>,   edge_t,  wedge_t>,
-        std::tuple<index_space_<29>, domain_<0>, domain_<1>, vertex_t,  wedge_t>,
-        std::tuple<index_space_<30>, domain_<1>, domain_<0>,  wedge_t,   cell_t>,
-        std::tuple<index_space_<31>, domain_<1>, domain_<0>,  wedge_t,   face_t>,
-        std::tuple<index_space_<32>, domain_<1>, domain_<0>,  wedge_t,   edge_t>,
-        std::tuple<index_space_<33>, domain_<1>, domain_<0>,  wedge_t, vertex_t>,
-        // corner <-> wedges
-        std::tuple<index_space_<34>, domain_<1>, domain_<1>,  wedge_t,  corner_t>,
-        std::tuple<index_space_<35>, domain_<1>, domain_<1>,  corner_t, wedge_t>
-      >;
-#endif
-
-  //============================================================================
   //! \brief depending upon the dimension/number of verices, create different 
   //!   types of face entities
   //============================================================================  
@@ -486,6 +463,72 @@ struct burton_types_t<3>
     // should never get here
     return nullptr;
   }
+
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief A collection of type information needed to specialize the flecsi
+//!   low-level mesh infrastructure for ALE methods.
+////////////////////////////////////////////////////////////////////////////////
+template<>
+struct burton_types_t<3, false> : public burton_3d_types_base
+{
+  
+  //! Definitions of burton mesh entities and their domain.
+  flecsi_register_entity_types(
+    flecsi_entity_type( index_spaces_t::vertices, 0, vertex_t ),
+    flecsi_entity_type( index_spaces_t::edges, 0, edge_t ),
+    flecsi_entity_type( index_spaces_t::faces, 0, face_t ),
+    flecsi_entity_type( index_spaces_t::cells, 0, cell_t )
+    //flecsi_entity_type( attributes::wedges, 1, wedge_t ),
+    //flecsi_entity_type( attributes::corners, 1, corner_t )
+  );
+
+
+  //! Connectivities are adjacencies of entities within a single domain.
+  flecsi_register_connectivities(
+    flecsi_connectivity( index_spaces_t::vertices_to_edges, 0, vertex_t, edge_t ),
+    flecsi_connectivity( index_spaces_t::vertices_to_faces, 0, vertex_t, face_t ),
+    flecsi_connectivity( index_spaces_t::vertices_to_cells, 0, vertex_t, cell_t ),
+    flecsi_connectivity( index_spaces_t::edges_to_vertices, 0, edge_t, vertex_t ),
+    flecsi_connectivity( index_spaces_t::edges_to_faces,    0, edge_t,   face_t ),
+    flecsi_connectivity( index_spaces_t::edges_to_cells,    0, edge_t,   cell_t ),
+    flecsi_connectivity( index_spaces_t::faces_to_vertices, 0, face_t, vertex_t ),
+    flecsi_connectivity( index_spaces_t::faces_to_edges,    0, face_t,   edge_t ),
+    flecsi_connectivity( index_spaces_t::faces_to_cells,    0, face_t,   cell_t ),
+    flecsi_connectivity( index_spaces_t::cells_to_vertices, 0, cell_t, vertex_t ),
+    flecsi_connectivity( index_spaces_t::cells_to_faces,    0, cell_t,   face_t ),
+    flecsi_connectivity( index_spaces_t::cells_to_edges,    0, cell_t,   edge_t )
+  );
+
+  //! Bindings are adjacencies of entities across two domains.
+  flecsi_register_bindings();
+#if 0
+  using bindings =
+      std::tuple<
+        // corners
+        std::tuple<index_space_<18>, domain_<0>, domain_<1>,   cell_t, corner_t>,
+        std::tuple<index_space_<19>, domain_<0>, domain_<1>,   face_t, corner_t>,
+        std::tuple<index_space_<20>, domain_<0>, domain_<1>,   edge_t, corner_t>,
+        std::tuple<index_space_<21>, domain_<0>, domain_<1>, vertex_t, corner_t>,
+        std::tuple<index_space_<22>, domain_<1>, domain_<0>, corner_t,   cell_t>,
+        std::tuple<index_space_<23>, domain_<1>, domain_<0>, corner_t,   face_t>,
+        std::tuple<index_space_<24>, domain_<1>, domain_<0>, corner_t,   edge_t>,
+        std::tuple<index_space_<25>, domain_<1>, domain_<0>, corner_t, vertex_t>,
+        // wedges
+        std::tuple<index_space_<26>, domain_<0>, domain_<1>,   cell_t,  wedge_t>,
+        std::tuple<index_space_<27>, domain_<0>, domain_<1>,   face_t,  wedge_t>,
+        std::tuple<index_space_<28>, domain_<0>, domain_<1>,   edge_t,  wedge_t>,
+        std::tuple<index_space_<29>, domain_<0>, domain_<1>, vertex_t,  wedge_t>,
+        std::tuple<index_space_<30>, domain_<1>, domain_<0>,  wedge_t,   cell_t>,
+        std::tuple<index_space_<31>, domain_<1>, domain_<0>,  wedge_t,   face_t>,
+        std::tuple<index_space_<32>, domain_<1>, domain_<0>,  wedge_t,   edge_t>,
+        std::tuple<index_space_<33>, domain_<1>, domain_<0>,  wedge_t, vertex_t>,
+        // corner <-> wedges
+        std::tuple<index_space_<34>, domain_<1>, domain_<1>,  wedge_t,  corner_t>,
+        std::tuple<index_space_<35>, domain_<1>, domain_<1>,  corner_t, wedge_t>
+      >;
+#endif
 
 };
 

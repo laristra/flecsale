@@ -22,15 +22,9 @@ namespace burton {
 //! \brief Type for storing instance of template specialized low level mesh.
 //! \tparam [in]  N  The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
-template < std::size_t N >
+template < std::size_t N, bool Extra_Elements >
 using burton_mesh_topology_t = 
-  flecsi::topology::mesh_topology_t< burton_types_t<N> >;
-
-
-//! Two dimensional specialization of the mesh topology.
-using burton_2d_mesh_topology_t = burton_mesh_topology_t<2>; 
-//! Three dimensional specialization of the mesh topology.
-using burton_3d_mesh_topology_t = burton_mesh_topology_t<3>; 
+  flecsi::topology::mesh_topology_t< burton_types_t<N, Extra_Elements> >;
 
 
 } // namespace

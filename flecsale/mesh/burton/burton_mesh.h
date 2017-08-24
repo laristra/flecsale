@@ -43,8 +43,8 @@ enum data_attributes_t : size_t {
 ///   execution models.
 /// \tparam N The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N >
-class burton_mesh_t  : public burton_mesh_topology_t<N>
+template< std::size_t N, bool Extra_Elements = false >
+class burton_mesh_t  : public burton_mesh_topology_t<N, Extra_Elements>
 
 {
 public:
@@ -54,7 +54,7 @@ public:
   //============================================================================
 
   //! \brief the base type
-  using base_t = burton_mesh_topology_t<N>;
+  using base_t = burton_mesh_topology_t<N, Extra_Elements>;
 
   //! \brief the mesh types
   using types_t = burton_types_t<N>;
