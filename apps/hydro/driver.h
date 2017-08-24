@@ -255,7 +255,7 @@ int driver(int argc, char** argv)
       cout.setf( std::ios::scientific );
       cout.precision(6);
       cout << "|  " << "Step:" << std::setw(10) << time_cnt+1
-          << "  |  Time:" << std::setw(17) << soln_time + time_step
+           << "  |  Time:" << std::setw(17) << soln_time + time_step
            << "  |  Step Size:" << std::setw(17) << time_step
            << "  |" << std::endl;
       cout.unsetf( std::ios::scientific );
