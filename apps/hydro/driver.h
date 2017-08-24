@@ -225,11 +225,6 @@ int driver(int argc, char** argv)
   // Residual Evaluation
   //===========================================================================
 
-  // Get the legion runtime and context.  In the furture, legion will not be 
-  // exposed to the user
-  auto legion_runtime = Legion::Runtime::get_runtime();
-  auto legion_context = Legion::Runtime::get_context();
-
   auto & min_reduction = 
     flecsi::execution::context_t::instance().min_reduction();
 
@@ -246,18 +241,8 @@ int driver(int argc, char** argv)
       evaluate_time_step, single, mesh, d, v, e, p, T, a
     );
 
-    local_future.defer_dynamic_collective_arrival(
-      legion_runtime, legion_context, min_reduction
-    );
-    
-    min_reduction = 
-      legion_runtime->advance_dynamic_collective(legion_context, min_reduction);
-
-    auto global_future = legion_runtime->get_dynamic_collective_result(
-      legion_context, min_reduction
-    );
-
-    auto time_step = global_future.get_result<real_t>();
+    auto time_step =
+	flecsi::execution::context_t::instance().reduce_min(local_future);
     time_step *= inputs_t::CFL;
 
     // access the computed time step and make sure its not too large
