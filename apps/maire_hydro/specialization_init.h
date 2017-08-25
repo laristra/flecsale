@@ -511,6 +511,10 @@ int specialization_tlt_init(int argc, char ** argv)
   
   // set exceptions 
   apps::common::enable_exceptions();
+  
+  // get the color
+  auto & context = flecsi::execution::context_t::instance();
+  auto rank = context.color();
 
   //===========================================================================
   // Parse arguments
@@ -527,11 +531,14 @@ int specialization_tlt_init(int argc, char ** argv)
     args.count("m") ? args.at("m") : std::string();
 
   // override any inputs if need be
-  if ( !mesh_filename_string.empty() )
-    std::cout << "Using mesh file \"" << mesh_filename_string << "\"." 
-              << std::endl;
-  else
+  if ( !mesh_filename_string.empty() ) {
+    if ( rank == 0 )
+      std::cout << "Using mesh file \"" << mesh_filename_string << "\"." 
+                << std::endl;
+  }
+  else {
     raise_runtime_error( "No mesh file provided" );
+  }
   
   //===========================================================================
   // Partition mesh
