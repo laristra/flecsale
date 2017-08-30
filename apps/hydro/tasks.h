@@ -327,12 +327,12 @@ void print(
 // TASK REGISTRATION
 ////////////////////////////////////////////////////////////////////////////////
 
-flecsi_register_task(initial_conditions, loc, single);
-flecsi_register_task(evaluate_time_step, loc, single);
-flecsi_register_task(evaluate_fluxes, loc, single);
-flecsi_register_task(apply_update, loc, single);
-flecsi_register_task(output, loc, single);
-flecsi_register_task(print, loc, single);
+flecsi_register_task(initial_conditions, loc, single|flecsi::leaf);
+flecsi_register_task(evaluate_time_step, loc, single|flecsi::leaf);
+flecsi_register_task(evaluate_fluxes, loc, single|flecsi::leaf);
+flecsi_register_task(apply_update, loc, single|flecsi::leaf);
+flecsi_register_task(output, loc, single|flecsi::leaf);
+flecsi_register_task(print, loc, single|flecsi::leaf);
 
 } // namespace hydro
 } // namespace apps
