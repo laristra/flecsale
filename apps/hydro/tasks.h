@@ -111,7 +111,9 @@ mesh_t::real_t evaluate_time_step(
   dense_handle_r__<mesh_t::real_t> e,
   dense_handle_r__<mesh_t::real_t> p,
   dense_handle_r__<mesh_t::real_t> T,
-  dense_handle_r__<mesh_t::real_t> a
+  dense_handle_r__<mesh_t::real_t> a,
+  mesh_t::real_t CFL,
+  mesh_t::real_t max_dt
 ) {
  
   using real_t = typename mesh_t::real_t;
@@ -141,8 +143,13 @@ mesh_t::real_t evaluate_time_step(
   if ( dt_inv <= 0 ) 
     raise_runtime_error( "infinite delta t" );
 
-  return 1 / dt_inv;
+  real_t time_step = 1 / dt_inv;
+  time_step *= CFL;
 
+  // access the computed time step and make sure its not too large
+  time_step = std::min( time_step, max_dt );
+  
+  return time_step;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -204,7 +211,7 @@ void evaluate_fluxes(
 void apply_update( 
   client_handle_r__<mesh_t> mesh,
   eos_t eos,
-  mesh_t::real_t delta_t,
+  Legion::Future delta_t,
   dense_handle_r__<flux_data_t> flux,
   dense_handle_rw__<mesh_t::real_t> d,
   dense_handle_rw__<mesh_t::vector_t> v,
@@ -242,7 +249,7 @@ void apply_update(
     } // edge
 
     // now compute the final update
-    delta_u *= delta_t/c->volume();
+    delta_u *= delta_t.get_result<mesh_t::real_t>()/c->volume();
 
     // apply the update
     auto u = pack(c, d, v, p, e, T, a);

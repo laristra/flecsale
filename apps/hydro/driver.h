@@ -238,29 +238,12 @@ int driver(int argc, char** argv)
     // compute the time step
     
     auto local_future = flecsi_execute_task( 
-      evaluate_time_step, single, mesh, d, v, e, p, T, a
+      evaluate_time_step, single, mesh, d, v, e, p, T, a,
+      inputs_t::CFL, inputs_t::final_time - soln_time
     );
 
     auto time_step =
 	flecsi::execution::context_t::instance().reduce_min(local_future);
-    time_step *= inputs_t::CFL;
-
-    // access the computed time step and make sure its not too large
-    time_step = std::min( time_step, inputs_t::final_time - soln_time );       
-
-    // output the time step
-    if ( rank == 0 ) {
-      cout << std::string(80, '=') << endl;
-      auto ss = cout.precision();
-      cout.setf( std::ios::scientific );
-      cout.precision(6);
-      cout << "|  " << "Step:" << std::setw(10) << time_cnt+1
-           << "  |  Time:" << std::setw(17) << soln_time + time_step
-           << "  |  Step Size:" << std::setw(17) << time_step
-           << "  |" << std::endl;
-      cout.unsetf( std::ios::scientific );
-      cout.precision(ss);
-    }
 
     //-------------------------------------------------------------------------
     // try a timestep
@@ -280,8 +263,24 @@ int driver(int argc, char** argv)
     // Post-process
     
     // update time
-    soln_time += time_step;
+    bool silence_warnings = true;
+    double completed_time_step = time_step.get_result<double>(silence_warnings);
+    soln_time += completed_time_step;
     time_cnt++;
+
+    // output the time step
+    if ( rank == 0 ) {
+      cout << std::string(80, '=') << endl;
+      auto ss = cout.precision();
+      cout.setf( std::ios::scientific );
+      cout.precision(6);
+      cout << "|  " << "Step:" << std::setw(10) << time_cnt+1
+           << "  |  Time:" << std::setw(17) << soln_time + completed_time_step
+           << "  |  Step Size:" << std::setw(17) << completed_time_step
+           << "  |" << std::endl;
+      cout.unsetf( std::ios::scientific );
+      cout.precision(ss);
+    }
 
 #ifdef HAVE_CATALYST
     if (!catalyst_scripts.empty()) {
