@@ -532,7 +532,6 @@ int specialization_spmd_init(int argc, char ** argv)
   auto mesh_handle = flecsi_get_client_handle(mesh_t, meshes, mesh0);
   auto f1 = 
     flecsi_execute_task(initialize_mesh, single, mesh_handle, mesh_filename);
-  f1.wait();
 
   return 0;
 }

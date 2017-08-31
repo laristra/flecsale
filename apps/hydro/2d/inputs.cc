@@ -29,12 +29,12 @@ template<> string base_t::prefix = "shock_box_2d";
 template<> string base_t::postfix = "dat";
 
 // output frequency
-template<> size_t base_t::output_freq = 1e6;
+template<> size_t base_t::output_freq = 0;
 
 // the CFL and final solution time
 template<> real_t base_t::CFL = 1.0/2.0;
-template<> real_t base_t::final_time = 0.2;
-template<> size_t base_t::max_steps = 1e6;
+template<> real_t base_t::final_time = 1e6;
+template<> size_t base_t::max_steps = 1000;
 
 // the equation of state
 template<> eos_t base_t::eos = 

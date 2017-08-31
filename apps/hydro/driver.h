@@ -14,6 +14,7 @@
 
 // user includes
 //#include <flecsale/mesh/mesh_utils.h>
+#include <flecsi/execution/future.h>
 #include <flecsale/utils/time_utils.h>
 #include <flecsale/io/catalyst/adaptor.h>
 
@@ -109,7 +110,6 @@ flecsi_register_field(
 ///////////////////////////////////////////////////////////////////////////////
 int driver(int argc, char** argv) 
 {
-
 
   // get the context
   auto & context = flecsi::execution::context_t::instance();
@@ -210,7 +210,6 @@ int driver(int argc, char** argv)
     auto name_char = utils::to_trivial_string( name );
     auto f =
       flecsi_execute_task(output, single, mesh, name_char, d, v, e, p, T, a);
-    f.wait();
   }
 
 
@@ -218,7 +217,6 @@ int driver(int argc, char** argv)
   {
     auto name = utils::to_trivial_string( prefix+".txt" );
     auto f = flecsi_execute_task(print, single, mesh, name);
-    f.wait();
   }
 
   //===========================================================================
@@ -236,35 +234,37 @@ int driver(int argc, char** argv)
 
     //-------------------------------------------------------------------------
     // compute the time step
-    
+
     auto local_future = flecsi_execute_task( 
       evaluate_time_step, single, mesh, d, v, e, p, T, a,
       inputs_t::CFL, inputs_t::final_time - soln_time
     );
 
-    auto time_step =
+    auto global_future =
 	flecsi::execution::context_t::instance().reduce_min(local_future);
+    flecsi::execution::flecsi_future__<mesh_t::real_t> *flecsi_future_time_step =
+        &global_future;
 
     //-------------------------------------------------------------------------
     // try a timestep
-    
+
     // compute the fluxes
     auto f1 = 
       flecsi_execute_task( evaluate_fluxes, single, mesh, d, v, e, p, T, a, F );
-    f1.wait();
-
+ 
     // Loop over each cell, scattering the fluxes to the cell
     auto f2 = flecsi_execute_task( 
-      apply_update, single, mesh, inputs_t::eos, time_step, F, d, v, e, p, T, a
+      apply_update, single, mesh, inputs_t::eos, flecsi_future_time_step, F, d, v, e, p, T, a
     );
-    f2.wait();
 
     //-------------------------------------------------------------------------
     // Post-process
-    
+
     // update time
     bool silence_warnings = true;
-    double completed_time_step = time_step.get_result<double>(silence_warnings);
+    size_t index = 0;
+    double completed_time_step = flecsi_future_time_step->get(index, silence_warnings);
+
     soln_time += completed_time_step;
     time_cnt++;
 
@@ -303,7 +303,6 @@ int driver(int argc, char** argv)
       auto name = prefix + "_" + apps::common::zero_padded( time_cnt ) + ".exo";
       auto name_char = utils::to_trivial_string( name );
       auto f = flecsi_execute_task(output, single, mesh, name_char, d, v, e, p, T, a);
-      f.wait();
     }
 
 
