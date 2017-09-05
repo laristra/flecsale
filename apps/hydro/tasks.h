@@ -212,7 +212,7 @@ void evaluate_fluxes(
 void apply_update( 
   client_handle_r__<mesh_t> mesh,
   eos_t eos,
-  flecsi::execution::flecsi_future__<mesh_t::real_t>* delta_t,
+  mesh_t::real_t delta_t,
   dense_handle_r__<flux_data_t> flux,
   dense_handle_rw__<mesh_t::real_t> d,
   dense_handle_rw__<mesh_t::vector_t> v,
@@ -249,7 +249,7 @@ void apply_update(
     } // edge
 
     // now compute the final update
-    delta_u *= delta_t->get()/c->volume();
+    delta_u *= delta_t/c->volume();
 
     // apply the update
     auto u = pack(c, d, v, p, e, T, a);

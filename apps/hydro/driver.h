@@ -240,10 +240,12 @@ int driver(int argc, char** argv)
       inputs_t::CFL, inputs_t::final_time - soln_time
     );
 
-    auto global_future =
-	flecsi::execution::context_t::instance().reduce_min(local_future);
-    flecsi::execution::flecsi_future__<mesh_t::real_t> *flecsi_future_time_step =
-        &global_future;
+    // FleCSI does not yet support Future handling
+    // auto global_future =
+    //	flecsi::execution::context_t::instance().reduce_min(local_future);
+    //flecsi::execution::flecsi_future__<mesh_t::real_t> *flecsi_future_time_step =
+    //    &global_future;
+    mesh_t::real_t hacked_time_step = 1.0e-3;
 
     //-------------------------------------------------------------------------
     // try a timestep
@@ -254,18 +256,23 @@ int driver(int argc, char** argv)
  
     // Loop over each cell, scattering the fluxes to the cell
     auto f2 = flecsi_execute_task( 
-      apply_update, single, mesh, inputs_t::eos, flecsi_future_time_step, F, d, v, e, p, T, a
+      //apply_update, single, mesh, inputs_t::eos, flecsi_future_time_step, F, d, v, e, p, T, a
+      apply_update, single, mesh, inputs_t::eos, hacked_time_step, F, d, v, e, p, T, a
     );
 
     //-------------------------------------------------------------------------
     // Post-process
 
     // update time
-    bool silence_warnings = true;
+    bool silence_warnings = true;  // All sub-tasks have been launched.  So, it is now
+                                   // acceptable to wait on global reduction and we can
+                                   // silence the warnings this would produce.
     size_t index = 0;
-    double completed_time_step = flecsi_future_time_step->get(index, silence_warnings);
+    // This is where future_step_step should be evaluated
+    // mesh_t::real_t future_time_step = flecsi_future_time_step->get(index, silence_warnings);
+    mesh_t::real_t future_time_step = hacked_time_step;
 
-    soln_time += completed_time_step;
+    soln_time += future_time_step;
     time_cnt++;
 
     // output the time step
@@ -275,8 +282,8 @@ int driver(int argc, char** argv)
       cout.setf( std::ios::scientific );
       cout.precision(6);
       cout << "|  " << "Step:" << std::setw(10) << time_cnt+1
-           << "  |  Time:" << std::setw(17) << soln_time + completed_time_step
-           << "  |  Step Size:" << std::setw(17) << completed_time_step
+           << "  |  Time:" << std::setw(17) << soln_time + future_time_step
+           << "  |  Step Size:" << std::setw(17) << future_time_step
            << "  |" << std::endl;
       cout.unsetf( std::ios::scientific );
       cout.precision(ss);
