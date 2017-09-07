@@ -172,9 +172,17 @@ void evaluate_fluxes(
 
   // type aliases
   using eqns_t = eqns__< mesh_t::num_dimensions >;
+  using counter_t = mesh_t::counter_t;
   
-  for ( auto f : mesh.faces( flecsi::owned ) ) 
+  
+  const auto & face_list = mesh.faces( flecsi::owned );
+  auto num_faces = face_list.size();
+
+  #pragma omp parallel for
+  for ( counter_t fit = 0; fit < num_faces; ++fit )
   {
+
+    const auto & f = face_list[fit];
     
     // get the cell neighbors
     const auto & cells = mesh.cells(f);
@@ -221,14 +229,22 @@ void apply_update(
   dense_handle_rw__<mesh_t::real_t> T,
   dense_handle_rw__<mesh_t::real_t> a
 ) {
+
   // type aliases
   using eqns_t = eqns__<mesh_t::num_dimensions>;
+  using counter_t = mesh_t::counter_t;
 
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
 
-  for ( auto c : mesh.cells( flecsi::owned ) )
+  const auto & cell_list = mesh.cells( flecsi::owned );
+  auto num_cells = cell_list.size();
+
+  #pragma omp parallel for
+  for ( counter_t cit = 0; cit < num_cells; ++cit )
   {
+
+    const auto & c = cell_list[cit];
 
     // initialize the update
     flux_data_t delta_u( 0 );
