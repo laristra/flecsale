@@ -15,7 +15,7 @@
 // library includes
 #include <portage/support/portage.h>
 #include <portage/support/Point.h>
-#include <portage/wrappers/mesh/AuxMeshTopology.h>
+#include <portage/wonton/mesh/AuxMeshTopology.h>
 
 // system includes
 #include <map>
