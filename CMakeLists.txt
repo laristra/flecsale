@@ -340,9 +340,14 @@ if(ENABLE_PORTAGE)
   if(NOT Boost_FOUND)
     message( FATAL_ERROR "Boost is needed for Portage" )
   endif()
+
+  find_package(LAPACKE REQUIRED)
+  include_directories(${LAPACKE_INCLUDE_DIRS})
+  add_definitions("-DHAVE_LAPACKE")
+
   include_directories(${PORTAGE_INCLUDE_DIR})
   add_definitions(-DHAVE_PORTAGE -DPORTAGE_SERIAL_ONLY)
-  list( APPEND FleCSALE_LIBRARIES ${PORTAGE_LIBRARY} )
+  list( APPEND FleCSALE_LIBRARIES ${PORTAGE_LIBRARY} ${LAPACKE_LIBRARIES} )
 endif()
 
 
