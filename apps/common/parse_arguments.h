@@ -37,36 +37,35 @@ static auto parse_arguments(
   // reset getopts global variable
   optind = 0;
 
-  while (1) {
     
     // getopt_long stores the option index here.
-    int option_index = 0;
+  int option_index = 0;
 
+  int c=0;
+  int done = 0;
+
+  while (!done && (c != -1)) {
     auto c = 
       getopt_long(argc, argv, short_options, long_options, &option_index);
     auto c_char = static_cast<char>(c);
     auto c_str = flecsale::utils::to_string( c_char );
-
-    // Detect the end of the options.
-    if (c == -1) break;
-
-    // no equivalent short option
-    if (c == 0) {
-      key_value_pair[long_options[option_index].name] = 
-        optarg ? optarg : "";
+    switch (c) {
+      case (-1):
+        break;
+      case 0:
+        key_value_pair[long_options[option_index].name] =
+          optarg ? optarg : "";
+      default:
+         done = 1;
+        break;
     }
-    // if the flag is not found, getopt prints a warning
-
-    // store the value
     if (optarg) key_value_pair[c_str] = optarg;
     else        key_value_pair[c_str] = "";
 
+    if (optind > argc)
+    raise_runtime_error( "Expected argument after options" );
 
   }
-
-  // make sure it 
-  if (optind > argc) 
-   raise_runtime_error( "Expected argument after options" );
 
   return key_value_pair;
 }
