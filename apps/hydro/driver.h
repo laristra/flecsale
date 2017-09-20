@@ -214,10 +214,12 @@ int driver(int argc, char** argv)
 
 
   // dump connectivity
-  {
     auto name = utils::to_trivial_string( prefix+".txt" );
     auto f = flecsi_execute_task(print, single, mesh, name);
-  }
+    f.wait();
+
+  // start a clock
+  double tstart;
 
   //===========================================================================
   // Residual Evaluation
@@ -251,14 +253,20 @@ int driver(int argc, char** argv)
     // try a timestep
 
     // compute the fluxes
-    auto f1 = 
+    f = 
       flecsi_execute_task( evaluate_fluxes, single, mesh, d, v, e, p, T, a, F );
  
     // Loop over each cell, scattering the fluxes to the cell
-    auto f2 = flecsi_execute_task( 
+    f = flecsi_execute_task( 
       //apply_update, single, mesh, inputs_t::eos, flecsi_future_time_step, F, d, v, e, p, T, a
       apply_update, single, mesh, inputs_t::eos, hacked_time_step, F, d, v, e, p, T, a
     );
+    // Be triply-sure that timing doesn't start until everyone is timestepping
+    if (num_steps == 0) {
+      f.wait();
+      tstart = utils::get_wall_time();
+    }
+
 
     //-------------------------------------------------------------------------
     // Post-process
