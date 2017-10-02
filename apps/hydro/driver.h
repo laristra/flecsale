@@ -14,7 +14,7 @@
 
 // user includes
 //#include <flecsale/mesh/mesh_utils.h>
-#include <flecsi/execution/future.h>
+#include <flecsi/execution/legion/future.h>
 #include <flecsale/utils/time_utils.h>
 #include <flecsale/io/catalyst/adaptor.h>
 

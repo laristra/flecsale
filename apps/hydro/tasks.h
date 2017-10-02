@@ -17,7 +17,6 @@
 #include <flecsale/utils/string_utils.h>
 #include <flecsi/execution/context.h>
 #include <flecsi/execution/execution.h>
-#include <flecsi/execution/future.h>
 
 // system includes
 #include <iomanip>
