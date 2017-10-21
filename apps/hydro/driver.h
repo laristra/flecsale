@@ -136,9 +136,6 @@ int driver(int argc, char** argv)
   // Mesh Setup
   //===========================================================================
 
-  // start a clock
-  auto tstart = utils::get_wall_time();
-
   // get the client handle 
   auto mesh = flecsi_get_client_handle(mesh_t, meshes, mesh0);
  
@@ -214,12 +211,12 @@ int driver(int argc, char** argv)
 
 
   // dump connectivity
-    auto name = utils::to_trivial_string( prefix+".txt" );
-    auto f = flecsi_execute_task(print, single, mesh, name);
-    f.wait();
+  auto name = utils::to_trivial_string( prefix+".txt" );
+  auto f = flecsi_execute_task(print, single, mesh, name);
+  f.wait();
 
   // start a clock
-  double tstart;
+  auto tstart = utils::get_wall_time();
 
   //===========================================================================
   // Residual Evaluation
