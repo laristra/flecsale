@@ -99,9 +99,10 @@ auto color_entity(
       // Check the remote info map to see if this cell is
       // off-color. If it is, compare it's rank for
       // the ownership logic below.
-      if(remote_info_map.find(c) != remote_info_map.end()) {
-        min_rank = std::min(min_rank, remote_info_map.at(c).rank);
-        shared_entities.insert(remote_info_map.at(c).rank);
+      auto it = remote_info_map.find(c);
+      if(it != remote_info_map.end()) {
+        min_rank = std::min(min_rank, it->second.rank);
+        shared_entities.insert(it->second.rank);
       }
       else {
         // If the referencing cell isn't in the remote info map
