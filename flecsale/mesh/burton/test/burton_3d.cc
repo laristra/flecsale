@@ -4,7 +4,7 @@
  *~-------------------------------------------------------------------------~~*/
 ////////////////////////////////////////////////////////////////////////////////
 /// \file
-/// 
+///
 /// \brief Tests general features of the burton mesh.
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -15,6 +15,75 @@
 // using statements
 using std::cout;
 using std::endl;
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief demonstrate that ptr_box 3d create the same mesh as box 3d
+////////////////////////////////////////////////////////////////////////////////
+namespace{
+/* Checks that meshes have same # vertices, and that vertices are in the same
+ * places*/
+bool compare_meshes_3d(mesh_3d_t const &m1, mesh_3d_t const &m2) {
+  auto vertices1 = m1.vertices();
+  auto vertices2 = m2.vertices();
+  bool sz_same = m1.num_vertices() == m2.num_vertices();
+  if(!sz_same){
+    printf("%s:%i meshes have different number of vertices: m1 has %lu, m2 has "
+           "%lu \n",
+           __FUNCTION__, __LINE__, m1.num_vertices(), m2.num_vertices());
+    return false;
+  }
+  bool v_locs_same(true);
+  for(size_t i = 0; i < m1.num_vertices(); ++i){
+    auto xv1 = vertices1[i]->coordinates();
+    auto xv2 = vertices2[i]->coordinates();
+    v_locs_same = v_locs_same && (xv1 == xv2);
+  }
+  return v_locs_same;
+} // compare_meshes_3d
+} // anonymous::
+
+TEST(burton_3d_factories, ptr_box){
+  using mesh_t = mesh_3d_t;
+  using real_t = mesh_t::real_t;
+  using mesh_ptr_t = std::shared_ptr<mesh_t>;
+  real_t min_x = 0.0, min_y = 0.0, min_z = 0.0, max_x = 1.0, max_y = 1.0,
+         max_z = 1.0;
+  size_t nx = 5, ny = 7, nz = 11;
+  {
+    mesh_ptr_t pm = flecsale::mesh::ptr_box<mesh_t>(nx, ny, nz, min_x, min_y,
+                                                    min_z, max_x, max_y, max_z);
+    mesh_t m = flecsale::mesh::box<mesh_t>(nx, ny, nz, min_x, min_y, min_z,
+                                           max_x, max_y, max_z);
+    bool same = compare_meshes_3d(*pm,m);
+    EXPECT_TRUE(same);
+  }
+  {
+    std::array<size_t,3> ns = {nx,ny,nz};
+    std::array<double,3> mins = {min_x,min_y,min_z};
+    std::array<double,3> maxs = {max_x,max_y,max_z};
+    mesh_ptr_t pm = flecsale::mesh::ptr_box<mesh_t>(ns,mins,maxs);
+    mesh_t m = flecsale::mesh::box<mesh_t>(ns,mins,maxs);
+    bool same = compare_meshes_3d(*pm,m);
+    EXPECT_TRUE(same);
+  }
+  {
+    flecsale::math::array<size_t,3> ns = {nx,ny,nz};
+    flecsale::math::array<double,3> mins = {min_x,min_y,min_z};
+    flecsale::math::array<double,3> maxs = {max_x,max_y,max_z};
+    mesh_ptr_t pm = flecsale::mesh::ptr_box<mesh_t>(ns,mins,maxs);
+    mesh_t m = flecsale::mesh::box<mesh_t>(ns,mins,maxs);
+    bool same = compare_meshes_3d(*pm,m);
+    EXPECT_TRUE(same);
+  }
+  { // centered versions
+    mesh_ptr_t pm =
+        flecsale::mesh::ptr_box<mesh_t>(nx, ny, nz, max_x, max_y, max_z);
+    mesh_t m = flecsale::mesh::box<mesh_t>(nx, ny, nz, max_x, max_y, max_z);
+    bool same = compare_meshes_3d(*pm,m);
+    EXPECT_TRUE(same);
+  }
+
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief dump the mesh to std out
@@ -59,14 +128,14 @@ TEST_F(burton_3d, mesh) {
   CINCH_CAPTURE() << separator;
   CINCH_CAPTURE() << "Faces in mesh:" << endl;
 
-  for(auto f : mesh_.faces()) 
+  for(auto f : mesh_.faces())
     CINCH_CAPTURE() << "----------- faces id: " << f.id()
                     << " with centroid " << f->centroid() << endl;
 
   CINCH_CAPTURE() << separator;
   CINCH_CAPTURE() << "Cells in mesh:" << endl;
 
-  for(auto c : mesh_.cells()) 
+  for(auto c : mesh_.cells())
     CINCH_CAPTURE() << "----------- cell id: " << c.id()
                     << " with centroid " << c->centroid() << endl;
 
@@ -191,11 +260,11 @@ TEST_F(burton_3d, mesh) {
     CINCH_CAPTURE() << "^^^^^^^^Corner id: " << c.id() << endl;
 
     CINCH_CAPTURE() << "    ----Wedges:" << endl;
-    for(auto w: mesh_.wedges(c)) 
+    for(auto w: mesh_.wedges(c))
       CINCH_CAPTURE() << "    ++++ wedge id: " << w.id() << endl;
 
     CINCH_CAPTURE() << "    ----Cells:" << endl;
-    for(auto cl: mesh_.cells(c)) 
+    for(auto cl: mesh_.cells(c))
       CINCH_CAPTURE() << "    ++++ cell id: " << cl.id() << endl;
 
     CINCH_CAPTURE() << "    ----Faces:" << endl;
@@ -203,11 +272,11 @@ TEST_F(burton_3d, mesh) {
       CINCH_CAPTURE() << "    ++++ face id: " << f.id() << endl;
 
     CINCH_CAPTURE() << "    ----Edges:" << endl;
-    for(auto e: mesh_.edges(c)) 
+    for(auto e: mesh_.edges(c))
       CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
 
     CINCH_CAPTURE() << "    ----Vertices:" << endl;
-    for(auto v: mesh_.vertices(c)) 
+    for(auto v: mesh_.vertices(c))
       CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
 
   } // for
@@ -219,11 +288,11 @@ TEST_F(burton_3d, mesh) {
     CINCH_CAPTURE() << "^^^^^^^^Wedge id: " << w.id() << endl;
 
     CINCH_CAPTURE() << "    ----Corners:" << endl;
-    for(auto c: mesh_.corners(w)) 
+    for(auto c: mesh_.corners(w))
       CINCH_CAPTURE() << "    ++++ corner id: " << c.id() << endl;
 
     CINCH_CAPTURE() << "    ----Cells:" << endl;
-    for(auto cl: mesh_.cells(w)) 
+    for(auto cl: mesh_.cells(w))
       CINCH_CAPTURE() << "    ++++ cell id: " << cl.id() << endl;
 
     CINCH_CAPTURE() << "    ----Faces:" << endl;
@@ -231,11 +300,11 @@ TEST_F(burton_3d, mesh) {
       CINCH_CAPTURE() << "    ++++ face id: " << f.id() << endl;
 
     CINCH_CAPTURE() << "    ----Edges:" << endl;
-    for(auto e: mesh_.edges(w)) 
+    for(auto e: mesh_.edges(w))
       CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
 
     CINCH_CAPTURE() << "    ----Vertices:" << endl;
-    for(auto v: mesh_.vertices(w)) 
+    for(auto v: mesh_.vertices(w))
       CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
 
   } // for
@@ -376,7 +445,7 @@ TEST_F(burton_3d, normals) {
   auto bnd_vertices = filter_boundary( mesh_.vertices() );
 
   for(auto vt : bnd_vertices) {
-    
+
     auto ws = filter_boundary( mesh_.wedges(vt) );
 
     ASSERT_EQ( 0, ws.size()%2 );
