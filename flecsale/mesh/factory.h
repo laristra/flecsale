@@ -14,8 +14,10 @@
 #include "flecsale/math/matrix.h"
 
 // system includes
-#include<cmath>
-#include<vector>
+#include <array>
+#include <cmath>
+#include <memory>
+#include <vector>
 
 namespace flecsale {
 namespace mesh {
@@ -30,9 +32,9 @@ namespace mesh {
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
 std::enable_if_t< T::num_dimensions == 2, T >
-box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, 
+box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
      typename T::real_t min_x,       typename T::real_t min_y,
-     typename T::real_t max_x,       typename T::real_t max_y ) 
+     typename T::real_t max_x,       typename T::real_t max_y )
 {
 
   using counter_t = typename T::counter_t;
@@ -47,13 +49,13 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
   // reserve storage for the mesh
   auto num_vertex = ( num_cells_x + 1 ) * ( num_cells_y + 1 );
   mesh.init_parameters( num_vertex );
-  
-  
+
+
   // create the individual vertices
   using vertex_t = typename T::vertex_t;
   std::vector<vertex_t*> vs;
   vs.reserve(num_vertex);
-  
+
   auto delta_x = length_x / num_cells_x;
   auto delta_y = length_y / num_cells_y;
 
@@ -67,23 +69,23 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
       auto v = mesh.create_vertex( {x, y} );
       vs.emplace_back( std::move(v) );
     }
-    
+
   }
-  
+
   // define each cell
   auto index = [=](auto i, auto j) { return i + num_vert_x*j; };
-  
+
   for(counter_t j = 0; j < num_cells_y; ++j)
     for(counter_t i = 0; i < num_cells_x; ++i) {
-      auto c = 
+      auto c =
         mesh.create_cell({
               vs[ index(i  , j  ) ],
               vs[ index(i+1, j  ) ],
               vs[ index(i+1, j+1) ],
               vs[ index(i  , j+1) ]});
     }
-  
-  
+
+
   // now finalize the mesh setup
   mesh.init();
 
@@ -91,19 +93,163 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Create a box mesh
+//! \brief std::array interface to box 2D
+//!
+//! \param [in] num_cells  the number of cells in the x and y dir
+//! \param [in] mins              the min coordinate in the x and y dir
+//! \param [in] maxs              the max coordinate in the x and y dir
+//! \return a new mesh object
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+std::enable_if_t< T::num_dimensions == 2, T >
+box( std::array<size_t,2> const &num_cells,
+     std::array<typename T::real_t,2> const & mins,
+     std::array<typename T::real_t,2> const & maxs)
+{
+  return box<T>(num_cells[0],num_cells[1],mins[0],mins[1],maxs[0],maxs[1]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief flecsale::array interface to box 2D
+//!
+//! \param [in] num_cells  the number of cells in the x and y dir
+//! \param [in] mins              the min coordinate in the x and y dir
+//! \param [in] maxs              the max coordinate in the x and y dir
+//! \return a new mesh object
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+std::enable_if_t< T::num_dimensions == 2, T >
+box( flecsale::math::array<size_t,2> const &num_cells,
+     flecsale::math::array<typename T::real_t,2> const & mins,
+     flecsale::math::array<typename T::real_t,2> const & maxs)
+{
+  return box<T>(num_cells[0],num_cells[1],mins[0],mins[1],maxs[0],maxs[1]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief  shared_ptr interface to box 2D
+//!
+//! \param [in] num_cells  the number of cells in the x and y dir
+//! \param [in] mins              the min coordinate in the x and y dir
+//! \param [in] maxs              the max coordinate in the x and y dir
+//! \return smart pointer to a new mesh object
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+std::enable_if_t< T::num_dimensions == 2, std::shared_ptr<T> >
+ptr_box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
+     typename T::real_t min_x,       typename T::real_t min_y,
+     typename T::real_t max_x,       typename T::real_t max_y )
+{
+
+  using counter_t = typename T::counter_t;
+
+  std::shared_ptr<T> pmesh = std::make_shared<T>();
+  T &mesh(*pmesh);
+
+  // the grid dimensions
+  auto length_x = max_x - min_x;
+  auto length_y = max_y - min_y;
+
+
+  // reserve storage for the mesh
+  auto num_vertex = ( num_cells_x + 1 ) * ( num_cells_y + 1 );
+  mesh.init_parameters( num_vertex );
+
+
+  // create the individual vertices
+  using vertex_t = typename T::vertex_t;
+  std::vector<vertex_t*> vs;
+  vs.reserve(num_vertex);
+
+  auto delta_x = length_x / num_cells_x;
+  auto delta_y = length_y / num_cells_y;
+
+  auto num_vert_x = num_cells_x + 1;
+  auto num_vert_y = num_cells_y + 1;
+
+  for(counter_t j = 0; j < num_vert_y; ++j) {
+    auto y = min_y + j*delta_y;
+    for(counter_t i = 0; i < num_vert_x; ++i) {
+      auto x = min_x + i*delta_x;
+      auto v = mesh.create_vertex( {x, y} );
+      vs.emplace_back( std::move(v) );
+    }
+
+  }
+
+  // define each cell
+  auto index = [=](auto i, auto j) { return i + num_vert_x*j; };
+
+  for(counter_t j = 0; j < num_cells_y; ++j)
+    for(counter_t i = 0; i < num_cells_x; ++i) {
+      auto c =
+        mesh.create_cell({
+              vs[ index(i  , j  ) ],
+              vs[ index(i+1, j  ) ],
+              vs[ index(i+1, j+1) ],
+              vs[ index(i  , j+1) ]});
+    }
+
+
+  // now finalize the mesh setup
+  mesh.init();
+
+  return pmesh;
+} // ptr_box
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief shared_ptr, std::array interface to box 2D
+//!
+//! \param [in] num_cells  the number of cells in the x and y dir
+//! \param [in] mins              the min coordinate in the x and y dir
+//! \param [in] maxs              the max coordinate in the x and y dir
+//! \return smart pointer to a new mesh object
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+std::enable_if_t< T::num_dimensions == 2, std::shared_ptr<T> >
+ptr_box( std::array<size_t,2> const &num_cells,
+         std::array<typename T::real_t,2> const & mins,
+         std::array<typename T::real_t,2> const & maxs)
+{
+  return ptr_box<T>(num_cells[0],num_cells[1],mins[0],mins[1],maxs[0],maxs[1]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief shared_ptr, flecsale::array interface to box 2D
+//!
+//! \param [in] num_cells  the number of cells in the x and y dir
+//! \param [in] mins              the min coordinate in the x and y dir
+//! \param [in] maxs              the max coordinate in the x and y dir
+//! \return smart pointer to a new mesh object
+////////////////////////////////////////////////////////////////////////////////
+template< typename T >
+std::enable_if_t< T::num_dimensions == 2, std::shared_ptr<T> >
+ptr_box( flecsale::math::array<size_t,2> const &num_cells,
+         flecsale::math::array<typename T::real_t,2> const & mins,
+         flecsale::math::array<typename T::real_t,2> const & maxs)
+{
+  return ptr_box<T>(num_cells[0],num_cells[1],mins[0],mins[1],maxs[0],maxs[1]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Create a 3D box mesh
 //!
 //! \param [in] num_cells_x,num_cells_y,num_cells_z  the number of cells in the x, y, and z dir
 //! \param [in] min_x,min_y,min_z  The min coordinate in the x, y, and z dir.
 //! \param [in] max_x,max_y,max_z  The max coordinate in the x, y, and z dir.
 //! \return a new mesh object
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-std::enable_if_t< T::num_dimensions == 3, T >
-box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T::size_t num_cells_z, 
-     typename T::real_t min_x,       typename T::real_t min_y,       typename T::real_t min_z,
-     typename T::real_t max_x,       typename T::real_t max_y,       typename T::real_t max_z ) 
-{
+template <typename T>
+std::enable_if_t<T::num_dimensions == 3, T>
+box(typename T::size_t num_cells_x,
+    typename T::size_t num_cells_y,
+    typename T::size_t num_cells_z,
+    typename T::real_t min_x,
+    typename T::real_t min_y,
+    typename T::real_t min_z,
+    typename T::real_t max_x,
+    typename T::real_t max_y,
+    typename T::real_t max_z) {
 
   using counter_t = typename T::counter_t;
 
@@ -114,7 +260,6 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
   auto length_y = max_y - min_y;
   auto length_z = max_z - min_z;
 
-
   auto num_vert_x = num_cells_x + 1;
   auto num_vert_y = num_cells_y + 1;
   auto num_vert_z = num_cells_z + 1;
@@ -122,13 +267,12 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
   // reserve storage for the mesh
   auto num_vertex = num_vert_x * num_vert_y * num_vert_z;
   mesh.init_parameters( num_vertex );
-  
-  
+
   // create the individual vertices
   using vertex_t = typename T::vertex_t;
   std::vector<vertex_t*> vs;
   vs.reserve(num_vertex);
-  
+
   auto delta_x = length_x / num_cells_x;
   auto delta_y = length_y / num_cells_y;
   auto delta_z = length_z / num_cells_z;
@@ -141,7 +285,7 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
         auto x = min_x + i*delta_x;
         auto v = mesh.create_vertex( {x, y, z} );
         vs.emplace_back( std::move(v) );
-      }     
+      }
     }
   }
 
@@ -150,17 +294,16 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
   auto stride_vert_y = stride_vert_x * num_vert_x;
   auto stride_vert_z = stride_vert_y * num_vert_y;
 
-  auto vert_index = [=](auto i, auto j, auto k) 
-    { 
-      return stride_vert_x*i + stride_vert_y*j +  + stride_vert_z*k; 
+  auto vert_index = [=](auto i, auto j, auto k)
+    {
+      return stride_vert_x*i + stride_vert_y*j +  + stride_vert_z*k;
     };
-  
 
   // go over vertices counter clockwise to define cell
   for( counter_t k = 0; k < num_cells_z; ++k )
     for( counter_t j = 0; j < num_cells_y; ++j )
       for( counter_t i = 0; i < num_cells_x; ++i )
-        auto c = mesh.create_cell( 
+        auto c = mesh.create_cell(
           {
             vs[ vert_index( i  , j  , k  ) ],
             vs[ vert_index( i+1, j  , k  ) ],
@@ -171,14 +314,182 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
             vs[ vert_index( i+1, j+1, k+1) ],
             vs[ vert_index( i  , j+1, k+1) ],
           } );
-  
-  
+
+
   // now finalize the mesh setup
   mesh.init();
 
   return mesh;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief std::array interface to box 3D
+//!
+//! \param [in] num_cells  the number of cells in the x, y, and z dir
+//! \param [in] mins The min coordinate in the x, y, and z dir.
+//! \param [in] maxs The max coordinate in the x, y, and z dir.
+//! \return a new mesh object
+////////////////////////////////////////////////////////////////////////////////
+template <typename T>
+std::enable_if_t<T::num_dimensions == 3, T>
+box(std::array<size_t, 3> const &num_cells,
+    std::array<typename T::real_t, 3> const &mins,
+    std::array<typename T::real_t, 3> const &maxs) {
+  return box<T>(
+    num_cells[0], num_cells[1], num_cells[2],
+    mins[0], mins[1], mins[2],
+    maxs[0], maxs[1], maxs[2]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief flecsale::array interface to box 3D
+//!
+//! \param [in] num_cells  the number of cells in the x, y, and z dir
+//! \param [in] mins The min coordinate in the x, y, and z dir.
+//! \param [in] maxs The max coordinate in the x, y, and z dir.
+//! \return a new mesh object
+////////////////////////////////////////////////////////////////////////////////
+template <typename T>
+std::enable_if_t<T::num_dimensions == 3, T>
+box(flecsale::math::array<size_t, 3> const &num_cells,
+    flecsale::math::array<typename T::real_t, 3> const &mins,
+    flecsale::math::array<typename T::real_t, 3> const &maxs) {
+  return box<T>(
+    num_cells[0], num_cells[1], num_cells[2],
+    mins[0], mins[1], mins[2],
+    maxs[0], maxs[1], maxs[2]);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief shared_ptr implementation of box 3D
+//!
+//! \param [in] num_cells_x,num_cells_y,num_cells_z  the number of cells in the x, y, and z dir
+//! \param [in] min_x,min_y,min_z  The min coordinate in the x, y, and z dir.
+//! \param [in] max_x,max_y,max_z  The max coordinate in the x, y, and z dir.
+//! \return  shared_ptr to a new mesh object
+////////////////////////////////////////////////////////////////////////////////
+template <typename T>
+std::enable_if_t<T::num_dimensions == 3, std::shared_ptr<T>>
+ptr_box(typename T::size_t num_cells_x,
+    typename T::size_t num_cells_y,
+    typename T::size_t num_cells_z,
+    typename T::real_t min_x,
+    typename T::real_t min_y,
+    typename T::real_t min_z,
+    typename T::real_t max_x,
+    typename T::real_t max_y,
+    typename T::real_t max_z) {
+
+  using counter_t = typename T::counter_t;
+
+  std::shared_ptr<T> pmesh = std::make_shared<T>();
+  T &mesh(*pmesh);
+
+  // the grid dimensions
+  auto length_x = max_x - min_x;
+  auto length_y = max_y - min_y;
+  auto length_z = max_z - min_z;
+
+  auto num_vert_x = num_cells_x + 1;
+  auto num_vert_y = num_cells_y + 1;
+  auto num_vert_z = num_cells_z + 1;
+
+  // reserve storage for the mesh
+  auto num_vertex = num_vert_x * num_vert_y * num_vert_z;
+  mesh.init_parameters( num_vertex );
+
+  // create the individual vertices
+  using vertex_t = typename T::vertex_t;
+  std::vector<vertex_t*> vs;
+  vs.reserve(num_vertex);
+
+  auto delta_x = length_x / num_cells_x;
+  auto delta_y = length_y / num_cells_y;
+  auto delta_z = length_z / num_cells_z;
+
+  for(counter_t k = 0; k < num_vert_z; ++k) {
+    auto z = min_z + k*delta_z;
+    for(counter_t j = 0; j < num_vert_y; ++j) {
+      auto y = min_y + j*delta_y;
+      for(counter_t i = 0; i < num_vert_x; ++i) {
+        auto x = min_x + i*delta_x;
+        auto v = mesh.create_vertex( {x, y, z} );
+        vs.emplace_back( std::move(v) );
+      }
+    }
+  }
+
+  // lambda function for coordinate indexing
+  auto stride_vert_x = 1;
+  auto stride_vert_y = stride_vert_x * num_vert_x;
+  auto stride_vert_z = stride_vert_y * num_vert_y;
+
+  auto vert_index = [=](auto i, auto j, auto k)
+    {
+      return stride_vert_x*i + stride_vert_y*j +  + stride_vert_z*k;
+    };
+
+  // go over vertices counter clockwise to define cell
+  for( counter_t k = 0; k < num_cells_z; ++k )
+    for( counter_t j = 0; j < num_cells_y; ++j )
+      for( counter_t i = 0; i < num_cells_x; ++i )
+        auto c = mesh.create_cell(
+          {
+            vs[ vert_index( i  , j  , k  ) ],
+            vs[ vert_index( i+1, j  , k  ) ],
+            vs[ vert_index( i+1, j+1, k  ) ],
+            vs[ vert_index( i  , j+1, k  ) ],
+            vs[ vert_index( i  , j  , k+1) ],
+            vs[ vert_index( i+1, j  , k+1) ],
+            vs[ vert_index( i+1, j+1, k+1) ],
+            vs[ vert_index( i  , j+1, k+1) ],
+          } );
+
+
+  // now finalize the mesh setup
+  mesh.init();
+
+  return pmesh;
+} // ptr_box 3d
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief std::array, shared_ptr interface to box 3D
+//!
+//! \param [in] num_cells  the number of cells in the x, y, and z dir
+//! \param [in] mins The min coordinate in the x, y, and z dir.
+//! \param [in] maxs The max coordinate in the x, y, and z dir.
+//! \return shared_ptr to a new mesh object
+////////////////////////////////////////////////////////////////////////////////
+template <typename T>
+std::enable_if_t<T::num_dimensions == 3, std::shared_ptr<T>>
+ptr_box(std::array<size_t, 3> const &num_cells,
+        std::array<typename T::real_t, 3> const &mins,
+        std::array<typename T::real_t, 3> const &maxs) {
+  return ptr_box<T>(
+    num_cells[0], num_cells[1], num_cells[2],
+    mins[0], mins[1], mins[2],
+    maxs[0], maxs[1], maxs[2]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief flecsale::array, shared_ptr interface to box 3D
+//!
+//! \param [in] num_cells  the number of cells in the x, y, and z dir
+//! \param [in] mins The min coordinate in the x, y, and z dir.
+//! \param [in] maxs The max coordinate in the x, y, and z dir.
+//! \return shared_ptr to a new mesh object
+////////////////////////////////////////////////////////////////////////////////
+template <typename T>
+std::enable_if_t<T::num_dimensions == 3, std::shared_ptr<T>>
+ptr_box(flecsale::math::array<size_t, 3> const &num_cells,
+        flecsale::math::array<typename T::real_t, 3> const &mins,
+        flecsale::math::array<typename T::real_t, 3> const &maxs) {
+  return ptr_box<T>(
+    num_cells[0], num_cells[1], num_cells[2],
+    mins[0], mins[1], mins[2],
+    maxs[0], maxs[1], maxs[2]);
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -190,10 +501,10 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T >
 std::enable_if_t< T::num_dimensions == 2, T >
-box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, 
-     typename T::real_t length_x,    typename T::real_t length_y ) 
+box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
+     typename T::real_t length_x,    typename T::real_t length_y )
 {
-  
+
   auto x1 =  length_x / 2;
   auto y1 =  length_y / 2;
   auto x0 = - x1;
@@ -212,9 +523,9 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y,
 template< typename T >
 std::enable_if_t< T::num_dimensions == 3, T >
 box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T::size_t num_cells_z,
-     typename T::real_t length_x,    typename T::real_t length_y,    typename T::real_t length_z ) 
+     typename T::real_t length_x,    typename T::real_t length_y,    typename T::real_t length_z )
 {
-  
+
   auto x1 =  length_x / 2;
   auto y1 =  length_y / 2;
   auto z1 =  length_z / 2;
@@ -231,13 +542,13 @@ box( typename T::size_t num_cells_x, typename T::size_t num_cells_y, typename T:
 //! \param [in,out] mesh   the mesh to rotate
 //! \param [in] degrees    the number of degrees to rotate by
 ////////////////////////////////////////////////////////////////////////////////
-template< 
+template<
   typename T,
   typename = typename std::enable_if_t< T::num_dimensions == 2, T >
 >
-void rotate( T & mesh, typename T::real_t degrees ) 
+void rotate( T & mesh, typename T::real_t degrees )
 {
-  
+
   // get some alias
   using real_t = typename T::real_t;
 
