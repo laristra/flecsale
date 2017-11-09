@@ -5,14 +5,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// \file
-/// 
+///
 /// \brief Some general use flux functions.
 ///
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
 // user includes
-#include "flecsale/math/general.h" 
+#include "flecsale/math/general.h"
+#include "flecsale/math/tuple.h"
 
 namespace flecsale {
 namespace eqns {
@@ -30,7 +31,7 @@ namespace eqns {
 //! \return the flux
 ////////////////////////////////////////////////////////////////////////////////
 template< typename E, typename U, typename V >
-auto average_flux( const U & wl, const U & wr, const V & n) { 
+auto average_flux( const U & wl, const U & wr, const V & n) {
   auto fl = E::flux( wl, n );
   auto fr = E::flux( wr, n );
   return fl + fr;
@@ -49,8 +50,8 @@ auto average_flux( const U & wl, const U & wr, const V & n) {
 //! \return the flux
 ////////////////////////////////////////////////////////////////////////////////
 template< typename E, typename U, typename V >
-auto rusanov_flux( const U & wl, const U & wr, const V & n) { 
-  // get the centered flux 
+auto rusanov_flux( const U & wl, const U & wr, const V & n) {
+  // get the centered flux
   auto favg = E::flux( wl, n ) + E::flux( wr, n );
   // compute some things for the dissipation term
   auto sl = E::fastest_wavespeed( wl, n );
@@ -77,7 +78,7 @@ auto rusanov_flux( const U & wl, const U & wr, const V & n) {
 //! \return the flux
 ////////////////////////////////////////////////////////////////////////////////
 template< typename E, typename U, typename V >
-auto hlle_flux( const U & wl, const U & wr, const V & n) { 
+auto hlle_flux( const U & wl, const U & wr, const V & n) {
   // compute some things for the dissipation term
   auto sl = E::minmax_eigenvalues( wl, n );
   auto sr = E::minmax_eigenvalues( wr, n );
@@ -85,9 +86,9 @@ auto hlle_flux( const U & wl, const U & wr, const V & n) {
   auto lambda_l = std::min( sl.first, sr.first );
   auto lambda_r = std::max( sl.second, sr.second );
 
-  if ( lambda_l >= 0 )   
+  if ( lambda_l >= 0 )
     return E::flux( wl, n );
-  else if ( lambda_r <= 0 ) 
+  else if ( lambda_r <= 0 )
     return E::flux( wr, n );
   else {
     auto fl = E::flux( wl, n );

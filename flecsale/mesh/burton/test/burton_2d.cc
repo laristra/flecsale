@@ -5,7 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 // \file
-// 
+//
 // \brief Tests general features of the burton mesh.
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -16,6 +16,72 @@
 // using statements
 using std::cout;
 using std::endl;
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief demonstrate that ptr_box 2d create the same mesh as box 2d
+////////////////////////////////////////////////////////////////////////////////
+namespace{
+/* Checks that meshes have same # vertices, and that vertices are in the same
+ * places*/
+bool compare_meshes_2d(mesh_2d_t const &m1, mesh_2d_t const &m2) {
+  auto vertices1 = m1.vertices();
+  auto vertices2 = m2.vertices();
+  bool sz_same = m1.num_vertices() == m2.num_vertices();
+  if(!sz_same){
+    printf("%s:%i meshes have different number of vertices: m1 has %lu, m2 has "
+           "%lu \n",
+           __FUNCTION__, __LINE__, m1.num_vertices(), m2.num_vertices());
+    return false;
+  }
+  bool v_locs_same(true);
+  for(size_t i = 0; i < m1.num_vertices(); ++i){
+    auto xv1 = vertices1[i]->coordinates();
+    auto xv2 = vertices2[i]->coordinates();
+    v_locs_same = v_locs_same && (xv1 == xv2);
+  }
+  return v_locs_same;
+} // compare_meshes_2d
+} // anonymous::
+
+TEST(burton_2d_factories, ptr_box) {
+  using mesh_t = mesh_2d_t;
+  using real_t = mesh_t::real_t;
+  using mesh_ptr_t = std::shared_ptr<mesh_t>;
+  real_t min_x = 0.0, min_y = 0.0, max_x = 1.0, max_y = 1.0;
+  size_t nx = 10, ny = 10;
+  {
+    mesh_ptr_t pm =
+        flecsale::mesh::ptr_box<mesh_t>(nx, ny, min_x, min_y, max_x, max_y);
+    mesh_t m = flecsale::mesh::box<mesh_t>(nx, ny, min_x, min_y, max_x, max_y);
+    bool same = compare_meshes_2d(*pm, m);
+    EXPECT_TRUE(same);
+  }
+  {
+    std::array<size_t, 2> ns = {nx, ny};
+    std::array<double, 2> mins = {min_x, min_y};
+    std::array<double, 2> maxs = {max_x, max_y};
+    mesh_ptr_t pm = flecsale::mesh::ptr_box<mesh_t>(ns, mins, maxs);
+    mesh_t m = flecsale::mesh::box<mesh_t>(ns, mins, maxs);
+    bool same = compare_meshes_2d(*pm, m);
+    EXPECT_TRUE(same);
+  }
+  {
+    flecsale::math::array<size_t, 2> ns = {nx, ny};
+    flecsale::math::array<double, 2> mins = {min_x, min_y};
+    flecsale::math::array<double, 2> maxs = {max_x, max_y};
+    mesh_ptr_t pm = flecsale::mesh::ptr_box<mesh_t>(ns, mins, maxs);
+    mesh_t m = flecsale::mesh::box<mesh_t>(ns, mins, maxs);
+    bool same = compare_meshes_2d(*pm, m);
+    EXPECT_TRUE(same);
+  }
+  { // centered version
+    mesh_ptr_t pm =
+        flecsale::mesh::ptr_box<mesh_t>(nx, ny, max_x, max_y);
+    mesh_t m = flecsale::mesh::box<mesh_t>(nx, ny, max_x, max_y);
+    bool same = compare_meshes_2d(*pm, m);
+    EXPECT_TRUE(same);
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief dump the mesh to std out
@@ -158,19 +224,19 @@ TEST_F(burton_2d, mesh) {
     CINCH_CAPTURE() << "^^^^^^^^Corner id: " << c.id() << endl;
 
     CINCH_CAPTURE() << "    ----Wedges:" << endl;
-    for(auto w: mesh_.wedges(c)) 
+    for(auto w: mesh_.wedges(c))
       CINCH_CAPTURE() << "    ++++ wedge id: " << w.id() << endl;
 
     CINCH_CAPTURE() << "    ----Cells:" << endl;
-    for(auto cl: mesh_.cells(c)) 
+    for(auto cl: mesh_.cells(c))
       CINCH_CAPTURE() << "    ++++ cell id: " << cl.id() << endl;
 
     CINCH_CAPTURE() << "    ----Edges:" << endl;
-    for(auto e: mesh_.edges(c)) 
+    for(auto e: mesh_.edges(c))
       CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
 
     CINCH_CAPTURE() << "    ----Vertices:" << endl;
-    for(auto v: mesh_.vertices(c)) 
+    for(auto v: mesh_.vertices(c))
       CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
 
   } // for
@@ -182,19 +248,19 @@ TEST_F(burton_2d, mesh) {
     CINCH_CAPTURE() << "^^^^^^^^Wedge id: " << w.id() << endl;
 
     CINCH_CAPTURE() << "    ----Corners:" << endl;
-    for(auto c: mesh_.corners(w)) 
+    for(auto c: mesh_.corners(w))
       CINCH_CAPTURE() << "    ++++ corner id: " << c.id() << endl;
 
     CINCH_CAPTURE() << "    ----Cells:" << endl;
-    for(auto cl: mesh_.cells(w)) 
+    for(auto cl: mesh_.cells(w))
       CINCH_CAPTURE() << "    ++++ cell id: " << cl.id() << endl;
 
     CINCH_CAPTURE() << "    ----Edges:" << endl;
-    for(auto e: mesh_.edges(w)) 
+    for(auto e: mesh_.edges(w))
       CINCH_CAPTURE() << "    ++++ edge id: " << e.id() << endl;
 
     CINCH_CAPTURE() << "    ----Vertices:" << endl;
-    for(auto v: mesh_.vertices(w)) 
+    for(auto v: mesh_.vertices(w))
       CINCH_CAPTURE() << "    ++++ vertex id: " << v.id() << endl;
 
   } // for
@@ -240,7 +306,7 @@ TEST_F(burton_2d, geometry) {
     auto n = e->normal();
 
     CINCH_CAPTURE() << "---- edge id: " << e.id()
-      << " with midpoint " << xc << ", length " << l 
+      << " with midpoint " << xc << ", length " << l
       << " and normal " << n << endl;
 
     for(auto v : mesh_.vertices(e)){
@@ -260,7 +326,7 @@ TEST_F(burton_2d, geometry) {
 
     CINCH_CAPTURE() << "    ----Corners:" << endl;
     for ( auto cn: mesh_.corners(c) ) {
-      
+
      CINCH_CAPTURE() << "    ++++ corner id: " << cn.id() << endl;
 
       for ( auto w: mesh_.wedges(cn) ) {
@@ -365,7 +431,7 @@ TEST_F(burton_2d, accessors) {
 
   struct data_t {
     double x, y;
-  };  
+  };
   flecsi_register_data(mesh_, hydro, const, data_t, global, 1);
 
   cout << "Accessing state with type real_t" << endl;
@@ -502,7 +568,7 @@ TEST_F(burton_2d, state) {
 
   struct data_t {
     int x, y;
-  };  
+  };
   flecsi_register_data(mesh_, hydro, const, data_t, global, 1);
 
 
