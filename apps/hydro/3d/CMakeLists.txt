@@ -3,7 +3,6 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
-MESSAGE( STATUS ${FleCSI_RUNTIME_DRIVER} )
 add_executable( hydro_3d
   $<TARGET_OBJECTS:apps_common> 
   driver.cc
