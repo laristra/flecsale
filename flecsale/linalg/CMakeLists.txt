@@ -6,4 +6,6 @@
 set(linalg_HEADERS
   types.h
   qr.h  detail/qr_impl.h
+
+  PARENT_SCOPE # THIS NEEDS TO BE HERE
 )

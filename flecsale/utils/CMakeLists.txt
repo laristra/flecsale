@@ -25,6 +25,8 @@ set(utils_HEADERS
   tuple_zip.h        detail/tuple_zip_impl.h
   type_traits.h      detail/type_traits_impl.h
   zip.h              detail/zip_impl.h
+  
+  PARENT_SCOPE # THIS NEEDS TO BE HERE
 )
 
 cinch_add_unit(test_utils

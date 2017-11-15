@@ -5,10 +5,6 @@
 
 set(common_HEADERS
   types.h
-)
-
-cinch_install_headers(
-  FILES ${common_HEADERS}
-  DESTINATION include/flecsale/common
+  PARENT_SCOPE # THIS NEEDS TO BE HERE
 )
 

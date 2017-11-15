@@ -14,11 +14,8 @@ set(geom_HEADERS
   shapes/polygon.h
   shapes/tetrahedron.h
   shapes/triangle.h
-)
-
-cinch_install_headers(
-  FILES ${geom_HEADERS}
-  DESTINATION include/flecsale/geom
+  
+  PARENT_SCOPE # THIS NEEDS TO BE HERE
 )
 
 cinch_add_unit(test_geom

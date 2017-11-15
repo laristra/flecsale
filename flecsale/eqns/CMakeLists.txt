@@ -7,11 +7,8 @@ set(eqns_HEADERS
   euler_eqns.h
   flux.h
   lagrange_eqns.h
-)
-
-cinch_install_headers(
-  FILES ${eqns_HEADERS}
-  DESTINATION include/flecsale/eqns
+  
+  PARENT_SCOPE # THIS NEEDS TO BE HERE
 )
 
 cinch_add_unit( test_eqns

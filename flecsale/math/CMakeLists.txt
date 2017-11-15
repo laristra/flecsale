@@ -11,6 +11,8 @@ set(math_HEADERS
   multi_array.h
   tuple.h
   vector.h
+  
+  PARENT_SCOPE # THIS NEEDS TO BE HERE
 )
 
 cinch_add_unit(test_math

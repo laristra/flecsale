@@ -6,12 +6,9 @@
 set(eos_HEADERS
   eos_base.h
   ideal_gas.h
+  
+  PARENT_SCOPE # THIS NEEDS TO BE HERE
 )
-
-
-cinch_install_headers(
-  FILES ${eos_HEADERS}
-  DESTINATION include/flecsale/eos)
 
 
 cinch_add_unit( test_eos

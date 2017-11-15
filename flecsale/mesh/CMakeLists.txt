@@ -26,20 +26,13 @@ set(mesh_HEADERS
   voronoi.h  detail/voronoi_impl.h
   vtk_utils.h
 
+  PARENT_SCOPE # THIS NEEDS TO BE HERE
 )
-
 
 set(mesh_SOURCES
   burton/burton_types.cc
+  PARENT_SCOPE # THIS NEEDS TO BE HERE
 )
-
-cinch_install_headers(
-  FILES ${mesh_HEADERS}
-  DESTINATION include/flecsale/mesh
-)
-
-add_library( flecsale_mesh OBJECT ${mesh_SOURCES} )
-set(FleCSALE_OBJECTS ${FleCSALE_OBJECTS} flecsale_mesh PARENT_SCOPE)
 
 # get a relative path
 cinch_add_unit(test_mesh
