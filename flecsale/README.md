@@ -1,14 +1,14 @@
 # Summary
 
-This is where the main ALE library functionallity is developped.  The
-end result of the code whithin this folder is a library,
+This is where the main ALE library functionality is developed.  The
+end result of the code within this folder is a library,
 **libale.a**, that users can link against in order to create actual
 applications.  There is no `main` function defined anywhere within
 this directory.
 
-Developpers should create and test their functionality here.  A sample
+Developers should create and test their functionality here.  A sample
 sub-package is provided for instructional purposes in `dummy`.
-Developpers should familiarize themselves with the
+Developers should familiarize themselves with the
 [Cinch](https://github.com/losalamos/cinch) build system and Google's
 C++ testing framework
 [gtest](https://github.com/google/googletest/blob/master/googletest/docs/Primer.md).
