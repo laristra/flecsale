@@ -55,3 +55,17 @@ TEST(centroid, 2d)
   ASSERT_NEAR( 0.5, cx2[1], test_tolerance ) << " Centroid calculation wrong ";
 
 } // TEST
+
+/* Test that centroid operator correctly handles unsupported
+ * input vector dimensionalities */
+using point_3d_t = point<real_t, 3>;
+using point_5d_t = point<real_t, 5>;
+
+TEST(centroid, HandlesUnsupportedDims)
+{
+  vector<point_3d_t> points_3d = { {0, 0, 0}, {1, 0, 7} };
+  vector<point_5d_t> points_5d = { {2, 0, 9, 0, 3}, {8 ,7, 9, 0, 7} };
+
+  ASSERT_THROW( centroid( points_3d ), ExceptionNotImplemented);
+  ASSERT_THROW( centroid( points_5d ), ExceptionNotImplemented);
+} // TEST
