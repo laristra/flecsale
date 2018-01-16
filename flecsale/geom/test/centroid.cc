@@ -10,6 +10,9 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
+// preprocessor directive for exception handling
+#define ENABLE_EXCEPTIONS
+
 // system includes
 #include<cinchtest.h>
 #include<vector>
@@ -34,6 +37,9 @@ using common::test_tolerance;
 
 //! the point type
 using point_2d_t = point<real_t, 2>;
+
+//! the error types used
+using utils::ExceptionNotImplemented;
 
 //=============================================================================
 //! \brief Test centroid operator.
