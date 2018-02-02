@@ -9,13 +9,13 @@
 #pragma once
 
 // hydro includes
-#include "arguments.h"
+#include "tasks.h"
 #include "types.h"
 
 // user includes
 //#include <flecsale/mesh/mesh_utils.h>
-#include <flecsale/utils/time_utils.h>
-#include <flecsale/io/catalyst/adaptor.h>
+#include <ristra/utils/time_utils.h>
+#include <ristra/io/catalyst/adaptor.h>
 
 
 // system includes
@@ -27,9 +27,6 @@
 namespace apps {
 namespace hydro {
   
-// register the data client
-flecsi_register_data_client(mesh_t, meshes, mesh0);
-
 // create some field data.  Fields are registered as struct of arrays.
 // this allows us to access the data in different patterns.
 flecsi_register_field(
@@ -115,23 +112,6 @@ int driver(int argc, char** argv)
   auto rank = context.color();
 
   //===========================================================================
-  // Parse arguments
-  //===========================================================================
-  
-  auto args = process_arguments( argc, argv );
-  // Assume arguments are sanitized
-  
-  // get the input file
-  auto mesh_filename = 
-    args.count("m") ? args.at("m") : std::string();
-  
-  // need to put the filename into a statically sized character array
-  auto mesh_basename = utils::basename( mesh_filename );
-
-  // figure out an output prefix, this will be used later
-  auto prefix = utils::remove_extension( mesh_basename );
-
-  //===========================================================================
   // Mesh Setup
   //===========================================================================
 
@@ -177,11 +157,11 @@ int driver(int argc, char** argv)
   real_t soln_time{0};  
   size_t time_cnt{0}; 
 
-
   // now call the main task to set the ics.  Here we set primitive/physical 
   // quanties
   flecsi_execute_task( 
     initial_conditions, 
+    apps::hydro,
     single, 
     mesh, 
     inputs_t::ics,
@@ -202,20 +182,20 @@ int driver(int argc, char** argv)
   // now output the solution
   auto has_output = (inputs_t::output_freq > 0);
   if (has_output) {
-    auto name = prefix + "_" + apps::common::zero_padded( 0 ) + ".exo";
-    auto name_char = utils::to_trivial_string( name );
-    auto f =
-      flecsi_execute_task(output, single, mesh, name_char, d, v, e, p, T, a);
+    auto name = inputs_t::prefix + "_" + apps::common::zero_padded( 0 ) + ".exo";
+    auto name_char = flecsi_sp::utils::to_char_array( name );
+    flecsi_execute_task(output, apps::hydro, single, mesh, name_char,
+        d, v, e, p, T, a);
   }
 
 
   // dump connectivity
-  auto name = utils::to_trivial_string( prefix+".txt" );
-  auto f = flecsi_execute_task(print, single, mesh, name);
+  auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+".txt" );
+  auto f = flecsi_execute_task(print, apps::hydro, single, mesh, name);
   f.wait();
 
   // start a clock
-  auto tstart = utils::get_wall_time();
+  auto tstart = ristra::utils::get_wall_time();
 
   //===========================================================================
   // Residual Evaluation
@@ -233,34 +213,32 @@ int driver(int argc, char** argv)
     //-------------------------------------------------------------------------
     // compute the time step
 
-    auto local_future = flecsi_execute_task( 
-      evaluate_time_step, single, mesh, d, v, e, p, T, a,
+    // we dont need the time step yet
+    auto local_future_time_step = flecsi_execute_task( 
+      evaluate_time_step, apps::hydro, single, mesh, d, v, e, p, T, a,
       inputs_t::CFL, inputs_t::final_time - soln_time
     );
-
-    // FleCSI does not yet support Future handling
-    // auto global_future =
-    //	flecsi::execution::context_t::instance().reduce_min(local_future);
-    //flecsi::execution::flecsi_future__<mesh_t::real_t> *flecsi_future_time_step =
-    //    &global_future;
-    mesh_t::real_t hacked_time_step = 1.0e-3;
 
     //-------------------------------------------------------------------------
     // try a timestep
 
     // compute the fluxes
-    f = 
-      flecsi_execute_task( evaluate_fluxes, single, mesh, d, v, e, p, T, a, F );
+    flecsi_execute_task( evaluate_fluxes, apps::hydro, single, mesh,
+        d, v, e, p, T, a, F );
  
+    // now we need it
+    auto time_step =
+      flecsi::execution::context_t::instance().reduce_min(local_future_time_step);
+
     // Loop over each cell, scattering the fluxes to the cell
-    f = flecsi_execute_task( 
-      //apply_update, single, mesh, inputs_t::eos, flecsi_future_time_step, F, d, v, e, p, T, a
-      apply_update, single, mesh, inputs_t::eos, hacked_time_step, F, d, v, e, p, T, a
+    flecsi_execute_task( 
+      apply_update, apps::hydro, single, mesh, inputs_t::eos,
+      time_step, F, d, v, e, p, T, a
     );
     // Be triply-sure that timing doesn't start until everyone is timestepping
     if (num_steps == 0) {
       f.wait();
-      tstart = utils::get_wall_time();
+      tstart = ristra::utils::get_wall_time();
     }
 
 
@@ -268,15 +246,7 @@ int driver(int argc, char** argv)
     // Post-process
 
     // update time
-    bool silence_warnings = true;  // All sub-tasks have been launched.  So, it is now
-                                   // acceptable to wait on global reduction and we can
-                                   // silence the warnings this would produce.
-    size_t index = 0;
-    // This is where future_step_step should be evaluated
-    // mesh_t::real_t future_time_step = flecsi_future_time_step->get(index, silence_warnings);
-    mesh_t::real_t future_time_step = hacked_time_step;
-
-    soln_time += future_time_step;
+    soln_time += time_step;
     time_cnt++;
 
     // output the time step
@@ -285,9 +255,9 @@ int driver(int argc, char** argv)
       auto ss = cout.precision();
       cout.setf( std::ios::scientific );
       cout.precision(6);
-      cout << "|  " << "Step:" << std::setw(10) << time_cnt+1
-           << "  |  Time:" << std::setw(17) << soln_time + future_time_step
-           << "  |  Step Size:" << std::setw(17) << future_time_step
+      cout << "|  " << "Step:" << std::setw(10) << time_cnt
+           << "  |  Time:" << std::setw(17) << soln_time 
+           << "  |  Step Size:" << std::setw(17) << time_step
            << "  |" << std::endl;
       cout.unsetf( std::ios::scientific );
       cout.precision(ss);
@@ -311,9 +281,11 @@ int driver(int argc, char** argv)
         )  
       ) 
     {
-      auto name = prefix + "_" + apps::common::zero_padded( time_cnt ) + ".exo";
-      auto name_char = utils::to_trivial_string( name );
-      auto f = flecsi_execute_task(output, single, mesh, name_char, d, v, e, p, T, a);
+      auto name = inputs_t::prefix + "_" +
+        apps::common::zero_padded( time_cnt ) + ".exo";
+      auto name_char = flecsi_sp::utils::to_char_array( name );
+      flecsi_execute_task(output, apps::hydro, single, mesh,
+          name_char, d, v, e, p, T, a);
     }
 
 
@@ -323,7 +295,7 @@ int driver(int argc, char** argv)
   // Post-process
   //===========================================================================
     
-  auto tdelta = utils::get_wall_time() - tstart;
+  auto tdelta = ristra::utils::get_wall_time() - tstart;
 
   if ( rank == 0 ) {
 

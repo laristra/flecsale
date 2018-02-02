@@ -14,9 +14,9 @@
 
 // flecsi includes
 #include <flecsale/io/io_exodus.h>
-#include <flecsale/utils/string_utils.h>
 #include <flecsi/execution/context.h>
 #include <flecsi/execution/execution.h>
+#include <ristra/utils/string_utils.h>
 
 // system includes
 #include <iomanip>
@@ -44,8 +44,6 @@ void initial_conditions(
   dense_handle_w__<mesh_t::real_t> a
 ) {
 
-  using eqns_t = eqns__< mesh_t::num_dimensions >;
-
   // This doesn't work with lua input
   //#pragma omp parallel for
   for ( auto c : mesh.cells( flecsi::owned ) ) {
@@ -58,44 +56,6 @@ void initial_conditions(
 
 }
 
-#if 0
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task for updating the state from energy.
-//!
-//! Updates the state from density and energy and computes the new pressure.
-//!
-//! \param [in,out] mesh the mesh object
-//! \return 0 for success
-////////////////////////////////////////////////////////////////////////////////
-template< typename T, typename EOS >
-int update_state_from_energy( T & mesh, const EOS * eos ) 
-{
-
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using eqns_t = eqns_t<T::num_dimensions>;
-
-  // get the collection accesor
-  state_accessor<T> state( mesh );
-
-  // get the cells
-  auto cs = mesh.cells();
-  auto num_cells = cs.size();
-
-  real_t ener(0);
-
-  #pragma omp parallel for
-  for ( counter_t i=0; i<num_cells; i++ ) {
-    auto c = cs[i];
-    auto u = state(c);
-    eqns_t::update_state_from_energy( u, *eos );
-  }
-
-  return 0;
-}
-
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to compute the time step size.
@@ -116,9 +76,6 @@ mesh_t::real_t evaluate_time_step(
   mesh_t::real_t max_dt
 ) {
  
-  using real_t = typename mesh_t::real_t;
-  using eqns_t = eqns__< mesh_t::num_dimensions >;
-
   // Loop over each cell, computing the minimum time step,
   // which is also the maximum 1/dt
   real_t dt_inv(0);
@@ -141,7 +98,7 @@ mesh_t::real_t evaluate_time_step(
   } // cell
 
   if ( dt_inv <= 0 ) 
-    raise_runtime_error( "infinite delta t" );
+    throw_runtime_error( "infinite delta t" );
 
   real_t time_step = 1 / dt_inv;
   time_step *= CFL;
@@ -169,11 +126,6 @@ void evaluate_fluxes(
   dense_handle_w__<flux_data_t> flux
 ) {
 
-  // type aliases
-  using eqns_t = eqns__< mesh_t::num_dimensions >;
-  using counter_t = mesh_t::counter_t;
-  
-  
   const auto & face_list = mesh.faces( flecsi::owned );
   auto num_faces = face_list.size();
 
@@ -229,10 +181,6 @@ void apply_update(
   dense_handle_rw__<mesh_t::real_t> a
 ) {
 
-  // type aliases
-  using eqns_t = eqns__<mesh_t::num_dimensions>;
-  using counter_t = mesh_t::counter_t;
-
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
 
@@ -275,7 +223,7 @@ void apply_update(
 
     // check the solution quantities
     if ( eqns_t::internal_energy(u) < 0 || eqns_t::density(u) < 0 ) 
-      raise_runtime_error( "Negative density or internal energy encountered!" );
+      throw_runtime_error( "Negative density or internal energy encountered!" );
 
   } // for
   //----------------------------------------------------------------------------
@@ -302,7 +250,7 @@ void output(
   auto rank = context.color();
 
   // figure out this ranks file name
-  auto name_and_ext = utils::split_extension( filename.str() );
+  auto name_and_ext = ristra::utils::split_extension( filename.str() );
   auto output_filename = 
     name_and_ext.first + "_rank" + apps::common::zero_padded(rank) +
     "." + name_and_ext.second;
@@ -328,7 +276,7 @@ void print(
   clog(info) << "PRINT MESH ON RANK " << rank << std::endl;
  
   // figure out this ranks file name
-  auto name_and_ext = utils::split_extension( filename.str() );
+  auto name_and_ext = ristra::utils::split_extension( filename.str() );
   auto output_filename = 
     name_and_ext.first + "_rank" + apps::common::zero_padded(rank) +
     "." + name_and_ext.second;
@@ -348,12 +296,12 @@ void print(
 // TASK REGISTRATION
 ////////////////////////////////////////////////////////////////////////////////
 
-flecsi_register_task(initial_conditions, loc, single|flecsi::leaf);
-flecsi_register_task(evaluate_time_step, loc, single|flecsi::leaf);
-flecsi_register_task(evaluate_fluxes, loc, single|flecsi::leaf);
-flecsi_register_task(apply_update, loc, single|flecsi::leaf);
-flecsi_register_task(output, loc, single|flecsi::leaf);
-flecsi_register_task(print, loc, single|flecsi::leaf);
+flecsi_register_task(initial_conditions, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(evaluate_time_step, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(evaluate_fluxes, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(apply_update, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(output, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(print, apps::hydro, loc, single|flecsi::leaf);
 
 } // namespace hydro
 } // namespace apps

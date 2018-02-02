@@ -4,3 +4,9 @@
 [submodule "flecsi"]
 	path = flecsi
 	url = ../../laristra/flecsi.git
+[submodule "ristra"]
+	path = ristra
+	url = git@github.com:laristra/libristra
+[submodule "specializations"]
+	path = specializations
+	url = git@github.com:laristra/flecsi-sp

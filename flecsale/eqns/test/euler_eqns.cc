@@ -15,9 +15,9 @@
 #include <iostream>
 
 // user includes
-#include "flecsale/common/types.h"
-#include "flecsale/eqns/euler_eqns.h"
-#include "flecsale/eos/ideal_gas.h"
+#include <flecsale-config.h>
+#include <flecsale/eqns/euler_eqns.h>
+#include <flecsale/eos/ideal_gas.h>
 
 
 // explicitly use some stuff
@@ -31,7 +31,7 @@ using namespace flecsale;
 using namespace flecsale::eqns;
 using namespace flecsale::eos;
 
-using real_t = common::real_t;
+using real_t = config::real_t;
 using eqns_t = euler_eqns_t<real_t,3>;
 using eos_t  = ideal_gas_t<real_t>;
 

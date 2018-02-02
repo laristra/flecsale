@@ -1,0 +1,26 @@
+#------------------------------------------------------------------------------#
+# FleCSALE configuration
+#------------------------------------------------------------------------------#
+
+@FLECSALE_CONFIG_CODE@
+
+#------------------------------------------------------------------------------#
+# Set the path to the FleCSALE headers.
+#------------------------------------------------------------------------------#
+
+set(FLECSALE_INCLUDE_DIRS @FLECSALE_INCLUDE_DIR@
+  @FLECSALE_EXTERNAL_INCLUDE_DIRS@)
+
+#------------------------------------------------------------------------------#
+# Ristra library dependencies (contains definitions for IMPORTED targets)
+#------------------------------------------------------------------------------#
+
+if(NOT TARGET FleCSALE AND NOT FleCSALE_BINARY_DIR)
+  include(@FLECSALE_CMAKE_DIR@/FleCSALETargets.cmake)
+endif()
+
+#------------------------------------------------------------------------------#
+# Set the FleCSALE libraries.
+#------------------------------------------------------------------------------#
+
+set(FLECSALE_LIBRARIES FleCSALE)

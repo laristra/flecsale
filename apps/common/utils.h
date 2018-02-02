@@ -23,7 +23,7 @@ static auto zero_padded(
 {
   std::stringstream ss;
   ss << std::setw( padding ) << std::setfill( '0' ) << n;
-  return ss.str();;
+  return ss.str();
 }
 
 } // namespace

@@ -1,0 +1,73 @@
+/*~-------------------------------------------------------------------------~~*
+ * Copyright (c) 2016 Los Alamos National Laboratory, LLC
+ * All rights reserved
+ *~-------------------------------------------------------------------------~~*/
+////////////////////////////////////////////////////////////////////////////////
+/// \file
+/// \brief Configuration for flecsi-sp project.
+////////////////////////////////////////////////////////////////////////////////
+#pragma once
+
+// system includes
+#include <cstdint> // for types
+
+//----------------------------------------------------------------------------//
+// CMake defines
+//----------------------------------------------------------------------------//
+
+// define the floating point precision
+#cmakedefine FLECSALE_DOUBLE_PRECISION
+
+// define 
+#cmakedefine FLECSALE_USE_64BIT_IDS
+
+// define the test tolerance 
+#define FLECSALE_TEST_TOLERANCE @FLECSALE_TEST_TOLERANCE@
+
+// is exodus enabled
+#cmakedefine FLECSALE_ENABLE_EXODUS
+
+//----------------------------------------------------------------------------//
+// Configuration
+//----------------------------------------------------------------------------//
+
+namespace flecsale {
+namespace config {
+
+//! real precision type
+#ifdef FLECSALE_DOUBLE_PRECISION
+using real_t = double;
+#else
+using real_t = float;
+#endif
+
+//! type of unsigned integer to use
+#ifdef FLECSALE_USE_64BIT_IDS
+using unsigned_integer_t = uint64_t;
+#else
+using unsigned_integer_t = uint32_t;
+#endif
+
+//! type of signed integer data to use
+#ifdef FLECSALE_USE_64BIT_IDS
+using integer_t = int64_t;
+#else
+using integer_t = int32_t;
+#endif
+
+//! a counter type
+//! \remark should be big enough to hold an unsigned_integer_t
+//! \remark allows one to play with loop counters for optimization purposes
+//! \remark signed loop counters may be more efficient
+using counter_t = std::size_t;
+
+//! the test tolerance 
+static constexpr real_t test_tolerance = FLECSALE_TEST_TOLERANCE;
+
+//! the maximum string lenght
+static constexpr std::size_t max_char_length = 256;
+
+} // namespace
+} // namespace
+
+

@@ -16,10 +16,8 @@
 #include <vector>
 
 // user includes
-#include "flecsale/common/constants.h"
-#include "flecsale/common/types.h"
-#include "flecsale/eos/ideal_gas.h"
-#include "flecsale/utils/tasks.h"
+#include <flecsale-config.h>
+#include <flecsale/eos/ideal_gas.h>
 
 
 // explicitly use some stuff
@@ -29,12 +27,11 @@ using std::vector;
 
 using namespace flecsale;
 using namespace flecsale::eos;
-using namespace flecsale::utils;
 
-using real_t = common::real_t;
+using real_t = config::real_t;
 using vector_t = vector<real_t>;
 
-using common::test_tolerance;
+using config::test_tolerance;
 
     
 ///////////////////////////////////////////////////////////////////////////////
@@ -63,10 +60,9 @@ TEST(eos, ideal_gas) {
     t  = eos.compute_temperature_de( d, e );    
   };
 
-  simple_task( update, d, p, e, ss, t );
-
   // now check
   for ( int i = 0; i<n; i++ ) {
+    update( d[i], p[i], e[i], ss[i], t[i] );
     std::cout <<   "d=" <<  d[i] 
               << ", p=" <<  p[i] 
               << ", e=" <<  e[i] 

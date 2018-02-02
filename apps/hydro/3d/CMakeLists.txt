@@ -7,50 +7,29 @@ add_executable( hydro_3d
   $<TARGET_OBJECTS:apps_common> 
   driver.cc
   inputs.cc
-  specialization_init.cc
-  ${FleCSI_RUNTIME_DRIVER}
-  ${FleCSI_RUNTIME_MAIN}
+  ${FLECSI_SP_BURTON_SPECIALIZATION_INIT}
+  ${FLECSI_RUNTIME_DRIVER}
+  ${FLECSI_RUNTIME_MAIN}
 )
-target_link_libraries( hydro_3d flecsale )
+target_link_libraries( hydro_3d FleCSALE )
 target_compile_definitions( 
   hydro_3d
   PRIVATE
+    FLECSI_SP_BURTON_MESH_DIMENSION=3
     FLECSI_ENABLE_SPECIALIZATION_TLT_INIT
     FLECSI_ENABLE_SPECIALIZATION_SPMD_INIT
 )
 
-if (LUA_FOUND)
+add_test( 
+  NAME shock_box_3d_1procs
+  COMMAND mpirun -n 1 $<TARGET_FILE:hydro_3d> -m ${CMAKE_CURRENT_SOURCE_DIR}/cube_3k_tet.g
+  #COMPARE shock_box_2d0000007.dat 
+  #STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d0000007.dat.std 
+)
 
-  create_regression_test( 
-    NAME shock_box_3d
-    COMMAND $<TARGET_FILE:hydro_3d> -f ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_3d.lua
-    COMPARE shock_box_3d0000011.dat 
-    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_3d0000011.dat.std 
-  )
-  
-  create_regression_test( 
-    NAME shock_box_3d_omp4
-    COMMAND $<TARGET_FILE:hydro_3d> -f ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_3d.lua
-    THREADS 4
-    COMPARE shock_box_3d0000011.dat 
-    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_3d0000011.dat.std 
-  )
-
-else()
-
-  create_regression_test( 
-    NAME shock_box_3d
-    COMMAND $<TARGET_FILE:hydro_3d> 
-    COMPARE shock_box_3d0000011.dat 
-    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_3d0000011.dat.std 
-  )
-  
-  create_regression_test( 
-    NAME shock_box_3d_omp4
-    COMMAND $<TARGET_FILE:hydro_3d> 
-    THREADS 4
-    COMPARE shock_box_3d0000011.dat 
-    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_3d0000011.dat.std 
-  )
-
-endif()
+add_test( 
+  NAME shock_box_3d_2procs
+  COMMAND mpirun -n 2 $<TARGET_FILE:hydro_3d> -m ${CMAKE_CURRENT_SOURCE_DIR}/cube_3k_tet.g
+  #COMPARE shock_box_2d0000007.dat 
+  #STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d0000007.dat.std 
+)

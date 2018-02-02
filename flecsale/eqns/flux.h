@@ -12,7 +12,7 @@
 #pragma once
 
 // user includes
-#include "flecsale/math/general.h" 
+#include <ristra/math/general.h>
 
 namespace flecsale {
 namespace eqns {
@@ -59,8 +59,8 @@ auto rusanov_flux( const U & wl, const U & wr, const V & n) {
   auto du = E::solution_delta( wl, wr );
   // compute final flux
   // f = 0.5*(fl+fr) - s_max/2 * (ur-ul)
-  math::divides_equal( favg, 2 );
-  math::multiplies_equal( du, s/2 );
+  ristra::math::divides_equal( favg, 2 );
+  ristra::math::multiplies_equal( du, s/2 );
   return favg - du;
 };
 

@@ -16,7 +16,7 @@ function(create_regression_test)
   if (ENABLE_REGRESSION_TESTS)
 
     # the command to run to compare outputs
-    set (TEST_COMMAND "${PYTHON_EXECUTABLE} ${FleCSALE_TOOL_DIR}/numdiff.py --verbose --absolute ${TEST_TOLERANCE}")
+    set (TEST_COMMAND "${PYTHON_EXECUTABLE} ${FLECSALE_TOOL_DIR}/numdiff.py --verbose --absolute ${TEST_TOLERANCE}")
 
     # parse the arguments
     set(options)
