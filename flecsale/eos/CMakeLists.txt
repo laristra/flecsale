@@ -11,6 +11,6 @@ set(eos_HEADERS
 )
 
 
-cinch_add_unit( test_eos
+cinch_add_unit( flecsale_eos
   SOURCES test/ideal_gas.cc
 )
