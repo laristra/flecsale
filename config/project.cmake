@@ -52,9 +52,25 @@ set( FLECSALE_TOOL_DIR "${PROJECT_SOURCE_DIR}/tools" CACHE INTERNAL "")
 # Ristra libraries come first in case any options depened on what we found.
 #------------------------------------------------------------------------------#
 
-find_package(FleCSI CONFIG REQUIRED)
-list(APPEND FLECSALE_LIBRARIES ${FleCSI_LIBRARIES})
-include_directories(${FleCSI_INCLUDE_DIRS})
+file(GLOB _flecsi_contents ${CMAKE_SOURCE_DIR}/flecsi/*)
+
+if ( _flecsi_contents )
+  if ( CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME )
+    add_subdirectory( ${CMAKE_SOURCE_DIR}/flecsi )
+  endif()
+  include_directories( ${CMAKE_SOURCE_DIR}/flecsi )
+  list(APPEND FLECSALE_LIBRARIES FleCSI)
+  set(_runtime_path ${FleCSI_SOURCE_DIR}/flecsi/execution/${FLECSI_RUNTIME_MODEL})
+  set(FLECSALE_RUNTIME_DRIVER ${_runtime_path}/runtime_driver.cc)
+  set(FLECSALE_RUNTIME_MAIN   ${_runtime_path}/runtime_main.cc)
+else()
+  find_package(FleCSI CONFIG REQUIRED)
+  include_directories(${FleCSI_INCLUDE_DIRS})
+  list(APPEND FLECSALE_LIBRARIES ${FleCSI_LIBRARIES})
+  set(FLECSALE_SP_RUNTIME_DRIVER ${FLECSI_RUNTIME_DRIVER})
+  set(FLECSALE_SP_RUNTIME_MAIN   ${FLECSI_RUNTIME_MAIN})
+endif()
+
 
 set( FLECSALE_RUNTIME_MODEL ${FLECSI_RUNTIME_MODEL} )
 
@@ -72,17 +88,40 @@ endif()
 # Ristra Library
 #------------------------------------------------------------------------------#
 
-find_package(Ristra CONFIG REQUIRED)
-list(APPEND FLECSALE_LIBRARIES ${RISTRA_LIBRARIES})
-include_directories(${RISTRA_INCLUDE_DIRS})
+file(GLOB _ristra_contents ${CMAKE_SOURCE_DIR}/ristra/*)
+
+if (_ristra_contents )
+  if ( CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME )
+    add_subdirectory( ${CMAKE_SOURCE_DIR}/ristra )
+  endif()
+  include_directories( ${CMAKE_SOURCE_DIR}/ristra )
+  list(APPEND FLECSALE_LIBRARIES Ristra)
+else()
+  find_package(Ristra CONFIG REQUIRED)
+  include_directories(${RISTRA_INCLUDE_DIRS})
+  list(APPEND FLECSALE_LIBRARIES ${RISTRA_LIBRARIES})
+endif()
 
 #------------------------------------------------------------------------------#
 # FleCSI-SP Library
 #------------------------------------------------------------------------------#
 
-find_package(FleCSI-SP CONFIG REQUIRED)
-list(APPEND FLECSALE_LIBRARIES ${FLECSI_SP_LIBRARIES})
-include_directories(${FleCSI_SP_INCLUDE_DIRS})
+file(GLOB _specializations_contents specializations/*)
+
+if ( _specializations_contents )
+  if ( CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME )
+    add_subdirectory( ${CMAKE_SOURCE_DIR}/specializations )
+  endif()
+  include_directories( ${CMAKE_SOURCE_DIR}/specializations )
+  list(APPEND FLECSALE_LIBRARIES FleCSI-SP)
+  set(FLECSI_SP_BURTON_SPECIALIZATION_INIT
+    ${FleCSI-SP_SOURCE_DIR}/flecsi-sp/burton/burton_specialization_init.cc)
+else()
+  find_package(FleCSI-SP CONFIG REQUIRED)
+  include_directories(${FleCSI_SP_INCLUDE_DIRS})
+  list(APPEND FLECSALE_LIBRARIES ${FLECSI_SP_LIBRARIES})
+endif()
+
 
 
 #------------------------------------------------------------------------------#

@@ -11,7 +11,7 @@ set(eqns_HEADERS
   PARENT_SCOPE # THIS NEEDS TO BE HERE
 )
 
-cinch_add_unit( test_eqns
+cinch_add_unit( flecsale_eqns
   SOURCES 
     test/euler_eqns.cc
 )
