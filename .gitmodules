@@ -6,7 +6,7 @@
 	url = ../../laristra/flecsi.git
 [submodule "ristra"]
 	path = ristra
-	url = git@github.com:laristra/libristra
+	url = ../../laristra/libristra.git
 [submodule "specializations"]
 	path = specializations
-	url = git@github.com:laristra/flecsi-sp
+	url = ../../laristra/flecsi-sp.git
