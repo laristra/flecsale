@@ -7,59 +7,35 @@ services:
 
 env:
   matrix:
-    - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Debug   MINIMAL=ON
-    - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Release MINIMAL=ON
-    - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Release COVERAGE=ON
-    - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Debug
-    - DISTRO=ubuntu INTERNAL_FLECSI=ON  BUILD_TYPE=Release DOCKERHUB=true
-    - DISTRO=ubuntu INTERNAL_FLECSI=OFF BUILD_TYPE=Release
-    - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Debug   MINIMAL=ON
-    - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Release MINIMAL=ON
-    - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Debug
-    - DISTRO=fedora INTERNAL_FLECSI=ON  BUILD_TYPE=Release DOCKERHUB=true
-
-matrix:
-  allow_failures:
-    - compiler: gcc
-      env: DISTRO=ubuntu INTERNAL_FLECSI=OFF BUILD_TYPE=Release
-    - compiler: clang
-      env: DISTRO=ubuntu INTERNAL_FLECSI=OFF BUILD_TYPE=Release
+    - DISTRO=ubuntu_mpi BUILD_TYPE=Debug DOCKERHUB=true
+    - DISTRO=fedora_mpi BUILD_TYPE=Release DOCKERHUB=true
 
 before_install:
  - git fetch --unshallow && git fetch --tags #for versioning
 
 script:
- - cp -vr docker ${HOME}/docker
- - sed -i "1s/fedora/${DISTRO}/" ${HOME}/docker/Dockerfile
- - cd ../../
- - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker
- - cp -r $HOME/.ccache ${HOME}/docker/ccache
- - docker build --build-arg BUILD_TYPE=${BUILD_TYPE} --build-arg INTERNAL_FLECSI=${INTERNAL_FLECSI}
-                --build-arg COVERAGE=${COVERAGE} --build-arg MINIMAL=${MINIMAL}
+  - if [[ ${CC} != gcc ]]; then TAG="_${CC}"; fi
+  - if [[ ${TRAVIS_BRANCH} != stable ]]; then TAG="${TAG}_master"; fi
+  - cp -vr docker ${HOME}/docker
+  - sed -i "1s/fedora_serial/${DISTRO}${TAG}/" ${HOME}/docker/Dockerfile
+  - cd ../../
+  - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker
+  - docker build --build-arg BUILD_TYPE=${BUILD_TYPE} 
                 --build-arg CC=${CC} --build-arg CXX=${CXX}
+                --build-arg CI=${CI} --build-arg TRAVIS=${TRAVIS} --build-arg TRAVIS_OS_NAME=${DISTRO}
                 --build-arg TRAVIS_BRANCH=${TRAVIS_BRANCH} --build-arg TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER}
                 --build-arg TRAVIS_PULL_REQUEST=${TRAVIS_PULL_REQUEST} --build-arg TRAVIS_JOB_ID=${TRAVIS_JOB_ID}
                 --build-arg TRAVIS_TAG=${TRAVIS_TAG} --build-arg TRAVIS_REPO_SLUG=${TRAVIS_REPO_SLUG}
                 --build-arg TRAVIS_COMMIT=${TRAVIS_COMMIT}
-                -t ${TRAVIS_REPO_SLUG}:${DISTRO} ${HOME}/docker/ &&
-   rm -rf ${HOME}/.ccache &&
-   CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO} /bin/bash) &&
-   docker cp ${CON}:/home/flecsi/.ccache ${HOME}/
+                -t ${TRAVIS_REPO_SLUG}:${DISTRO}${TAG} ${HOME}/docker/ &&
+    CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO}${TAG} /bin/bash)
 
 after_success:
   - if [[ ${DOCKERHUB} = true && ${DOCKER_USERNAME} && ${DOCKER_PASSWORD} && ${TRAVIS_PULL_REQUEST} == false && ${TRAVIS_BRANCH} == master && ${CC} = gcc ]]; then
       docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
-      docker push "${TRAVIS_REPO_SLUG}:${DISTRO}";
+      docker push "${TRAVIS_REPO_SLUG}:${DISTRO}${TAG}";
     fi
-
-cache:
-  - ccache
 
 compiler:
   - gcc
-  - clang
 
-notifications:
-  branches:
-    only:
-      - master
