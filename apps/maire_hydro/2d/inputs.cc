@@ -21,7 +21,6 @@ namespace hydro {
 //=============================================================================
 // type aliases confined to this translation unit
 //=============================================================================
-using base_t = inputs_t::base_t;
 using size_t = inputs_t::size_t;
 using real_t = inputs_t::real_t;
 using vector_t = inputs_t::vector_t;
@@ -53,7 +52,7 @@ auto vol = dx * dy;
 
 // compute a radial size
 auto delta_r = std::numeric_limits<real_t>::epsilon() + 
-  std::sqrt( math::sqr( dx/2 ) + math::sqr( dy/2 ) );
+  std::sqrt( ristra::math::sqr( dx/2 ) + ristra::math::sqr( dy/2 ) );
 
 // we are only using symmetry boundary conditions here
 auto symmetry_condition = std::make_shared<symmetry_condition_t>();
@@ -63,29 +62,28 @@ auto symmetry_condition = std::make_shared<symmetry_condition_t>();
 //=============================================================================
 
 // the case prefix
-template<> string base_t::prefix = "sedov_2d";
-template<> string base_t::postfix = "dat";
+string inputs_t::prefix = "sedov_2d";
+string inputs_t::postfix = "dat";
 
 // output frequency
-template<> size_t base_t::output_freq = 20;
+size_t inputs_t::output_freq = 20;
 
 // the CFL and final solution time
-template<> time_constants_t base_t::CFL = 
+time_constants_t inputs_t::CFL = 
 { .accoustic = 0.25, .volume = 0.1, .growth = 1.01 };
 
-template<> real_t base_t::final_time = 1.0;
-template<> real_t base_t::initial_time_step = 1.e-5;
-template<> size_t base_t::max_steps = 20;
+real_t inputs_t::final_time = 1.0;
+real_t inputs_t::initial_time_step = 1.e-5;
+size_t inputs_t::max_steps = 20;
 
 // the equation of state
-template<> eos_t base_t::eos = 
+eos_t inputs_t::eos = 
   flecsale::eos::ideal_gas_t<real_t>( 
     /* gamma */ 1.4, /* cv */ 1.0 
   ); 
 
 // this is a lambda function to set the initial conditions
-template<>
-inputs_t::ics_function_t base_t::ics = 
+inputs_t::ics_function_t inputs_t::ics = 
   [g=gamma, V=vol]( const vector_t & x, const real_t & )
   {
     constexpr real_t e0 = 0.244816;
@@ -98,25 +96,13 @@ inputs_t::ics_function_t base_t::ics =
     return std::make_tuple( d, v, p );
   };
 
-// This function builds and returns a mesh
-template<>
-inputs_t::mesh_function_t base_t::make_mesh = 
-  [nx=num_cells_x, ny=num_cells_y, lx=length_x, ly=length_y](const real_t &)
-  { 
-    // this is the mesh object
-    return flecsale::mesh::box<mesh_t>( 
-      nx, ny, 0, 0, lx, ly
-    );
-  };
-
 // install each boundary
 //
 // - both +ve and -ve side boundaries can be installed at once since 
 //   they will never overlap
 // - if they did overlap, then you need to define them seperately or else
 //   its hard to count the number of different conditions on points or edges.
-template<>
-inputs_t::bcs_list_t base_t::bcs = {
+inputs_t::bcs_list_t inputs_t::bcs = {
 
   // the +/- x-axis boundaries
   std::make_pair( 

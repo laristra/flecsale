@@ -10,72 +10,59 @@
 #pragma once
 
 // user includes
-#include <flecsale/common/types.h>
+#include <flecsale-config.h>
 #include <flecsale/eqns/lagrange_eqns.h>
 #include <flecsale/eqns/flux.h>
 #include <flecsale/eos/ideal_gas.h>
-#include <flecsale/math/general.h>
-#include <flecsale/math/matrix.h>
-#include <flecsale/utils/trivial_string.h>
+#include <ristra/math/general.h>
+#include <ristra/math/matrix.h>
 
-#include <flecsale/mesh/burton/burton.h>
+#include <flecsi-sp/utils/char_array.h>
+#include <flecsi-sp/utils/types.h>
+#include <flecsi-sp/burton/burton_mesh.h>
 
 #include "../common/utils.h"
 
 namespace apps {
 namespace hydro {
 
-// some namespace aliases
-namespace common= flecsale::common;
-namespace mesh  = flecsale::mesh;
-namespace math  = flecsale::math;
-namespace utils = flecsale::utils;
-namespace geom  = flecsale::geom;
-namespace eos   = flecsale::eos;
-namespace eqns  = flecsale::eqns;
-
-// the handle type
-template<typename T>
-using dense_handle_w__ =
-  flecsi::data::legion::dense_handle_t<T, flecsi::wo, flecsi::wo, flecsi::ro>;
-
-template<typename T>
-using dense_handle_rw__ =
-  flecsi::data::legion::dense_handle_t<T, flecsi::rw, flecsi::rw, flecsi::ro>;
-
-template<typename T>
-using dense_handle_r__ =
-  flecsi::data::legion::dense_handle_t<T, flecsi::ro, flecsi::ro, flecsi::ro>;
-
-template<typename DC>
-using client_handle_w__ = flecsi::data_client_handle__<DC, flecsi::wo>;
-
-template<typename DC>
-using client_handle_r__ = flecsi::data_client_handle__<DC, flecsi::ro>;
-
-
 // mesh and some underlying data types
-template <std::size_t N>
-using mesh__ = typename mesh::burton::burton_mesh_t<N, true>;
+using mesh_t = flecsi_sp::burton::burton_mesh_t;
+using real_t = mesh_t::real_t;
+using vector_t = mesh_t::vector_t;
+using counter_t = mesh_t::counter_t;
 
-using size_t = common::size_t;
-using real_t = common::real_t;
+using eos_t = flecsale::eos::ideal_gas_t<real_t>;
 
-template< std::size_t N >
-using matrix__ = math::matrix< real_t, N, N >; 
-
-using eos_t = eos::ideal_gas_t<real_t>;
+using eqns_t = typename flecsale::eqns::lagrange_eqns_t<real_t, mesh_t::num_dimensions>;
 
 template< std::size_t N >
-using eqns__ = typename eqns::lagrange_eqns_t<real_t, N>;
+using matrix__ = ristra::math::matrix< real_t, N, N >; 
 
-template<std::size_t N>
-using flux_data__ = typename eqns__<N>::flux_data_t;
+using flux_data_t = eqns_t::flux_data_t;
+
 
 // explicitly use some other stuff
 using std::cout;
 using std::cerr;
 using std::endl;
+
+
+// the access permission types
+template<typename T>
+using dense_handle_w__ = flecsi_sp::utils::dense_handle_w__<T>;
+
+template<typename T>
+using dense_handle_rw__ = flecsi_sp::utils::dense_handle_rw__<T>;
+
+template<typename T>
+using dense_handle_r__ = flecsi_sp::utils::dense_handle_r__<T>;
+
+template<typename DC>
+using client_handle_w__ = flecsi_sp::utils::client_handle_w__<DC>;
+
+template<typename DC>
+using client_handle_r__ = flecsi_sp::utils::client_handle_r__<DC>;
 
 //! \brief a class to distinguish between different types of 
 //!   update errors.
@@ -92,7 +79,7 @@ enum class mode_t
 };
 
 //! a trivially copyable character array
-using char_array_t = utils::trivial_string_t;
+using char_array_t = flecsi_sp::utils::char_array_t;
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief A general boundary condition type.
@@ -104,7 +91,7 @@ class boundary_condition_t
 public:
 
   using real_type   = real_t; 
-  using vector_type = math::vector< real_type, N >; 
+  using vector_type = ristra::math::vector< real_type, N >; 
 
   virtual bool has_prescribed_velocity() const 
   { return false; };
@@ -153,7 +140,7 @@ boundary_condition_t<N> * make_boundary_condition( const std::string & str )
   else if ( str == "none" )
     return new boundary_condition_t<N>();
   else {
-    raise_implemented_error( 
+    throw_implemented_error( 
       "No implementation for boundary condition of type \'" << str << "\'"
     );
     return nullptr;
@@ -163,7 +150,7 @@ boundary_condition_t<N> * make_boundary_condition( const std::string & str )
 
 
 //! \brief a type for storing boundary tags
-using tag_t = mesh__<2>::tag_t;
+using tag_t = mesh_t::tag_t;
 
 //! \brief a map for storing links between boundary conditions and tags
 template< std::size_t N >

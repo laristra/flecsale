@@ -28,6 +28,7 @@ namespace hydro {
 // mesh and some underlying data types
 using mesh_t = flecsi_sp::burton::burton_mesh_t;
 using real_t = mesh_t::real_t;
+using vector_t = mesh_t::vector_t;
 using counter_t = mesh_t::counter_t;
 
 using eos_t = flecsale::eos::ideal_gas_t<real_t>;

@@ -7,50 +7,30 @@ add_executable( maire_hydro_2d
   $<TARGET_OBJECTS:apps_common> 
   driver.cc
   inputs.cc
-  specialization_init.cc
-  ${FleCSI_RUNTIME_DRIVER}
-  ${FleCSI_RUNTIME_MAIN}
+  ${FLECSI_SP_BURTON_SPECIALIZATION_INIT}
+  ${FLECSALE_RUNTIME_DRIVER}
+  ${FLECSALE_RUNTIME_MAIN}
 )
-target_link_libraries( maire_hydro_2d flecsale )
+target_link_libraries( maire_hydro_2d FleCSALE )
 target_compile_definitions( 
   maire_hydro_2d
   PRIVATE
+    FLECSI_SP_BURTON_MESH_DIMENSION=2
+    FLECSI_SP_BURTON_MESH_EXTRAS
     FLECSI_ENABLE_SPECIALIZATION_TLT_INIT
     FLECSI_ENABLE_SPECIALIZATION_SPMD_INIT
 )
 
-if (LUA_FOUND) 
+add_test( 
+  NAME flecsale_sedov_2d_1procs
+  COMMAND mpirun -n 1 $<TARGET_FILE:maire_hydro_2d> -m ${FLECSALE_DATA_DIR}/meshes/square_32x32.g
+  #COMPARE shock_box_2d0000007.dat 
+  #STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d0000007.dat.std 
+)
 
-  create_regression_test( 
-    NAME sedov_maire_2d
-    COMMAND $<TARGET_FILE:maire_hydro_2d> -f ${CMAKE_CURRENT_SOURCE_DIR}/sedov_2d.lua
-    COMPARE sedov_2d0000020.dat 
-    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/sedov_2d0000020.dat.std 
-  )
-  
-  create_regression_test( 
-    NAME sedov_maire_2d_omp4
-    COMMAND $<TARGET_FILE:maire_hydro_2d> -f ${CMAKE_CURRENT_SOURCE_DIR}/sedov_2d.lua
-    THREADS 4
-    COMPARE sedov_2d0000020.dat 
-    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/sedov_2d0000020.dat.std 
-  )
-
-else()
-
-  create_regression_test( 
-    NAME sedov_maire_2d
-    COMMAND $<TARGET_FILE:maire_hydro_2d>
-    COMPARE sedov_2d0000020.dat 
-    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/sedov_2d0000020.dat.std 
-  )
-  
-  create_regression_test( 
-    NAME sedov_maire_2d_omp4
-    COMMAND $<TARGET_FILE:maire_hydro_2d>
-    THREADS 4
-    COMPARE sedov_2d0000020.dat 
-    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/sedov_2d0000020.dat.std 
-  )
-
-endif()
+add_test( 
+  NAME flecsale_sedov_2d_2procs
+  COMMAND mpirun -n 2 $<TARGET_FILE:maire_hydro_2d> -m ${FLECSALE_DATA_DIR}/meshes/square_32x32.g
+  #COMPARE shock_box_2d0000007.dat 
+  #STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d0000007.dat.std 
+)

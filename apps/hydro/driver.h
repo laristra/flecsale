@@ -13,7 +13,6 @@
 #include "types.h"
 
 // user includes
-//#include <flecsale/mesh/mesh_utils.h>
 #include <ristra/utils/time_utils.h>
 #include <ristra/io/catalyst/adaptor.h>
 

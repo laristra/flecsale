@@ -13,10 +13,11 @@
 #pragma once
 
 // user includes
-#include "flecsale/math/tuple.h"
-#include "flecsale/math/general.h"
-#include "flecsale/math/vector.h"
-#include "flecsale/utils/const_string.h"
+#include <ristra/math/tuple.h>
+#include <ristra/math/general.h>
+#include <ristra/math/vector.h>
+#include <ristra/utils/const_string.h>
+#include <ristra/assertions/errors.h>
 
 namespace flecsale {
 namespace eqns {
@@ -44,7 +45,7 @@ public:
   using real_t = T;
 
   //! \brief The vector type.
-  using vector_t = math::vector<real_t,N>;
+  using vector_t = ristra::math::vector<real_t,N>;
 
   //! The number of dimensions.
   static constexpr size_t dimensions = N;
@@ -70,7 +71,7 @@ public:
     //! data_t is a std::tuple with a real_t for mass, a vector_t for momentum
     //! and a real_t for energy.  This needs to correspond to index
     //! or there may be problems
-    using data_t = math::array<real_t, index::total>;
+    using data_t = ristra::math::array<real_t, index::total>;
 
     //! \brief the number of equations
     static constexpr size_t number(void)
@@ -88,7 +89,7 @@ public:
     //!
     //! This needs to correspond with index or they may be problems
     using data_t = 
-      math::tuple<real_t,real_t,vector_t,real_t,real_t,real_t,real_t,real_t>;
+      ristra::math::tuple<real_t,real_t,vector_t,real_t,real_t,real_t,real_t,real_t>;
 
     //! \brief the variables in the primitive state
     enum index : size_t
@@ -109,7 +110,7 @@ public:
     {  return index::total; }
 
     //! \brief the number of variables
-    static constexpr std::array< utils::const_string, number() > names = 
+    static constexpr std::array< ristra::utils::const_string, number() > names = 
       { 
         "volume", 
         "mass",
@@ -131,7 +132,7 @@ public:
   //! \brief  the type for holding the state data
   using state_data_t = typename variables::data_t;
   //! \brief  the type for holding refernces to state data
-  using state_ref_t = utils::reference_wrapper_t< state_data_t >;
+  using state_ref_t = ristra::utils::reference_wrapper_t< state_data_t >;
 
   //! \brief  the type for holding the state data (mass, momentum, and energy)
   using flux_data_t = typename equations::data_t;
@@ -156,63 +157,63 @@ public:
   template< typename U >
   inline static decltype(auto) volume( U && u )
   { 
-    return math::get<variables::index::volume>( std::forward<U>(u) ); 
+    return ristra::math::get<variables::index::volume>( std::forward<U>(u) ); 
   }
 
   //! \copydoc volume
   template< typename U >
   inline static decltype(auto) mass( U && u )
   { 
-    return math::get<variables::index::mass>( u ); 
+    return ristra::math::get<variables::index::mass>( u ); 
   }
 
   //! \copydoc volume
   template< typename U >
   inline static decltype(auto) velocity( U && u )
   { 
-    return math::get<variables::index::velocity>( u ); 
+    return ristra::math::get<variables::index::velocity>( u ); 
   }
 
   //! \copydoc volume
   template< typename U >
   inline static decltype(auto) pressure( U && u )
   { 
-    return math::get<variables::index::pressure>( u ); 
+    return ristra::math::get<variables::index::pressure>( u ); 
   }
 
   //! \copydoc volume
   template< typename U >
   inline static decltype(auto) density( U && u )
   { 
-    return math::get<variables::index::density>( u ); 
+    return ristra::math::get<variables::index::density>( u ); 
   }
 
   //! \copydoc volume
   template< typename U >
   inline static decltype(auto) internal_energy( U && u )
   { 
-    return math::get<variables::index::internal_energy>( u ); 
+    return ristra::math::get<variables::index::internal_energy>( u ); 
   }
 
   //! \copydoc volume
   template< typename U >
   inline static decltype(auto) sound_speed( U && u )
   { 
-    return math::get<variables::index::sound_speed>( u ); 
+    return ristra::math::get<variables::index::sound_speed>( u ); 
   }
 
   //! \copydoc volume
   template< typename U >
   inline static decltype(auto) temperature( U && u )
   { 
-    return math::get<variables::index::temperature>( u ); 
+    return ristra::math::get<variables::index::temperature>( u ); 
   }
 
   //! \copydoc volume
   template<typename U>
   static auto total_energy( U && u )
   { 
-    using math::abs;
+    using ristra::math::abs;
     auto ie = internal_energy( std::forward<U>(u) );
     auto & vel = velocity( std::forward<U>(u) );
     return ie + dot_product( vel, vel ) / 2;
@@ -244,7 +245,7 @@ public:
   template <typename U, typename E>
   static void update_state_from_pressure( U && u, const E & eos )
   {
-    using math::get;
+    using ristra::math::get;
 
     // access independant or derived quantities 
     auto m = mass( std::forward<U>(u) );
@@ -279,7 +280,7 @@ public:
   template <typename U, typename E>
   static void update_state_from_energy( U && u, const E & eos )
   {
-    using math::get;
+    using ristra::math::get;
 
     // access independant or derived quantities 
     auto d = density( std::forward<U>(u) );
@@ -311,7 +312,7 @@ public:
     U && u, F && du, 
     const real_t & fact = 1.0
   ) {
-    using math::get;
+    using ristra::math::get;
 
     // get the conserved quatities
     auto   m   = mass( std::forward<U>(u) );
@@ -334,7 +335,7 @@ public:
     ie = et - dot_product( vel, vel ) / 2;
 
     if ( internal_energy(u) < 0 )
-      raise_runtime_error( 
+      throw_runtime_error( 
         "Negative internal energy encountered, " << internal_energy(u) << "." 
         << std::endl << "Current state = " << u << "."
       );
@@ -351,14 +352,14 @@ public:
   template< typename U >
   static void update_volume( U && u, real_t new_vol )
   {
-    using math::get;
+    using ristra::math::get;
 
     // recompute solution quantities
     volume(std::forward<U>(u)) = new_vol;
     density(std::forward<U>(u)) = mass(std::forward<U>(u)) / new_vol;
 
     if ( density(std::forward<U>(u)) < 0 )
-      raise_runtime_error( 
+      throw_runtime_error( 
         "Negative density encountered, " << density(u) << "." 
         << std::endl << "Current state = " << u << "."
       );

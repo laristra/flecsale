@@ -35,13 +35,13 @@ void initial_conditions(
   client_handle_r__<mesh_t>  mesh,
   inputs_t::ics_function_t ics, 
   eos_t eos,
-  mesh_t::real_t soln_time,
-  dense_handle_w__<mesh_t::real_t> d,
-  dense_handle_w__<mesh_t::vector_t> v,
-  dense_handle_w__<mesh_t::real_t> e,
-  dense_handle_w__<mesh_t::real_t> p,
-  dense_handle_w__<mesh_t::real_t> T,
-  dense_handle_w__<mesh_t::real_t> a
+  real_t soln_time,
+  dense_handle_w__<real_t> d,
+  dense_handle_w__<vector_t> v,
+  dense_handle_w__<real_t> e,
+  dense_handle_w__<real_t> p,
+  dense_handle_w__<real_t> T,
+  dense_handle_w__<real_t> a
 ) {
 
   // This doesn't work with lua input
@@ -64,16 +64,16 @@ void initial_conditions(
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-mesh_t::real_t evaluate_time_step(
+real_t evaluate_time_step(
   client_handle_r__<mesh_t> mesh,
-  dense_handle_r__<mesh_t::real_t> d,
-  dense_handle_r__<mesh_t::vector_t> v,
-  dense_handle_r__<mesh_t::real_t> e,
-  dense_handle_r__<mesh_t::real_t> p,
-  dense_handle_r__<mesh_t::real_t> T,
-  dense_handle_r__<mesh_t::real_t> a,
-  mesh_t::real_t CFL,
-  mesh_t::real_t max_dt
+  dense_handle_r__<real_t> d,
+  dense_handle_r__<vector_t> v,
+  dense_handle_r__<real_t> e,
+  dense_handle_r__<real_t> p,
+  dense_handle_r__<real_t> T,
+  dense_handle_r__<real_t> a,
+  real_t CFL,
+  real_t max_dt
 ) {
  
   // Loop over each cell, computing the minimum time step,
@@ -117,12 +117,12 @@ mesh_t::real_t evaluate_time_step(
 ////////////////////////////////////////////////////////////////////////////////
 void evaluate_fluxes( 
   client_handle_r__<mesh_t> mesh,
-  dense_handle_r__<mesh_t::real_t> d,
-  dense_handle_r__<mesh_t::vector_t> v,
-  dense_handle_r__<mesh_t::real_t> e,
-  dense_handle_r__<mesh_t::real_t> p,
-  dense_handle_r__<mesh_t::real_t> T,
-  dense_handle_r__<mesh_t::real_t> a,
+  dense_handle_r__<real_t> d,
+  dense_handle_r__<vector_t> v,
+  dense_handle_r__<real_t> e,
+  dense_handle_r__<real_t> p,
+  dense_handle_r__<real_t> T,
+  dense_handle_r__<real_t> a,
   dense_handle_w__<flux_data_t> flux
 ) {
 
@@ -171,14 +171,14 @@ void evaluate_fluxes(
 void apply_update( 
   client_handle_r__<mesh_t> mesh,
   eos_t eos,
-  mesh_t::real_t delta_t,
+  real_t delta_t,
   dense_handle_r__<flux_data_t> flux,
-  dense_handle_rw__<mesh_t::real_t> d,
-  dense_handle_rw__<mesh_t::vector_t> v,
-  dense_handle_rw__<mesh_t::real_t> e,
-  dense_handle_rw__<mesh_t::real_t> p,
-  dense_handle_rw__<mesh_t::real_t> T,
-  dense_handle_rw__<mesh_t::real_t> a
+  dense_handle_rw__<real_t> d,
+  dense_handle_rw__<vector_t> v,
+  dense_handle_rw__<real_t> e,
+  dense_handle_rw__<real_t> p,
+  dense_handle_rw__<real_t> T,
+  dense_handle_rw__<real_t> a
 ) {
 
   //----------------------------------------------------------------------------
@@ -236,12 +236,12 @@ void apply_update(
 void output( 
   client_handle_r__<mesh_t> mesh, 
   char_array_t filename,
-  dense_handle_r__<mesh_t::real_t> d,
-  dense_handle_r__<mesh_t::vector_t> v,
-  dense_handle_r__<mesh_t::real_t> e,
-  dense_handle_r__<mesh_t::real_t> p,
-  dense_handle_r__<mesh_t::real_t> T,
-  dense_handle_r__<mesh_t::real_t> a
+  dense_handle_r__<real_t> d,
+  dense_handle_r__<vector_t> v,
+  dense_handle_r__<real_t> e,
+  dense_handle_r__<real_t> p,
+  dense_handle_r__<real_t> T,
+  dense_handle_r__<real_t> a
 ) {
   clog(info) << "OUTPUT MESH TASK" << std::endl;
  
