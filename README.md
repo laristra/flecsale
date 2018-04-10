@@ -12,14 +12,17 @@ tabular equation of state (EOS).
 
 ## Minimal
 
-- [FleCSI](https://github.com/laristra/flecsi)
-- [CMake](http://www.cmake.org/) >= 2.8
+- [Boost C++ Libraries](boost.org) >= 1.56
 - C++14 compliant compiler  (gcc >= 5.3.0, clang>=3.7.0)
+- [CMake](http://www.cmake.org/) >= 3.0
+- [Exodus](https://github.com/gsjaardema/seacas) to read/write ExodusII formatted files
+- [FleCSI](https://github.com/laristra/flecsi)
+- MPI implementation
+- [ParMETIS](https://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview) for mesh partitioning
 
 ## Optional
 
 - [Doxygen](http://doxygen.org) to generate documentation
-- [Exodus](https://github.com/gsjaardema/seacas) to read/write ExodusII formatted files
 - [Lua](http://lua.org) >= 5.2 for application input
 - [OpenSSL](http://openssl.org) for field data checksums
 - [Python](http://python.org) >= 2.7 for regression tests
@@ -52,7 +55,7 @@ using [CMake](https://cmake.org/):
 
     $ mkdir build
     $ cd build
-    $ CC=gcc CXX=g++ cmake /path/to/source/directory [options]
+    $ CC=gcc CXX=g++ cmake /path/to/source/directory -DFLECSI_RUNTIME_MODEL="mpi" -DENABLE_COLORING=on [options]
     $ make -j
 
 The environment variables `CC` and `CXX` are only necessary to select
@@ -67,12 +70,13 @@ specify an option.  For example, to build the unit tests, specify
 
 # CMake installation options
 
+
  - `CMAKE_BUILD_TYPE`:  Type of build: `Release` (for users) or `Debug` (for developers)
  - `ENABLE_DOXYGEN`:  Generate HTML API documentation with Doxygen - Default is `OFF`
  - `ENABLE_LUA`: Enable application input with Lua - Defaults to `ON` if Lua was found
- - `ENABLE_OPENSSL`: Enable checksum reporting - Defaults to `ON` if OpenSSL was found
  - `ENABLE_REGRESSION_TESTS`: Build the regression tests - Defaults to `ENABLE_UNIT_TESTS`
  - `ENABLE_UNIT_TESTS`:  Build the unit tests - Default is `OFF`
+ - `FLECSI_RUNTIME_MODEL`: Parallel backend: `mpi` (for most users), `legion`, or `hpx`
 
 # Release
 
