@@ -20,6 +20,8 @@
 #include <flecsi-sp/utils/types.h>
 #include <flecsi-sp/burton/burton_mesh.h>
 
+#include <flecsi/data/global_accessor.h>
+
 #include "../common/utils.h"
 
 namespace apps {
@@ -54,11 +56,27 @@ using dense_handle_rw__ = flecsi_sp::utils::dense_handle_rw__<T>;
 template<typename T>
 using dense_handle_r__ = flecsi_sp::utils::dense_handle_r__<T>;
 
+template<typename T>
+using global_handle_w__ = flecsi::global_accessor__<T, flecsi::wo>;
+
+template<typename T>
+using global_handle_rw__ = flecsi::global_accessor__<T, flecsi::rw>;
+
+template<typename T>
+using global_handle_r__ = flecsi::global_accessor__<T, flecsi::ro>;
+
 template<typename DC>
 using client_handle_w__ = flecsi_sp::utils::client_handle_w__<DC>;
 
 template<typename DC>
 using client_handle_r__ = flecsi_sp::utils::client_handle_r__<DC>;
+
+template<typename T>
+using future_handle__ =
+  flecsi::execution::flecsi_future<
+    T, flecsi::execution::launch_type_t::single
+  >;
+
 
 //! \brief a class to distinguish between different types of 
 //!   update errors.

@@ -85,13 +85,12 @@ using char_array_t = flecsi_sp::utils::char_array_t;
 //! \brief A general boundary condition type.
 //! \tparam N  The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N >
 class boundary_condition_t
 {
 public:
 
   using real_type   = real_t; 
-  using vector_type = ristra::math::vector< real_type, N >; 
+  using vector_type = vector_t; 
 
   virtual bool has_prescribed_velocity() const 
   { return false; };
@@ -116,8 +115,7 @@ public:
 //!        conditions.
 //! \tparam N  The number of dimensions.
 ////////////////////////////////////////////////////////////////////////////////
-template< std::size_t N >
-class symmetry_boundary_condition_t : public boundary_condition_t<N>
+class symmetry_boundary_condition_t : public boundary_condition_t
 {
 public:
   virtual bool has_symmetry() const override
@@ -132,13 +130,12 @@ public:
 //! \param [in] type_str  The type of boundary condition as a string.
 //! \return A new instance of the type.
 ////////////////////////////////////////////////////////////////////////////////
-template < std::size_t N >
-boundary_condition_t<N> * make_boundary_condition( const std::string & str )
+inline boundary_condition_t * make_boundary_condition( const std::string & str )
 {
   if ( str == "symmetry" )
-    return new symmetry_boundary_condition_t<N>();
+    return new symmetry_boundary_condition_t();
   else if ( str == "none" )
-    return new boundary_condition_t<N>();
+    return new boundary_condition_t();
   else {
     throw_implemented_error( 
       "No implementation for boundary condition of type \'" << str << "\'"
@@ -153,8 +150,7 @@ boundary_condition_t<N> * make_boundary_condition( const std::string & str )
 using tag_t = mesh_t::tag_t;
 
 //! \brief a map for storing links between boundary conditions and tags
-template< std::size_t N >
-using boundary_map_t = std::map< tag_t, boundary_condition_t<N> * >;
+using boundary_map_t = std::map< tag_t, boundary_condition_t * >;
 
 //! \breif a map for equations of state
 using eos_map_t = std::map< tag_t, eos_t * >;

@@ -28,15 +28,31 @@
 namespace apps {
 namespace hydro {
 
-template< typename E >
-auto filter_boundary( E && entities )
-{
-  return
-    std::forward<decltype(entities)>(entities).filter(
-      [](auto e) { return e->is_boundary(); }
-    );
-};
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Install a boundary on the mesh
+////////////////////////////////////////////////////////////////////////////////
+void install_boundary( 
+  client_handle_r__<mesh_t>  mesh,
+  real_t soln_time,
+  tag_t bc_key,
+  boundary_condition_t * bc_type,
+  inputs_t::bcs_function_t bc_function
+) {
+
+  mesh.install_boundary( 
+      [=](auto f) 
+      { 
+        if ( f->is_boundary() ) {
+          const auto & fx = f->midpoint();
+          return ( bc_function(fx, soln_time) );
+        }
+        return false;
+      },
+      bc_key
+    );
+    globals::boundaries.emplace( bc_key, bc_type );
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task for setting initial conditions
@@ -111,7 +127,6 @@ void update_state_from_energy(
 
 }
 
-#if 0
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to compute the time step size
 //!
@@ -119,85 +134,55 @@ void update_state_from_energy(
 //! \param [in,out] limit_string  a string describing the limiting time step
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int evaluate_time_step( T & mesh, std::string & limit_string ) 
-{
-
-  // access what we need
-  auto sound_speed = flecsi_get_accessor( mesh, hydro, cell_sound_speed, real_t, dense, 0 );
-
-  auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
-  auto cell_volume = mesh.cell_volumes();
-  auto cell_min_length = mesh.cell_min_lengths();
-
-  auto time_step = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
-  auto cfl = flecsi_get_accessor( mesh, hydro, cfl, time_constants_t, global, 0 );
+double evaluate_time_step(
+  client_handle_r__<mesh_t> mesh,
+  time_constants_t cfl, 
+	real_t previous_time_step,
+	dense_handle_r__<real_t> sound_speed,
+	dense_handle_r__<flux_data_t> dudt
+) {
  
- 
-  //----------------------------------------------------------------------------
   // Loop over each cell, computing the minimum time step,
   // which is also the maximum 1/dt
   real_t dt_acc_inv(0);
   real_t dt_vol_inv(0);
 
-  auto cs = mesh.cells();
+  auto cs = mesh.cells( flecsi::owned );
   auto num_cells = cs.size();
 
-  #pragma omp parallel for reduction( max : dt_acc_inv, dt_vol_inv )
   for ( counter_t i=0; i<num_cells; ++i ) {
     auto c = cs[i];
 
     // compute the inverse of the time scale
-    auto dti =  sound_speed[c] / cell_min_length[c] / cfl->accoustic;
+    auto dti =  sound_speed(c) / c->min_length();
     // check for the maximum value
     dt_acc_inv = std::max( dti, dt_acc_inv );
 
     // now check the volume change
-    auto dVdt = eqns_t::volumetric_rate_of_change( dudt[c] );
-    dti = std::abs(dVdt) / cell_volume[c] / cfl->volume;
+    auto dVdt = eqns_t::volumetric_rate_of_change( dudt(c) );
+    dti = std::abs(dVdt) / c->volume();
     // check for the maximum value
     dt_vol_inv = std::max( dti, dt_vol_inv );
 
   } // cell
-  //----------------------------------------------------------------------------
 
 
   assert( dt_acc_inv > 0 && "infinite delta t" );
   assert( dt_vol_inv > 0 && "infinite delta t" );
   
   // get the individual cfls
-  auto dt_acc = cfl->accoustic / dt_acc_inv;
-  auto dt_vol = cfl->volume / dt_vol_inv;
-  auto dt_growth = cfl->growth*(*time_step);
+  auto dt_acc = cfl.accoustic / dt_acc_inv;
+  auto dt_vol = cfl.volume / dt_vol_inv;
+  auto dt_growth = cfl.growth * previous_time_step;
 
   // find the minimum one
   auto dts = std::array<real_t,3> { dt_acc, dt_vol, dt_growth };
   auto it = std::min_element( dts.begin(), dts.end() );
 
-  switch ( std::distance( dts.begin(), it ) ) {
-  case 0:
-    limit_string = "accoustic";
-    break;
-  case 1:
-    limit_string = "volume";
-    break;
-  case 2:
-    limit_string = "growth";
-    break;
-  default:
-    limit_string = "unknown";
-    raise_runtime_error( "could not determine time step limit" );
-    break;    
-  };
-
-  // invert dt and check against growth
-  *time_step = *it;
-      
-  return 0;
+	// return the solution
+  return *it;
 
 }
-
-#endif 
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to compute nodal quantities
@@ -208,10 +193,10 @@ int evaluate_time_step( T & mesh, std::string & limit_string )
 void estimate_nodal_state( 
   client_handle_r__<mesh_t>  mesh,
   dense_handle_r__<vector_t> cell_vel,
-  dense_handle_w__<vector_t> vertex_vel
+  dense_handle_r__<vector_t> vertex_vel // Hack to avoid communication
 ) {
 
-  for ( auto v : mesh.vertices( flecsi::owned ) ) {
+  for ( auto v : mesh.vertices() ) {
     vertex_vel(v) = 0.;
     const auto & cells = mesh.cells(v);
     for ( auto c : cells ) vertex_vel(v) += cell_vel(c);
@@ -248,10 +233,15 @@ void evaluate_nodal_state(
   // use a matrix type
   using matrix_t = ristra::math::matrix<real_t, num_dims, num_dims>;
 
+  auto rank = flecsi::execution::context_t::instance().color();
+  auto num_ranks = flecsi::execution::context_t::instance().colors();
+  bool print = true;
+  if ( num_ranks > 1 ) print = (rank == 1);
+
   //----------------------------------------------------------------------------
   // Loop over each vertex
   //----------------------------------------------------------------------------
-
+  if ( print ) std::cout << "POINTS" << std::endl;
   for ( auto vt : mesh.vertices( flecsi::owned ) ) {
 
     // create the final matrix the point
@@ -264,6 +254,7 @@ void evaluate_nodal_state(
 
     // create some corner storage
     std::vector< matrix_t > Mpc(num_corners, 0);
+    if ( print ) std::cout << "*** vertex " << vt.id() << std::endl;
 
     //--------------------------------------------------------------------------
     // build point matrix
@@ -301,7 +292,8 @@ void evaluate_nodal_state(
         ristra::math::outer_product( n, n, Mpc[j], zc*l );
         // compute the pressure coefficient
         for ( int d=0; d<num_dims; ++d ) 
-          npc(cn)[d] += l * n[d];
+          npc(cn)[d] += /*l **/ n[d];
+        if ( print ) std::cout << "for corner " << cn.id() << " add " << n << " to get " <<  npc(cn) << std::endl;
       } // wedges
 
       // add to the global matrix
@@ -341,10 +333,12 @@ void evaluate_nodal_state(
       }
 
       // otherwise, apply the pressure conditions
-      auto bnd_wedges = filter_boundary( mesh.wedges(vt) );
-      for ( auto w : bnd_wedges ) 
+      for ( auto w : mesh.wedges(vt) ) 
       {
-        auto f = mesh.faces(w).front();
+				// skip internal wedges
+				if ( ! w->is_boundary() ) continue;
+        // for wedges attached to boundary
+				auto f = mesh.faces(w).front();
         auto c = mesh.cells(w).front();
         for ( auto tag : f->tags() ) {
           auto b = globals::boundaries.at( tag );
@@ -419,6 +413,12 @@ void evaluate_nodal_state(
         for ( int d=0; d<num_dims; ++d )
           un(vt)[d] = b_view[d];
 
+        for ( auto i : un(vt) ) 
+          if ( std::abs(i) > 1.e-12 ) {
+            if (print) std::cout << "boundary = " << un(vt) << std::endl;
+            break;
+          }
+
       } // end has symmetry
 
     } // boundary point
@@ -430,6 +430,13 @@ void evaluate_nodal_state(
     else {
       
       un(vt) = ristra::math::solve( Mp, rhs );
+        
+      for ( auto i : un(vt) ) 
+        if ( std::abs(i) > 1.e-12 ) {
+          if (print) std::cout << "internal = " << un(vt) << std::endl;
+          break;
+        }
+
 
     } // internal point
 
@@ -442,18 +449,106 @@ void evaluate_nodal_state(
       auto cn = cnrs[j];
       // corner attaches to one cell and one point
       auto cl = mesh.cells(cn).front();
-
+    
       // now add the vertex component to the force
       matrix_vector( 
         static_cast<real_t>(-1), Mpc[j], un(vt), 
         static_cast<real_t>(1), Fpc(cn)
       );
+      
+      for ( auto i : un(vt) ) 
+      if ( std::abs(i) > 1.e-12 ) {
+          if (print) std::cout << Fpc(cn) << std::endl;
+        break;
+      }
+
 
     }
 
   } // vertex
   //----------------------------------------------------------------------------
 
+    auto whostr_corner = [&](size_t i) {
+      auto exc = mesh.corners(flecsi::exclusive);
+      auto sha = mesh.corners(flecsi::shared);
+      auto gho = mesh.corners(flecsi::ghost);
+      for ( auto ent : exc )
+        if (ent.id() == i)
+          return std::string("e");
+      for ( auto ent : sha )
+        if (ent.id() == i)
+          return std::string("s");
+      for ( auto ent : gho )
+        if (ent.id() == i)
+          return std::string("g");
+      return std::string("o");
+    };
+
+    auto whostr_vert = [&](size_t i) {
+      auto exc = mesh.vertices(flecsi::exclusive);
+      auto sha = mesh.vertices(flecsi::shared);
+      auto gho = mesh.vertices(flecsi::ghost);
+      for ( auto ent : exc )
+        if (ent.id() == i)
+          return std::string("e");
+      for ( auto ent : sha )
+        if (ent.id() == i)
+          return std::string("s");
+      for ( auto ent : gho )
+        if (ent.id() == i)
+          return std::string("g");
+      return std::string("o");
+    };
+
+
+
+    if (print ) {
+      
+      std::ofstream out( "verts.txt" );
+
+      out << "VERTICES" << std::endl;
+    for ( auto vt : mesh.vertices() ) {
+      auto who = whostr_vert(vt);
+      out << who << vt.id() << ", " << vt->coordinates() << " , " << un(vt) << std::endl;
+    }
+
+      out << "CORNERS" << std::endl;
+    for ( auto cn : mesh.corners() ) {
+      auto who = whostr_corner(cn);
+      auto cl = mesh.cells(cn).front();
+      auto vt = mesh.vertices(cn).front();
+      out << who << cn.id() << ", " << cl.id() << ", "<<vt.id()<<  " : " << vt->coordinates() << " , " << npc(cn) << " ws ";
+      for ( auto w : mesh.wedges(cn) ) out << w->facet_normal() << " ";
+      out << std::endl;
+    }
+    
+    }
+
+#if 0 
+  for ( auto cl : mesh.cells(flecsi::owned) ) {
+    bool yes = false;
+    for ( auto cn : mesh.corners(cl) ) {
+      auto pt = mesh.vertices(cn).front();
+      for ( auto i : un(pt) )
+        if ( std::abs(i) > 1.e-12 ) {
+          yes = true;
+          break;
+        }
+    } // cn
+    if ( yes && print ) { 
+      std::cout << "cell with forces" << std::endl;
+      for ( auto cn : mesh.corners(cl) ) {
+        auto pt = mesh.vertices(cn).front();
+        auto who = whostr(cn);
+        std::cout << who << cn.id() << " : " << Fpc(cn) << " -> " << un(pt) << std::endl;
+      }
+      std::cout << "...normals" << std::endl;
+      for ( auto cn : mesh.corners(cl) ) {
+        std::cout << npc(cn) << std::endl;
+      }
+    }
+  }
+#endif
 
 }
 
@@ -468,24 +563,22 @@ void evaluate_residual(
   dense_handle_r__<vector_t> uv,
   dense_handle_r__<vector_t> npc,
   dense_handle_r__<vector_t> Fpc,
-  dense_handle_w__<flux_data_t> dudt
+  dense_handle_w__<flux_data_t> dudt // hack so no communication occurs
 )
 {
 
-  //----------------------------------------------------------------------------
   // TASK: loop over each cell and compute the residual
   
-  // get the cells
-  auto cs = mesh.cells( flecsi::owned );
-  auto num_cells = cs.size();
+  auto rank = flecsi::execution::context_t::instance().color();
+  auto num_ranks = flecsi::execution::context_t::instance().colors();
+  bool print = true;
+  if ( num_ranks > 1 ) print = (rank == 1);
+  
+  if ( print ) std::cout << "CELLS" << std::endl;
 
-  #pragma omp parallel for
-  for ( counter_t i=0; i<num_cells; i++ ) {
+
+  for ( auto cl : mesh.cells(flecsi::owned) ) {
     
-    // get the cell_t pointer
-    auto cl = cs[i];
-
-    //--------------------------------------------------------------------------
     // Gather corner forces to compute the cell residual
 
     // local cell residual
@@ -498,9 +591,91 @@ void evaluate_residual(
       // add contribution
       eqns_t::compute_update( uv(pt), Fpc(cn), npc(cn), dudt(cl) );
     }// corners    
+  
+
+    auto exc = mesh.corners(flecsi::exclusive);
+    auto sha = mesh.corners(flecsi::shared);
+    auto gho = mesh.corners(flecsi::ghost);
+    auto whostr = [&](size_t i) {
+      for ( auto ent : exc )
+        if (ent.id() == i)
+          return std::string("e");
+      for ( auto ent : sha )
+        if (ent.id() == i)
+          return std::string("s");
+      for ( auto ent : gho )
+        if (ent.id() == i)
+          return std::string("g");
+      return std::string("o");
+    };
+
+#if 0
+    if ( print ) 
+    for ( auto i : dudt(cl) ) 
+      if ( std::abs(i) > 1.e-12 ) {
+        std::cout << "nonzero dudt" << std::endl;
+        for ( auto cn : mesh.corners(cl) ) {
+          auto who = whostr(cn);
+          auto pt = mesh.vertices(cn).front();
+          std::cout << " ... " << who << cn.id() << " : " <<  Fpc(cn) << " -> " << uv(pt)<< std::endl;
+        }
+        std::cout << " --- "<< dudt(cl) << std::endl;
+        break;
+      }
+#endif    
     
   } // cell
-  //----------------------------------------------------------------------------
+    
+  auto whostr_corner = [&](size_t i) {
+      auto exc = mesh.corners(flecsi::exclusive);
+      auto sha = mesh.corners(flecsi::shared);
+      auto gho = mesh.corners(flecsi::ghost);
+      for ( auto ent : exc )
+        if (ent.id() == i)
+          return std::string("e");
+      for ( auto ent : sha )
+        if (ent.id() == i)
+          return std::string("s");
+      for ( auto ent : gho )
+        if (ent.id() == i)
+          return std::string("g");
+      return std::string("o");
+    };
+
+    auto whostr_vert = [&](size_t i) {
+      auto exc = mesh.vertices(flecsi::exclusive);
+      auto sha = mesh.vertices(flecsi::shared);
+      auto gho = mesh.vertices(flecsi::ghost);
+      for ( auto ent : exc )
+        if (ent.id() == i)
+          return std::string("e");
+      for ( auto ent : sha )
+        if (ent.id() == i)
+          return std::string("s");
+      for ( auto ent : gho )
+        if (ent.id() == i)
+          return std::string("g");
+      return std::string("o");
+    };
+
+    
+  if (print ) {
+      
+      std::ofstream out( "cells.txt" );
+
+      out << "VERTICES" << std::endl;
+    for ( auto vt : mesh.vertices(flecsi::owned) ) {
+      auto who = whostr_vert(vt);
+      out << who << vt.id() << ", " << vt->coordinates() << " , " << uv(vt) << std::endl;
+    }
+
+      out << "CORNERS" << std::endl;
+    for ( auto cn : mesh.corners(flecsi::owned) ) {
+      auto who = whostr_corner(cn);
+      out << who << cn.id() << " : " << Fpc(cn) << " , " << npc(cn) << std::endl;
+    }
+    
+    }
 
 }
 
@@ -525,22 +700,15 @@ void apply_update(
 ) {
 
   // Using the cell residual, update the state
-  auto cs = mesh.cells( flecsi::owned );
-  auto num_cells = cs.size();
-  
-  #pragma omp parallel for
-  for ( counter_t i=0; i<num_cells; i++ ) {
+  for ( auto cl : mesh.cells(flecsi::owned) ) {
 
-    // get the cell_t pointer
-    auto cl = cs[i];
- 
     // get the cell state
     auto u = pack(cl, Vc, Mc, uc, pc, dc, ec, Tc, ac);
 
     // apply the update
     eqns_t::update_state_from_flux( u, dudt(cl), delta_t );
     eqns_t::update_volume( u, cl->volume() );
-    
+
   } // for
 
 }
@@ -559,15 +727,14 @@ void move_mesh(
 
   // Update ALL vertices, including ghost so that we dont need to communicate.
 	// DEFECT we are modifying the mesh, but its read-only.
-  auto vs = mesh.vertices();
-  auto num_verts = vs.size();
 
-  #pragma omp parallel for
-  for ( counter_t i=0; i<num_verts; i++ ) {
-    auto vt = vs[i];
+  for ( auto vt : mesh.vertices() ) {
     for ( int d=0; d<mesh_t::num_dimensions; ++d )
       vt->coordinates()[d] += delta_t * vel(vt)[d];
   }
+
+	// now update the geometry
+	mesh.update_geometry();
 
 }
 
@@ -579,7 +746,7 @@ void move_mesh(
 ////////////////////////////////////////////////////////////////////////////////
 void save_coordinates( 
   client_handle_r__<mesh_t>  mesh,
-  dense_handle_w__<vector_t> coord0
+  dense_handle_r__<vector_t> coord0 // Hack to avoid communication
 )
 {
 
@@ -630,8 +797,8 @@ void save_solution(
   client_handle_r__<mesh_t>  mesh,
   dense_handle_r__<vector_t> cell_vel,
 	dense_handle_r__<real_t> cell_ener,
-	dense_handle_w__<vector_t> cell_vel_0,
-	dense_handle_w__<real_t> cell_ener_0
+	dense_handle_r__<vector_t> cell_vel_0, // "r" permissions hack to avoid communication
+	dense_handle_r__<real_t> cell_ener_0   // "r" permissions hack to avoid communication
 )
 {
 
@@ -683,7 +850,10 @@ void restore_solution(
 ////////////////////////////////////////////////////////////////////////////////
 void output( 
   client_handle_r__<mesh_t> mesh, 
-  char_array_t filename,
+  char_array_t prefix,
+	char_array_t postfix,
+	size_t iteration,
+	real_t time,
   dense_handle_r__<real_t> d,
   dense_handle_r__<vector_t> v,
   dense_handle_r__<real_t> e,
@@ -698,14 +868,13 @@ void output(
   auto rank = context.color();
 
   // figure out this ranks file name
-  auto name_and_ext = ristra::utils::split_extension( filename.str() );
   auto output_filename = 
-    name_and_ext.first + "_rank" + apps::common::zero_padded(rank) +
-    "." + name_and_ext.second;
+    prefix.str() + "_rank" + apps::common::zero_padded(rank) +
+    "_" + apps::common::zero_padded(iteration) + "." + postfix.str();
 
   // now outut the mesh
   flecsale::io::io_exodus__<mesh_t>::write(
-    output_filename, mesh, &d //, v, e, p, T, a
+    output_filename, mesh, iteration, time, &d //, v, e, p, T, a
   );
 }
 
@@ -745,9 +914,12 @@ void print(
 ////////////////////////////////////////////////////////////////////////////////
 
 flecsi_register_task(initial_conditions, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(install_boundary, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(estimate_nodal_state, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(evaluate_nodal_state, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(evaluate_residual, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(evaluate_time_step, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(move_mesh, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(apply_update, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(update_state_from_energy, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(save_coordinates, apps::hydro, loc, single|flecsi::leaf);

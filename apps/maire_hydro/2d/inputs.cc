@@ -26,8 +26,7 @@ using real_t = inputs_t::real_t;
 using vector_t = inputs_t::vector_t;
 using string = std::string;
 using eos_t = inputs_t::eos_t;
-using symmetry_condition_t = 
-  symmetry_boundary_condition_t<inputs_t::num_dimensions>;
+using symmetry_condition_t = symmetry_boundary_condition_t;
 
 //=============================================================================
 // These constants are not part of the input class, they are globally scoped
@@ -38,8 +37,8 @@ using symmetry_condition_t =
 constexpr real_t gamma = 1.4;
 
 // the grid dimensions
-constexpr size_t num_cells_x = 20;
-constexpr size_t num_cells_y = 20;
+constexpr size_t num_cells_x = 32;
+constexpr size_t num_cells_y = 32;
 constexpr real_t length_x = 1.2;
 constexpr real_t length_y = 1.2;
 
@@ -74,7 +73,7 @@ time_constants_t inputs_t::CFL =
 
 real_t inputs_t::final_time = 1.0;
 real_t inputs_t::initial_time_step = 1.e-5;
-size_t inputs_t::max_steps = 20;
+size_t inputs_t::max_steps = 1;
 
 // the equation of state
 eos_t inputs_t::eos = 

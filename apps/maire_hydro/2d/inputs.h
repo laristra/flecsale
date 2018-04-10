@@ -51,7 +51,7 @@ public:
 
   //! the bcs function type
   //! \{
-  using bcs_t = boundary_condition_t<num_dimensions>;
+  using bcs_t = boundary_condition_t;
   using bcs_ptr_t = std::shared_ptr< bcs_t >;
   using bcs_function_t = 
     std::function< bool(const vector_t & x, const real_t & t) >;

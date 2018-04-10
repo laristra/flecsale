@@ -19,7 +19,7 @@ namespace hydro {
 namespace globals {
 
 // the boundary mapper
-boundary_map_t< mesh_t::num_dimensions > boundaries;
+boundary_map_t boundaries;
 
 
 } // namespace

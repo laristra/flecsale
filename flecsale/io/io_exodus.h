@@ -71,7 +71,7 @@ public:
   //============================================================================
   template< typename T >
   static
-  void write_fields( int exoid, mesh_t & m, const T & f ) 
+  void write_fields( int exoid, mesh_t & m, size_t time_step, const T & f ) 
   { 
 
     int status;
@@ -84,11 +84,6 @@ public:
 
     //--------------------------------------------------------------------------
     // initial setup
-
-    // get the iteration number
-    // - first step starts at 1
-    auto time_step = 1;
-
 
     // a lambda function for validating strings
     auto validate_string = []( auto && str ) {
@@ -353,6 +348,8 @@ public:
   static void write(
     const std::string &name,
     mesh_t &m,
+    size_t iteration = 0,
+    ex_real_t time = 0.0,
     T * const d = nullptr
   ) {
 
@@ -368,6 +365,11 @@ public:
     //--------------------------------------------------------------------------
     // initial setup
     //--------------------------------------------------------------------------
+    
+    // get the iteration number
+    // - first step starts at 1
+    // - ignore input iteration because we are always only outputting one solution
+    iteration = 1;
 
     auto exoid = base_t::open( name, std::ios_base::out );
     assert(exoid >= 0);
@@ -461,8 +463,16 @@ public:
     // write field data
     //--------------------------------------------------------------------------
     if ( d ) 
-      write_fields( exoid, m, *d );
+      write_fields( exoid, m, iteration, *d );
 
+
+    //--------------------------------------------------------------------------
+    // final setup
+    //--------------------------------------------------------------------------
+
+    // set the time
+    auto status = ex_put_time(exoid, iteration, &time );
+    assert(status == 0);
 
     //--------------------------------------------------------------------------
     // final step

@@ -163,6 +163,18 @@ void evaluate_fluxes(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief Perform a reduction to get the time step
+////////////////////////////////////////////////////////////////////////////////
+void gather_time_step(
+  future_handle__<real_t> local_time_step,
+  global_handle_w__<real_t> time_step
+) {
+
+  auto dt = flecsi::execution::context_t::instance().reduce_min(local_time_step);
+  time_step = 0.;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to update the solution in each cell.
 //!
 //! \param [in,out] mesh the mesh object
@@ -183,6 +195,9 @@ void apply_update(
 
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
+
+
+  //auto delta_t = static_cast<real_t>( time_step );
 
   const auto & cell_list = mesh.cells( flecsi::owned );
   auto num_cells = cell_list.size();
@@ -235,7 +250,10 @@ void apply_update(
 ////////////////////////////////////////////////////////////////////////////////
 void output( 
   client_handle_r__<mesh_t> mesh, 
-  char_array_t filename,
+  char_array_t prefix,
+	char_array_t postfix,
+	size_t iteration,
+	real_t time,
   dense_handle_r__<real_t> d,
   dense_handle_r__<vector_t> v,
   dense_handle_r__<real_t> e,
@@ -250,14 +268,13 @@ void output(
   auto rank = context.color();
 
   // figure out this ranks file name
-  auto name_and_ext = ristra::utils::split_extension( filename.str() );
   auto output_filename = 
-    name_and_ext.first + "_rank" + apps::common::zero_padded(rank) +
-    "." + name_and_ext.second;
+    prefix.str() + "_rank" + apps::common::zero_padded(rank) +
+    "." + apps::common::zero_padded(iteration) + "." + postfix.str();
 
   // now outut the mesh
   flecsale::io::io_exodus__<mesh_t>::write(
-    output_filename, mesh, &d //, v, e, p, T, a
+    output_filename, mesh, iteration, time, &d //, v, e, p, T, a
   );
 }
 
@@ -298,6 +315,7 @@ void print(
 
 flecsi_register_task(initial_conditions, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(evaluate_time_step, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(gather_time_step, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(evaluate_fluxes, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(apply_update, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(output, apps::hydro, loc, single|flecsi::leaf);

@@ -232,23 +232,21 @@ int driver(int argc, char** argv)
   // Boundary Conditions
   //===========================================================================
   
-
   // install each boundary
+  tag_t bc_key = 0;
   for ( const auto & bc_pair : inputs_t::bcs )
   {
     auto bc_type = bc_pair.first.get();
     auto bc_function = bc_pair.second; 
-    auto bc_key = mesh.install_boundary( 
-      [=](auto f) 
-      { 
-        if ( f->is_boundary() ) {
-          const auto & fx = f->midpoint();
-          return ( bc_function(fx, soln_time) );
-        }
-        return false;
-      }
-    );
-    globals::boundaries.emplace( bc_key, bc_type );
+    flecsi_execute_task(
+        install_boundary,
+        apps::hydro,
+        single,
+        mesh,
+        soln_time,
+        bc_key++,
+        bc_type,
+        bc_function);
   }
 
   //===========================================================================
@@ -273,14 +271,22 @@ int driver(int argc, char** argv)
   // Pre-processing
   //===========================================================================
 
+  auto prefix_char = flecsi_sp::utils::to_char_array( inputs_t::prefix );
+ 	auto postfix_char =  flecsi_sp::utils::to_char_array( "exo" );
 
   // now output the solution
   auto has_output = (inputs_t::output_freq > 0);
   if (has_output) {
-    auto name = inputs_t::prefix + "_" + apps::common::zero_padded( 0 ) + ".exo";
-    auto name_char = flecsi_sp::utils::to_char_array( name );
     flecsi_execute_task(
-      output, apps::hydro, single, mesh, name_char, dc, uc, ec, pc, Tc, ac
+      output,
+ 			apps::hydro,
+ 			single,
+ 			mesh,
+ 			prefix_char,
+ 			postfix_char,
+			time_cnt,
+      soln_time,
+ 			dc, uc, ec, pc, Tc, ac
     );
   }
 
@@ -294,13 +300,12 @@ int driver(int argc, char** argv)
   // start a clock
   auto tstart = ristra::utils::get_wall_time();
 
+	// the initial time step
+	auto time_step = inputs_t::initial_time_step;
 
   //===========================================================================
   // Residual Evaluation
   //===========================================================================
-
-  auto & min_reduction = 
-    flecsi::execution::context_t::instance().min_reduction();
 
   for (
     size_t num_steps = 0;
@@ -330,7 +335,7 @@ int driver(int argc, char** argv)
 		);
 
     // compute the nodal velocity at n=0
-    flecsi_execute_task( 
+    auto f = flecsi_execute_task( 
       evaluate_nodal_state,
       apps::hydro,
       single,
@@ -339,49 +344,55 @@ int driver(int argc, char** argv)
       Vc, Mc, uc, pc, dc, ec, Tc, ac,
       un, npc, Fpc
     );
+    f.wait();
 
     // compute the fluxes
-    flecsi_execute_task(
+    auto f2 = flecsi_execute_task(
 			 evaluate_residual,
 		 	 apps::hydro,
 			 single,
 			 mesh,
 			 un, npc, Fpc, dUdt
      );
+    f2.wait();
+# if 0
 
-#if 0
     //--------------------------------------------------------------------------
     // Time step evaluation
     //--------------------------------------------------------------------------
 
     // compute the time step
-    std::string limit_string;
-    flecsi_execute_task( evaluate_time_step_task, apps::hydro, single, mesh, limit_string );
+    auto local_time_step_future = flecsi_execute_task(
+			evaluate_time_step,
+	 		apps::hydro,
+	 		single,
+			mesh,
+			inputs_t::CFL,
+			time_step,
+			ac, dUdt
+ 		);
     
-    // access the computed time step and make sure its not too large
-    *time_step = std::min( *time_step, inputs_t::final_time - soln_time );       
+    // now we need it
+    time_step =
+      flecsi::execution::context_t::instance().reduce_min(local_time_step_future);
+    time_step = std::min( time_step, inputs_t::final_time - soln_time );       
 
-    cout << std::string(60, '=') << endl;
-    auto ss = cout.precision();
-    cout.setf( std::ios::scientific );
-    cout.precision(6);
-    cout << "| " << std::setw(8) << "Step:"
-         << " | " << std::setw(13) << "Time:"
-         << " | " << std::setw(13) << "Step Size:"
-         << " | " << std::setw(13) << "Limit:"
-         << " |" << std::endl;
-    cout << "| " << std::setw(8) << time_cnt+1
-         << " | " << std::setw(13) << soln_time + (*time_step)
-         << " | " << std::setw(13) << *time_step
-         << " | " << std::setw(13) << limit_string
-         << " |" << std::endl;
-    cout.unsetf( std::ios::scientific );
-    cout.precision(ss);
-#else
-
-		real_t time_step = 0;
-
-#endif
+		if ( rank == 0 ) {
+      cout << std::string(44, '=') << endl;
+      auto ss = cout.precision();
+      cout.setf( std::ios::scientific );
+      cout.precision(6);
+      cout << "| " << std::setw(8) << "Step:"
+           << " | " << std::setw(13) << "Time:"
+           << " | " << std::setw(13) << "Step Size:"
+           << " |" << std::endl;
+      cout << "| " << std::setw(8) << time_cnt+1
+           << " | " << std::setw(13) << soln_time + (time_step)
+           << " | " << std::setw(13) << time_step
+           << " |" << std::endl;
+      cout.unsetf( std::ios::scientific );
+      cout.precision(ss);
+		}
 
 // #define USE_FIRST_ORDER_TIME_STEPPING
 #ifndef USE_FIRST_ORDER_TIME_STEPPING // set to 0 for first order
@@ -485,7 +496,7 @@ int driver(int argc, char** argv)
  			 apps::hydro,
        single,
 			 mesh, 
-			 0.5*time_step,
+			 time_step,
 			 dUdt,
        Vc, Mc, uc, pc, dc, ec, Tc, ac
      );
@@ -517,13 +528,19 @@ int driver(int argc, char** argv)
         )  
       ) 
     {
-      auto name = inputs_t::prefix + "_" + apps::common::zero_padded( time_cnt ) + ".exo";
-      auto name_char = flecsi_sp::utils::to_char_array( name );
       flecsi_execute_task(
-        output, apps::hydro, single, mesh, name_char, dc, uc, ec, pc, Tc, ac
+        output,
+	 			apps::hydro,
+ 				single,
+ 				mesh,
+	 			prefix_char,
+ 				postfix_char,
+ 				time_cnt,
+        soln_time,
+ 				dc, uc, ec, pc, Tc, ac
       );
     }
-
+#endif
   } // for
 
   //===========================================================================
