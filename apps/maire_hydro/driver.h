@@ -335,7 +335,7 @@ int driver(int argc, char** argv)
 		);
 
     // compute the nodal velocity at n=0
-    auto f = flecsi_execute_task( 
+    flecsi_execute_task( 
       evaluate_nodal_state,
       apps::hydro,
       single,
@@ -344,18 +344,15 @@ int driver(int argc, char** argv)
       Vc, Mc, uc, pc, dc, ec, Tc, ac,
       un, npc, Fpc
     );
-    f.wait();
 
     // compute the fluxes
-    auto f2 = flecsi_execute_task(
+    flecsi_execute_task(
 			 evaluate_residual,
 		 	 apps::hydro,
 			 single,
 			 mesh,
 			 un, npc, Fpc, dUdt
      );
-    f2.wait();
-# if 0
 
     //--------------------------------------------------------------------------
     // Time step evaluation
@@ -477,7 +474,7 @@ int driver(int argc, char** argv)
  			uc0, uc, ec0, ec
  		);
 
-#endif
+#endif // USE_FIRST_ORDER_TIME_STEPPING
 
 
     // move the mesh to n+1
@@ -540,7 +537,7 @@ int driver(int argc, char** argv)
  				dc, uc, ec, pc, Tc, ac
       );
     }
-#endif
+
   } // for
 
   //===========================================================================

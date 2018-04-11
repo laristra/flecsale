@@ -193,10 +193,12 @@ double evaluate_time_step(
 void estimate_nodal_state( 
   client_handle_r__<mesh_t>  mesh,
   dense_handle_r__<vector_t> cell_vel,
-  dense_handle_r__<vector_t> vertex_vel // Hack to avoid communication
+  dense_handle_w__<vector_t> vertex_vel // Hack to avoid communication
 ) {
 
-  for ( auto v : mesh.vertices() ) {
+  using subset_t = mesh_t::subset_t;
+  for ( auto v : mesh.vertices(subset_t::overlapping) )
+  {
     vertex_vel(v) = 0.;
     const auto & cells = mesh.cells(v);
     for ( auto c : cells ) vertex_vel(v) += cell_vel(c);
@@ -232,17 +234,14 @@ void evaluate_nodal_state(
 
   // use a matrix type
   using matrix_t = ristra::math::matrix<real_t, num_dims, num_dims>;
-
-  auto rank = flecsi::execution::context_t::instance().color();
-  auto num_ranks = flecsi::execution::context_t::instance().colors();
-  bool print = true;
-  if ( num_ranks > 1 ) print = (rank == 1);
+  
+  // the subsets type
+  using subset_t = mesh_t::subset_t;
 
   //----------------------------------------------------------------------------
   // Loop over each vertex
   //----------------------------------------------------------------------------
-  if ( print ) std::cout << "POINTS" << std::endl;
-  for ( auto vt : mesh.vertices( flecsi::owned ) ) {
+  for ( auto vt : mesh.vertices( subset_t::overlapping ) ) {
 
     // create the final matrix the point
     matrix_t Mp(0);
@@ -254,7 +253,6 @@ void evaluate_nodal_state(
 
     // create some corner storage
     std::vector< matrix_t > Mpc(num_corners, 0);
-    if ( print ) std::cout << "*** vertex " << vt.id() << std::endl;
 
     //--------------------------------------------------------------------------
     // build point matrix
@@ -292,8 +290,7 @@ void evaluate_nodal_state(
         ristra::math::outer_product( n, n, Mpc[j], zc*l );
         // compute the pressure coefficient
         for ( int d=0; d<num_dims; ++d ) 
-          npc(cn)[d] += /*l **/ n[d];
-        if ( print ) std::cout << "for corner " << cn.id() << " add " << n << " to get " <<  npc(cn) << std::endl;
+          npc(cn)[d] += l * n[d];
       } // wedges
 
       // add to the global matrix
@@ -412,13 +409,6 @@ void evaluate_nodal_state(
         // copy the results back
         for ( int d=0; d<num_dims; ++d )
           un(vt)[d] = b_view[d];
-
-        for ( auto i : un(vt) ) 
-          if ( std::abs(i) > 1.e-12 ) {
-            if (print) std::cout << "boundary = " << un(vt) << std::endl;
-            break;
-          }
-
       } // end has symmetry
 
     } // boundary point
@@ -430,13 +420,6 @@ void evaluate_nodal_state(
     else {
       
       un(vt) = ristra::math::solve( Mp, rhs );
-        
-      for ( auto i : un(vt) ) 
-        if ( std::abs(i) > 1.e-12 ) {
-          if (print) std::cout << "internal = " << un(vt) << std::endl;
-          break;
-        }
-
 
     } // internal point
 
@@ -455,100 +438,11 @@ void evaluate_nodal_state(
         static_cast<real_t>(-1), Mpc[j], un(vt), 
         static_cast<real_t>(1), Fpc(cn)
       );
-      
-      for ( auto i : un(vt) ) 
-      if ( std::abs(i) > 1.e-12 ) {
-          if (print) std::cout << Fpc(cn) << std::endl;
-        break;
-      }
-
 
     }
 
   } // vertex
   //----------------------------------------------------------------------------
-
-    auto whostr_corner = [&](size_t i) {
-      auto exc = mesh.corners(flecsi::exclusive);
-      auto sha = mesh.corners(flecsi::shared);
-      auto gho = mesh.corners(flecsi::ghost);
-      for ( auto ent : exc )
-        if (ent.id() == i)
-          return std::string("e");
-      for ( auto ent : sha )
-        if (ent.id() == i)
-          return std::string("s");
-      for ( auto ent : gho )
-        if (ent.id() == i)
-          return std::string("g");
-      return std::string("o");
-    };
-
-    auto whostr_vert = [&](size_t i) {
-      auto exc = mesh.vertices(flecsi::exclusive);
-      auto sha = mesh.vertices(flecsi::shared);
-      auto gho = mesh.vertices(flecsi::ghost);
-      for ( auto ent : exc )
-        if (ent.id() == i)
-          return std::string("e");
-      for ( auto ent : sha )
-        if (ent.id() == i)
-          return std::string("s");
-      for ( auto ent : gho )
-        if (ent.id() == i)
-          return std::string("g");
-      return std::string("o");
-    };
-
-
-
-    if (print ) {
-      
-      std::ofstream out( "verts.txt" );
-
-      out << "VERTICES" << std::endl;
-    for ( auto vt : mesh.vertices() ) {
-      auto who = whostr_vert(vt);
-      out << who << vt.id() << ", " << vt->coordinates() << " , " << un(vt) << std::endl;
-    }
-
-      out << "CORNERS" << std::endl;
-    for ( auto cn : mesh.corners() ) {
-      auto who = whostr_corner(cn);
-      auto cl = mesh.cells(cn).front();
-      auto vt = mesh.vertices(cn).front();
-      out << who << cn.id() << ", " << cl.id() << ", "<<vt.id()<<  " : " << vt->coordinates() << " , " << npc(cn) << " ws ";
-      for ( auto w : mesh.wedges(cn) ) out << w->facet_normal() << " ";
-      out << std::endl;
-    }
-    
-    }
-
-#if 0 
-  for ( auto cl : mesh.cells(flecsi::owned) ) {
-    bool yes = false;
-    for ( auto cn : mesh.corners(cl) ) {
-      auto pt = mesh.vertices(cn).front();
-      for ( auto i : un(pt) )
-        if ( std::abs(i) > 1.e-12 ) {
-          yes = true;
-          break;
-        }
-    } // cn
-    if ( yes && print ) { 
-      std::cout << "cell with forces" << std::endl;
-      for ( auto cn : mesh.corners(cl) ) {
-        auto pt = mesh.vertices(cn).front();
-        auto who = whostr(cn);
-        std::cout << who << cn.id() << " : " << Fpc(cn) << " -> " << un(pt) << std::endl;
-      }
-      std::cout << "...normals" << std::endl;
-      for ( auto cn : mesh.corners(cl) ) {
-        std::cout << npc(cn) << std::endl;
-      }
-    }
-  }
-#endif
 
 }
 
@@ -568,14 +462,6 @@ void evaluate_residual(
 {
 
   // TASK: loop over each cell and compute the residual
-  
-  auto rank = flecsi::execution::context_t::instance().color();
-  auto num_ranks = flecsi::execution::context_t::instance().colors();
-  bool print = true;
-  if ( num_ranks > 1 ) print = (rank == 1);
-  
-  if ( print ) std::cout << "CELLS" << std::endl;
-
 
   for ( auto cl : mesh.cells(flecsi::owned) ) {
     
@@ -591,92 +477,9 @@ void evaluate_residual(
       // add contribution
       eqns_t::compute_update( uv(pt), Fpc(cn), npc(cn), dudt(cl) );
     }// corners    
-  
-
-    auto exc = mesh.corners(flecsi::exclusive);
-    auto sha = mesh.corners(flecsi::shared);
-    auto gho = mesh.corners(flecsi::ghost);
-    auto whostr = [&](size_t i) {
-      for ( auto ent : exc )
-        if (ent.id() == i)
-          return std::string("e");
-      for ( auto ent : sha )
-        if (ent.id() == i)
-          return std::string("s");
-      for ( auto ent : gho )
-        if (ent.id() == i)
-          return std::string("g");
-      return std::string("o");
-    };
-
-#if 0
-    if ( print ) 
-    for ( auto i : dudt(cl) ) 
-      if ( std::abs(i) > 1.e-12 ) {
-        std::cout << "nonzero dudt" << std::endl;
-        for ( auto cn : mesh.corners(cl) ) {
-          auto who = whostr(cn);
-          auto pt = mesh.vertices(cn).front();
-          std::cout << " ... " << who << cn.id() << " : " <<  Fpc(cn) << " -> " << uv(pt)<< std::endl;
-        }
-        std::cout << " --- "<< dudt(cl) << std::endl;
-        break;
-      }
-#endif    
     
   } // cell
     
-  auto whostr_corner = [&](size_t i) {
-      auto exc = mesh.corners(flecsi::exclusive);
-      auto sha = mesh.corners(flecsi::shared);
-      auto gho = mesh.corners(flecsi::ghost);
-      for ( auto ent : exc )
-        if (ent.id() == i)
-          return std::string("e");
-      for ( auto ent : sha )
-        if (ent.id() == i)
-          return std::string("s");
-      for ( auto ent : gho )
-        if (ent.id() == i)
-          return std::string("g");
-      return std::string("o");
-    };
-
-    auto whostr_vert = [&](size_t i) {
-      auto exc = mesh.vertices(flecsi::exclusive);
-      auto sha = mesh.vertices(flecsi::shared);
-      auto gho = mesh.vertices(flecsi::ghost);
-      for ( auto ent : exc )
-        if (ent.id() == i)
-          return std::string("e");
-      for ( auto ent : sha )
-        if (ent.id() == i)
-          return std::string("s");
-      for ( auto ent : gho )
-        if (ent.id() == i)
-          return std::string("g");
-      return std::string("o");
-    };
-
-    
-  if (print ) {
-      
-      std::ofstream out( "cells.txt" );
-
-      out << "VERTICES" << std::endl;
-    for ( auto vt : mesh.vertices(flecsi::owned) ) {
-      auto who = whostr_vert(vt);
-      out << who << vt.id() << ", " << vt->coordinates() << " , " << uv(vt) << std::endl;
-    }
-
-      out << "CORNERS" << std::endl;
-    for ( auto cn : mesh.corners(flecsi::owned) ) {
-      auto who = whostr_corner(cn);
-      out << who << cn.id() << " : " << Fpc(cn) << " , " << npc(cn) << std::endl;
-    }
-    
-    }
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////
