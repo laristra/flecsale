@@ -9,21 +9,17 @@
 
 // hydro includes
 #include "inputs.h"
-#include "tasks.h"
 #include "../driver.h"
-
 
 namespace flecsi {
 namespace execution {
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
 ///////////////////////////////////////////////////////////////////////////////
 void driver(int argc, char** argv) 
 {
-  using namespace apps::hydro;
-  apps::hydro::driver<inputs_t>( argc, argv );
+  apps::hydro::driver( argc, argv );
 }
 
 } // namespace

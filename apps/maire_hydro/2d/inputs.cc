@@ -73,7 +73,7 @@ time_constants_t inputs_t::CFL =
 
 real_t inputs_t::final_time = 1.0;
 real_t inputs_t::initial_time_step = 1.e-5;
-size_t inputs_t::max_steps = 1e6;
+size_t inputs_t::max_steps = 20;
 
 // the equation of state
 eos_t inputs_t::eos = 
