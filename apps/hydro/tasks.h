@@ -35,13 +35,13 @@ void initial_conditions(
   client_handle_r__<mesh_t>  mesh,
   inputs_t::ics_function_t ics, 
   eos_t eos,
-  mesh_t::real_t soln_time,
-  dense_handle_w__<mesh_t::real_t> d,
-  dense_handle_w__<mesh_t::vector_t> v,
-  dense_handle_w__<mesh_t::real_t> e,
-  dense_handle_w__<mesh_t::real_t> p,
-  dense_handle_w__<mesh_t::real_t> T,
-  dense_handle_w__<mesh_t::real_t> a
+  real_t soln_time,
+  dense_handle_w__<real_t> d,
+  dense_handle_w__<vector_t> v,
+  dense_handle_w__<real_t> e,
+  dense_handle_w__<real_t> p,
+  dense_handle_w__<real_t> T,
+  dense_handle_w__<real_t> a
 ) {
 
   // This doesn't work with lua input
@@ -64,16 +64,16 @@ void initial_conditions(
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-mesh_t::real_t evaluate_time_step(
+real_t evaluate_time_step(
   client_handle_r__<mesh_t> mesh,
-  dense_handle_r__<mesh_t::real_t> d,
-  dense_handle_r__<mesh_t::vector_t> v,
-  dense_handle_r__<mesh_t::real_t> e,
-  dense_handle_r__<mesh_t::real_t> p,
-  dense_handle_r__<mesh_t::real_t> T,
-  dense_handle_r__<mesh_t::real_t> a,
-  mesh_t::real_t CFL,
-  mesh_t::real_t max_dt
+  dense_handle_r__<real_t> d,
+  dense_handle_r__<vector_t> v,
+  dense_handle_r__<real_t> e,
+  dense_handle_r__<real_t> p,
+  dense_handle_r__<real_t> T,
+  dense_handle_r__<real_t> a,
+  real_t CFL,
+  real_t max_dt
 ) {
  
   // Loop over each cell, computing the minimum time step,
@@ -117,12 +117,12 @@ mesh_t::real_t evaluate_time_step(
 ////////////////////////////////////////////////////////////////////////////////
 void evaluate_fluxes( 
   client_handle_r__<mesh_t> mesh,
-  dense_handle_r__<mesh_t::real_t> d,
-  dense_handle_r__<mesh_t::vector_t> v,
-  dense_handle_r__<mesh_t::real_t> e,
-  dense_handle_r__<mesh_t::real_t> p,
-  dense_handle_r__<mesh_t::real_t> T,
-  dense_handle_r__<mesh_t::real_t> a,
+  dense_handle_r__<real_t> d,
+  dense_handle_r__<vector_t> v,
+  dense_handle_r__<real_t> e,
+  dense_handle_r__<real_t> p,
+  dense_handle_r__<real_t> T,
+  dense_handle_r__<real_t> a,
   dense_handle_w__<flux_data_t> flux
 ) {
 
@@ -163,6 +163,18 @@ void evaluate_fluxes(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief Perform a reduction to get the time step
+////////////////////////////////////////////////////////////////////////////////
+void gather_time_step(
+  future_handle__<real_t> local_time_step,
+  global_handle_w__<real_t> time_step
+) {
+
+  auto dt = flecsi::execution::context_t::instance().reduce_min(local_time_step);
+  time_step = 0.;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to update the solution in each cell.
 //!
 //! \param [in,out] mesh the mesh object
@@ -171,18 +183,21 @@ void evaluate_fluxes(
 void apply_update( 
   client_handle_r__<mesh_t> mesh,
   eos_t eos,
-  mesh_t::real_t delta_t,
+  real_t delta_t,
   dense_handle_r__<flux_data_t> flux,
-  dense_handle_rw__<mesh_t::real_t> d,
-  dense_handle_rw__<mesh_t::vector_t> v,
-  dense_handle_rw__<mesh_t::real_t> e,
-  dense_handle_rw__<mesh_t::real_t> p,
-  dense_handle_rw__<mesh_t::real_t> T,
-  dense_handle_rw__<mesh_t::real_t> a
+  dense_handle_rw__<real_t> d,
+  dense_handle_rw__<vector_t> v,
+  dense_handle_rw__<real_t> e,
+  dense_handle_rw__<real_t> p,
+  dense_handle_rw__<real_t> T,
+  dense_handle_rw__<real_t> a
 ) {
 
   //----------------------------------------------------------------------------
   // Loop over each cell, scattering the fluxes to the cell
+
+
+  //auto delta_t = static_cast<real_t>( time_step );
 
   const auto & cell_list = mesh.cells( flecsi::owned );
   auto num_cells = cell_list.size();
@@ -235,13 +250,16 @@ void apply_update(
 ////////////////////////////////////////////////////////////////////////////////
 void output( 
   client_handle_r__<mesh_t> mesh, 
-  char_array_t filename,
-  dense_handle_r__<mesh_t::real_t> d,
-  dense_handle_r__<mesh_t::vector_t> v,
-  dense_handle_r__<mesh_t::real_t> e,
-  dense_handle_r__<mesh_t::real_t> p,
-  dense_handle_r__<mesh_t::real_t> T,
-  dense_handle_r__<mesh_t::real_t> a
+  char_array_t prefix,
+	char_array_t postfix,
+	size_t iteration,
+	real_t time,
+  dense_handle_r__<real_t> d,
+  dense_handle_r__<vector_t> v,
+  dense_handle_r__<real_t> e,
+  dense_handle_r__<real_t> p,
+  dense_handle_r__<real_t> T,
+  dense_handle_r__<real_t> a
 ) {
   clog(info) << "OUTPUT MESH TASK" << std::endl;
  
@@ -250,14 +268,13 @@ void output(
   auto rank = context.color();
 
   // figure out this ranks file name
-  auto name_and_ext = ristra::utils::split_extension( filename.str() );
   auto output_filename = 
-    name_and_ext.first + "_rank" + apps::common::zero_padded(rank) +
-    "." + name_and_ext.second;
+    prefix.str() + "_rank" + apps::common::zero_padded(rank) +
+    "." + apps::common::zero_padded(iteration) + "." + postfix.str();
 
   // now outut the mesh
   flecsale::io::io_exodus__<mesh_t>::write(
-    output_filename, mesh, &d //, v, e, p, T, a
+    output_filename, mesh, iteration, time, &d //, v, e, p, T, a
   );
 }
 
@@ -298,6 +315,7 @@ void print(
 
 flecsi_register_task(initial_conditions, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(evaluate_time_step, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(gather_time_step, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(evaluate_fluxes, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(apply_update, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(output, apps::hydro, loc, single|flecsi::leaf);

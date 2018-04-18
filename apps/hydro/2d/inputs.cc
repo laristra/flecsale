@@ -33,7 +33,7 @@ size_t inputs_t::output_freq = 1e6;
 // the CFL and final solution time
 real_t inputs_t::CFL = 1.0/2.0;
 real_t inputs_t::final_time = 0.2;
-size_t inputs_t::max_steps = 1e6;
+size_t inputs_t::max_steps = 20;
 
 // the equation of state
 eos_t inputs_t::eos = 

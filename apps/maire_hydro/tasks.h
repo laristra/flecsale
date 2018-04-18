@@ -10,14 +10,15 @@
 #pragma once
 
 // hydro includes
+#include "globals.h"
 #include "types.h"
 
 #include <flecsale/io/io_exodus.h>
 #include <flecsale/linalg/qr.h>
-#include <flecsale/utils/algorithm.h>
-#include <flecsale/utils/array_view.h>
-#include <flecsale/utils/filter_iterator.h>
-#include <flecsale/utils/string_utils.h>
+#include <ristra/utils/algorithm.h>
+#include <ristra/utils/array_view.h>
+#include <ristra/utils/filter_iterator.h>
+#include <ristra/utils/string_utils.h>
 #include <flecsi/execution/context.h>
 #include <flecsi/execution/execution.h>
 
@@ -26,6 +27,32 @@
 
 namespace apps {
 namespace hydro {
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Install a boundary on the mesh
+////////////////////////////////////////////////////////////////////////////////
+void install_boundary( 
+  client_handle_r__<mesh_t>  mesh,
+  real_t soln_time,
+  tag_t bc_key,
+  boundary_condition_t * bc_type,
+  inputs_t::bcs_function_t bc_function
+) {
+
+  mesh.install_boundary( 
+      [=](auto f) 
+      { 
+        if ( f->is_boundary() ) {
+          const auto & fx = f->midpoint();
+          return ( bc_function(fx, soln_time) );
+        }
+        return false;
+      },
+      bc_key
+    );
+    globals::boundaries.emplace( bc_key, bc_type );
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task for setting initial conditions
@@ -38,18 +65,16 @@ void initial_conditions(
   client_handle_r__<mesh_t>  mesh,
   inputs_t::ics_function_t ics, 
   eos_t eos,
-  mesh_t::real_t soln_time,
-  dense_handle_w__<mesh_t::real_t> V,
-  dense_handle_w__<mesh_t::real_t> M,
-  dense_handle_w__<mesh_t::vector_t> v,
-  dense_handle_w__<mesh_t::real_t> p,
-  dense_handle_w__<mesh_t::real_t> d,
-  dense_handle_w__<mesh_t::real_t> e,
-  dense_handle_w__<mesh_t::real_t> T,
-  dense_handle_w__<mesh_t::real_t> a
+  real_t soln_time,
+  dense_handle_w__<real_t> V,
+  dense_handle_w__<real_t> M,
+  dense_handle_w__<vector_t> v,
+  dense_handle_w__<real_t> p,
+  dense_handle_w__<real_t> d,
+  dense_handle_w__<real_t> e,
+  dense_handle_w__<real_t> T,
+  dense_handle_w__<real_t> a
 ) {
-
-  using eqns_t = eqns__< mesh_t::num_dimensions >;
 
   // This doesn't work with lua input
   // #pragma omp parallel for
@@ -70,7 +95,6 @@ void initial_conditions(
 
 }
 
-#if 0
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task for setting initial conditions
@@ -78,32 +102,30 @@ void initial_conditions(
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T, typename EOS >
-int update_state_from_energy( T & mesh, const EOS * eos ) {
+void update_state_from_energy( 
+  client_handle_r__<mesh_t>  mesh,
+  eos_t eos,
+  dense_handle_r__<real_t> V,
+  dense_handle_r__<real_t> M,
+  dense_handle_r__<vector_t> v,
+  dense_handle_w__<real_t> p,
+  dense_handle_r__<real_t> d,
+  dense_handle_w__<real_t> e,
+  dense_handle_w__<real_t> T,
+  dense_handle_w__<real_t> a
+) {
 
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using eqns_t = eqns_t<T::num_dimensions>;
-  using flux_data_t = flux_data_t<T::num_dimensions>;
-
-  // get the collection accesor
-  auto cell_state = cell_state_accessor<T>( mesh );
-
-  auto cs = mesh.cells();
+  auto cs = mesh.cells( flecsi::owned );
   auto num_cells = cs.size();
-
-  // loop over materials first?
 
   #pragma omp parallel for
   for ( counter_t i=0; i<num_cells; ++i ) {
     auto c = cs[i];
-    auto u = cell_state(c);
-    eqns_t::update_state_from_energy( u, *eos );
+    auto u = pack(c, V, M, v, p, d, e, T, a);
+    eqns_t::update_state_from_energy( u, eos );
   }
 
-  return 0;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to compute the time step size
@@ -112,92 +134,55 @@ int update_state_from_energy( T & mesh, const EOS * eos ) {
 //! \param [in,out] limit_string  a string describing the limiting time step
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int evaluate_time_step( T & mesh, std::string & limit_string ) 
-{
-
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using real_t = typename T::real_t;
-  using vector_t = typename T::vector_t;
-  using eqns_t = eqns_t<T::num_dimensions>;
-  using flux_data_t = flux_data_t<T::num_dimensions>;
-
-  // access what we need
-  auto sound_speed = flecsi_get_accessor( mesh, hydro, cell_sound_speed, real_t, dense, 0 );
-
-  auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
-  auto cell_volume = mesh.cell_volumes();
-  auto cell_min_length = mesh.cell_min_lengths();
-
-  auto time_step = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
-  auto cfl = flecsi_get_accessor( mesh, hydro, cfl, time_constants_t, global, 0 );
+double evaluate_time_step(
+  client_handle_r__<mesh_t> mesh,
+  time_constants_t cfl, 
+	real_t previous_time_step,
+	dense_handle_r__<real_t> sound_speed,
+	dense_handle_r__<flux_data_t> dudt
+) {
  
- 
-  //----------------------------------------------------------------------------
   // Loop over each cell, computing the minimum time step,
   // which is also the maximum 1/dt
   real_t dt_acc_inv(0);
   real_t dt_vol_inv(0);
 
-  auto cs = mesh.cells();
+  auto cs = mesh.cells( flecsi::owned );
   auto num_cells = cs.size();
 
-  #pragma omp parallel for reduction( max : dt_acc_inv, dt_vol_inv )
   for ( counter_t i=0; i<num_cells; ++i ) {
     auto c = cs[i];
 
     // compute the inverse of the time scale
-    auto dti =  sound_speed[c] / cell_min_length[c] / cfl->accoustic;
+    auto dti =  sound_speed(c) / c->min_length();
     // check for the maximum value
     dt_acc_inv = std::max( dti, dt_acc_inv );
 
     // now check the volume change
-    auto dVdt = eqns_t::volumetric_rate_of_change( dudt[c] );
-    dti = std::abs(dVdt) / cell_volume[c] / cfl->volume;
+    auto dVdt = eqns_t::volumetric_rate_of_change( dudt(c) );
+    dti = std::abs(dVdt) / c->volume();
     // check for the maximum value
     dt_vol_inv = std::max( dti, dt_vol_inv );
 
   } // cell
-  //----------------------------------------------------------------------------
 
 
   assert( dt_acc_inv > 0 && "infinite delta t" );
   assert( dt_vol_inv > 0 && "infinite delta t" );
   
   // get the individual cfls
-  auto dt_acc = cfl->accoustic / dt_acc_inv;
-  auto dt_vol = cfl->volume / dt_vol_inv;
-  auto dt_growth = cfl->growth*(*time_step);
+  auto dt_acc = cfl.accoustic / dt_acc_inv;
+  auto dt_vol = cfl.volume / dt_vol_inv;
+  auto dt_growth = cfl.growth * previous_time_step;
 
   // find the minimum one
   auto dts = std::array<real_t,3> { dt_acc, dt_vol, dt_growth };
   auto it = std::min_element( dts.begin(), dts.end() );
 
-  switch ( std::distance( dts.begin(), it ) ) {
-  case 0:
-    limit_string = "accoustic";
-    break;
-  case 1:
-    limit_string = "volume";
-    break;
-  case 2:
-    limit_string = "growth";
-    break;
-  default:
-    limit_string = "unknown";
-    raise_runtime_error( "could not determine time step limit" );
-    break;    
-  };
-
-  // invert dt and check against growth
-  *time_step = *it;
-      
-  return 0;
+	// return the solution
+  return *it;
 
 }
-
-#endif 
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to compute nodal quantities
@@ -207,11 +192,13 @@ int evaluate_time_step( T & mesh, std::string & limit_string )
 ////////////////////////////////////////////////////////////////////////////////
 void estimate_nodal_state( 
   client_handle_r__<mesh_t>  mesh,
-  dense_handle_r__<mesh_t::vector_t> cell_vel,
-  dense_handle_w__<mesh_t::vector_t> vertex_vel
+  dense_handle_r__<vector_t> cell_vel,
+  dense_handle_w__<vector_t> vertex_vel // Hack to avoid communication
 ) {
 
-  for ( auto v : mesh.vertices( flecsi::owned ) ) {
+  using subset_t = mesh_t::subset_t;
+  for ( auto v : mesh.vertices(subset_t::overlapping) )
+  {
     vertex_vel(v) = 0.;
     const auto & cells = mesh.cells(v);
     for ( auto c : cells ) vertex_vel(v) += cell_vel(c);
@@ -228,38 +215,33 @@ void estimate_nodal_state(
 ////////////////////////////////////////////////////////////////////////////////
 void evaluate_nodal_state( 
   client_handle_r__<mesh_t>  mesh,
-  mesh_t::real_t soln_time,
-  dense_handle_w__<mesh_t::real_t> Vc,
-  dense_handle_w__<mesh_t::real_t> Mc,
-  dense_handle_w__<mesh_t::vector_t> uc,
-  dense_handle_w__<mesh_t::real_t> pc,
-  dense_handle_w__<mesh_t::real_t> dc,
-  dense_handle_w__<mesh_t::real_t> ec,
-  dense_handle_w__<mesh_t::real_t> Tc,
-  dense_handle_w__<mesh_t::real_t> ac,
-  dense_handle_w__<mesh_t::vector_t> un,
-  dense_handle_w__<mesh_t::vector_t> npc,
-  dense_handle_w__<mesh_t::vector_t> Fpc
+  real_t soln_time,
+  dense_handle_r__<real_t> Vc,
+  dense_handle_r__<real_t> Mc,
+  dense_handle_r__<vector_t> uc,
+  dense_handle_r__<real_t> pc,
+  dense_handle_r__<real_t> dc,
+  dense_handle_r__<real_t> ec,
+  dense_handle_r__<real_t> Tc,
+  dense_handle_r__<real_t> ac,
+  dense_handle_w__<vector_t> un,
+  dense_handle_w__<vector_t> npc,
+  dense_handle_w__<vector_t> Fpc
 ) {
 
-  // type aliases
-  using real_t = typename T::real_t;
-  using vector_t = typename T::vector_t;
-  using matrix_t = matrix_t< T::num_dimensions >; 
-  using flux_data_t = flux_data_t<T::num_dimensions>;
-  using eqns_t = eqns_t<T::num_dimensions>;
-
   // get the number of dimensions and create a matrix
-  constexpr auto num_dims = T::num_dimensions;
+  constexpr auto num_dims = mesh_t::num_dimensions;
 
-
+  // use a matrix type
+  using matrix_t = ristra::math::matrix<real_t, num_dims, num_dims>;
+  
+  // the subsets type
+  using subset_t = mesh_t::subset_t;
 
   //----------------------------------------------------------------------------
   // Loop over each vertex
   //----------------------------------------------------------------------------
-
-  for ( auto vt : mesh.vertices( flecsi::owned ) ) {
-#if 0
+  for ( auto vt : mesh.vertices( subset_t::overlapping ) ) {
 
     // create the final matrix the point
     matrix_t Mp(0);
@@ -280,13 +262,14 @@ void evaluate_nodal_state(
       auto cn = cnrs[j];
 
       // initialize the corner force
-      Fpc[cn] = 0;
-      npc[cn] = 0;
+      Fpc(cn) = 0;
+      npc(cn) = 0;
 
       // corner attaches to one cell and one point
       auto cl = mesh.cells(cn).front();
       // get the cell state (there is only one)
-      auto state = cell_state(cl);
+      auto state = pack(cl, Vc, Mc, uc, pc, dc, ec, Tc, ac);
+
       // the corner quantities are approximated as cell ones
       const auto & pc = eqns_t::pressure( state );
       const auto & uc = eqns_t::velocity( state );
@@ -300,25 +283,26 @@ void evaluate_nodal_state(
       for ( auto w : ws ) 
       {
         // get the first wedge normal
-        const auto & n = wedge_facet_normal[w];
-        const auto & l = wedge_facet_area[w];
+        const auto & n = w->facet_normal();
+        const auto & l = w->facet_area();
         // the final matrix
         // Mpc = zc * ( lpc^- npc^-.npc^-  + lpc^+ npc^+.npc^+ );
-        math::outer_product( n, n, Mpc[j], zc*l );
+        ristra::math::outer_product( n, n, Mpc[j], zc*l );
         // compute the pressure coefficient
-        for ( int d=0; d<T::num_dimensions; ++d ) 
-          npc[cn][d] += l * n[d];
+        for ( int d=0; d<num_dims; ++d ) 
+          npc(cn)[d] += l * n[d];
       } // wedges
 
       // add to the global matrix
       Mp += Mpc[j];
       // compute a portion of the corner force and 
       // add the pressure and velocity contributions to the system
-      ax_plus_y( Mpc[j], uc, Fpc[cn] );   
-      for ( int d=0; d<dims; ++d ) {
-        Fpc[cn][d] += pc * npc[cn][d];
-        rhs[d] += Fpc[cn][d];
+      ax_plus_y( Mpc[j], uc, Fpc(cn) );   
+      for ( int d=0; d<num_dims; ++d ) {
+        Fpc(cn)[d] += pc * npc(cn)[d];
+        rhs[d] += Fpc(cn)[d];
       }
+
     } // corner
 
     //--------------------------------------------------------------------------
@@ -336,43 +320,46 @@ void evaluate_nodal_state(
       // first check if this has a prescribed velocity.  If it does, then nothing to do
       auto vel_bc = std::find_if( 
         point_tags.begin(), point_tags.end(), 
-        [&boundary_map](const auto & id) { 
-          return boundary_map.at(id)->has_prescribed_velocity();
+        [&boundaries=globals::boundaries](const auto & id) { 
+          return boundaries.at(id)->has_prescribed_velocity();
         } );
       if ( vel_bc != point_tags.end() ) {
-        vertex_velocity[vt] = boundary_map.at(*vel_bc)->velocity( vt->coordinates(), soln_time );
+        un(vt) = 
+          globals::boundaries.at(*vel_bc)->velocity( vt->coordinates(), soln_time );
         continue;
       }
 
       // otherwise, apply the pressure conditions
-      auto bnd_wedges = filter_boundary( mesh.wedges(vt) );
-      for ( auto w : bnd_wedges ) 
+      for ( auto w : mesh.wedges(vt) ) 
       {
-        auto f = mesh.faces(w).front();
+				// skip internal wedges
+				if ( ! w->is_boundary() ) continue;
+        // for wedges attached to boundary
+				auto f = mesh.faces(w).front();
         auto c = mesh.cells(w).front();
         for ( auto tag : f->tags() ) {
-          auto b = boundary_map.at( tag );
+          auto b = globals::boundaries.at( tag );
           // PRESSURE CONDITION
           if ( b->has_prescribed_pressure() ) {
-            const auto & n = wedge_facet_normal[w];
-            const auto & l = wedge_facet_area[w];
-            const auto & x = wedge_facet_centroid[w];
+            const auto & n = w->facet_normal();
+            const auto & l = w->facet_area();
+            const auto & x = w->facet_centroid();
             auto fact = l * b->pressure( x, soln_time );
-            for ( int d=0; d<T::num_dimensions; ++d )
+            for ( int d=0; d<num_dims; ++d )
               rhs[d] -= fact * n[d];
           }
           // SYMMETRY CONDITION
           else if ( b->has_symmetry() ) {
-            const auto & n = wedge_facet_normal[w];
-            const auto & l = wedge_facet_area[w];          
+            const auto & n = w->facet_normal();
+            const auto & l = w->facet_area();
             if ( symmetry_normals.count(tag) ) {
               auto & tmp = symmetry_normals[tag];
-              for ( int d=0; d<T::num_dimensions; ++d )
+              for ( int d=0; d<num_dims; ++d )
                 tmp[d] += l * n[d];
             }
             else {
               auto & tmp = symmetry_normals[tag];
-              for ( int d=0; d<T::num_dimensions; ++d )              
+              for ( int d=0; d<num_dims; ++d )              
                 tmp[d] = l * n[d];
             }
           } // END CONDITIONS
@@ -384,12 +371,10 @@ void evaluate_nodal_state(
       //
       // no additional symmetry constraints
       if ( symmetry_normals.empty() ) {
-        vertex_velocity[vt]  = math::solve( Mp, rhs );
+        un(vt)  = ristra::math::solve( Mp, rhs );
       }
       // add symmetry constraints and grow the system
       else {
-        // how many dimensions
-        constexpr auto num_dims = T::num_dimensions;
         // how many extra constraints ( there are two wedges per face )
         auto num_symmetry = symmetry_normals.size();
         // the matrix size
@@ -398,9 +383,9 @@ void evaluate_nodal_state(
         std::vector< real_t > A( num_rows * num_rows, 0 ); // zerod
         std::vector< real_t > b( num_rows ); // zerod
         // create the views
-        auto A_view = utils::make_array_view( A, num_rows, num_rows );
-        auto M_view = utils::make_array_view( Mp.data(), num_dims, num_dims );
-        auto b_view = utils::make_array_view( b );
+        auto A_view = ristra::utils::make_array_view( A, num_rows, num_rows );
+        auto M_view = ristra::utils::make_array_view( Mp.data(), num_dims, num_dims );
+        auto b_view = ristra::utils::make_array_view( b );
         // insert the old system into the new one
         for ( int d=0; d<num_dims; ++d )
           b_view[d] = rhs[d];
@@ -423,8 +408,7 @@ void evaluate_nodal_state(
         flecsale::linalg::qr( A_view, b_view );
         // copy the results back
         for ( int d=0; d<num_dims; ++d )
-          vertex_velocity[vt][d] = b_view[d];
-
+          un(vt)[d] = b_view[d];
       } // end has symmetry
 
     } // boundary point
@@ -435,7 +419,7 @@ void evaluate_nodal_state(
     // now solve for point velocity
     else {
       
-      vertex_velocity[vt] = math::solve( Mp, rhs );
+      un(vt) = ristra::math::solve( Mp, rhs );
 
     } // internal point
 
@@ -448,24 +432,19 @@ void evaluate_nodal_state(
       auto cn = cnrs[j];
       // corner attaches to one cell and one point
       auto cl = mesh.cells(cn).front();
-
+    
       // now add the vertex component to the force
       matrix_vector( 
-        static_cast<real_t>(-1), Mpc[j], vertex_velocity[vt], 
-        static_cast<real_t>(1), Fpc[cn]
+        static_cast<real_t>(-1), Mpc[j], un(vt), 
+        static_cast<real_t>(1), Fpc(cn)
       );
 
     }
 
-#endif
-
   } // vertex
   //----------------------------------------------------------------------------
 
-
 }
-
-#if 0
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to sum the forces and comput the cell changes
@@ -473,58 +452,34 @@ void evaluate_nodal_state(
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int32_t evaluate_residual( T & mesh ) {
+void evaluate_residual( 
+  client_handle_r__<mesh_t>  mesh,
+  dense_handle_r__<vector_t> uv,
+  dense_handle_r__<vector_t> npc,
+  dense_handle_r__<vector_t> Fpc,
+  dense_handle_w__<flux_data_t> dudt // hack so no communication occurs
+)
+{
 
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using real_t = typename T::real_t;
-  using vector_t = typename T::vector_t;
-  using matrix_t = matrix_t< T::num_dimensions >; 
-  using flux_data_t = flux_data_t<T::num_dimensions>;
-  using eqns_t = eqns_t<T::num_dimensions>;
-
-  // access what we need
-  auto cell_state = cell_state_accessor<T>( mesh );
-
-  auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
-  
-  auto uv = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
-
-  auto npc = flecsi_get_accessor( mesh, hydro, corner_normal, vector_t, dense, 0 );
-  auto Fpc = flecsi_get_accessor( mesh, hydro, corner_force, vector_t, dense, 0 );
-
-  //----------------------------------------------------------------------------
   // TASK: loop over each cell and compute the residual
-  
-  // get the cells
-  auto cs = mesh.cells();
-  auto num_cells = cs.size();
 
-  #pragma omp parallel for
-  for ( counter_t i=0; i<num_cells; i++ ) {
+  for ( auto cl : mesh.cells(flecsi::owned) ) {
     
-    // get the cell_t pointer
-    auto cl = cs[i];
-
-    //--------------------------------------------------------------------------
     // Gather corner forces to compute the cell residual
 
     // local cell residual
-    dudt[cl] = 0;
+    dudt(cl) = 0;
 
     // compute subcell forces
     for ( auto cn : mesh.corners(cl) ) {
       // corner attaches to one point and zone
       auto pt = mesh.vertices(cn).front();
       // add contribution
-      eqns_t::compute_update( uv[pt], Fpc[cn], npc[cn], dudt[cl] );
+      eqns_t::compute_update( uv(pt), Fpc(cn), npc(cn), dudt(cl) );
     }// corners    
     
   } // cell
-  //----------------------------------------------------------------------------
-
-  return 0;
+    
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -533,130 +488,31 @@ int32_t evaluate_residual( T & mesh ) {
 //! \param [in,out] mesh the mesh object
 //!   \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-solution_error_t
-apply_update( T & mesh, real_t coef, real_t tolerance, bool first_time ) 
-{
+void apply_update(
+  client_handle_r__<mesh_t>  mesh,
+	real_t delta_t,
+  dense_handle_r__<flux_data_t> dudt,
+  dense_handle_w__<real_t> Vc,
+  dense_handle_r__<real_t> Mc,
+  dense_handle_w__<vector_t> uc,
+  dense_handle_r__<real_t> pc,
+  dense_handle_w__<real_t> dc,
+  dense_handle_w__<real_t> ec,
+  dense_handle_r__<real_t> Tc,
+  dense_handle_r__<real_t> ac
+) {
 
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using real_t = typename T::real_t;
-  using vector_t = typename T::vector_t;
-  using flux_data_t = flux_data_t<T::num_dimensions>;
-  using eqns_t = eqns_t<T::num_dimensions>;
-
-
-  // access what we need
-  auto cell_state = cell_state_accessor<T>( mesh );
-
-  auto dudt = flecsi_get_accessor( mesh, hydro, cell_residual, flux_data_t, dense, 0 );
-
-  auto cell_volume = mesh.cell_volumes();
-
-  // read only access
-  const auto delta_t = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
-  auto ener0 = flecsi_get_accessor( mesh, hydro, sum_total_energy, real_t, global, 0 );
-
-  // the time step factor
-  auto fact = coef * (*delta_t);
-
-  real_t mass(0);
-  vector_t mom(0);
-  real_t ener(0);
-  bool bad_cell(false);
- 
-  //----------------------------------------------------------------------------
-  // Loop over each cell, scattering the fluxes to the cell
-
-  auto cs = mesh.cells();
-  auto num_cells = cs.size();
-  
-  #pragma omp declare reduction( + : vector_t : omp_out += omp_in ) \
-    initializer (omp_priv(omp_orig))
-
-  #pragma omp parallel for reduction( + : mass, mom, ener ) \
-    reduction( || : bad_cell )
-  for ( counter_t i=0; i<num_cells; i++ ) {
-
-    // get the cell_t pointer
-    auto cl = cs[i];
- 
-    //--------------------------------------------------------------------------
-    // Using the cell residual, update the state
+  // Using the cell residual, update the state
+  for ( auto cl : mesh.cells(flecsi::owned) ) {
 
     // get the cell state
-    auto u = cell_state( cl );
+    auto u = pack(cl, Vc, Mc, uc, pc, dc, ec, Tc, ac);
 
     // apply the update
-    eqns_t::update_state_from_flux( u, dudt[cl], fact );
-    eqns_t::update_volume( u, cell_volume[cl] );
-
-    // post update sums
-    auto vel = eqns_t::velocity(u);
-    auto ie = eqns_t::internal_energy(u);
-    auto m  = eqns_t::mass(u);
-    auto rho  = eqns_t::density(u);
-    mass += m;
-    ener += m * ie;
-    for ( int d=0; d<T::num_dimensions; ++d ) {
-      auto tmp = m * vel[d];
-      mom[d] += tmp;
-      ener += 0.5 * tmp * vel[d];
-    }
-    
-    // check the solution quantities
-    if ( ie < 0 || rho < 0 || cell_volume[cl] < 0 )
-      bad_cell = true;
+    eqns_t::update_state_from_flux( u, dudt(cl), delta_t );
+    eqns_t::update_volume( u, cl->volume() );
 
   } // for
-  //----------------------------------------------------------------------------
-
-  // return unphysical if something went wrong
-  if (bad_cell) {
-    std::cout << "Negative internal energy or density encountered in a cell" 
-      << std::endl;
-    return solution_error_t::unphysical;
-  }
-
-  std::stringstream mom_ss;
-  mom_ss.setf( std::ios::scientific );
-
-  for ( const auto & mx : mom )
-    mom_ss << std::setprecision(2) << std::setw(9) << mx << " ";
-  auto mom_str = mom_ss.str();
-  mom_str.pop_back();
-
-  auto ss = cout.precision();
-  cout.setf( std::ios::scientific );
-
-  if ( first_time ) {
-    cout << std::string(60, '-') << endl;
-    cout << "| " << std::setw(10) << "Mass:"
-         << " | " << std::setw(29) << "Momentum:"
-         << " | " << std::setw(11) << "Energy:"
-         << " |" << std::endl;
-  }
-  cout << "| " << std::setprecision(3) << std::setw(10) << mass
-       << " | " << std::setw(29) << mom_str
-       << " | " << std::setprecision(4)  << std::setw(11) << ener
-       << " |" << std::endl;
-
-  cout.unsetf( std::ios::scientific );
-  cout.precision(ss);
-
-  //----------------------------------------------------------------------------
-  // check the invariants
-
-  auto err = std::abs( *ener0 - ener );
-
-  // check the difference
-  if ( err > tolerance )
-    return solution_error_t::variance;
-
-  // store the old value
-  *ener0 = ener;
-
-  return solution_error_t::ok;
 
 }
 
@@ -666,38 +522,70 @@ apply_update( T & mesh, real_t coef, real_t tolerance, bool first_time )
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int move_mesh( T & mesh, real_t coef ) {
+void move_mesh(
+	 client_handle_r__<mesh_t> mesh,
+	 dense_handle_r__<vector_t> vel,
+	 real_t delta_t
+) {
 
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using real_t = typename T::real_t;
-  using vector_t = typename T::vector_t;
+  // Update ALL vertices, including ghost so that we dont need to communicate.
+	// DEFECT we are modifying the mesh, but its read-only.
 
-  // access what we need
-  auto vel = flecsi_get_accessor( mesh, hydro, node_velocity, vector_t, dense, 0 );
+  for ( auto vt : mesh.vertices() ) {
+    for ( int d=0; d<mesh_t::num_dimensions; ++d )
+      vt->coordinates()[d] += delta_t * vel(vt)[d];
+  }
 
-  // read only access
-  const auto delta_t = flecsi_get_accessor( mesh, hydro, time_step, real_t, global, 0 );
+	// now update the geometry
+	mesh.update_geometry();
 
-  // the time step factor
-  auto fact = coef * (*delta_t);
- 
-  // Loop over each cell, scattering the fluxes to the cell
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to save the coordinates
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+void save_coordinates( 
+  client_handle_r__<mesh_t>  mesh,
+  dense_handle_r__<vector_t> coord0 // Hack to avoid communication
+)
+{
+
+  // Loop over vertices
   auto vs = mesh.vertices();
   auto num_verts = vs.size();
 
   #pragma omp parallel for
   for ( counter_t i=0; i<num_verts; i++ ) {
     auto vt = vs[i];
-    for ( int d=0; d<T::num_dimensions; ++d )
-      vt->coordinates()[d] += fact * vel[vt][d];
+    coord0(vt) = vt->coordinates();
   }
 
-  // now update the geometry
-  mesh.update_geometry();
+}
 
-  return 0;
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task to restore the coordinates
+//!
+//! \param [in,out] mesh the mesh object
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+void restore_coordinates( 
+  client_handle_r__<mesh_t>  mesh,
+  dense_handle_r__<vector_t> coord0
+)
+{
+
+  // Loop over vertices
+  auto vs = mesh.vertices();
+  auto num_verts = vs.size();
+
+  #pragma omp parallel for
+  for ( counter_t i=0; i<num_verts; i++ ) {
+    auto vt = vs[i];
+    vt->coordinates() = coord0(vt);
+  }
 
 }
 
@@ -708,82 +596,14 @@ int move_mesh( T & mesh, real_t coef ) {
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int save_coordinates( T & mesh ) {
-
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using vector_t = typename T::vector_t;
-
-  // access what we need
-  auto coord0 = flecsi_get_accessor( mesh, hydro, node_coordinates, vector_t, dense, 0 );
-
-  // Loop over vertices
-  auto vs = mesh.vertices();
-  auto num_verts = vs.size();
-
-  #pragma omp parallel for
-  for ( counter_t i=0; i<num_verts; i++ ) {
-    auto vt = vs[i];
-    coord0[vt] = vt->coordinates();
-  }
-
-  return 0;
-
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to restore the coordinates
-//!
-//! \param [in,out] mesh the mesh object
-//! \return 0 for success
-////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int restore_coordinates( T & mesh ) {
-
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using vector_t = typename T::vector_t;
-
-  // access what we need
-  auto coord0 = flecsi_get_accessor( mesh, hydro, node_coordinates, vector_t, dense, 0 );
-
-  // Loop over vertices
-  auto vs = mesh.vertices();
-  auto num_verts = vs.size();
-
-  #pragma omp parallel for
-  for ( counter_t i=0; i<num_verts; i++ ) {
-    auto vt = vs[i];
-    vt->coordinates() = coord0[vt];
-  }
-
-  return 0;
-
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to save the coordinates
-//!
-//! \param [in,out] mesh the mesh object
-//! \return 0 for success
-////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int save_solution( T & mesh ) {
-
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using real_t = typename T::real_t;
-  using vector_t = typename T::vector_t;
-
-  // access what we need
-  auto vel  = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
-  auto vel0 = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 1 );
-
-  auto ener  = flecsi_get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 0 );
-  auto ener0 = flecsi_get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 1 );
+void save_solution( 
+  client_handle_r__<mesh_t>  mesh,
+  dense_handle_r__<vector_t> cell_vel,
+	dense_handle_r__<real_t> cell_ener,
+	dense_handle_r__<vector_t> cell_vel_0, // "r" permissions hack to avoid communication
+	dense_handle_r__<real_t> cell_ener_0   // "r" permissions hack to avoid communication
+)
+{
 
   // Loop over cells
   auto cs = mesh.cells();
@@ -792,14 +612,11 @@ int save_solution( T & mesh ) {
   #pragma omp parallel for
   for ( counter_t i=0; i<num_cells; i++ ) {
     auto c = cs[i];
-    vel0[c] = vel[c];
-    ener0[c] = ener[c];
+    cell_vel_0(c) = cell_vel(c);
+    cell_ener_0(c) = cell_ener(c);
   }
 
-  return 0;
-
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to restore the coordinates
@@ -807,20 +624,14 @@ int save_solution( T & mesh ) {
 //! \param [in,out] mesh the mesh object
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-template< typename T >
-int restore_solution( T & mesh ) {
-
-  // type aliases
-  using counter_t = typename T::counter_t;
-  using real_t = typename T::real_t;
-  using vector_t = typename T::vector_t;
-
-  // access what we need
-  auto vel  = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 0 );
-  auto vel0 = flecsi_get_accessor( mesh, hydro, cell_velocity, vector_t, dense, 1 );
-
-  auto ener  = flecsi_get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 0 );
-  auto ener0 = flecsi_get_accessor( mesh, hydro, cell_internal_energy, real_t, dense, 1 );
+void restore_solution( 
+  client_handle_r__<mesh_t>  mesh,
+	dense_handle_r__<vector_t> cell_vel_0,
+  dense_handle_w__<vector_t> cell_vel,
+	dense_handle_r__<real_t> cell_ener_0,
+	dense_handle_w__<real_t> cell_ener
+)
+{
 
   // Loop over cells
   auto cs = mesh.cells();
@@ -829,15 +640,12 @@ int restore_solution( T & mesh ) {
   #pragma omp parallel for
   for ( counter_t i=0; i<num_cells; i++ ) {
     auto c = cs[i];
-    vel[c] = vel0[c];
-    ener[c] = ener0[c];
+    cell_vel(c) = cell_vel_0(c);
+    cell_ener(c) = cell_ener_0(c);
   }
-
-  return 0;
 
 }
 
-#endif
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -845,13 +653,16 @@ int restore_solution( T & mesh ) {
 ////////////////////////////////////////////////////////////////////////////////
 void output( 
   client_handle_r__<mesh_t> mesh, 
-  char_array_t filename,
-  dense_handle_r__<mesh_t::real_t> d,
-  dense_handle_r__<mesh_t::vector_t> v,
-  dense_handle_r__<mesh_t::real_t> e,
-  dense_handle_r__<mesh_t::real_t> p,
-  dense_handle_r__<mesh_t::real_t> T,
-  dense_handle_r__<mesh_t::real_t> a
+  char_array_t prefix,
+	char_array_t postfix,
+	size_t iteration,
+	real_t time,
+  dense_handle_r__<real_t> d,
+  dense_handle_r__<vector_t> v,
+  dense_handle_r__<real_t> e,
+  dense_handle_r__<real_t> p,
+  dense_handle_r__<real_t> T,
+  dense_handle_r__<real_t> a
 ) {
   clog(info) << "OUTPUT MESH TASK" << std::endl;
  
@@ -860,14 +671,13 @@ void output(
   auto rank = context.color();
 
   // figure out this ranks file name
-  auto name_and_ext = utils::split_extension( filename.str() );
   auto output_filename = 
-    name_and_ext.first + "_rank" + apps::common::zero_padded(rank) +
-    "." + name_and_ext.second;
+    prefix.str() + "_rank" + apps::common::zero_padded(rank) +
+    "_" + apps::common::zero_padded(iteration) + "." + postfix.str();
 
   // now outut the mesh
   flecsale::io::io_exodus__<mesh_t>::write(
-    output_filename, mesh, &d //, v, e, p, T, a
+    output_filename, mesh, iteration, time, &d //, v, e, p, T, a
   );
 }
 
@@ -886,7 +696,7 @@ void print(
   clog(info) << "PRINT MESH ON RANK " << rank << std::endl;
  
   // figure out this ranks file name
-  auto name_and_ext = utils::split_extension( filename.str() );
+  auto name_and_ext = ristra::utils::split_extension( filename.str() );
   auto output_filename = 
     name_and_ext.first + "_rank" + apps::common::zero_padded(rank) +
     "." + name_and_ext.second;
@@ -906,11 +716,21 @@ void print(
 // TASK REGISTRATION
 ////////////////////////////////////////////////////////////////////////////////
 
-flecsi_register_task(initial_conditions, loc, single);
-flecsi_register_task(estimate_nodal_state, loc, single);
-flecsi_register_task(evaluate_nodal_state, loc, single);
-flecsi_register_task(output, loc, single);
-flecsi_register_task(print, loc, single);
+flecsi_register_task(initial_conditions, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(install_boundary, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(estimate_nodal_state, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(evaluate_nodal_state, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(evaluate_residual, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(evaluate_time_step, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(move_mesh, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(apply_update, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(update_state_from_energy, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(save_coordinates, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(restore_coordinates, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(save_solution, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(restore_solution, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(output, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(print, apps::hydro, loc, single|flecsi::leaf);
 
 } // namespace hydro
 } // namespace apps

@@ -24,7 +24,7 @@ namespace hydro {
 ///////////////////////////////////////////////////////////////////////////////
 class inputs_t {
 public:
-  
+
   //! the size type
   using size_t = mesh_t::size_t;
   //! the real type
@@ -48,9 +48,6 @@ public:
   using ics_function_t = 
     std::function< ics_return_t(const vector_t & x, const real_t & t) >;
   //! \}
-
-  //! the mesh function type
-  using mesh_function_t = std::function< mesh_t(const real_t & t) >;
 
   //! \brief the case prefix and postfix
   //! \{

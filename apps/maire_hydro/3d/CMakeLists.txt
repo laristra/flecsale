@@ -5,45 +5,32 @@
 
 add_executable( maire_hydro_3d
   $<TARGET_OBJECTS:apps_common> 
-  inputs.cc
   driver.cc
-  ${FleCSI_RUNTIME_DRIVER}
-  ${FleCSI_RUNTIME_MAIN}
+  inputs.cc
+  ${FLECSI_SP_BURTON_SPECIALIZATION_INIT}
+  ${FLECSALE_RUNTIME_DRIVER}
+  ${FLECSALE_RUNTIME_MAIN}
 )
-target_link_libraries( maire_hydro_3d flecsale )
+target_link_libraries( maire_hydro_3d FleCSALE )
+target_compile_definitions( 
+  maire_hydro_3d
+  PRIVATE
+    FLECSI_SP_BURTON_MESH_DIMENSION=3
+    FLECSI_SP_BURTON_MESH_EXTRAS
+    FLECSI_ENABLE_SPECIALIZATION_TLT_INIT
+    FLECSI_ENABLE_SPECIALIZATION_SPMD_INIT
+)
 
-if (LUA_FOUND) 
+add_test( 
+  NAME flecsale_sedov_3d_1procs
+  COMMAND mpirun -n 1 $<TARGET_FILE:maire_hydro_3d> -m ${FLECSALE_DATA_DIR}/meshes/sedov_32x32.g
+  #COMPARE shock_box_2d0000007.dat 
+  #STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d0000007.dat.std 
+)
 
-  create_regression_test( 
-    NAME sedov_maire_3d
-    COMMAND $<TARGET_FILE:maire_hydro_3d> -f ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d.lua
-    COMPARE sedov_3d0000010.dat 
-    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d0000010.dat.std 
-  )
-  
-  create_regression_test( 
-    NAME sedov_maire_3d_omp4
-    COMMAND $<TARGET_FILE:maire_hydro_3d> -f ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d.lua
-    THREADS 4
-    COMPARE sedov_3d0000010.dat 
-    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d0000010.dat.std 
-  )
-
-else()
-
-  create_regression_test( 
-    NAME sedov_maire_3d
-    COMMAND $<TARGET_FILE:maire_hydro_3d> 
-    COMPARE sedov_3d0000010.dat 
-    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d0000010.dat.std 
-  )
-  
-  create_regression_test( 
-    NAME sedov_maire_3d_omp4
-    COMMAND $<TARGET_FILE:maire_hydro_3d> 
-    THREADS 4
-    COMPARE sedov_3d0000010.dat 
-    STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/sedov_3d0000010.dat.std 
-  )
-
-endif()
+add_test( 
+  NAME flecsale_sedov_3d_2procs
+  COMMAND mpirun -n 2 $<TARGET_FILE:maire_hydro_3d> -m ${FLECSALE_DATA_DIR}/meshes/sedov_32x32.g
+  #COMPARE shock_box_2d0000007.dat 
+  #STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d0000007.dat.std 
+)

@@ -20,6 +20,8 @@
 #include <flecsi-sp/utils/types.h>
 #include <flecsi-sp/burton/burton_mesh.h>
 
+#include <flecsi/data/global_accessor.h>
+
 #include "../common/utils.h"
 
 namespace apps {
@@ -28,6 +30,7 @@ namespace hydro {
 // mesh and some underlying data types
 using mesh_t = flecsi_sp::burton::burton_mesh_t;
 using real_t = mesh_t::real_t;
+using vector_t = mesh_t::vector_t;
 using counter_t = mesh_t::counter_t;
 
 using eos_t = flecsale::eos::ideal_gas_t<real_t>;
@@ -53,11 +56,27 @@ using dense_handle_rw__ = flecsi_sp::utils::dense_handle_rw__<T>;
 template<typename T>
 using dense_handle_r__ = flecsi_sp::utils::dense_handle_r__<T>;
 
+template<typename T>
+using global_handle_w__ = flecsi::global_accessor__<T, flecsi::wo>;
+
+template<typename T>
+using global_handle_rw__ = flecsi::global_accessor__<T, flecsi::rw>;
+
+template<typename T>
+using global_handle_r__ = flecsi::global_accessor__<T, flecsi::ro>;
+
 template<typename DC>
 using client_handle_w__ = flecsi_sp::utils::client_handle_w__<DC>;
 
 template<typename DC>
 using client_handle_r__ = flecsi_sp::utils::client_handle_r__<DC>;
+
+template<typename T>
+using future_handle__ =
+  flecsi::execution::flecsi_future<
+    T, flecsi::execution::launch_type_t::single
+  >;
+
 
 //! \brief a class to distinguish between different types of 
 //!   update errors.

@@ -13,7 +13,6 @@
 #include "types.h"
 
 // user includes
-//#include <flecsale/mesh/mesh_utils.h>
 #include <ristra/utils/time_utils.h>
 #include <ristra/io/catalyst/adaptor.h>
 
@@ -178,14 +177,24 @@ int driver(int argc, char** argv)
   //===========================================================================
   // Pre-processing
   //===========================================================================
+  
+  auto prefix_char = flecsi_sp::utils::to_char_array( inputs_t::prefix );
+ 	auto postfix_char =  flecsi_sp::utils::to_char_array( "exo" );
 
   // now output the solution
   auto has_output = (inputs_t::output_freq > 0);
   if (has_output) {
-    auto name = inputs_t::prefix + "_" + apps::common::zero_padded( 0 ) + ".exo";
-    auto name_char = flecsi_sp::utils::to_char_array( name );
-    flecsi_execute_task(output, apps::hydro, single, mesh, name_char,
-        d, v, e, p, T, a);
+    flecsi_execute_task(
+      output,
+ 			apps::hydro,
+ 			single,
+ 			mesh,
+ 			prefix_char,
+ 			postfix_char,
+			time_cnt,
+      soln_time,
+ 			d, v, e, p, T, a
+    );
   }
 
 
@@ -200,9 +209,6 @@ int driver(int argc, char** argv)
   //===========================================================================
   // Residual Evaluation
   //===========================================================================
-
-  auto & min_reduction = 
-    flecsi::execution::context_t::instance().min_reduction();
 
   for ( 
     size_t num_steps = 0;
@@ -235,12 +241,6 @@ int driver(int argc, char** argv)
       apply_update, apps::hydro, single, mesh, inputs_t::eos,
       time_step, F, d, v, e, p, T, a
     );
-    // Be triply-sure that timing doesn't start until everyone is timestepping
-    if (num_steps == 0) {
-      f.wait();
-      tstart = ristra::utils::get_wall_time();
-    }
-
 
     //-------------------------------------------------------------------------
     // Post-process
@@ -281,11 +281,17 @@ int driver(int argc, char** argv)
         )  
       ) 
     {
-      auto name = inputs_t::prefix + "_" +
-        apps::common::zero_padded( time_cnt ) + ".exo";
-      auto name_char = flecsi_sp::utils::to_char_array( name );
-      flecsi_execute_task(output, apps::hydro, single, mesh,
-          name_char, d, v, e, p, T, a);
+      flecsi_execute_task(
+        output,
+	 			apps::hydro,
+ 				single,
+ 				mesh,
+	 			prefix_char,
+ 				postfix_char,
+ 				time_cnt,
+        soln_time,
+ 				d, v, e, p, T, a
+      );
     }
 
 

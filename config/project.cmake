@@ -379,7 +379,7 @@ include_directories(${CMAKE_BINARY_DIR})
 #------------------------------------------------------------------------------#
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-cinch_add_library_target(FleCSALE flecsale)
+cinch_add_library_target(FleCSALE flecsale EXPORT_TARGET FleCSALETargets)
 cinch_target_link_libraries( FleCSALE ${FLECSALE_LIBRARIES} )
 
 #------------------------------------------------------------------------------#
