@@ -55,6 +55,20 @@ void install_boundary(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief Check if the mesh is correct
+//!
+//! \param [in] mesh the mesh object
+////////////////////////////////////////////////////////////////////////////////
+void validate_mesh( 
+  client_handle_r__<mesh_t> mesh
+) {
+  
+  mesh.is_valid();
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task for setting initial conditions
 //!
 //! \param [in,out] mesh the mesh object
@@ -110,7 +124,7 @@ void update_state_from_energy(
   dense_handle_r__<vector_t> v,
   dense_handle_w__<real_t> p,
   dense_handle_r__<real_t> d,
-  dense_handle_w__<real_t> e,
+  dense_handle_r__<real_t> e,
   dense_handle_w__<real_t> T,
   dense_handle_w__<real_t> a
 ) {
@@ -716,6 +730,7 @@ void print(
 // TASK REGISTRATION
 ////////////////////////////////////////////////////////////////////////////////
 
+flecsi_register_task(validate_mesh, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(initial_conditions, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(install_boundary, apps::hydro, loc, single|flecsi::leaf);
 flecsi_register_task(estimate_nodal_state, apps::hydro, loc, single|flecsi::leaf);
