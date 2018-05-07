@@ -52,17 +52,21 @@ set( FLECSALE_TOOL_DIR "${PROJECT_SOURCE_DIR}/tools" CACHE INTERNAL "")
 # Ristra libraries come first in case any options depened on what we found.
 #------------------------------------------------------------------------------#
 
-file(GLOB _flecsi_contents ${CMAKE_SOURCE_DIR}/flecsi/*)
+set( FLECSI_SUBMODULE_DIR ${CMAKE_SOURCE_DIR}/flecsi )
+file(GLOB _flecsi_contents ${FLECSI_SUBMODULE_DIR}/*)
 
 if ( _flecsi_contents )
   if ( CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME )
-    add_subdirectory( ${CMAKE_SOURCE_DIR}/flecsi )
+    add_subdirectory( ${FLECSI_SUBMODULE_DIR} )
   endif()
-  include_directories( ${CMAKE_SOURCE_DIR}/flecsi )
+  include_directories( ${FLECSI_SUBMODULE_DIR} )
   list(APPEND FLECSALE_LIBRARIES FleCSI)
   set(_runtime_path ${FleCSI_SOURCE_DIR}/flecsi/execution/${FLECSI_RUNTIME_MODEL})
   set(FLECSALE_RUNTIME_DRIVER ${_runtime_path}/runtime_driver.cc)
   set(FLECSALE_RUNTIME_MAIN   ${_runtime_path}/runtime_main.cc)
+  get_property(_include_dirs DIRECTORY ${FLECSI_SUBMODULE_DIR}
+    PROPERTY INCLUDE_DIRECTORIES)
+  include_directories( ${_include_dirs} )
 else()
   find_package(FleCSI CONFIG REQUIRED)
   include_directories(${FleCSI_INCLUDE_DIRS})
@@ -88,14 +92,18 @@ endif()
 # Ristra Library
 #------------------------------------------------------------------------------#
 
-file(GLOB _ristra_contents ${CMAKE_SOURCE_DIR}/ristra/*)
+set( RISTRA_SUBMODULE_DIR ${CMAKE_SOURCE_DIR}/ristra )
+file(GLOB _ristra_contents ${RISTRA_SUBMODULE_DIR}/*)
 
 if (_ristra_contents )
   if ( CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME )
-    add_subdirectory( ${CMAKE_SOURCE_DIR}/ristra )
+    add_subdirectory( ${RISTRA_SUBMODULE_DIR} )
   endif()
-  include_directories( ${CMAKE_SOURCE_DIR}/ristra )
+  include_directories( ${RISTRA_SUBMODULE_DIR} )
   list(APPEND FLECSALE_LIBRARIES Ristra)
+  get_property(_include_dirs DIRECTORY ${RISTRA_SUBMODULE_DIR}
+    PROPERTY INCLUDE_DIRECTORIES)
+  include_directories( ${_include_dirs} )
 else()
   find_package(Ristra CONFIG REQUIRED)
   include_directories(${RISTRA_INCLUDE_DIRS})

@@ -182,7 +182,14 @@ int driver(int argc, char** argv)
   // get the client handle 
   auto mesh = flecsi_get_client_handle(mesh_t, meshes, mesh0);
  
-  // cout << mesh;
+  // check the mesh
+  flecsi_execute_task( 
+    validate_mesh, 
+    apps::hydro,
+    single, 
+    mesh
+  );
+
   
   //===========================================================================
   // Some typedefs
