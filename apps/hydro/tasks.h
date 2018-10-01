@@ -105,7 +105,7 @@ real_t evaluate_time_step(
 
   // access the computed time step and make sure its not too large
   time_step = std::min( time_step, max_dt );
-  
+
   return time_step;
 }
 
