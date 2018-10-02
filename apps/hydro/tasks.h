@@ -273,9 +273,9 @@ void output(
     "." + apps::common::zero_padded(iteration) + "." + postfix.str();
 
   // now outut the mesh
-//  flecsale::io::io_exodus__<mesh_t>::write(
-//    output_filename, mesh, iteration, time, &d //, v, e, p, T, a
-//  );
+  flecsale::io::io_exodus__<mesh_t>::write(
+    output_filename, mesh, iteration, time, &d //, v, e, p, T, a
+  );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
