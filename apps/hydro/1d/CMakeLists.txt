@@ -22,14 +22,14 @@ target_compile_definitions(
 
 add_test( 
   NAME flecsale_shock_box_1d_1procs
-  COMMAND mpirun -n 1 $<TARGET_FILE:hydro_1d> -m not_used
+  COMMAND mpirun -n 1 $<TARGET_FILE:hydro_1d> -m ${FLECSALE_DATA_DIR}/meshes/uniform_32.exo
   #COMPARE shock_box_1d0000007.dat 
   #STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_1d0000007.dat.std 
 )
 
 add_test( 
   NAME flecsale_shock_box_1d_2procs
-  COMMAND mpirun -n 2 $<TARGET_FILE:hydro_1d> -m not_used
+  COMMAND mpirun -n 2 $<TARGET_FILE:hydro_1d> -m ${FLECSALE_DATA_DIR}/meshes/uniform_32.exo
   #COMPARE shock_box_1d0000007.dat 
   #STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_1d0000007.dat.std 
 )
