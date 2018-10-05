@@ -47,7 +47,7 @@ inputs_t::ics_function_t inputs_t::ics =
   {
     real_t d, p;
     vector_t v(0);
-    if ( x[0] < 0 ) {
+    if ( x[0] < 0.5 ) {
       d = 0.125;
       p = 0.1;
     }
