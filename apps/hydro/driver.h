@@ -233,8 +233,9 @@ int driver(int argc, char** argv)
         d, v, e, p, T, a, F );
  
     // now we need it
-    auto time_step =
+    auto global_future_time_step =
       flecsi::execution::context_t::instance().reduce_min(local_future_time_step);
+    auto time_step = global_future_time_step.get();
 
     // Loop over each cell, scattering the fluxes to the cell
     flecsi_execute_task( 
