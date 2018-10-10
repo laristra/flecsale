@@ -415,7 +415,7 @@ public:
     // Face connectivity
     //--------------------------------------------------------------------------
 
-    if ( num_dims == 2 ) {
+    if ( num_dims < 3 ) {
 
       // get the master entity lists
       const auto & cs = m.cells();
