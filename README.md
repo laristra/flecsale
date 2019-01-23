@@ -1,5 +1,4 @@
 [![Build Status](https://travis-ci.com/laristra/flecsale.svg?branch=stable)](https://travis-ci.com/laristra/flecsale)
-[![codecov.io](https://codecov.io/github/laristra/flecsale/coverage.svg?branch=stable)](https://codecov.io/github/laristra/flecsale?branch=stable)
 
 # FleCSALE
 
