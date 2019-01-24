@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/laristra/flecsale.svg?branch=stable)](https://travis-ci.com/laristra/flecsale)
+
 # FleCSALE
 
 FleCSALE is a computer software package developed for studying problems that
