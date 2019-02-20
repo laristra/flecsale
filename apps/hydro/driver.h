@@ -13,6 +13,7 @@
 #include "types.h"
 
 // user includes
+#include <flecsi/execution/reduction.h>
 #include <ristra/utils/time_utils.h>
 #include <ristra/io/catalyst/adaptor.h>
 
@@ -161,7 +162,7 @@ int driver(int argc, char** argv)
   flecsi_execute_task( 
     initial_conditions, 
     apps::hydro,
-    single, 
+    index, 
     mesh, 
     inputs_t::ics,
     inputs_t::eos,
@@ -187,7 +188,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task(
       output,
  			apps::hydro,
- 			single,
+ 			index,
  			mesh,
  			prefix_char,
  			postfix_char,
@@ -200,7 +201,7 @@ int driver(int argc, char** argv)
 
   // dump connectivity
   auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+".txt" );
-  auto f = flecsi_execute_task(print, apps::hydro, single, mesh, name);
+  auto f = flecsi_execute_task(print, apps::hydro, index, mesh, name);
   f.wait();
 
   // start a clock
@@ -220,26 +221,23 @@ int driver(int argc, char** argv)
     // compute the time step
 
     // we dont need the time step yet
-    auto local_future_time_step = flecsi_execute_task( 
-      evaluate_time_step, apps::hydro, single, mesh, d, v, e, p, T, a,
-      inputs_t::CFL, inputs_t::final_time - soln_time
+    auto global_future_time_step = flecsi_execute_reduction_task(
+      evaluate_time_step, apps::hydro, index, min, double, mesh, d, v, e, p, T,
+			a, inputs_t::CFL, inputs_t::final_time - soln_time
     );
 
     //-------------------------------------------------------------------------
     // try a timestep
 
     // compute the fluxes
-    flecsi_execute_task( evaluate_fluxes, apps::hydro, single, mesh,
+    flecsi_execute_task( evaluate_fluxes, apps::hydro, index, mesh,
         d, v, e, p, T, a, F );
  
-    // now we need it
-    auto global_future_time_step =
-      flecsi::execution::context_t::instance().reduce_min(local_future_time_step);
     auto time_step = global_future_time_step.get();
 
     // Loop over each cell, scattering the fluxes to the cell
     flecsi_execute_task( 
-      apply_update, apps::hydro, single, mesh, inputs_t::eos,
+      apply_update, apps::hydro, index, mesh, inputs_t::eos,
       time_step, F, d, v, e, p, T, a
     );
 
@@ -285,7 +283,7 @@ int driver(int argc, char** argv)
       flecsi_execute_task(
         output,
 	 			apps::hydro,
- 				single,
+ 				index,
  				mesh,
 	 			prefix_char,
  				postfix_char,

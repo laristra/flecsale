@@ -162,6 +162,7 @@ endif()
 #------------------------------------------------------------------------------#
 
 # find python for running regression tests
+set(PythonInterp_FIND_VERSION TRUE) # unknown hack to search for versions
 find_package (PythonInterp QUIET)
 if (PYTHONINTERP_FOUND)
   cmake_dependent_option( 

@@ -730,22 +730,22 @@ void print(
 // TASK REGISTRATION
 ////////////////////////////////////////////////////////////////////////////////
 
-flecsi_register_task(validate_mesh, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(initial_conditions, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(install_boundary, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(estimate_nodal_state, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(evaluate_nodal_state, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(evaluate_residual, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(evaluate_time_step, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(move_mesh, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(apply_update, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(update_state_from_energy, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(save_coordinates, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(restore_coordinates, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(save_solution, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(restore_solution, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(output, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(print, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(validate_mesh, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(initial_conditions, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(install_boundary, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(estimate_nodal_state, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(evaluate_nodal_state, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(evaluate_residual, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(evaluate_time_step, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(move_mesh, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(apply_update, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(update_state_from_energy, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(save_coordinates, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(restore_coordinates, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(save_solution, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(restore_solution, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(output, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(print, apps::hydro, loc, index|flecsi::leaf);
 
 } // namespace hydro
 } // namespace apps
