@@ -13,6 +13,7 @@
 #include "types.h"
 
 // user includes
+#include <flecsi/execution/reduction.h>
 #include <ristra/utils/time_utils.h>
 
 
@@ -186,7 +187,7 @@ int driver(int argc, char** argv)
   flecsi_execute_task( 
     validate_mesh, 
     apps::hydro,
-    single, 
+    index, 
     mesh
   );
 
@@ -248,7 +249,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task(
         install_boundary,
         apps::hydro,
-        single,
+        index,
         mesh,
         soln_time,
         bc_key++,
@@ -265,7 +266,7 @@ int driver(int argc, char** argv)
   flecsi_execute_task( 
     initial_conditions, 
     apps::hydro,
-    single, 
+    index, 
     mesh, 
     inputs_t::ics,
     inputs_t::eos,
@@ -287,7 +288,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task(
       output,
  			apps::hydro,
- 			single,
+ 			index,
  			mesh,
  			prefix_char,
  			postfix_char,
@@ -301,7 +302,7 @@ int driver(int argc, char** argv)
 
   // dump connectivity
   auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+".txt" );
-  auto f = flecsi_execute_task(print, apps::hydro, single, mesh, name);
+  auto f = flecsi_execute_task(print, apps::hydro, index, mesh, name);
   f.wait();
 
   // start a clock
@@ -325,8 +326,8 @@ int driver(int argc, char** argv)
     //--------------------------------------------------------------------------
 
     // Save solution at n=0
-    flecsi_execute_task( save_coordinates, apps::hydro, single, mesh, xn );
-    flecsi_execute_task( save_solution, apps::hydro, single, mesh, uc, ec, uc0, ec0 );
+    flecsi_execute_task( save_coordinates, apps::hydro, index, mesh, xn );
+    flecsi_execute_task( save_solution, apps::hydro, index, mesh, uc, ec, uc0, ec0 );
 
 
     //--------------------------------------------------------------------------
@@ -337,7 +338,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task(
 			 estimate_nodal_state,
 			 apps::hydro,
-       single,
+       index,
 			 mesh, uc, un
 		);
 
@@ -345,7 +346,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task( 
       evaluate_nodal_state,
       apps::hydro,
-      single,
+      index,
       mesh,
       soln_time,
       Vc, Mc, uc, pc, dc, ec, Tc, ac,
@@ -356,7 +357,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task(
 			 evaluate_residual,
 		 	 apps::hydro,
-			 single,
+			 index,
 			 mesh,
 			 un, npc, Fpc, dUdt
      );
@@ -366,19 +367,15 @@ int driver(int argc, char** argv)
     //--------------------------------------------------------------------------
 
     // compute the time step
-    auto local_time_step_future = flecsi_execute_task(
-			evaluate_time_step,
-	 		apps::hydro,
-	 		single,
-			mesh,
-			inputs_t::CFL,
-			time_step,
-			ac, dUdt
- 		);
-    
+    auto global_future_time_step = flecsi_execute_reduction_task(
+      evaluate_time_step, apps::hydro, index, min, double, mesh,
+      inputs_t::CFL,
+      time_step,
+      ac, dUdt
+    );
+ 
     // now we need it
-    time_step =
-      flecsi::execution::context_t::instance().reduce_min(local_time_step_future);
+		time_step = global_future_time_step.get();
     time_step = std::min( time_step, inputs_t::final_time - soln_time );       
 
 		if ( rank == 0 ) {
@@ -409,7 +406,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task(
 			 move_mesh, 
  			 apps::hydro,
-       single,
+       index,
 			 mesh, 
 			 un,
 			 0.5*time_step
@@ -419,7 +416,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task(
 			 apply_update, 
  			 apps::hydro,
-       single,
+       index,
 			 mesh, 
 			 0.5*time_step,
 			 dUdt,
@@ -430,7 +427,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task( 
       update_state_from_energy,
 			apps::hydro,
-			single,
+			index,
 			mesh,
 			inputs_t::eos,
 			Vc, Mc, uc, pc, dc, ec, Tc, ac 
@@ -444,7 +441,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task( 
       evaluate_nodal_state,
       apps::hydro,
-      single,
+      index,
       mesh,
       soln_time,
       Vc, Mc, uc, pc, dc, ec, Tc, ac,
@@ -455,7 +452,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task(
 			 evaluate_residual,
 		 	 apps::hydro,
-			 single,
+			 index,
 			 mesh,
 			 un, npc, Fpc, dUdt
      );
@@ -468,7 +465,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task(
 			restore_coordinates,
  			apps::hydro,
- 			single,
+ 			index,
  			mesh,
 			xn
  		);
@@ -476,7 +473,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task(
 	 		restore_solution,
  			apps::hydro,
- 			single,
+ 			index,
  			mesh,
  			uc0, uc, ec0, ec
  		);
@@ -488,7 +485,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task(
 			 move_mesh, 
  			 apps::hydro,
-       single,
+       index,
 			 mesh, 
 			 un,
 			 time_step
@@ -498,7 +495,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task(
 			 apply_update, 
  			 apps::hydro,
-       single,
+       index,
 			 mesh, 
 			 time_step,
 			 dUdt,
@@ -509,7 +506,7 @@ int driver(int argc, char** argv)
     flecsi_execute_task( 
       update_state_from_energy,
 			apps::hydro,
-			single,
+			index,
 			mesh,
 			inputs_t::eos,
 			Vc, Mc, uc, pc, dc, ec, Tc, ac 
@@ -535,7 +532,7 @@ int driver(int argc, char** argv)
       flecsi_execute_task(
         output,
 	 			apps::hydro,
- 				single,
+ 				index,
  				mesh,
 	 			prefix_char,
  				postfix_char,
