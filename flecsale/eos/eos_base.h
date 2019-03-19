@@ -33,6 +33,13 @@ public:
 
   // \brief the real type
   using real_t = T;
+    
+  //============================================================================
+  // Constructor / Destructors
+  //============================================================================
+
+  //! \brief virtual destructor is needed
+  virtual ~eos_base_t() {}
 
 #if 0
 

@@ -163,18 +163,6 @@ void evaluate_fluxes(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//! \brief Perform a reduction to get the time step
-////////////////////////////////////////////////////////////////////////////////
-void gather_time_step(
-  future_handle__<real_t> local_time_step,
-  global_handle_w__<real_t> time_step
-) {
-
-  auto dt = flecsi::execution::context_t::instance().reduce_min(local_time_step);
-  time_step = 0.;
-}
-
-////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to update the solution in each cell.
 //!
 //! \param [in,out] mesh the mesh object
@@ -313,13 +301,12 @@ void print(
 // TASK REGISTRATION
 ////////////////////////////////////////////////////////////////////////////////
 
-flecsi_register_task(initial_conditions, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(evaluate_time_step, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(gather_time_step, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(evaluate_fluxes, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(apply_update, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(output, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(print, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(initial_conditions, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(evaluate_time_step, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(evaluate_fluxes, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(apply_update, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(output, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(print, apps::hydro, loc, index|flecsi::leaf);
 
 } // namespace hydro
 } // namespace apps
