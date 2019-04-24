@@ -48,31 +48,31 @@ using std::endl;
 
 // the access permission types
 template<typename T>
-using dense_handle_w__ = flecsi_sp::utils::dense_handle_w__<T>;
+using dense_handle_w = flecsi_sp::utils::dense_handle_w<T>;
 
 template<typename T>
-using dense_handle_rw__ = flecsi_sp::utils::dense_handle_rw__<T>;
+using dense_handle_rw = flecsi_sp::utils::dense_handle_rw<T>;
 
 template<typename T>
-using dense_handle_r__ = flecsi_sp::utils::dense_handle_r__<T>;
+using dense_handle_r = flecsi_sp::utils::dense_handle_r<T>;
 
 template<typename T>
-using global_handle_w__ = flecsi::global_accessor_u<T, flecsi::wo>;
+using global_handle_w = flecsi::global_accessor_u<T, flecsi::wo>;
 
 template<typename T>
-using global_handle_rw__ = flecsi::global_accessor_u<T, flecsi::rw>;
+using global_handle_rw = flecsi::global_accessor_u<T, flecsi::rw>;
 
 template<typename T>
-using global_handle_r__ = flecsi::global_accessor_u<T, flecsi::ro>;
+using global_handle_r = flecsi::global_accessor_u<T, flecsi::ro>;
 
 template<typename DC>
-using client_handle_w__ = flecsi_sp::utils::client_handle_w__<DC>;
+using client_handle_w = flecsi_sp::utils::client_handle_w<DC>;
 
 template<typename DC>
-using client_handle_r__ = flecsi_sp::utils::client_handle_r__<DC>;
+using client_handle_r = flecsi_sp::utils::client_handle_r<DC>;
 
 template<typename T>
-using future_handle__ =
+using future_handle =
   flecsi::execution::flecsi_future<
     T, flecsi::execution::launch_type_t::index
   >;

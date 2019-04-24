@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 # Set the minimum Cinch version
-cinch_minimum_required(2.0)
+cinch_minimum_required(VERSION v1.0)
 
 # Set the project name
 project(FleCSALE)
@@ -32,7 +32,7 @@ endif()
 # Changes the Cinch defaults
 option(ENABLE_BOOST_PREPROCESSOR "Enable Boost.Preprocessor" ON)
 option(
-  ENABLE_BOOST_PROGRAM_OPTIONS
+  ENABLE_BOOST
   "Enable Boost program options for command-line flags"
   ON
 )
@@ -320,7 +320,7 @@ endif()
 # Boost - Right now, only used by portage
 #------------------------------------------------------------------------------#
 
-if (ENABLE_BOOST_PROGRAM_OPTIONS)
+if (ENABLE_BOOST)
   find_package(Boost COMPONENTS program_options REQUIRED)
 else()
   find_package(Boost QUIET)
@@ -331,7 +331,7 @@ if(Boost_FOUND)
   include_directories( ${Boost_INCLUDE_DIRS} )
 endif()
 
-if (ENABLE_BOOST_PROGRAM_OPTIONS)
+if (ENABLE_BOOST)
   list(APPEND FLECSALE_LIBRARIES ${Boost_LIBRARIES} )
 endif()
 
@@ -347,8 +347,9 @@ if(FLECSALE_ENABLE_PORTAGE)
   if(NOT Boost_FOUND)
     message( FATAL_ERROR "Boost is needed for Portage" )
   endif()
-  include_directories(${PORTAGE_INCLUDE_DIR})
-  list( APPEND FLECSALE_LIBRARIES ${PORTAGE_LIBRARY} )
+  message( STATUS "Portage location: ${PORTAGE_INCLUDE_DIRS}" )
+  include_directories(${PORTAGE_INCLUDE_DIRS})
+  list( APPEND FLECSALE_LIBRARIES ${PORTAGE_LIBRARIES} )
 endif()
 
 #------------------------------------------------------------------------------#

@@ -32,16 +32,16 @@ namespace hydro {
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void initial_conditions( 
-  client_handle_r__<mesh_t>  mesh,
+  client_handle_r<mesh_t>  mesh,
   inputs_t::ics_function_t ics, 
   eos_t eos,
   real_t soln_time,
-  dense_handle_w__<real_t> d,
-  dense_handle_w__<vector_t> v,
-  dense_handle_w__<real_t> e,
-  dense_handle_w__<real_t> p,
-  dense_handle_w__<real_t> T,
-  dense_handle_w__<real_t> a
+  dense_handle_w<real_t> d,
+  dense_handle_w<vector_t> v,
+  dense_handle_w<real_t> e,
+  dense_handle_w<real_t> p,
+  dense_handle_w<real_t> T,
+  dense_handle_w<real_t> a
 ) {
 
   // This doesn't work with lua input
@@ -65,13 +65,13 @@ void initial_conditions(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 real_t evaluate_time_step(
-  client_handle_r__<mesh_t> mesh,
-  dense_handle_r__<real_t> d,
-  dense_handle_r__<vector_t> v,
-  dense_handle_r__<real_t> e,
-  dense_handle_r__<real_t> p,
-  dense_handle_r__<real_t> T,
-  dense_handle_r__<real_t> a,
+  client_handle_r<mesh_t> mesh,
+  dense_handle_r<real_t> d,
+  dense_handle_r<vector_t> v,
+  dense_handle_r<real_t> e,
+  dense_handle_r<real_t> p,
+  dense_handle_r<real_t> T,
+  dense_handle_r<real_t> a,
   real_t CFL,
   real_t max_dt
 ) {
@@ -116,14 +116,14 @@ real_t evaluate_time_step(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void evaluate_fluxes( 
-  client_handle_r__<mesh_t> mesh,
-  dense_handle_r__<real_t> d,
-  dense_handle_r__<vector_t> v,
-  dense_handle_r__<real_t> e,
-  dense_handle_r__<real_t> p,
-  dense_handle_r__<real_t> T,
-  dense_handle_r__<real_t> a,
-  dense_handle_w__<flux_data_t> flux
+  client_handle_r<mesh_t> mesh,
+  dense_handle_r<real_t> d,
+  dense_handle_r<vector_t> v,
+  dense_handle_r<real_t> e,
+  dense_handle_r<real_t> p,
+  dense_handle_r<real_t> T,
+  dense_handle_r<real_t> a,
+  dense_handle_w<flux_data_t> flux
 ) {
 
   const auto & face_list = mesh.faces( flecsi::owned );
@@ -169,16 +169,16 @@ void evaluate_fluxes(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void apply_update( 
-  client_handle_r__<mesh_t> mesh,
+  client_handle_r<mesh_t> mesh,
   eos_t eos,
   real_t delta_t,
-  dense_handle_r__<flux_data_t> flux,
-  dense_handle_rw__<real_t> d,
-  dense_handle_rw__<vector_t> v,
-  dense_handle_rw__<real_t> e,
-  dense_handle_rw__<real_t> p,
-  dense_handle_rw__<real_t> T,
-  dense_handle_rw__<real_t> a
+  dense_handle_r<flux_data_t> flux,
+  dense_handle_rw<real_t> d,
+  dense_handle_rw<vector_t> v,
+  dense_handle_rw<real_t> e,
+  dense_handle_rw<real_t> p,
+  dense_handle_rw<real_t> T,
+  dense_handle_rw<real_t> a
 ) {
 
   //----------------------------------------------------------------------------
@@ -237,17 +237,17 @@ void apply_update(
 /// \brief output the solution
 ////////////////////////////////////////////////////////////////////////////////
 void output( 
-  client_handle_r__<mesh_t> mesh, 
+  client_handle_r<mesh_t> mesh, 
   char_array_t prefix,
 	char_array_t postfix,
 	size_t iteration,
 	real_t time,
-  dense_handle_r__<real_t> d,
-  dense_handle_r__<vector_t> v,
-  dense_handle_r__<real_t> e,
-  dense_handle_r__<real_t> p,
-  dense_handle_r__<real_t> T,
-  dense_handle_r__<real_t> a
+  dense_handle_r<real_t> d,
+  dense_handle_r<vector_t> v,
+  dense_handle_r<real_t> e,
+  dense_handle_r<real_t> p,
+  dense_handle_r<real_t> T,
+  dense_handle_r<real_t> a
 ) {
   clog(info) << "OUTPUT MESH TASK" << std::endl;
  
@@ -261,7 +261,7 @@ void output(
     "." + apps::common::zero_padded(iteration) + "." + postfix.str();
 
   // now outut the mesh
-  flecsale::io::io_exodus__<mesh_t>::write(
+  flecsale::io::io_exodus<mesh_t>::write(
     output_filename, mesh, iteration, time, &d //, v, e, p, T, a
   );
 }
@@ -270,7 +270,7 @@ void output(
 /// \brief output the solution
 ////////////////////////////////////////////////////////////////////////////////
 void print( 
-  client_handle_r__<mesh_t> mesh,
+  client_handle_r<mesh_t> mesh,
   char_array_t filename
 ) {
 

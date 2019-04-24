@@ -15,10 +15,10 @@ namespace apps {
 namespace hydro {
 
 //! the 3d mesh type
-using mesh_t = mesh__<3>;
+using mesh_t = mesh<3>;
 
 // type aliases
-using flux_data_t = flux_data__<mesh_t::num_dimensions>;
+using flux_data_t = flux_data<mesh_t::num_dimensions>;
 
 } // namespace 
 } // namespace
