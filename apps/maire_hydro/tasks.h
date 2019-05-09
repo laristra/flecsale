@@ -33,7 +33,7 @@ namespace hydro {
 //! \brief Install a boundary on the mesh
 ////////////////////////////////////////////////////////////////////////////////
 void install_boundary( 
-  client_handle_r__<mesh_t>  mesh,
+  client_handle_r<mesh_t>  mesh,
   real_t soln_time,
   tag_t bc_key,
   boundary_condition_t * bc_type,
@@ -60,7 +60,7 @@ void install_boundary(
 //! \param [in] mesh the mesh object
 ////////////////////////////////////////////////////////////////////////////////
 void validate_mesh( 
-  client_handle_r__<mesh_t> mesh
+  client_handle_r<mesh_t> mesh
 ) {
   
   mesh.is_valid();
@@ -76,18 +76,18 @@ void validate_mesh(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void initial_conditions( 
-  client_handle_r__<mesh_t>  mesh,
+  client_handle_r<mesh_t>  mesh,
   inputs_t::ics_function_t ics, 
   eos_t eos,
   real_t soln_time,
-  dense_handle_w__<real_t> V,
-  dense_handle_w__<real_t> M,
-  dense_handle_w__<vector_t> v,
-  dense_handle_w__<real_t> p,
-  dense_handle_w__<real_t> d,
-  dense_handle_w__<real_t> e,
-  dense_handle_w__<real_t> T,
-  dense_handle_w__<real_t> a
+  dense_handle_w<real_t> V,
+  dense_handle_w<real_t> M,
+  dense_handle_w<vector_t> v,
+  dense_handle_w<real_t> p,
+  dense_handle_w<real_t> d,
+  dense_handle_w<real_t> e,
+  dense_handle_w<real_t> T,
+  dense_handle_w<real_t> a
 ) {
 
   // This doesn't work with lua input
@@ -117,16 +117,16 @@ void initial_conditions(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void update_state_from_energy( 
-  client_handle_r__<mesh_t>  mesh,
+  client_handle_r<mesh_t>  mesh,
   eos_t eos,
-  dense_handle_r__<real_t> V,
-  dense_handle_r__<real_t> M,
-  dense_handle_r__<vector_t> v,
-  dense_handle_w__<real_t> p,
-  dense_handle_r__<real_t> d,
-  dense_handle_r__<real_t> e,
-  dense_handle_w__<real_t> T,
-  dense_handle_w__<real_t> a
+  dense_handle_r<real_t> V,
+  dense_handle_r<real_t> M,
+  dense_handle_r<vector_t> v,
+  dense_handle_w<real_t> p,
+  dense_handle_r<real_t> d,
+  dense_handle_r<real_t> e,
+  dense_handle_w<real_t> T,
+  dense_handle_w<real_t> a
 ) {
 
   auto cs = mesh.cells( flecsi::owned );
@@ -149,11 +149,11 @@ void update_state_from_energy(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 double evaluate_time_step(
-  client_handle_r__<mesh_t> mesh,
+  client_handle_r<mesh_t> mesh,
   time_constants_t cfl, 
 	real_t previous_time_step,
-	dense_handle_r__<real_t> sound_speed,
-	dense_handle_r__<flux_data_t> dudt
+	dense_handle_r<real_t> sound_speed,
+	dense_handle_r<flux_data_t> dudt
 ) {
  
   // Loop over each cell, computing the minimum time step,
@@ -205,9 +205,9 @@ double evaluate_time_step(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void estimate_nodal_state( 
-  client_handle_r__<mesh_t>  mesh,
-  dense_handle_r__<vector_t> cell_vel,
-  dense_handle_w__<vector_t> vertex_vel // Hack to avoid communication
+  client_handle_r<mesh_t>  mesh,
+  dense_handle_r<vector_t> cell_vel,
+  dense_handle_w<vector_t> vertex_vel // Hack to avoid communication
 ) {
 
   using subset_t = mesh_t::subset_t;
@@ -228,19 +228,19 @@ void estimate_nodal_state(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void evaluate_nodal_state( 
-  client_handle_r__<mesh_t>  mesh,
+  client_handle_r<mesh_t>  mesh,
   real_t soln_time,
-  dense_handle_r__<real_t> Vc,
-  dense_handle_r__<real_t> Mc,
-  dense_handle_r__<vector_t> uc,
-  dense_handle_r__<real_t> pc,
-  dense_handle_r__<real_t> dc,
-  dense_handle_r__<real_t> ec,
-  dense_handle_r__<real_t> Tc,
-  dense_handle_r__<real_t> ac,
-  dense_handle_w__<vector_t> un,
-  dense_handle_w__<vector_t> npc,
-  dense_handle_w__<vector_t> Fpc
+  dense_handle_r<real_t> Vc,
+  dense_handle_r<real_t> Mc,
+  dense_handle_r<vector_t> uc,
+  dense_handle_r<real_t> pc,
+  dense_handle_r<real_t> dc,
+  dense_handle_r<real_t> ec,
+  dense_handle_r<real_t> Tc,
+  dense_handle_r<real_t> ac,
+  dense_handle_w<vector_t> un,
+  dense_handle_w<vector_t> npc,
+  dense_handle_w<vector_t> Fpc
 ) {
 
   // get the number of dimensions and create a matrix
@@ -467,11 +467,11 @@ void evaluate_nodal_state(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void evaluate_residual( 
-  client_handle_r__<mesh_t>  mesh,
-  dense_handle_r__<vector_t> uv,
-  dense_handle_r__<vector_t> npc,
-  dense_handle_r__<vector_t> Fpc,
-  dense_handle_w__<flux_data_t> dudt // hack so no communication occurs
+  client_handle_r<mesh_t>  mesh,
+  dense_handle_r<vector_t> uv,
+  dense_handle_r<vector_t> npc,
+  dense_handle_r<vector_t> Fpc,
+  dense_handle_w<flux_data_t> dudt // hack so no communication occurs
 )
 {
 
@@ -503,17 +503,17 @@ void evaluate_residual(
 //!   \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void apply_update(
-  client_handle_r__<mesh_t>  mesh,
+  client_handle_r<mesh_t>  mesh,
 	real_t delta_t,
-  dense_handle_r__<flux_data_t> dudt,
-  dense_handle_w__<real_t> Vc,
-  dense_handle_r__<real_t> Mc,
-  dense_handle_w__<vector_t> uc,
-  dense_handle_r__<real_t> pc,
-  dense_handle_w__<real_t> dc,
-  dense_handle_w__<real_t> ec,
-  dense_handle_r__<real_t> Tc,
-  dense_handle_r__<real_t> ac
+  dense_handle_r<flux_data_t> dudt,
+  dense_handle_w<real_t> Vc,
+  dense_handle_r<real_t> Mc,
+  dense_handle_w<vector_t> uc,
+  dense_handle_r<real_t> pc,
+  dense_handle_w<real_t> dc,
+  dense_handle_w<real_t> ec,
+  dense_handle_r<real_t> Tc,
+  dense_handle_r<real_t> ac
 ) {
 
   // Using the cell residual, update the state
@@ -537,8 +537,8 @@ void apply_update(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void move_mesh(
-	 client_handle_r__<mesh_t> mesh,
-	 dense_handle_r__<vector_t> vel,
+	 client_handle_r<mesh_t> mesh,
+	 dense_handle_r<vector_t> vel,
 	 real_t delta_t
 ) {
 
@@ -562,8 +562,8 @@ void move_mesh(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void save_coordinates( 
-  client_handle_r__<mesh_t>  mesh,
-  dense_handle_r__<vector_t> coord0 // Hack to avoid communication
+  client_handle_r<mesh_t>  mesh,
+  dense_handle_r<vector_t> coord0 // Hack to avoid communication
 )
 {
 
@@ -586,8 +586,8 @@ void save_coordinates(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void restore_coordinates( 
-  client_handle_r__<mesh_t>  mesh,
-  dense_handle_r__<vector_t> coord0
+  client_handle_r<mesh_t>  mesh,
+  dense_handle_r<vector_t> coord0
 )
 {
 
@@ -611,11 +611,11 @@ void restore_coordinates(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void save_solution( 
-  client_handle_r__<mesh_t>  mesh,
-  dense_handle_r__<vector_t> cell_vel,
-	dense_handle_r__<real_t> cell_ener,
-	dense_handle_r__<vector_t> cell_vel_0, // "r" permissions hack to avoid communication
-	dense_handle_r__<real_t> cell_ener_0   // "r" permissions hack to avoid communication
+  client_handle_r<mesh_t>  mesh,
+  dense_handle_r<vector_t> cell_vel,
+	dense_handle_r<real_t> cell_ener,
+	dense_handle_r<vector_t> cell_vel_0, // "r" permissions hack to avoid communication
+	dense_handle_r<real_t> cell_ener_0   // "r" permissions hack to avoid communication
 )
 {
 
@@ -639,11 +639,11 @@ void save_solution(
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
 void restore_solution( 
-  client_handle_r__<mesh_t>  mesh,
-	dense_handle_r__<vector_t> cell_vel_0,
-  dense_handle_w__<vector_t> cell_vel,
-	dense_handle_r__<real_t> cell_ener_0,
-	dense_handle_w__<real_t> cell_ener
+  client_handle_r<mesh_t>  mesh,
+	dense_handle_r<vector_t> cell_vel_0,
+  dense_handle_w<vector_t> cell_vel,
+	dense_handle_r<real_t> cell_ener_0,
+	dense_handle_w<real_t> cell_ener
 )
 {
 
@@ -666,17 +666,17 @@ void restore_solution(
 /// \brief output the solution
 ////////////////////////////////////////////////////////////////////////////////
 void output( 
-  client_handle_r__<mesh_t> mesh, 
+  client_handle_r<mesh_t> mesh, 
   char_array_t prefix,
 	char_array_t postfix,
 	size_t iteration,
 	real_t time,
-  dense_handle_r__<real_t> d,
-  dense_handle_r__<vector_t> v,
-  dense_handle_r__<real_t> e,
-  dense_handle_r__<real_t> p,
-  dense_handle_r__<real_t> T,
-  dense_handle_r__<real_t> a
+  dense_handle_r<real_t> d,
+  dense_handle_r<vector_t> v,
+  dense_handle_r<real_t> e,
+  dense_handle_r<real_t> p,
+  dense_handle_r<real_t> T,
+  dense_handle_r<real_t> a
 ) {
   clog(info) << "OUTPUT MESH TASK" << std::endl;
  
@@ -690,7 +690,7 @@ void output(
     "_" + apps::common::zero_padded(iteration) + "." + postfix.str();
 
   // now outut the mesh
-  flecsale::io::io_exodus__<mesh_t>::write(
+  flecsale::io::io_exodus<mesh_t>::write(
     output_filename, mesh, iteration, time, &d //, v, e, p, T, a
   );
 }
@@ -699,7 +699,7 @@ void output(
 /// \brief output the solution
 ////////////////////////////////////////////////////////////////////////////////
 void print( 
-  client_handle_r__<mesh_t> mesh,
+  client_handle_r<mesh_t> mesh,
   char_array_t filename
 ) {
 

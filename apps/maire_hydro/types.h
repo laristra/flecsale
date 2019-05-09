@@ -37,7 +37,7 @@ using eos_t = flecsale::eos::ideal_gas_t<real_t>;
 using eqns_t = typename flecsale::eqns::lagrange_eqns_t<real_t, mesh_t::num_dimensions>;
 
 template< std::size_t N >
-using matrix__ = ristra::math::matrix< real_t, N, N >; 
+using matrix = ristra::math::matrix< real_t, N, N >; 
 
 using flux_data_t = eqns_t::flux_data_t;
 
@@ -50,19 +50,19 @@ using std::endl;
 
 // the access permission types
 template<typename T>
-using dense_handle_w__ = flecsi_sp::utils::dense_handle_w__<T>;
+using dense_handle_w = flecsi_sp::utils::dense_handle_w<T>;
 
 template<typename T>
-using dense_handle_rw__ = flecsi_sp::utils::dense_handle_rw__<T>;
+using dense_handle_rw = flecsi_sp::utils::dense_handle_rw<T>;
 
 template<typename T>
-using dense_handle_r__ = flecsi_sp::utils::dense_handle_r__<T>;
+using dense_handle_r = flecsi_sp::utils::dense_handle_r<T>;
 
 template<typename DC>
-using client_handle_w__ = flecsi_sp::utils::client_handle_w__<DC>;
+using client_handle_w = flecsi_sp::utils::client_handle_w<DC>;
 
 template<typename DC>
-using client_handle_r__ = flecsi_sp::utils::client_handle_r__<DC>;
+using client_handle_r = flecsi_sp::utils::client_handle_r<DC>;
 
 //! \brief a class to distinguish between different types of 
 //!   update errors.
