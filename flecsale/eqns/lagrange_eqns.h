@@ -335,7 +335,7 @@ public:
     ie = et - dot_product( vel, vel ) / 2;
 
     if ( internal_energy(u) < 0 )
-      throw_runtime_error( 
+      THROW_RUNTIME_ERROR( 
         "Negative internal energy encountered, " << internal_energy(u) << "." 
         << std::endl << "Current state = " << u << "."
       );
@@ -359,7 +359,7 @@ public:
     density(std::forward<U>(u)) = mass(std::forward<U>(u)) / new_vol;
 
     if ( density(std::forward<U>(u)) < 0 )
-      throw_runtime_error( 
+      THROW_RUNTIME_ERROR( 
         "Negative density encountered, " << density(u) << "." 
         << std::endl << "Current state = " << u << "."
       );

@@ -101,7 +101,7 @@ public:
     // put the number of element fields
     status = ex_put_var_param(exoid, "e", num_var);
     if (status)
-      throw_runtime_error(
+      THROW_RUNTIME_ERROR(
         "Problem writing variable number, " <<
         " ex_put_var_param() returned " << status 
       );
@@ -112,7 +112,7 @@ public:
     auto label = std::string( "output_variable" );
     status = ex_put_var_name(exoid, "e", var_id, "density");
     if (status)
-      throw_runtime_error(
+      THROW_RUNTIME_ERROR(
         "Problem writing variable name, " <<
         " ex_put_var_name() returned " << status 
       );
@@ -124,7 +124,7 @@ public:
       exoid, time_step, var_id, elem_blk_id, tmp.size(), tmp.data()
     );
     if (status)
-      throw_runtime_error(
+      THROW_RUNTIME_ERROR(
         "Problem writing variable data, " <<
         " ex_put_elem_var() returned " << status 
       );

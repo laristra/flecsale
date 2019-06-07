@@ -137,7 +137,7 @@ inline boundary_condition_t * make_boundary_condition( const std::string & str )
   else if ( str == "none" )
     return new boundary_condition_t();
   else {
-    throw_implemented_error( 
+    THROW_IMPLEMENTED_ERROR( 
       "No implementation for boundary condition of type \'" << str << "\'"
     );
     return nullptr;

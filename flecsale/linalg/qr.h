@@ -60,10 +60,10 @@ void qr (
     
   // initial checks
   if (rows < 1 || cols < 1) 
-    throw_runtime_error("Incorect matrix sizes");
+    THROW_RUNTIME_ERROR("Incorect matrix sizes");
 
   if ( B.template extent<0>() != rows ) 
-    throw_runtime_error("RHS vector wrong size");
+    THROW_RUNTIME_ERROR("RHS vector wrong size");
 
   // householder vector
   std::vector<T> v(rows);

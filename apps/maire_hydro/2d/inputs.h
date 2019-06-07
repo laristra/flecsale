@@ -96,7 +96,7 @@ public:
       load_lua(file);
     }
     else
-      throw_runtime_error(
+      THROW_RUNTIME_ERROR(
         "Unknown file extension for \""<<file<<"\""
       );
   }
@@ -140,7 +140,7 @@ public:
       eos = ideal_gas_t( g, cv );
     }
     else {
-      throw_implemented_error("Unknown eos type \""<<eos_type<<"\"");
+      THROW_IMPLEMENTED_ERROR("Unknown eos type \""<<eos_type<<"\"");
     }
 
     // now set some dimension specific inputs
@@ -182,7 +182,7 @@ public:
       };
     }
     else {
-      throw_implemented_error("Unknown mesh type \""<<mesh_type<<"\"");
+      THROW_IMPLEMENTED_ERROR("Unknown mesh type \""<<mesh_type<<"\"");
     }
 
     // now clear and reset the boundary conditions
@@ -211,7 +211,7 @@ public:
     
 #else
 
-    throw_implemented_error( 
+    THROW_IMPLEMENTED_ERROR( 
       "You need to link with lua in order to use lua functionality."
     );
 

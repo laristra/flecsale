@@ -98,7 +98,7 @@ real_t evaluate_time_step(
   } // cell
 
   if ( dt_inv <= 0 ) 
-    throw_runtime_error( "infinite delta t" );
+    THROW_RUNTIME_ERROR( "infinite delta t" );
 
   real_t time_step = 1 / dt_inv;
   time_step *= CFL;
@@ -226,7 +226,7 @@ void apply_update(
 
     // check the solution quantities
     if ( eqns_t::internal_energy(u) < 0 || eqns_t::density(u) < 0 ) 
-      throw_runtime_error( "Negative density or internal energy encountered!" );
+      THROW_RUNTIME_ERROR( "Negative density or internal energy encountered!" );
 
   } // for
   //----------------------------------------------------------------------------
