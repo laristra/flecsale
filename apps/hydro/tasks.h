@@ -13,7 +13,7 @@
 #include "types.h"
 
 // flecsi includes
-#include <flecsale/io/io_exodus.h>
+#include <flecsi-sp/io/io_exodus.h>
 #include <flecsi/execution/context.h>
 #include <flecsi/execution/execution.h>
 #include <ristra/utils/string_utils.h>
@@ -261,8 +261,11 @@ void output(
     "." + apps::common::zero_padded(iteration) + "." + postfix.str();
 
   // now outut the mesh
-  flecsale::io::io_exodus<mesh_t>::write(
-    output_filename, mesh, iteration, time, &d //, v, e, p, T, a
+  using field_type = decltype(d);
+  std::vector<field_type*> var_ptrs{&d, &p};
+  std::vector<std::string> var_names{"density", "pressure"};
+  flecsi_sp::io::io_exodus<mesh_t>::write(
+	  output_filename, mesh, time, var_ptrs, var_names
   );
 }
 

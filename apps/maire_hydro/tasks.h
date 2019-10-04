@@ -13,7 +13,7 @@
 #include "globals.h"
 #include "types.h"
 
-#include <flecsale/io/io_exodus.h>
+#include <flecsi-sp/io/io_exodus.h>
 #include <flecsale/linalg/qr.h>
 #include <ristra/utils/algorithm.h>
 #include <ristra/utils/array_view.h>
@@ -690,8 +690,11 @@ void output(
     "_" + apps::common::zero_padded(iteration) + "." + postfix.str();
 
   // now outut the mesh
-  flecsale::io::io_exodus<mesh_t>::write(
-    output_filename, mesh, iteration, time, &d //, v, e, p, T, a
+  using field_type = decltype(d);
+  std::vector<field_type*> var_ptrs{&d};
+  std::vector<std::string> var_names{"density"};
+  flecsi_sp::io::io_exodus<mesh_t>::write(
+	  output_filename, mesh, time, var_ptrs, var_names
   );
 }
 
