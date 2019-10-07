@@ -25,15 +25,26 @@ namespace apps {
 namespace hydro {
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief Update mesh geometry
+//!
+//! \param [in] mesh the mesh object
+////////////////////////////////////////////////////////////////////////////////
+void update_geometry(
+  client_handle_r<mesh_t> mesh
+) {
+	mesh.update_geometry();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task for setting initial conditions
 //!
 //! \param [in,out] mesh the mesh object
 //! \param [in]     ics  the initial conditions to set
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-void initial_conditions( 
+void initial_conditions(
   client_handle_r<mesh_t>  mesh,
-  inputs_t::ics_function_t ics, 
   eos_t eos,
   real_t soln_time,
   dense_handle_w<real_t> d,
@@ -44,16 +55,48 @@ void initial_conditions(
   dense_handle_w<real_t> a
 ) {
 
-  // This doesn't work with lua input
-  //#pragma omp parallel for
   for ( auto c : mesh.cells( flecsi::owned ) ) {
-    std::tie( d(c), v(c), p(c) ) = ics( c->centroid(), soln_time );
-    eqns_t::update_state_from_pressure( 
+    auto lid = c.id();
+    std::tie( d(c), v(c), p(c) ) = inputs_t::initial_conditions(
+      mesh, lid, soln_time );
+    eqns_t::update_state_from_pressure(
       pack( c, d, v, p, e, T, a ),
       eos
     );
   }
 
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task for setting initial conditions
+//!
+//! \param [in,out] mesh the mesh object
+//! \param [in]     ics  the initial conditions to set
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+void initial_conditions_from_file(
+  client_handle_r<mesh_t>  mesh,
+  eos_t eos,
+  real_t soln_time,
+  char_array_t filename,
+  dense_handle_w<real_t> d,
+  dense_handle_w<vector_t> v,
+  dense_handle_w<real_t> e,
+  dense_handle_w<real_t> p,
+  dense_handle_w<real_t> T,
+  dense_handle_w<real_t> a
+) {
+	auto ics = inputs_t::get_initial_conditions(filename.str());
+
+	// This doesn't work with lua input
+	//#pragma omp parallel for
+	for ( auto c : mesh.cells( flecsi::owned ) ) {
+		std::tie( d(c), v(c), p(c) ) = ics( c->centroid(), soln_time );
+		eqns_t::update_state_from_pressure(
+			pack( c, d, v, p, e, T, a ),
+			eos
+			);
+	}
 }
 
 
@@ -304,7 +347,9 @@ void print(
 // TASK REGISTRATION
 ////////////////////////////////////////////////////////////////////////////////
 
+flecsi_register_task(update_geometry, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(initial_conditions, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(initial_conditions_from_file, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(evaluate_time_step, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(evaluate_fluxes, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(apply_update, apps::hydro, loc, index|flecsi::leaf);

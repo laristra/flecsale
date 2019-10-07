@@ -8,7 +8,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 // hydro includes
-#include "inputs.h"
+#include "../inputs.h"
 
 #include <flecsale/eos/ideal_gas.h>
 
@@ -36,27 +36,28 @@ real_t inputs_t::final_time = 0.2;
 size_t inputs_t::max_steps = 20;
 
 // the equation of state
-eos_t inputs_t::eos = 
-  flecsale::eos::ideal_gas_t<real_t>( 
-    /* gamma */ 1.4, /* cv */ 1.0 
-  ); 
+eos_t inputs_t::eos =
+  flecsale::eos::ideal_gas_t<real_t>(
+    /* gamma */ 1.4, /* cv */ 1.0
+  );
 
-// this is a lambda function to set the initial conditions
-inputs_t::ics_function_t inputs_t::ics = 
-  []( const vector_t & x, const real_t & )
-  {
-    real_t d, p;
-    vector_t v(0);
-    if ( x[0] < 0 && x[1] < 0 ) {
-      d = 0.125;
-      p = 0.1;
-    }
-    else {
-      d = 1.0;
-      p = 1.0;
-    }    
-    return std::make_tuple( d, v, p );
-  };
+// this is a function to set the initial conditions
+inputs_t::ics_return_t inputs_t::initial_conditions(
+  const mesh_t & mesh, size_t local_id, const real_t & )
+{
+  const auto & x = mesh.cells()[local_id]->centroid();
+  real_t d, p;
+  vector_t v(0);
+  if ( x[0] < 0 && x[1] < 0 ) {
+    d = 0.125;
+    p = 0.1;
+  }
+  else {
+    d = 1.0;
+    p = 1.0;
+  }
+  return std::make_tuple( d, v, p );
+}
 
 } // namespace
 } // namespace

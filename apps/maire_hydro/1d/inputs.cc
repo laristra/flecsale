@@ -8,8 +8,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 // hydro includes
-#include "inputs.h"
+#include "../inputs.h"
 
+#include <flecsi/flecsi/execution/execution.h>
 #include <flecsale/eos/ideal_gas.h>
 
 // system includes
@@ -26,7 +27,6 @@ using real_t = inputs_t::real_t;
 using vector_t = inputs_t::vector_t;
 using string = std::string;
 using eos_t = inputs_t::eos_t;
-using symmetry_condition_t = symmetry_boundary_condition_t;
 
 //=============================================================================
 // These constants are not part of the input class, they are globally scoped
@@ -36,23 +36,9 @@ using symmetry_condition_t = symmetry_boundary_condition_t;
 // the value of gamma
 constexpr real_t gamma = 1.4;
 
-// the grid dimensions
-constexpr size_t num_cells_x = 32;
-//constexpr real_t length_x = 1.2;
-constexpr real_t length_x = 1.0;
-
-// some length scales
-auto dx = length_x / num_cells_x;
-
-// compute a reference volume
-auto vol = dx;
-
-// compute a radial size
-auto delta_r = std::numeric_limits<real_t>::epsilon() + 
-  std::abs( dx/2 );
-
-// we are only using symmetry boundary conditions here
-auto symmetry_condition = std::make_shared<symmetry_condition_t>();
+// utility to see if value near another, within tolerance
+auto near( real_t a, real_t b, real_t tol = flecsale::config::test_tolerance  )
+{ return std::abs(a - b) <= tol; }
 
 //=============================================================================
 // Now set the inputs.
@@ -79,37 +65,61 @@ eos_t inputs_t::eos =
     /* gamma */ 1.4, /* cv */ 1.0 
   ); 
 
-// this is a lambda function to set the initial conditions
-inputs_t::ics_function_t inputs_t::ics = 
-  [g=gamma, V=vol]( const vector_t & x, const real_t & )
-  {
-    constexpr real_t e0 = 0.244816;
-    real_t d = 1.0;
-    vector_t v = 0;
-    real_t p = 1.e-6;
-    auto r = abs( x[0] );
-    if ( r < delta_r  )
-      p = (g - 1) * d * e0 / V;
-    return std::make_tuple( d, v, p );
-  };
+// this is a static function to set the initial conditions
+inputs_t::ics_return_t inputs_t::initial_conditions(
+	const mesh_t & mesh, size_t local_id, const real_t &)
+{
+	const auto & x = mesh.cells()[local_id]->centroid();
+	const auto & vol = mesh.cells()[local_id]->volume();
+
+	// compute a radial size
+	auto delta_r = std::numerical_limits<real_t>::epsilon() +
+		std::abs(vol/2);
+
+	constexpr real_t e0 = 0.244816;
+	real_t d = 1.0;
+	vector_t v = 0;
+	real_t p = 1.e-6;
+	auto r = abs( x[0] );
+	if ( r < delta_r  )
+		p = (gamma - 1) * d * e0 / vol;
+	return std::make_tuple( d, v, p );
+}
+
+
+// register a global data object for each boundary
+static constexpr x_boundary = 0;
+flecsi_register_global_object(
+	x_boundary,
+	boundaries, // arbitrary name
+	boundary_condition_t);
+
+void inputs_t::initialize_boundaries() {
+	flecsi_initialize_global_object(
+		x_boundary,
+		boundaries,
+		symmetry_boundary_condition_t);
+}
 
 // install each boundary
 //
-// - both +ve and -ve side boundaries can be installed at once since 
+// - both +ve and -ve side boundaries can be installed at once since
 //   they will never overlap
 // - if they did overlap, then you need to define them seperately or else
 //   its hard to count the number of different conditions on points or edges.
-inputs_t::bcs_list_t inputs_t::bcs = {
-
-  // the +/- x-axis boundaries
-  std::make_pair( 
-    symmetry_condition,
-    [lx=length_x]( const vector_t & x, const real_t & t )
-    { 
-      return ( x[0] == 0.0 || x[0] == lx );
-    }
-  ),
-};
+void inputs_t::boundary_conditions(
+	mesh_t & mesh, const real_t &) {
+	mesh.install_boundary(
+		[=](auto f) {
+			if (f->is_boundary()) {
+				const auto & n = f->normal();
+				return (near(std::abs(n[0]), 1.0));
+			}
+			else
+				return false;
+		},
+		x_boundary);
+}
 
 } // namespace
 } // namespace

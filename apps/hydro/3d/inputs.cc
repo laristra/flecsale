@@ -8,7 +8,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 // hydro includes
-#include "inputs.h"
+#include "../inputs.h"
 
 #include <flecsale/eos/ideal_gas.h>
 #include <ristra/math/constants.h>
@@ -56,24 +56,28 @@ real_t inputs_t::final_time = 1.0;
 size_t inputs_t::max_steps = 1e6;
 
 // the equation of state
-eos_t inputs_t::eos = 
-  flecsale::eos::ideal_gas_t<real_t>( 
-    /* gamma */ gamma, /* cv */ 1.0 
-  ); 
+eos_t inputs_t::eos =
+  flecsale::eos::ideal_gas_t<real_t>(
+    /* gamma */ gamma, /* cv */ 1.0
+  );
 
-// this is a lambda function to set the initial conditions
-inputs_t::ics_function_t inputs_t::ics = 
-  [g=gamma]( const vector_t & x, const real_t & )
-  {
-    constexpr real_t e0 = 0.106384;
-    real_t d = 1.0;
-    vector_t v = 0;
-    real_t p = 1.e-6;
-    auto r = sqrt( x[0]*x[0] + x[1]*x[1] + x[2]*x[2] );
-    if ( r < delta_r + std::numeric_limits<real_t>::epsilon() )
-      p = (g - 1) * d * e0 / vol;
-    return std::make_tuple( d, v, p );
-  };
+
+// this is a function to set the initial conditions
+inputs_t::ics_return_t inputs_t::initial_conditions(
+  const mesh_t & mesh, size_t local_id, const real_t & )
+{
+  const auto & x = mesh.cells()[local_id]->centroid();
+
+  constexpr real_t e0 = 0.106384;
+  real_t d = 1.0;
+  vector_t v = 0;
+  real_t p = 1.e-6;
+  auto r = sqrt( x[0]*x[0] + x[1]*x[1] + x[2]*x[2] );
+  if ( r < delta_r + std::numeric_limits<real_t>::epsilon() )
+	  p = (gamma - 1) * d * e0 / vol;
+
+  return std::make_tuple( d, v, p );
+}
 
 } // namespace
 } // namespace

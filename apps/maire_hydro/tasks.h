@@ -32,26 +32,10 @@ namespace hydro {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Install a boundary on the mesh
 ////////////////////////////////////////////////////////////////////////////////
-void install_boundary( 
+void install_boundary(
   client_handle_r<mesh_t>  mesh,
-  real_t soln_time,
-  tag_t bc_key,
-  boundary_condition_t * bc_type,
-  inputs_t::bcs_function_t bc_function
-) {
-
-  mesh.install_boundary( 
-      [=](auto f) 
-      { 
-        if ( f->is_boundary() ) {
-          const auto & fx = f->midpoint();
-          return ( bc_function(fx, soln_time) );
-        }
-        return false;
-      },
-      bc_key
-    );
-    globals::boundaries.emplace( bc_key, bc_type );
+  real_t soln_time) {
+	inputs_t::boundary_conditions(mesh, soln_time);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -67,6 +51,15 @@ void validate_mesh(
 
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Update mesh geometry
+//!
+//! \param [in] mesh the mesh object
+////////////////////////////////////////////////////////////////////////////////
+void update_geometry(client_handle_r<mesh_t> mesh) {
+	mesh.update_geometry();
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task for setting initial conditions
@@ -75,9 +68,8 @@ void validate_mesh(
 //! \param [in]     ics  the initial conditions to set
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-void initial_conditions( 
+void initial_conditions(
   client_handle_r<mesh_t>  mesh,
-  inputs_t::ics_function_t ics, 
   eos_t eos,
   real_t soln_time,
   dense_handle_w<real_t> V,
@@ -89,24 +81,23 @@ void initial_conditions(
   dense_handle_w<real_t> T,
   dense_handle_w<real_t> a
 ) {
-
   // This doesn't work with lua input
   // #pragma omp parallel for
   for ( auto c : mesh.cells( flecsi::owned ) ) {
     // now copy the state to flexi
     real_t den;
-    std::tie( den, v(c), p(c) ) = ics( c->centroid(), soln_time );
+    std::tie( den, v(c), p(c) ) = inputs_t::initial_conditions(
+	    mesh, c.id(), soln_time );
     // set mass and volume now
     const auto & cell_vol = c->volume();
     M(c) = den*cell_vol;
     V(c) = cell_vol;
     // now update the rest of the state
-    eqns_t::update_state_from_pressure( 
+    eqns_t::update_state_from_pressure(
       pack( c, V, M, v, p, d, e, T, a ),
       eos
     );
   }
-
 }
 
 
@@ -332,52 +323,53 @@ void evaluate_nodal_state(
       const auto & point_tags =  vt->tags();
 
       // first check if this has a prescribed velocity.  If it does, then nothing to do
-      auto vel_bc = std::find_if( 
-        point_tags.begin(), point_tags.end(), 
-        [&boundaries=globals::boundaries](const auto & id) { 
-          return boundaries.at(id)->has_prescribed_velocity();
-        } );
+      auto vel_bc = std::find_if(
+        point_tags.begin(), point_tags.end(),
+        [](const auto & id) {
+	        auto bc = flecsi_get_global_object(id, boundaries, boundary_condition_t);
+	        return bc->has_prescribed_velocity();
+        });
       if ( vel_bc != point_tags.end() ) {
-        un(vt) = 
-          globals::boundaries.at(*vel_bc)->velocity( vt->coordinates(), soln_time );
-        continue;
+	      auto bc = flecsi_get_global_object(*vel_bc, boundaries, boundary_condition_t);
+	      un(vt) = bc->velocity(vt->coordinates(), soln_time);
+	      continue;
       }
 
       // otherwise, apply the pressure conditions
-      for ( auto w : mesh.wedges(vt) ) 
+      for ( auto w : mesh.wedges(vt) )
       {
-				// skip internal wedges
-				if ( ! w->is_boundary() ) continue;
-        // for wedges attached to boundary
-				auto f = mesh.faces(w).front();
-        auto c = mesh.cells(w).front();
-        for ( auto tag : f->tags() ) {
-          auto b = globals::boundaries.at( tag );
-          // PRESSURE CONDITION
-          if ( b->has_prescribed_pressure() ) {
-            const auto & n = w->facet_normal();
-            const auto & l = w->facet_area();
-            const auto & x = w->facet_centroid();
-            auto fact = l * b->pressure( x, soln_time );
-            for ( int d=0; d<num_dims; ++d )
-              rhs[d] -= fact * n[d];
-          }
-          // SYMMETRY CONDITION
-          else if ( b->has_symmetry() ) {
-            const auto & n = w->facet_normal();
-            const auto & l = w->facet_area();
-            if ( symmetry_normals.count(tag) ) {
-              auto & tmp = symmetry_normals[tag];
-              for ( int d=0; d<num_dims; ++d )
-                tmp[d] += l * n[d];
-            }
-            else {
-              auto & tmp = symmetry_normals[tag];
-              for ( int d=0; d<num_dims; ++d )              
-                tmp[d] = l * n[d];
-            }
-          } // END CONDITIONS
-        } // for each tag
+	      // skip internal wedges
+	      if ( ! w->is_boundary() ) continue;
+	      // for wedges attached to boundary
+	      auto f = mesh.faces(w).front();
+	      auto c = mesh.cells(w).front();
+	      for ( auto tag : f->tags() ) {
+		      auto b = flecsi_get_global_object(tag, boundaries, boundary_condition_t);
+		      // PRESSURE CONDITION
+		      if ( b->has_prescribed_pressure() ) {
+			      const auto & n = w->facet_normal();
+			      const auto & l = w->facet_area();
+			      const auto & x = w->facet_centroid();
+			      auto fact = l * b->pressure( x, soln_time );
+			      for ( int d=0; d<num_dims; ++d )
+				      rhs[d] -= fact * n[d];
+		      }
+		      // SYMMETRY CONDITION
+		      else if ( b->has_symmetry() ) {
+			      const auto & n = w->facet_normal();
+			      const auto & l = w->facet_area();
+			      if ( symmetry_normals.count(tag) ) {
+				      auto & tmp = symmetry_normals[tag];
+				      for ( int d=0; d<num_dims; ++d )
+					      tmp[d] += l * n[d];
+			      }
+			      else {
+				      auto & tmp = symmetry_normals[tag];
+				      for ( int d=0; d<num_dims; ++d )
+					      tmp[d] = l * n[d];
+			      }
+		      } // END CONDITIONS
+	      } // for each tag
       } // for each wedge
 
 
@@ -734,6 +726,7 @@ void print(
 ////////////////////////////////////////////////////////////////////////////////
 
 flecsi_register_task(validate_mesh, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(update_geometry, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(initial_conditions, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(install_boundary, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(estimate_nodal_state, apps::hydro, loc, index|flecsi::leaf);
