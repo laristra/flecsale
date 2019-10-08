@@ -346,6 +346,12 @@ int driver(int argc, char** argv)
 
   }
 
+  // dump solution for verification
+  {
+    auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+"-solution.txt" );
+    flecsi_execute_task( dump, apps::hydro, index, mesh, time_cnt, soln_time,
+        d, v, e, p, name );
+  }
 
   // success if you reached here
   return 0;

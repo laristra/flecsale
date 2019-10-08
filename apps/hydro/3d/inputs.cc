@@ -29,15 +29,6 @@ using eos_t = inputs_t::eos_t;
 // within this translation unit only.
 //=============================================================================
 
-// the value of gamma
-const real_t gamma = 1.4;
-
-// compute a radial size
-const real_t delta_r = .1;
-
-// and a representative volume
-// - 1/8-th the volume of a sphere
-const real_t vol = ristra::math::pi * ristra::math::cube(delta_r) / 6.;
 
 //=============================================================================
 // Now set the inputs.
@@ -48,17 +39,17 @@ string inputs_t::prefix = "shock_box_3d";
 string inputs_t::postfix = "dat";
 
 // output frequency
-size_t inputs_t::output_freq = 100;
+size_t inputs_t::output_freq = 1e6;
 
 // the CFL and final solution time
 real_t inputs_t::CFL = 1.0/3.0;
-real_t inputs_t::final_time = 1.0;
-size_t inputs_t::max_steps = 1e6;
+real_t inputs_t::final_time = 0.2;
+size_t inputs_t::max_steps = 20;
 
 // the equation of state
 eos_t inputs_t::eos =
   flecsale::eos::ideal_gas_t<real_t>(
-    /* gamma */ gamma, /* cv */ 1.0
+    /* gamma */ 1.4, /* cv */ 1.0
   );
 
 
@@ -66,17 +57,20 @@ eos_t inputs_t::eos =
 inputs_t::ics_return_t inputs_t::initial_conditions(
   const mesh_t & mesh, size_t local_id, const real_t & )
 {
-  const auto & x = mesh.cells()[local_id]->centroid();
+	const auto & x = mesh.cells()[local_id]->centroid();
 
-  constexpr real_t e0 = 0.106384;
-  real_t d = 1.0;
-  vector_t v = 0;
-  real_t p = 1.e-6;
-  auto r = sqrt( x[0]*x[0] + x[1]*x[1] + x[2]*x[2] );
-  if ( r < delta_r + std::numeric_limits<real_t>::epsilon() )
-	  p = (gamma - 1) * d * e0 / vol;
+	real_t d, p;
+	vector_t v(0);
+	if ( x[0] < 0 && x[1] < 0 && x[2] < 0 ) {
+		d = 0.125;
+		p = 0.1;
+	}
+	else {
+		d = 1.0;
+		p = 1.0;
+	}
 
-  return std::make_tuple( d, v, p );
+	return std::make_tuple( d, v, p );
 }
 
 } // namespace

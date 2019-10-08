@@ -27,6 +27,10 @@
 // is exodus enabled
 #cmakedefine FLECSALE_ENABLE_EXODUS
 
+// is lua enabled
+#cmakedefine FLECSALE_ENABLE_LUA
+
+
 //----------------------------------------------------------------------------//
 // Configuration
 //----------------------------------------------------------------------------//

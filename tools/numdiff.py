@@ -55,6 +55,16 @@ def numSplit(line):
     return numList
 
 ################################################################################
+# split lines
+################################################################################
+def split(line):
+    list = splitPattern.split(line)
+    if list[-1] == "":
+        del list[-1]
+
+    return list
+
+################################################################################
 # check for numerical equivalence
 ################################################################################
 def softEquiv(ref, target, relative_tolerance, absolute_tolerance):
@@ -90,40 +100,9 @@ def softEquiv(ref, target, relative_tolerance, absolute_tolerance):
 ################################################################################
 def compareStrings(f, options, expLine, actLine, lineNum):
 
-
-    ### check that they're a bunch of numbers
-    try:
-        exp = numSplit(expLine)
-        act = numSplit(actLine)
-    except ValueError as e:
-
-        if options.checkText:
-
-            if (expLine != actLine):
-                if options.verbosity:
-                    print( "-" * 16 ) 
-                    print( "##%-8d<==%s" % (lineNum, expLine) )
-                    print( "##%-8d==>%s" % (lineNum, actLine) )
-                    print( "@ Text lines do not match!" )
-                    print( "-" * 16 )
-                f.fail( "Text did not match in line %d" % lineNum )
-            else:
-                if options.verbosity > VERBOSE:
-                    print( "-" * 16 ) 
-                    print( "##%-8d<==%s" % (lineNum, expLine) )
-                    print( "##%-8d==>%s" % (lineNum, actLine) )
-                    print( "@ Text lines match" )
-                    print( "-" * 16 )
-        
-        else:
-            if options.verbosity > VERBOSE:
-                print( "-" * 16 ) 
-                print( "##%-8d<==%s" % (lineNum, expLine) )
-                print( "##%-8d==>%s" % (lineNum, actLine) )
-                print( "@ Ignoring text lines" )
-                print( "-" * 16 )
-            
-        return
+    # split the lines
+    exp = split(expLine)
+    act = split(actLine)
 
     ### check the ranges
     if len(exp) != len(act):
@@ -138,27 +117,62 @@ def compareStrings(f, options, expLine, actLine, lineNum):
 
     ### soft equiv on each value
     for col in range(0, len(exp)):
-        expVal = exp[col]
-        actVal = act[col]
-        [isEquiv, abs_err, rel_err] = softEquiv(expVal, actVal, options.rel_tol, options.abs_tol)
 
-        # for very verbose, always print errors
-        if options.verbosity > VERBOSE:
-            print( "-" * 16 )
-            print( "##%-8d#:%-4d<==%15.8e" % (lineNum, col+1, expVal) )
-            print( "##%-8d#:%-4d==>%15.8e" % (lineNum, col+1, actVal) )
-            print( "@ Absolute error = %15.8e, Relative error = %15.8e" % (abs_err, rel_err) )
-            print( "-" * 16 ) 
+        ## try to compare numbers
+        try:
+            expVal = float(exp[col])
+            actVal = float(act[col])
+            [isEquiv, abs_err, rel_err] = softEquiv(expVal, actVal, options.rel_tol, options.abs_tol)
 
-        # ERROR
-        if not isEquiv:
-            if options.verbosity == VERBOSE:
-                print( "-" * 16 ) 
+            # for very verbose, always print errors
+            if options.verbosity > VERBOSE:
+                print( "-" * 16 )
                 print( "##%-8d#:%-4d<==%15.8e" % (lineNum, col+1, expVal) )
                 print( "##%-8d#:%-4d==>%15.8e" % (lineNum, col+1, actVal) )
                 print( "@ Absolute error = %15.8e, Relative error = %15.8e" % (abs_err, rel_err) )
                 print( "-" * 16 ) 
-            f.fail( "Non-equivalence in line %d, column %d" % (lineNum, col) )
+
+            # ERROR
+            if not isEquiv:
+                if options.verbosity == VERBOSE:
+                    print( "-" * 16 ) 
+                    print( "##%-8d#:%-4d<==%15.8e" % (lineNum, col+1, expVal) )
+                    print( "##%-8d#:%-4d==>%15.8e" % (lineNum, col+1, actVal) )
+                    print( "@ Absolute error = %15.8e, Relative error = %15.8e" % (abs_err, rel_err) )
+                    print( "-" * 16 ) 
+                f.fail( "Non-equivalence in line %d, column %d" % (lineNum, col) )
+
+        ## Otherwse, compare text
+        except:
+
+            expVal = exp[col]
+            actVal = act[col]
+
+            if options.checkText:
+                if ( expVal != actVal ):
+                    if options.verbosity:
+                        print( "-" * 16 ) 
+                        print( "##%-8d#:%-4d<==\"%s\"" % (lineNum, col+1, expVal) )
+                        print( "##%-8d#:%-4d==>\"%s\"" % (lineNum, col+1, actVal) )
+                        print( "@ Text does not match!" )
+                        print( "-" * 16 )
+                    f.fail( "Text did not match in line %d, column %d" % (lineNum, col) )
+                else:
+                    if options.verbosity > VERBOSE:
+                        print( "-" * 16 ) 
+                        print( "##%-8d#:%-4d<==\"%s\"" % (lineNum, col+1, expVal) )
+                        print( "##%-8d#:%-4d==>\"%s\"" % (lineNum, col+1, actVal) )
+                        print( "@ Text matches" )
+                        print( "-" * 16 )
+            
+            else:
+                if options.verbosity > VERBOSE:
+                    print( "-" * 16 ) 
+                    print( "##%-8d#:%-4d<==\"%s\"" % (lineNum, col+1, expVal) )
+                    print( "##%-8d#:%-4d==>\"%s\"" % (lineNum, col+1, actVal) )
+                    print( "@ Ignoring text in line %d, column %d" % (lineNum, col) )
+                    print( "-" * 16 )
+
     return
 
 ################################################################################
