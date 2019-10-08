@@ -722,6 +722,90 @@ void print(
 
 
 ////////////////////////////////////////////////////////////////////////////////
+/// \brief Dump solution to file for regression testing
+////////////////////////////////////////////////////////////////////////////////
+void dump(
+	client_handle_r<mesh_t> mesh,
+	size_t iteration,
+	real_t time,
+	dense_handle_r<real_t> d,
+	dense_handle_r<vector_t> v,
+	dense_handle_r<real_t> e,
+	dense_handle_r<real_t> p,
+	char_array_t filename)
+{
+	// get the context
+	auto & context = flecsi::execution::context_t::instance();
+	auto rank = context.color();
+
+	constexpr auto num_dims = mesh_t::num_dimensions;
+	const auto & vert_lid_to_gid = context.index_map( mesh_t::index_spaces_t::vertices );
+	const auto & cell_lid_to_gid = context.index_map( mesh_t::index_spaces_t::cells );
+
+	clog(info) << "DUMP SOLUTION ON RANK " << rank << std::endl;
+
+	// figure out this ranks file name
+	auto name_and_ext = ristra::utils::split_extension( filename.str() );
+	auto output_filename =
+		name_and_ext.first + "_rank" + apps::common::zero_padded(rank) +
+		+ "." + name_and_ext.second;
+
+	// dump to file
+	if (rank == 0)
+		std::cout << "Dumping solution to: " << output_filename << std::endl;
+	std::ofstream file( output_filename );
+
+	// Dump cell centered quantities
+	file.precision(14);
+	file.setf( std::ios::scientific );
+	file << "# Solution time: " << time << std::endl;
+	file << "# Number iterations: " << iteration << std::endl;
+
+	file << "# BEGIN CELLS" << std::endl;
+	file << "# Total number: " << mesh.num_cells() << std::endl;
+	file << "# local_id global_id ";
+	for ( int dim=0; dim<num_dims; ++dim ) file << "centroid(" << dim << ") ";
+	file << "density internal_energy pressure ";
+	for ( int dim=0; dim<num_dims; ++dim ) file << "velocity(" << dim << ") ";
+	file << std::endl;
+
+	for ( auto c : mesh.cells() ) {
+
+		file << c.id() << " " << cell_lid_to_gid.at(c.id()) << " ";
+		for ( auto x : c->centroid() ) file << x << " ";
+		file << d(c) << " " << e(c) << " " << p(c) << " ";
+		for ( auto x : v(c) ) file << x << " ";
+		file << std::endl;
+
+	}
+
+	file << "# END CELLS" << std::endl;
+
+	// Dump vertex quantities
+	file << "# BEGIN VERTICES" << std::endl;
+	file << "# Total number: " << mesh.num_vertices() << std::endl;
+	file << "# local_id global_id ";
+	for ( int dim=0; dim<num_dims; ++dim ) file << "coordinate(" << dim << ") ";
+	file << std::endl;
+
+	for ( auto v : mesh.vertices() ) {
+
+		file << v.id() << " " << vert_lid_to_gid.at(v.id()) << " ";
+		for ( auto x : v->coordinates() ) file << x << " ";
+		file << std::endl;
+
+	}
+
+	file << "# END VERTICES" << std::endl;
+
+	// close file
+	file.close();
+
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
 // TASK REGISTRATION
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -742,6 +826,7 @@ flecsi_register_task(save_solution, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(restore_solution, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(output, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(print, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(dump, apps::hydro, loc, index|flecsi::leaf);
 
 } // namespace hydro
 } // namespace apps
