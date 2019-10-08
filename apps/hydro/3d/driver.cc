@@ -8,7 +8,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 // hydro includes
-#include "inputs.h"
+#include "../inputs.h"
 #include "../driver.h"
 
 namespace flecsi {

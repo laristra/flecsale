@@ -21,16 +21,34 @@ target_compile_definitions(
     FLECSI_ENABLE_SPECIALIZATION_SPMD_INIT
 )
 
-add_test( 
-  NAME flecsale_sedov_2d_1procs
-  COMMAND mpirun -n 1 $<TARGET_FILE:maire_hydro_2d> -m ${FLECSALE_DATA_DIR}/meshes/sedov_32x32.g
-  #COMPARE shock_box_2d0000007.dat 
-  #STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d0000007.dat.std 
+
+add_executable( maire_hydro_2d_regression
+  $<TARGET_OBJECTS:apps_common>
+  driver.cc
+  inputs_regression.cc
+  ${FLECSI_SP_BURTON_SPECIALIZATION_INIT}
+  ${FLECSALE_RUNTIME_DRIVER}
+  ${FLECSALE_RUNTIME_MAIN}
+)
+target_link_libraries( maire_hydro_2d_regression FleCSALE )
+target_compile_definitions(
+  maire_hydro_2d_regression
+  PRIVATE
+  FLECSI_SP_BURTON_MESH_DIMENSION=2
+  FLECSI_SP_BURTON_MESH_EXTRAS
+  FLECSI_ENABLE_SPECIALIZATION_TLT_INIT
+  FLECSI_ENABLE_SPECIALIZATION_SPMD_INIT
 )
 
-add_test( 
-  NAME flecsale_sedov_2d_2procs
-  COMMAND mpirun -n 2 $<TARGET_FILE:maire_hydro_2d> -m ${FLECSALE_DATA_DIR}/meshes/sedov_32x32.g
-  #COMPARE shock_box_2d0000007.dat 
-  #STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d0000007.dat.std 
+create_regression_test(
+  NAME flecsale_sedov_2d_1procs
+  COMMAND
+    ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS}
+    $<TARGET_FILE:maire_hydro_2d_regression> ${MPIEXEC_POSTFLAGS} -m
+    ${FLECSALE_DATA_DIR}/meshes/sedov_32x32.g
+    -ll:csize 9000
+  COMPARE
+    sedov_2d-solution_rank000000.txt
+  STANDARD
+    ${CMAKE_CURRENT_SOURCE_DIR}/sedov_2d-solution_rank000000.txt.1procs.std
 )

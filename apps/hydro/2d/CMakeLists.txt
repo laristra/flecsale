@@ -20,16 +20,43 @@ target_compile_definitions(
     FLECSI_ENABLE_SPECIALIZATION_SPMD_INIT
 )
 
-add_test( 
+if ( FLECSALE_ENABLE_LUA )
+  create_regression_test(
+    NAME flecsale_shock_box_2d_1procs_with_input
+    COMMAND
+      ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS}
+      $<TARGET_FILE:hydro_2d> ${MPIEXEC_POSTFLAGS} -m
+      ${FLECSALE_DATA_DIR}/meshes/square_32x32.g
+      -f ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d.lua
+    COMPARE
+      shock_box_2d-solution_rank000000.txt
+    STANDARD
+      ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d-solution_rank000000.txt.1procs.std
+  )
+endif()
+
+create_regression_test(
   NAME flecsale_shock_box_2d_1procs
-  COMMAND mpirun -n 1 $<TARGET_FILE:hydro_2d> -m ${FLECSALE_DATA_DIR}/meshes/square_32x32.g
-  #COMPARE shock_box_2d0000007.dat 
-  #STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d0000007.dat.std 
+  COMMAND
+    ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS}
+    $<TARGET_FILE:hydro_2d> ${MPIEXEC_POSTFLAGS} -m
+    ${FLECSALE_DATA_DIR}/meshes/square_32x32.g
+  COMPARE
+    shock_box_2d-solution_rank000000.txt
+  STANDARD
+    ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d-solution_rank000000.txt.1procs.std
 )
 
-add_test( 
+create_regression_test(
   NAME flecsale_shock_box_2d_2procs
-  COMMAND mpirun -n 2 $<TARGET_FILE:hydro_2d> -m ${FLECSALE_DATA_DIR}/meshes/square_32x32.g
-  #COMPARE shock_box_2d0000007.dat 
-  #STANDARD ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d0000007.dat.std 
+  COMMAND
+    ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+    $<TARGET_FILE:hydro_2d> ${MPIEXEC_POSTFLAGS} -m
+    ${FLECSALE_DATA_DIR}/meshes/square_32x32.g
+  COMPARE
+    shock_box_2d-solution_rank000000.txt
+    shock_box_2d-solution_rank000001.txt
+  STANDARD
+    ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d-solution_rank000000.txt.2procs.std
+    ${CMAKE_CURRENT_SOURCE_DIR}/shock_box_2d-solution_rank000001.txt.2procs.std
 )

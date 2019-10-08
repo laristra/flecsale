@@ -11,6 +11,7 @@
 #include "globals.h"
 #include "tasks.h"
 #include "types.h"
+#include "../common/arguments.h"
 
 // user includes
 #include <flecsi/execution/reduction.h>
@@ -180,9 +181,17 @@ int driver(int argc, char** argv)
   // Mesh Setup
   //===========================================================================
 
-  // get the client handle 
+  // get the client handle
   auto mesh = flecsi_get_client_handle(mesh_t, meshes, mesh0);
- 
+
+  // make sure geometry is up to date
+  flecsi_execute_task(
+	  update_geometry,
+	  apps::hydro,
+	  index,
+	  mesh
+	  ).wait(); // DONT GO FORWARD UNTIL DONE!
+
   // check the mesh
   flecsi_execute_task( 
     validate_mesh, 
@@ -191,7 +200,18 @@ int driver(int argc, char** argv)
     mesh
   );
 
-  
+  // get the input file
+  auto args = apps::common::process_arguments( argc, argv );
+  auto input_file_name =
+    args.count("f") ? args.at("f") : std::string();
+
+  // override any inputs that can be
+  if ( !input_file_name.empty() ) {
+    std::cout << "Using input file \"" << input_file_name << "\"."
+              << std::endl;
+    inputs_t::load( input_file_name );
+  }
+
   //===========================================================================
   // Some typedefs
   //===========================================================================
@@ -239,36 +259,26 @@ int driver(int argc, char** argv)
   //===========================================================================
   // Boundary Conditions
   //===========================================================================
-  
-  // install each boundary
-  tag_t bc_key = 0;
-  for ( const auto & bc_pair : inputs_t::bcs )
-  {
-    auto bc_type = bc_pair.first.get();
-    auto bc_function = bc_pair.second; 
-    flecsi_execute_task(
-        install_boundary,
-        apps::hydro,
-        index,
-        mesh,
-        soln_time,
-        bc_key++,
-        bc_type,
-        bc_function);
-  }
+
+  inputs_t::initialize_boundaries();
+  flecsi_execute_task(
+	  install_boundary,
+	  apps::hydro,
+	  index,
+	  mesh,
+	  soln_time);
 
   //===========================================================================
   // Initial conditions
   //===========================================================================
-  
-  // now call the main task to set the ics.  Here we set primitive/physical 
+
+  // now call the main task to set the ics.  Here we set primitive/physical
   // quanties
-  flecsi_execute_task( 
-    initial_conditions, 
+  flecsi_execute_task(
+    initial_conditions,
     apps::hydro,
-    index, 
-    mesh, 
-    inputs_t::ics,
+    index,
+    mesh,
     inputs_t::eos,
     soln_time,
     Vc, Mc, uc, pc, dc, ec, Tc, ac
@@ -560,6 +570,13 @@ int driver(int argc, char** argv)
     std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
               << tdelta << "s." << std::endl;
 
+  }
+
+  // dump solution for verification
+  {
+	  auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+"-solution.txt" );
+	  flecsi_execute_task(dump, apps::hydro, index, mesh,
+	                      time_cnt, soln_time, dc, uc, ec, pc, name);
   }
 
 

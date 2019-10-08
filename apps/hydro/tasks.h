@@ -13,7 +13,7 @@
 #include "types.h"
 
 // flecsi includes
-#include <flecsale/io/io_exodus.h>
+#include <flecsi-sp/io/io_exodus.h>
 #include <flecsi/execution/context.h>
 #include <flecsi/execution/execution.h>
 #include <ristra/utils/string_utils.h>
@@ -25,15 +25,26 @@ namespace apps {
 namespace hydro {
 
 ////////////////////////////////////////////////////////////////////////////////
+//! \brief Update mesh geometry
+//!
+//! \param [in] mesh the mesh object
+////////////////////////////////////////////////////////////////////////////////
+void update_geometry(
+  client_handle_r<mesh_t> mesh
+) {
+	mesh.update_geometry();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task for setting initial conditions
 //!
 //! \param [in,out] mesh the mesh object
 //! \param [in]     ics  the initial conditions to set
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-void initial_conditions( 
+void initial_conditions(
   client_handle_r<mesh_t>  mesh,
-  inputs_t::ics_function_t ics, 
   eos_t eos,
   real_t soln_time,
   dense_handle_w<real_t> d,
@@ -44,16 +55,48 @@ void initial_conditions(
   dense_handle_w<real_t> a
 ) {
 
-  // This doesn't work with lua input
-  //#pragma omp parallel for
   for ( auto c : mesh.cells( flecsi::owned ) ) {
-    std::tie( d(c), v(c), p(c) ) = ics( c->centroid(), soln_time );
-    eqns_t::update_state_from_pressure( 
+    auto lid = c.id();
+    std::tie( d(c), v(c), p(c) ) = inputs_t::initial_conditions(
+      mesh, lid, soln_time );
+    eqns_t::update_state_from_pressure(
       pack( c, d, v, p, e, T, a ),
       eos
     );
   }
 
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! \brief The main task for setting initial conditions
+//!
+//! \param [in,out] mesh the mesh object
+//! \param [in]     ics  the initial conditions to set
+//! \return 0 for success
+////////////////////////////////////////////////////////////////////////////////
+void initial_conditions_from_file(
+  client_handle_r<mesh_t>  mesh,
+  eos_t eos,
+  real_t soln_time,
+  char_array_t filename,
+  dense_handle_w<real_t> d,
+  dense_handle_w<vector_t> v,
+  dense_handle_w<real_t> e,
+  dense_handle_w<real_t> p,
+  dense_handle_w<real_t> T,
+  dense_handle_w<real_t> a
+) {
+	auto ics = inputs_t::get_initial_conditions(filename.str());
+
+	// This doesn't work with lua input
+	//#pragma omp parallel for
+	for ( auto c : mesh.cells( flecsi::owned ) ) {
+		std::tie( d(c), v(c), p(c) ) = ics( c->centroid(), soln_time );
+		eqns_t::update_state_from_pressure(
+			pack( c, d, v, p, e, T, a ),
+			eos
+			);
+	}
 }
 
 
@@ -261,8 +304,11 @@ void output(
     "." + apps::common::zero_padded(iteration) + "." + postfix.str();
 
   // now outut the mesh
-  flecsale::io::io_exodus<mesh_t>::write(
-    output_filename, mesh, iteration, time, &d //, v, e, p, T, a
+  using field_type = decltype(d);
+  std::vector<field_type*> var_ptrs{&d, &p};
+  std::vector<std::string> var_names{"density", "pressure"};
+  flecsi_sp::io::io_exodus<mesh_t>::write(
+	  output_filename, mesh, time, var_ptrs, var_names
   );
 }
 
@@ -296,17 +342,101 @@ void print(
   
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Dump solution to file for regression testing
+////////////////////////////////////////////////////////////////////////////////
+void dump(
+	client_handle_r<mesh_t> mesh,
+	size_t iteration,
+	real_t time,
+	dense_handle_r<real_t> d,
+	dense_handle_r<vector_t> v,
+	dense_handle_r<real_t> e,
+	dense_handle_r<real_t> p,
+	char_array_t filename) {
+	// get the context
+	auto & context = flecsi::execution::context_t::instance();
+	auto rank = context.color();
+
+	constexpr auto num_dims = mesh_t::num_dimensions;
+	const auto & vert_lid_to_gid = context.index_map( mesh_t::index_spaces_t::vertices );
+	const auto & cell_lid_to_gid = context.index_map( mesh_t::index_spaces_t::cells );
+
+	clog(info) << "DUMP SOLUTION ON RANK " << rank << std::endl;
+
+	// figure out this ranks file name
+	auto name_and_ext = ristra::utils::split_extension( filename.str() );
+	auto output_filename =
+		name_and_ext.first + "_rank" + apps::common::zero_padded(rank) +
+		+ "." + name_and_ext.second;
+
+	// dump to file
+	if (rank==0)
+		std::cout << "Dumping solution to: " << output_filename << std::endl;
+	std::ofstream file( output_filename );
+
+	// Dump cell centered quantities
+	file.precision(14);
+	file.setf( std::ios::scientific );
+	file << "# Solution time: " << time << std::endl;
+	file << "# Number iterations: " << iteration << std::endl;
+
+	file << "# BEGIN CELLS" << std::endl;
+	file << "# Total number: " << mesh.num_cells() << std::endl;
+	file << "# local_id global_id ";
+	for ( int dim=0; dim<num_dims; ++dim ) file << "centroid(" << dim << ") ";
+	file << "density internal_energy pressure ";
+	for ( int dim=0; dim<num_dims; ++dim ) file << "velocity(" << dim << ") ";
+	file << std::endl;
+
+	for ( auto c : mesh.cells() ) {
+
+		file << c.id() << " " << cell_lid_to_gid.at(c.id()) << " ";
+		for ( auto x : c->centroid() ) file << x << " ";
+		file << d(c) << " " << e(c) << " " << p(c) << " ";
+		for ( auto x : v(c) ) file << x << " ";
+		file << std::endl;
+
+	}
+
+	file << "# END CELLS" << std::endl;
+
+	// Dump vertex quantities
+	file << "# BEGIN VERTICES" << std::endl;
+	file << "# Total number: " << mesh.num_vertices() << std::endl;
+	file << "# local_id global_id ";
+	for ( int dim=0; dim<num_dims; ++dim ) file << "coordinate(" << dim << ") ";
+	file << std::endl;
+
+	for ( auto v : mesh.vertices() ) {
+
+		file << v.id() << " " << vert_lid_to_gid.at(v.id()) << " ";
+		for ( auto x : v->coordinates() ) file << x << " ";
+		file << std::endl;
+
+	}
+
+	file << "# END VERTICES" << std::endl;
+
+	// close file
+	file.close();
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // TASK REGISTRATION
 ////////////////////////////////////////////////////////////////////////////////
 
+flecsi_register_task(update_geometry, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(initial_conditions, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(initial_conditions_from_file, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(evaluate_time_step, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(evaluate_fluxes, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(apply_update, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(output, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(print, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(dump, apps::hydro, loc, index|flecsi::leaf);
 
 } // namespace hydro
 } // namespace apps

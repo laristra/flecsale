@@ -118,32 +118,13 @@ public:
 class symmetry_boundary_condition_t : public boundary_condition_t
 {
 public:
-  virtual bool has_symmetry() const override
-  { return true; }
+	static constexpr size_t type_id = 0;
 
-  virtual ~symmetry_boundary_condition_t() {}
+	virtual bool has_symmetry() const override
+	{ return true; }
+
+	virtual ~symmetry_boundary_condition_t() {}
 };
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief A function to create a new boundary object based on a string.
-//! \tparam N  The number of dimensions.
-//! \param [in] type_str  The type of boundary condition as a string.
-//! \return A new instance of the type.
-////////////////////////////////////////////////////////////////////////////////
-inline boundary_condition_t * make_boundary_condition( const std::string & str )
-{
-  if ( str == "symmetry" )
-    return new symmetry_boundary_condition_t();
-  else if ( str == "none" )
-    return new boundary_condition_t();
-  else {
-    THROW_IMPLEMENTED_ERROR( 
-      "No implementation for boundary condition of type \'" << str << "\'"
-    );
-    return nullptr;
-  }
-
-}
 
 
 //! \brief a type for storing boundary tags

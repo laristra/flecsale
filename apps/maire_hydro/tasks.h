@@ -13,7 +13,7 @@
 #include "globals.h"
 #include "types.h"
 
-#include <flecsale/io/io_exodus.h>
+#include <flecsi-sp/io/io_exodus.h>
 #include <flecsale/linalg/qr.h>
 #include <ristra/utils/algorithm.h>
 #include <ristra/utils/array_view.h>
@@ -32,26 +32,10 @@ namespace hydro {
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Install a boundary on the mesh
 ////////////////////////////////////////////////////////////////////////////////
-void install_boundary( 
+void install_boundary(
   client_handle_r<mesh_t>  mesh,
-  real_t soln_time,
-  tag_t bc_key,
-  boundary_condition_t * bc_type,
-  inputs_t::bcs_function_t bc_function
-) {
-
-  mesh.install_boundary( 
-      [=](auto f) 
-      { 
-        if ( f->is_boundary() ) {
-          const auto & fx = f->midpoint();
-          return ( bc_function(fx, soln_time) );
-        }
-        return false;
-      },
-      bc_key
-    );
-    globals::boundaries.emplace( bc_key, bc_type );
+  real_t soln_time) {
+	inputs_t::boundary_conditions(mesh, soln_time);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -67,6 +51,15 @@ void validate_mesh(
 
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Update mesh geometry
+//!
+//! \param [in] mesh the mesh object
+////////////////////////////////////////////////////////////////////////////////
+void update_geometry(client_handle_r<mesh_t> mesh) {
+	mesh.update_geometry();
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task for setting initial conditions
@@ -75,9 +68,8 @@ void validate_mesh(
 //! \param [in]     ics  the initial conditions to set
 //! \return 0 for success
 ////////////////////////////////////////////////////////////////////////////////
-void initial_conditions( 
+void initial_conditions(
   client_handle_r<mesh_t>  mesh,
-  inputs_t::ics_function_t ics, 
   eos_t eos,
   real_t soln_time,
   dense_handle_w<real_t> V,
@@ -89,24 +81,23 @@ void initial_conditions(
   dense_handle_w<real_t> T,
   dense_handle_w<real_t> a
 ) {
-
   // This doesn't work with lua input
   // #pragma omp parallel for
   for ( auto c : mesh.cells( flecsi::owned ) ) {
     // now copy the state to flexi
     real_t den;
-    std::tie( den, v(c), p(c) ) = ics( c->centroid(), soln_time );
+    std::tie( den, v(c), p(c) ) = inputs_t::initial_conditions(
+	    mesh, c.id(), soln_time );
     // set mass and volume now
     const auto & cell_vol = c->volume();
     M(c) = den*cell_vol;
     V(c) = cell_vol;
     // now update the rest of the state
-    eqns_t::update_state_from_pressure( 
+    eqns_t::update_state_from_pressure(
       pack( c, V, M, v, p, d, e, T, a ),
       eos
     );
   }
-
 }
 
 
@@ -332,52 +323,53 @@ void evaluate_nodal_state(
       const auto & point_tags =  vt->tags();
 
       // first check if this has a prescribed velocity.  If it does, then nothing to do
-      auto vel_bc = std::find_if( 
-        point_tags.begin(), point_tags.end(), 
-        [&boundaries=globals::boundaries](const auto & id) { 
-          return boundaries.at(id)->has_prescribed_velocity();
-        } );
+      auto vel_bc = std::find_if(
+        point_tags.begin(), point_tags.end(),
+        [](const auto & id) {
+	        auto bc = flecsi_get_global_object(id, boundaries, boundary_condition_t);
+	        return bc->has_prescribed_velocity();
+        });
       if ( vel_bc != point_tags.end() ) {
-        un(vt) = 
-          globals::boundaries.at(*vel_bc)->velocity( vt->coordinates(), soln_time );
-        continue;
+	      auto bc = flecsi_get_global_object(*vel_bc, boundaries, boundary_condition_t);
+	      un(vt) = bc->velocity(vt->coordinates(), soln_time);
+	      continue;
       }
 
       // otherwise, apply the pressure conditions
-      for ( auto w : mesh.wedges(vt) ) 
+      for ( auto w : mesh.wedges(vt) )
       {
-				// skip internal wedges
-				if ( ! w->is_boundary() ) continue;
-        // for wedges attached to boundary
-				auto f = mesh.faces(w).front();
-        auto c = mesh.cells(w).front();
-        for ( auto tag : f->tags() ) {
-          auto b = globals::boundaries.at( tag );
-          // PRESSURE CONDITION
-          if ( b->has_prescribed_pressure() ) {
-            const auto & n = w->facet_normal();
-            const auto & l = w->facet_area();
-            const auto & x = w->facet_centroid();
-            auto fact = l * b->pressure( x, soln_time );
-            for ( int d=0; d<num_dims; ++d )
-              rhs[d] -= fact * n[d];
-          }
-          // SYMMETRY CONDITION
-          else if ( b->has_symmetry() ) {
-            const auto & n = w->facet_normal();
-            const auto & l = w->facet_area();
-            if ( symmetry_normals.count(tag) ) {
-              auto & tmp = symmetry_normals[tag];
-              for ( int d=0; d<num_dims; ++d )
-                tmp[d] += l * n[d];
-            }
-            else {
-              auto & tmp = symmetry_normals[tag];
-              for ( int d=0; d<num_dims; ++d )              
-                tmp[d] = l * n[d];
-            }
-          } // END CONDITIONS
-        } // for each tag
+	      // skip internal wedges
+	      if ( ! w->is_boundary() ) continue;
+	      // for wedges attached to boundary
+	      auto f = mesh.faces(w).front();
+	      auto c = mesh.cells(w).front();
+	      for ( auto tag : f->tags() ) {
+		      auto b = flecsi_get_global_object(tag, boundaries, boundary_condition_t);
+		      // PRESSURE CONDITION
+		      if ( b->has_prescribed_pressure() ) {
+			      const auto & n = w->facet_normal();
+			      const auto & l = w->facet_area();
+			      const auto & x = w->facet_centroid();
+			      auto fact = l * b->pressure( x, soln_time );
+			      for ( int d=0; d<num_dims; ++d )
+				      rhs[d] -= fact * n[d];
+		      }
+		      // SYMMETRY CONDITION
+		      else if ( b->has_symmetry() ) {
+			      const auto & n = w->facet_normal();
+			      const auto & l = w->facet_area();
+			      if ( symmetry_normals.count(tag) ) {
+				      auto & tmp = symmetry_normals[tag];
+				      for ( int d=0; d<num_dims; ++d )
+					      tmp[d] += l * n[d];
+			      }
+			      else {
+				      auto & tmp = symmetry_normals[tag];
+				      for ( int d=0; d<num_dims; ++d )
+					      tmp[d] = l * n[d];
+			      }
+		      } // END CONDITIONS
+	      } // for each tag
       } // for each wedge
 
 
@@ -690,8 +682,11 @@ void output(
     "_" + apps::common::zero_padded(iteration) + "." + postfix.str();
 
   // now outut the mesh
-  flecsale::io::io_exodus<mesh_t>::write(
-    output_filename, mesh, iteration, time, &d //, v, e, p, T, a
+  using field_type = decltype(d);
+  std::vector<field_type*> var_ptrs{&d};
+  std::vector<std::string> var_names{"density"};
+  flecsi_sp::io::io_exodus<mesh_t>::write(
+	  output_filename, mesh, time, var_ptrs, var_names
   );
 }
 
@@ -727,10 +722,95 @@ void print(
 
 
 ////////////////////////////////////////////////////////////////////////////////
+/// \brief Dump solution to file for regression testing
+////////////////////////////////////////////////////////////////////////////////
+void dump(
+	client_handle_r<mesh_t> mesh,
+	size_t iteration,
+	real_t time,
+	dense_handle_r<real_t> d,
+	dense_handle_r<vector_t> v,
+	dense_handle_r<real_t> e,
+	dense_handle_r<real_t> p,
+	char_array_t filename)
+{
+	// get the context
+	auto & context = flecsi::execution::context_t::instance();
+	auto rank = context.color();
+
+	constexpr auto num_dims = mesh_t::num_dimensions;
+	const auto & vert_lid_to_gid = context.index_map( mesh_t::index_spaces_t::vertices );
+	const auto & cell_lid_to_gid = context.index_map( mesh_t::index_spaces_t::cells );
+
+	clog(info) << "DUMP SOLUTION ON RANK " << rank << std::endl;
+
+	// figure out this ranks file name
+	auto name_and_ext = ristra::utils::split_extension( filename.str() );
+	auto output_filename =
+		name_and_ext.first + "_rank" + apps::common::zero_padded(rank) +
+		+ "." + name_and_ext.second;
+
+	// dump to file
+	if (rank == 0)
+		std::cout << "Dumping solution to: " << output_filename << std::endl;
+	std::ofstream file( output_filename );
+
+	// Dump cell centered quantities
+	file.precision(14);
+	file.setf( std::ios::scientific );
+	file << "# Solution time: " << time << std::endl;
+	file << "# Number iterations: " << iteration << std::endl;
+
+	file << "# BEGIN CELLS" << std::endl;
+	file << "# Total number: " << mesh.num_cells() << std::endl;
+	file << "# local_id global_id ";
+	for ( int dim=0; dim<num_dims; ++dim ) file << "centroid(" << dim << ") ";
+	file << "density internal_energy pressure ";
+	for ( int dim=0; dim<num_dims; ++dim ) file << "velocity(" << dim << ") ";
+	file << std::endl;
+
+	for ( auto c : mesh.cells() ) {
+
+		file << c.id() << " " << cell_lid_to_gid.at(c.id()) << " ";
+		for ( auto x : c->centroid() ) file << x << " ";
+		file << d(c) << " " << e(c) << " " << p(c) << " ";
+		for ( auto x : v(c) ) file << x << " ";
+		file << std::endl;
+
+	}
+
+	file << "# END CELLS" << std::endl;
+
+	// Dump vertex quantities
+	file << "# BEGIN VERTICES" << std::endl;
+	file << "# Total number: " << mesh.num_vertices() << std::endl;
+	file << "# local_id global_id ";
+	for ( int dim=0; dim<num_dims; ++dim ) file << "coordinate(" << dim << ") ";
+	file << std::endl;
+
+	for ( auto v : mesh.vertices() ) {
+
+		file << v.id() << " " << vert_lid_to_gid.at(v.id()) << " ";
+		for ( auto x : v->coordinates() ) file << x << " ";
+		file << std::endl;
+
+	}
+
+	file << "# END VERTICES" << std::endl;
+
+	// close file
+	file.close();
+
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
 // TASK REGISTRATION
 ////////////////////////////////////////////////////////////////////////////////
 
 flecsi_register_task(validate_mesh, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(update_geometry, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(initial_conditions, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(install_boundary, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(estimate_nodal_state, apps::hydro, loc, index|flecsi::leaf);
@@ -746,6 +826,7 @@ flecsi_register_task(save_solution, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(restore_solution, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(output, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(print, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(dump, apps::hydro, loc, index|flecsi::leaf);
 
 } // namespace hydro
 } // namespace apps
