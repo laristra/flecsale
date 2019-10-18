@@ -486,7 +486,7 @@ int driver(int argc, char** argv)
  			index,
  			mesh,
  			uc0, uc, ec0, ec
- 		);
+      ).wait();
 
 #endif // USE_FIRST_ORDER_TIME_STEPPING
 

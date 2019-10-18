@@ -555,7 +555,7 @@ void move_mesh(
 ////////////////////////////////////////////////////////////////////////////////
 void save_coordinates( 
   client_handle_r<mesh_t>  mesh,
-  dense_handle_r<vector_t> coord0 // Hack to avoid communication
+  dense_handle_w<vector_t> coord0
 )
 {
 
@@ -606,8 +606,8 @@ void save_solution(
   client_handle_r<mesh_t>  mesh,
   dense_handle_r<vector_t> cell_vel,
 	dense_handle_r<real_t> cell_ener,
-	dense_handle_r<vector_t> cell_vel_0, // "r" permissions hack to avoid communication
-	dense_handle_r<real_t> cell_ener_0   // "r" permissions hack to avoid communication
+	dense_handle_w<vector_t> cell_vel_0, // "r" permissions hack to avoid communication
+	dense_handle_w<real_t> cell_ener_0   // "r" permissions hack to avoid communication
 )
 {
 
