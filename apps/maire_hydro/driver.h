@@ -410,25 +410,16 @@ int driver(int argc, char** argv)
 
     //--------------------------------------------------------------------------
     // Move to n+1/2
-		//--------------------------------------------------------------------------
+	//--------------------------------------------------------------------------
 
-    // move the mesh to n+1/2
-    flecsi_execute_task(
-			 move_mesh, 
- 			 apps::hydro,
-       index,
-			 mesh, 
-			 un,
-			 0.5*time_step
-     );
-
-	 	// update solution to n+1/2
+	// update solution to n+1/2
     flecsi_execute_task(
 			 apply_update, 
  			 apps::hydro,
        index,
 			 mesh, 
 			 0.5*time_step,
+             xn, un,
 			 dUdt,
        Vc, Mc, uc, pc, dc, ec, Tc, ac
      );
@@ -486,21 +477,10 @@ int driver(int argc, char** argv)
  			index,
  			mesh,
  			uc0, uc, ec0, ec
- 		);
+      );
 
 #endif // USE_FIRST_ORDER_TIME_STEPPING
 
-
-    // move the mesh to n+1
-    flecsi_execute_task(
-			 move_mesh, 
- 			 apps::hydro,
-       index,
-			 mesh, 
-			 un,
-			 time_step
-     );
-    
 	 	// update solution to n+1/2
     flecsi_execute_task(
 			 apply_update, 
@@ -508,6 +488,7 @@ int driver(int argc, char** argv)
        index,
 			 mesh, 
 			 time_step,
+             xn, un,
 			 dUdt,
        Vc, Mc, uc, pc, dc, ec, Tc, ac
      );

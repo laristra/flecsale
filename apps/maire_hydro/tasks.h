@@ -496,7 +496,9 @@ void evaluate_residual(
 ////////////////////////////////////////////////////////////////////////////////
 void apply_update(
   client_handle_r<mesh_t>  mesh,
-	real_t delta_t,
+  real_t delta_t,
+  dense_handle_r<vector_t> xn,
+  dense_handle_r<vector_t> vn,
   dense_handle_r<flux_data_t> dudt,
   dense_handle_w<real_t> Vc,
   dense_handle_r<real_t> Mc,
@@ -507,6 +509,29 @@ void apply_update(
   dense_handle_r<real_t> Tc,
   dense_handle_r<real_t> ac
 ) {
+
+  //----------------------------------------------------------------------------
+  // Move the mesh
+  //----------------------------------------------------------------------------
+
+  // Update ALL vertices, including ghost so that we dont need to communicate.
+
+  constexpr auto num_dims = mesh_t::num_dimensions;
+  auto do_step = delta_t > flecsale::config::test_tolerance;
+
+  if ( do_step ) {
+
+    for ( auto vt : mesh.vertices() ) {
+      const auto & vn_ = vn(vt);
+      const auto & xn_ = xn(vt);
+      for ( int d=0; d<num_dims; ++d )
+        vt->coordinates()[d] = xn_[d] + delta_t * vn_[d];
+    }
+
+    // now update the geometry
+    mesh.update_geometry();
+
+  }
 
   // Using the cell residual, update the state
   for ( auto cl : mesh.cells(flecsi::owned) ) {
@@ -522,30 +547,6 @@ void apply_update(
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//! \brief The main task to move the mesh
-//!
-//! \param [in,out] mesh the mesh object
-//! \return 0 for success
-////////////////////////////////////////////////////////////////////////////////
-void move_mesh(
-	 client_handle_r<mesh_t> mesh,
-	 dense_handle_r<vector_t> vel,
-	 real_t delta_t
-) {
-
-  // Update ALL vertices, including ghost so that we dont need to communicate.
-	// DEFECT we are modifying the mesh, but its read-only.
-
-  for ( auto vt : mesh.vertices() ) {
-    for ( int d=0; d<mesh_t::num_dimensions; ++d )
-      vt->coordinates()[d] += delta_t * vel(vt)[d];
-  }
-
-	// now update the geometry
-	mesh.update_geometry();
-
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to save the coordinates
@@ -555,7 +556,7 @@ void move_mesh(
 ////////////////////////////////////////////////////////////////////////////////
 void save_coordinates( 
   client_handle_r<mesh_t>  mesh,
-  dense_handle_r<vector_t> coord0 // Hack to avoid communication
+  dense_handle_w<vector_t> coord0
 )
 {
 
@@ -606,8 +607,8 @@ void save_solution(
   client_handle_r<mesh_t>  mesh,
   dense_handle_r<vector_t> cell_vel,
 	dense_handle_r<real_t> cell_ener,
-	dense_handle_r<vector_t> cell_vel_0, // "r" permissions hack to avoid communication
-	dense_handle_r<real_t> cell_ener_0   // "r" permissions hack to avoid communication
+	dense_handle_w<vector_t> cell_vel_0, // "r" permissions hack to avoid communication
+	dense_handle_w<real_t> cell_ener_0   // "r" permissions hack to avoid communication
 )
 {
 
@@ -817,7 +818,6 @@ flecsi_register_task(estimate_nodal_state, apps::hydro, loc, index|flecsi::leaf)
 flecsi_register_task(evaluate_nodal_state, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(evaluate_residual, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(evaluate_time_step, apps::hydro, loc, index|flecsi::leaf);
-flecsi_register_task(move_mesh, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(apply_update, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(update_state_from_energy, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(save_coordinates, apps::hydro, loc, index|flecsi::leaf);
