@@ -205,6 +205,10 @@ void evaluate_fluxes(
 
 }
 
+template<typename T>
+using handle_t =
+  flecsi::execution::flecsi_future<T, flecsi::execution::launch_type_t::single>;
+
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief The main task to update the solution in each cell.
 //!
@@ -214,7 +218,7 @@ void evaluate_fluxes(
 void apply_update( 
   client_handle_r<mesh_t> mesh,
   eos_t eos,
-  real_t delta_t,
+  handle_t<real_t> future_delta_t,
   dense_handle_r<flux_data_t> flux,
   dense_handle_rw<real_t> d,
   dense_handle_rw<vector_t> v,
@@ -229,7 +233,7 @@ void apply_update(
 
 
   //auto delta_t = static_cast<real_t>( time_step );
-
+  real_t delta_t = future_delta_t;
   const auto & cell_list = mesh.cells( flecsi::owned );
   auto num_cells = cell_list.size();
 

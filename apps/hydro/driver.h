@@ -265,19 +265,19 @@ int driver(int argc, char** argv)
     flecsi_execute_task( evaluate_fluxes, apps::hydro, index, mesh,
         d, v, e, p, T, a, F );
  
-    auto time_step = global_future_time_step.get();
+    //auto time_step = global_future_time_step.get();
 
     // Loop over each cell, scattering the fluxes to the cell
     f = flecsi_execute_task( 
       apply_update, apps::hydro, index, mesh, inputs_t::eos,
-      time_step, F, d, v, e, p, T, a
+      global_future_time_step, F, d, v, e, p, T, a
     );
 
     //-------------------------------------------------------------------------
     // Post-process
 
     // update time
-    soln_time += time_step;
+    //soln_time += time_step;
     time_cnt++;
 
     // output the time step
@@ -288,7 +288,7 @@ int driver(int argc, char** argv)
       cout.precision(6);
       cout << "|  " << "Step:" << std::setw(10) << time_cnt
            << "  |  Time:" << std::setw(17) << soln_time 
-           << "  |  Step Size:" << std::setw(17) << time_step
+     //      << "  |  Step Size:" << std::setw(17) << time_step
            << "  |" << std::endl;
       cout.unsetf( std::ios::scientific );
       cout.precision(ss);
