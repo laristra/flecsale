@@ -231,6 +231,9 @@ int driver(int argc, char** argv)
     f.wait();
   }
 
+  auto runtime = Legion::Runtime::get_runtime();
+  auto ctx = Legion::Runtime::get_context();
+
 
   // dump connectivity
   auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+".txt" );
@@ -249,6 +252,7 @@ int driver(int argc, char** argv)
     (num_steps < inputs_t::max_steps && soln_time < inputs_t::final_time); 
     ++num_steps 
   ) {   
+runtime->begin_trace(ctx, 42);
     //-------------------------------------------------------------------------
     // compute the time step
 
@@ -273,6 +277,7 @@ int driver(int argc, char** argv)
       global_future_time_step, F, d, v, e, p, T, a
     );
 
+runtime->end_trace(ctx, 42);
     //-------------------------------------------------------------------------
     // Post-process
 
