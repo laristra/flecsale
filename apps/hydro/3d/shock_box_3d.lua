@@ -6,7 +6,7 @@ hydro = {
   output_freq = 1e6,
   -- The time stepping parameters
   final_time = 0.2,
-  max_steps = 1e6,
+  max_steps = 12,
   CFL = 1./3.,
   -- the mesh
   mesh = {
