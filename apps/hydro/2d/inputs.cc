@@ -28,7 +28,7 @@ string inputs_t::prefix = "shock_box_2d";
 string inputs_t::postfix = "dat";
 
 // output frequency
-size_t inputs_t::output_freq = 1e6;
+size_t inputs_t::output_freq = 0;
 
 // the CFL and final solution time
 real_t inputs_t::CFL = 1.0/2.0;

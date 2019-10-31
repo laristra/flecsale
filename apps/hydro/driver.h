@@ -217,7 +217,7 @@ int driver(int argc, char** argv)
   // now output the solution
   auto has_output = (inputs_t::output_freq > 0);
   if (has_output) {
-    flecsi_execute_task(
+    auto f = flecsi_execute_task(
       output,
  			apps::hydro,
  			index,
@@ -228,6 +228,7 @@ int driver(int argc, char** argv)
       soln_time,
  			d, v, e, p, T, a
     );
+    f.wait();
   }
 
 
@@ -248,7 +249,6 @@ int driver(int argc, char** argv)
     (num_steps < inputs_t::max_steps && soln_time < inputs_t::final_time); 
     ++num_steps 
   ) {   
-
     //-------------------------------------------------------------------------
     // compute the time step
 
@@ -268,7 +268,7 @@ int driver(int argc, char** argv)
     auto time_step = global_future_time_step.get();
 
     // Loop over each cell, scattering the fluxes to the cell
-    flecsi_execute_task( 
+    f = flecsi_execute_task( 
       apply_update, apps::hydro, index, mesh, inputs_t::eos,
       time_step, F, d, v, e, p, T, a
     );
@@ -331,7 +331,7 @@ int driver(int argc, char** argv)
   //===========================================================================
   // Post-process
   //===========================================================================
-    
+  f.wait();    
   auto tdelta = ristra::utils::get_wall_time() - tstart;
 
   if ( rank == 0 ) {
