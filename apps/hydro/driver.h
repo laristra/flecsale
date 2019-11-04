@@ -215,6 +215,7 @@ int driver(int argc, char** argv)
  	auto postfix_char =  flecsi_sp::utils::to_char_array( "exo" );
 
   // now output the solution
+#if 0
   auto has_output = (inputs_t::output_freq > 0);
   if (has_output) {
     auto f = flecsi_execute_task(
@@ -230,7 +231,7 @@ int driver(int argc, char** argv)
     );
     f.wait();
   }
-
+#endif
   auto runtime = Legion::Runtime::get_runtime();
   auto ctx = Legion::Runtime::get_context();
 
@@ -286,6 +287,7 @@ runtime->end_trace(ctx, 42);
     time_cnt++;
 
     // output the time step
+#if 0
     if ( rank == 0 ) {
       cout << std::string(80, '=') << endl;
       auto ss = cout.precision();
@@ -298,6 +300,7 @@ runtime->end_trace(ctx, 42);
       cout.unsetf( std::ios::scientific );
       cout.precision(ss);
     }
+#endif
 
 #ifdef HAVE_CATALYST
     if (!catalyst_scripts.empty()) {
@@ -308,7 +311,7 @@ runtime->end_trace(ctx, 42);
     }
 #endif
 
-
+#if 0
     // now output the solution
     if ( has_output && 
         (time_cnt % inputs_t::output_freq == 0 || 
@@ -330,7 +333,7 @@ runtime->end_trace(ctx, 42);
       );
     }
 
-
+#endif
   }
 
   //===========================================================================
