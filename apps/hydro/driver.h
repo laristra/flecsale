@@ -120,12 +120,13 @@ int driver(int argc, char** argv)
   auto mesh = flecsi_get_client_handle(mesh_t, meshes, mesh0);
 
   // make sure geometry is up to date
-  flecsi_execute_task(
+  auto f = flecsi_execute_task(
 	  update_geometry,
 	  apps::hydro,
 	  index,
 	  mesh
-	  ).wait(); // DONT GO FORWARD UNTIL DONE!
+	  );
+  f.wait(); // DONT GO FORWARD UNTIL DONE!
 
   // get the input file
   auto args = apps::common::process_arguments( argc, argv );
@@ -182,7 +183,7 @@ int driver(int argc, char** argv)
   // quanties
   if (!input_file_name.empty()) {
 	  auto filename_char = flecsi_sp::utils::to_char_array(input_file_name);
-	  flecsi_execute_task(
+	  f = flecsi_execute_task(
 		  initial_conditions_from_file,
 		  apps::hydro,
 		  index,
@@ -192,7 +193,7 @@ int driver(int argc, char** argv)
 		  filename_char,
 		  d, v, e, p, T, a);
   } else {
-	  flecsi_execute_task(
+	  f = flecsi_execute_task(
 		  initial_conditions,
 		  apps::hydro,
 		  index,
@@ -237,10 +238,12 @@ int driver(int argc, char** argv)
 
 
   // dump connectivity
+#if 0
   auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+".txt" );
   auto f = flecsi_execute_task(print, apps::hydro, index, mesh, name);
-  f.wait();
+#endif
 
+  f.wait();
   // start a clock
   auto tstart = ristra::utils::get_wall_time();
 
@@ -355,11 +358,13 @@ runtime->end_trace(ctx, 42);
   }
 
   // dump solution for verification
+#if 0
   {
     auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+"-solution.txt" );
     flecsi_execute_task( dump, apps::hydro, index, mesh, time_cnt, soln_time,
         d, v, e, p, name );
   }
+#endif
 
   // success if you reached here
   return 0;
