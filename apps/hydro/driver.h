@@ -232,9 +232,9 @@ int driver(int argc, char** argv)
 
 
   // dump connectivity
-  auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+".txt" );
-  auto f = flecsi_execute_task(print, apps::hydro, index, mesh, name);
-  f.wait();
+  //  auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+".txt" );
+  //  auto f = flecsi_execute_task(print, apps::hydro, index, mesh, name);
+  //  f.wait();
 
   // start a clock
   auto tstart = ristra::utils::get_wall_time();
@@ -348,9 +348,9 @@ int driver(int argc, char** argv)
 
   // dump solution for verification
   {
-    auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+"-solution.txt" );
-    flecsi_execute_task( dump, apps::hydro, index, mesh, time_cnt, soln_time,
-        d, v, e, p, name );
+    //    auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+"-solution.txt" );
+    //    flecsi_execute_task( dump, apps::hydro, index, mesh, time_cnt, soln_time,
+    //        d, v, e, p, name );
   }
 
   // success if you reached here
