@@ -3,7 +3,7 @@
 	url = ../../laristra/cinch.git
 [submodule "flecsi"]
 	path = flecsi
-	url = ../../laristra/flecsi.git
+	url = git:://github.com/gshipman/flecsi.git
 [submodule "ristra"]
 	path = ristra
 	url = ../../laristra/libristra.git
