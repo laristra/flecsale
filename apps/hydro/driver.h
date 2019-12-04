@@ -120,12 +120,13 @@ int driver(int argc, char** argv)
   auto mesh = flecsi_get_client_handle(mesh_t, meshes, mesh0);
 
   // make sure geometry is up to date
-  flecsi_execute_task(
+  auto f = flecsi_execute_task(
 	  update_geometry,
 	  apps::hydro,
 	  index,
 	  mesh
-	  ).wait(); // DONT GO FORWARD UNTIL DONE!
+	  );
+  f.wait(); // DONT GO FORWARD UNTIL DONE!
 
   // get the input file
   auto args = apps::common::process_arguments( argc, argv );
@@ -182,7 +183,7 @@ int driver(int argc, char** argv)
   // quanties
   if (!input_file_name.empty()) {
 	  auto filename_char = flecsi_sp::utils::to_char_array(input_file_name);
-	  flecsi_execute_task(
+	  f = flecsi_execute_task(
 		  initial_conditions_from_file,
 		  apps::hydro,
 		  index,
@@ -192,7 +193,7 @@ int driver(int argc, char** argv)
 		  filename_char,
 		  d, v, e, p, T, a);
   } else {
-	  flecsi_execute_task(
+	  f = flecsi_execute_task(
 		  initial_conditions,
 		  apps::hydro,
 		  index,
@@ -215,9 +216,10 @@ int driver(int argc, char** argv)
  	auto postfix_char =  flecsi_sp::utils::to_char_array( "exo" );
 
   // now output the solution
+#if 0
   auto has_output = (inputs_t::output_freq > 0);
   if (has_output) {
-    flecsi_execute_task(
+    auto f = flecsi_execute_task(
       output,
  			apps::hydro,
  			index,
@@ -228,14 +230,20 @@ int driver(int argc, char** argv)
       soln_time,
  			d, v, e, p, T, a
     );
+    f.wait();
   }
+#endif
+  auto runtime = Legion::Runtime::get_runtime();
+  auto ctx = Legion::Runtime::get_context();
 
 
   // dump connectivity
-  //  auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+".txt" );
-  //  auto f = flecsi_execute_task(print, apps::hydro, index, mesh, name);
-  //  f.wait();
+#if 0
+  auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+".txt" );
+  auto f = flecsi_execute_task(print, apps::hydro, index, mesh, name);
+#endif
 
+  f.wait();
   // start a clock
   auto tstart = ristra::utils::get_wall_time();
 
@@ -248,7 +256,7 @@ int driver(int argc, char** argv)
     (num_steps < inputs_t::max_steps && soln_time < inputs_t::final_time); 
     ++num_steps 
   ) {   
-
+runtime->begin_trace(ctx, 42);
     //-------------------------------------------------------------------------
     // compute the time step
 
@@ -265,22 +273,24 @@ int driver(int argc, char** argv)
     flecsi_execute_task( evaluate_fluxes, apps::hydro, index, mesh,
         d, v, e, p, T, a, F );
  
-    auto time_step = global_future_time_step.get();
+    //auto time_step = global_future_time_step.get();
 
     // Loop over each cell, scattering the fluxes to the cell
-    flecsi_execute_task( 
+    f = flecsi_execute_task( 
       apply_update, apps::hydro, index, mesh, inputs_t::eos,
-      time_step, F, d, v, e, p, T, a
+      global_future_time_step, F, d, v, e, p, T, a
     );
 
+runtime->end_trace(ctx, 42);
     //-------------------------------------------------------------------------
     // Post-process
 
     // update time
-    soln_time += time_step;
+    //soln_time += time_step;
     time_cnt++;
 
     // output the time step
+#if 0
     if ( rank == 0 ) {
       cout << std::string(80, '=') << endl;
       auto ss = cout.precision();
@@ -288,11 +298,12 @@ int driver(int argc, char** argv)
       cout.precision(6);
       cout << "|  " << "Step:" << std::setw(10) << time_cnt
            << "  |  Time:" << std::setw(17) << soln_time 
-           << "  |  Step Size:" << std::setw(17) << time_step
+     //      << "  |  Step Size:" << std::setw(17) << time_step
            << "  |" << std::endl;
       cout.unsetf( std::ios::scientific );
       cout.precision(ss);
     }
+#endif
 
 #ifdef HAVE_CATALYST
     if (!catalyst_scripts.empty()) {
@@ -303,7 +314,7 @@ int driver(int argc, char** argv)
     }
 #endif
 
-
+#if 0
     // now output the solution
     if ( has_output && 
         (time_cnt % inputs_t::output_freq == 0 || 
@@ -325,13 +336,13 @@ int driver(int argc, char** argv)
       );
     }
 
-
+#endif
   }
 
   //===========================================================================
   // Post-process
   //===========================================================================
-    
+  f.wait();    
   auto tdelta = ristra::utils::get_wall_time() - tstart;
 
   if ( rank == 0 ) {
@@ -347,11 +358,13 @@ int driver(int argc, char** argv)
   }
 
   // dump solution for verification
+#if 0
   {
     //    auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+"-solution.txt" );
     //    flecsi_execute_task( dump, apps::hydro, index, mesh, time_cnt, soln_time,
     //        d, v, e, p, name );
   }
+#endif
 
   // success if you reached here
   return 0;
