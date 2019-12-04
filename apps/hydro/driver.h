@@ -360,9 +360,9 @@ runtime->end_trace(ctx, 42);
   // dump solution for verification
 #if 0
   {
-    auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+"-solution.txt" );
-    flecsi_execute_task( dump, apps::hydro, index, mesh, time_cnt, soln_time,
-        d, v, e, p, name );
+    //    auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+"-solution.txt" );
+    //    flecsi_execute_task( dump, apps::hydro, index, mesh, time_cnt, soln_time,
+    //        d, v, e, p, name );
   }
 #endif
 
