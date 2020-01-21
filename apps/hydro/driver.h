@@ -25,6 +25,8 @@
 #include <sstream>
 #include <utility>
 
+#include<Kokkos_Core.hpp>
+
 namespace apps {
 namespace hydro {
   
@@ -107,6 +109,7 @@ flecsi_register_field(
 ///////////////////////////////////////////////////////////////////////////////
 int driver(int argc, char** argv) 
 {
+  Kokkos::initialize();
 
   // get the context
   auto & context = flecsi::execution::context_t::instance();
@@ -367,6 +370,7 @@ runtime->end_trace(ctx, 42);
 #endif
 
   // success if you reached here
+  Kokkos::finalize();
   return 0;
 
 }

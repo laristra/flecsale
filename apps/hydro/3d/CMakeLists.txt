@@ -3,6 +3,11 @@
 # All rights reserved.
 #~----------------------------------------------------------------------------~#
 
+set_property(SOURCE driver.cc APPEND PROPERTY COMPILE_FLAGS "-xcuda --cuda-gpu-arch=sm_70" )
+set_property(SOURCE inputs.cc APPEND PROPERTY COMPILE_FLAGS "-xcuda --cuda-gpu-arch=sm_70" )
+set_property(SOURCE ../../../specializations/flecsi-sp/burton/burton_specialization_init.cc APPEND PROPERTY COMPILE_FLAGS "-xcuda --cuda-gpu-arch=sm_70" )
+set_property(SOURCE ../../../flecsi/flecsi/execution/legion/runtime_driver.cc APPEND PROPERTY COMPILE_FLAGS "-xcuda --cuda-gpu-arch=sm_70" )
+set_property(SOURCE ../../../flecsi/flecsi/execution/legion/runtime_main.cc APPEND PROPERTY COMPILE_FLAGS "-xcuda --cuda-gpu-arch=sm_70" )
 add_executable( hydro_3d
   $<TARGET_OBJECTS:apps_common> 
   driver.cc
@@ -11,7 +16,7 @@ add_executable( hydro_3d
   ${FLECSALE_RUNTIME_DRIVER}
   ${FLECSALE_RUNTIME_MAIN}
 )
-target_link_libraries( hydro_3d FleCSALE )
+target_link_libraries( hydro_3d FleCSALE -lkokkoscore )
 target_compile_definitions( 
   hydro_3d
   PRIVATE

@@ -16,6 +16,7 @@
 #include <ristra/math/general.h>
 #include <ristra/math/array.h>
 
+#include <flecsi/utils/target.h>
 namespace flecsale {
 namespace eqns {
 
@@ -134,27 +135,27 @@ public:
   //! \return The quantity of interest.
   //============================================================================
   template< typename U >
-  inline static decltype(auto) density( U && u ) noexcept
+  FLECSI_INLINE_TARGET inline static decltype(auto) density( U && u ) noexcept
   { return ristra::math::get<variables::index::density>( std::forward<U>(u) ); }
 
   //! \copydoc density
   template< typename U >
-  inline static decltype(auto) velocity( U && u ) noexcept
+  FLECSI_INLINE_TARGET inline static decltype(auto) velocity( U && u ) noexcept
   { return ristra::math::get<variables::index::velocity>( std::forward<U>(u) ); }
 
   //! \copydoc density
   template< typename U >
-  inline static decltype(auto) pressure( U && u ) noexcept
+  FLECSI_INLINE_TARGET inline static decltype(auto) pressure( U && u ) noexcept
   { return ristra::math::get<variables::index::pressure>( std::forward<U>(u) ); }
 
   //! \copydoc density
   template< typename U >
-  inline static decltype(auto) internal_energy( U && u ) noexcept
+  FLECSI_INLINE_TARGET inline static decltype(auto) internal_energy( U && u ) noexcept
   { return ristra::math::get<variables::index::internal_energy>( std::forward<U>(u) ); }
 
   //! \copydoc density
   template< typename U >
-  inline static decltype(auto) sound_speed( U && u ) noexcept
+  FLECSI_INLINE_TARGET inline static decltype(auto) sound_speed( U && u ) noexcept
   { return ristra::math::get<variables::index::sound_speed>( std::forward<U>(u) ); }
 
   //! \copydoc density
@@ -164,7 +165,7 @@ public:
 
   //! \copydoc density
   template< typename U >
-  static auto total_energy( U && u ) noexcept
+  FLECSI_INLINE_TARGET static auto total_energy( U && u ) noexcept
   { 
     using ristra::math::dot_product;
     return internal_energy( std::forward<U>(u) ) + 
@@ -181,7 +182,7 @@ public:
   //! \return The fastest moving wave speed.
   //============================================================================
   template < typename U, typename V>
-  static auto fastest_wavespeed( U && u, const V & norm )
+  FLECSI_INLINE_TARGET static auto fastest_wavespeed( U && u, const V & norm )
   {
     auto vn = ristra::math::dot_product( velocity( std::forward<U>(u) ), norm );
     return sound_speed( std::forward<U>(u) ) + std::abs(vn);
@@ -220,7 +221,7 @@ public:
   //! \return The fastest moving wave speed.
   //============================================================================
   template <typename U, typename V>
-  static auto minmax_eigenvalues( U && u, const V & norm )
+  FLECSI_INLINE_TARGET static auto minmax_eigenvalues( U && u, const V & norm )
   {
     using ristra::math::get;
 
@@ -236,7 +237,7 @@ public:
   //! \return ur - ul
   //============================================================================
   template< typename UL, typename UR >
-  static auto solution_delta( 
+  FLECSI_INLINE_TARGET static auto solution_delta( 
     UL && ul, UR && ur 
   ) {
     using ristra::math::get;
@@ -272,7 +273,7 @@ public:
   //! \return The flux alligned with the normal direction.
   //============================================================================
   template <typename U, typename V>
-  static auto flux( U && u, const V & norm )
+  FLECSI_INLINE_TARGET static auto flux( U && u, const V & norm )
   {
 
     using ristra::math::get;
@@ -311,7 +312,7 @@ public:
   //! \return The solution flux.
   //============================================================================
   template <typename U, typename V>
-  static auto wall_flux( U && u, const V & norm )
+  FLECSI_INLINE_TARGET static auto wall_flux( U && u, const V & norm )
   {
     auto & p  = pressure( std::forward<U>(u) );
     auto pn = p*norm;

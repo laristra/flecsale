@@ -100,7 +100,7 @@ using char_array_t = flecsi_sp::utils::char_array_t;
 //! Change the called function to alter the flux evaluation.
 ////////////////////////////////////////////////////////////////////////////////
 template< typename E, typename UL, typename UR, typename V >
-auto flux_function( UL && left_state, UR && right_state, V && norm )
+FLECSI_INLINE_TARGET auto flux_function( UL && left_state, UR && right_state, V && norm )
 { 
   return 
     flecsale::eqns::hlle_flux<E>(
@@ -114,7 +114,7 @@ auto flux_function( UL && left_state, UR && right_state, V && norm )
 //! Change the called function to alter the flux evaluation.
 ////////////////////////////////////////////////////////////////////////////////
 template< typename E, typename U, typename V >
-auto boundary_flux( U && state, V && norm )
+FLECSI_INLINE_TARGET auto boundary_flux( U && state, V && norm )
 { 
   return 
     E::wall_flux( std::forward<U>(state), std::forward<V>(norm) ); 
@@ -125,7 +125,7 @@ auto boundary_flux( U && state, V && norm )
 //! Change the called function to alter the flux evaluation.
 ////////////////////////////////////////////////////////////////////////////////
 template< typename T, typename...ARGS >
-decltype(auto) pack( T && loc, ARGS&&... args )
+FLECSI_INLINE_TARGET decltype(auto) pack( T && loc, ARGS&&... args )
 { 
   return 
     std::forward_as_tuple( std::forward<ARGS>(args)(std::forward<T>(loc))... ); 

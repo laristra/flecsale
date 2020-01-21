@@ -77,7 +77,7 @@ auto rusanov_flux( const U & wl, const U & wr, const V & n) {
 //! \return the flux
 ////////////////////////////////////////////////////////////////////////////////
 template< typename E, typename U, typename V >
-auto hlle_flux( const U & wl, const U & wr, const V & n) { 
+FLECSI_INLINE_TARGET auto hlle_flux( const U & wl, const U & wr, const V & n) { 
   // compute some things for the dissipation term
   auto sl = E::minmax_eigenvalues( wl, n );
   auto sr = E::minmax_eigenvalues( wr, n );

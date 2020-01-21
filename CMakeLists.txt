@@ -37,6 +37,9 @@ endif()
 
 include(${CINCH_SOURCE_DIR}/cmake/ProjectLists.txt)
 
+set_property(SOURCE flecsi/flecsi/coloring/test/dcrs.cc APPEND PROPERTY COMPILE_FLAGS "-xcuda --cuda-gpu-arch=sm_70" )
+set_property(SOURCE flecsi/flecsi/execution/legion/runtime_driver.cc APPEND PROPERTY COMPILE_FLAGS "-xcuda --cuda-gpu-arch=sm_70" )
+set_property(SOURCE specializations/flecsi-sp/burton/burton_specialization_init.cc APPEND PROPERTY COMPILE_FLAGS "-xcuda --cuda-gpu-arch=sm_70" )
 #------------------------------------------------------------------------------#
 # Formatting options for emacs and vim.
 # vim: set tabstop=4 shiftwidth=4 expandtab :

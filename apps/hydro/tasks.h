@@ -21,6 +21,8 @@
 // system includes
 #include <iomanip>
 
+#include<Kokkos_Core.hpp>
+
 namespace apps {
 namespace hydro {
 
@@ -118,37 +120,38 @@ real_t evaluate_time_step(
   real_t CFL,
   real_t max_dt
 ) {
- 
+
+/*
+   Kokkos::parallel_for("Loop1", 10, KOKKOS_LAMBDA (const int& i) {
+     printf("Greeting from iteration %i\n",i);
+   });
+*/
   // Loop over each cell, computing the minimum time step,
   // which is also the maximum 1/dt
   real_t dt_inv(0);
 
-  for ( auto c : mesh.cells( flecsi::owned ) ) {
-
+  Kokkos::parallel_reduce("timestep_calc", mesh.cells(flecsi::owned).size(), KOKKOS_LAMBDA(const int& i, real_t& dti){
+    dti = 0; 
+    auto c = mesh.cells(flecsi::owned)[i];
     // get the solution state
     auto u = pack( c, d, v, p, e, T, a );
-
-    // loop over each face
-    for ( auto f : mesh.faces(c) ) {
+    for ( auto f : mesh.faces() ) {
       // estimate the length scale normal to the face
       auto delta_x = c->volume() / f->area();
       // compute the inverse of the time scale
-      auto dti = eqns_t::fastest_wavespeed( u, f->normal() ) / delta_x;
+      dti = max(dti,eqns_t::fastest_wavespeed( u, f->normal() ) / delta_x);
       // check for the maximum value
-      dt_inv = std::max( dti, dt_inv );
     } // edge
-
-  } // cell
-
+  }, Kokkos::Max<real_t>(dt_inv));
   if ( dt_inv <= 0 ) 
     THROW_RUNTIME_ERROR( "infinite delta t" );
-
+  
   real_t time_step = 1 / dt_inv;
   time_step *= CFL;
 
   // access the computed time step and make sure its not too large
   time_step = std::min( time_step, max_dt );
-
+  
   return time_step;
 }
 
@@ -172,6 +175,34 @@ void evaluate_fluxes(
   const auto & face_list = mesh.faces( flecsi::owned );
   auto num_faces = face_list.size();
 
+  Kokkos::parallel_for("evaluate_fluxes", num_faces, KOKKOS_LAMBDA(const int& fit){
+    auto f = face_list[fit];
+    
+    // get the cell neighbors
+    auto cells = mesh.cells(f);
+    //auto num_cells = cells.size();
+
+    // get the left state
+    //auto w_left = pack( cells[0], d, v, p, e, T, a );
+    
+    // compute the face flux
+    //
+    // interior cell
+    //if ( num_cells == 2 ) {
+    //  auto w_right = pack( cells[1], d, v, p, e, T, a );
+    //  flux(f) = flux_function<eqns_t>( w_left, w_right, f->normal() );
+    //} 
+    // boundary cell
+    //else {
+    //  flux(f) = boundary_flux<eqns_t>( w_left, f->normal() );
+    //}
+   
+    // scale the flux by the face area
+    //flux(f) *= f->area();
+
+  }); // for
+  std::cout << "finished!\n";
+  /*
   #pragma omp parallel for
   for ( counter_t fit = 0; fit < num_faces; ++fit )
   {
@@ -201,6 +232,7 @@ void evaluate_fluxes(
     flux(f) *= f->area();
 
   } // for
+  */
   //----------------------------------------------------------------------------
 
 }
