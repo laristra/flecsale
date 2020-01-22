@@ -26,6 +26,15 @@
 namespace apps {
 namespace hydro {
 
+void cudaErrorCheck(int line, bool sync=true){
+  if(sync){cudaDeviceSynchronize();}
+  cudaError_t error = cudaGetLastError();
+  if(error != cudaSuccess){
+    printf("CUDA error on line %d: %s\n", line, cudaGetErrorString(error));
+    exit(-1);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //! \brief Update mesh geometry
 //!
@@ -66,7 +75,6 @@ void initial_conditions(
       eos
     );
   }
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -121,11 +129,6 @@ real_t evaluate_time_step(
   real_t max_dt
 ) {
 
-/*
-   Kokkos::parallel_for("Loop1", 10, KOKKOS_LAMBDA (const int& i) {
-     printf("Greeting from iteration %i\n",i);
-   });
-*/
   // Loop over each cell, computing the minimum time step,
   // which is also the maximum 1/dt
   real_t dt_inv(0);
@@ -135,7 +138,7 @@ real_t evaluate_time_step(
     auto c = mesh.cells(flecsi::owned)[i];
     // get the solution state
     auto u = pack( c, d, v, p, e, T, a );
-    for ( auto f : mesh.faces() ) {
+    for ( auto f : mesh.faces(c) ) {
       // estimate the length scale normal to the face
       auto delta_x = c->volume() / f->area();
       // compute the inverse of the time scale
@@ -143,6 +146,7 @@ real_t evaluate_time_step(
       // check for the maximum value
     } // edge
   }, Kokkos::Max<real_t>(dt_inv));
+  cudaErrorCheck(__LINE__);
   if ( dt_inv <= 0 ) 
     THROW_RUNTIME_ERROR( "infinite delta t" );
   
@@ -175,33 +179,36 @@ void evaluate_fluxes(
   const auto & face_list = mesh.faces( flecsi::owned );
   auto num_faces = face_list.size();
 
-  Kokkos::parallel_for("evaluate_fluxes", num_faces, KOKKOS_LAMBDA(const int& fit){
-    auto f = face_list[fit];
+  Kokkos::parallel_for("evaluate_fluxes", num_faces, KOKKOS_LAMBDA(int fit){
+    auto & f = face_list[fit];
     
     // get the cell neighbors
-    auto cells = mesh.cells(f);
-    //auto num_cells = cells.size();
+    auto & cells = mesh.cells(f);
+    auto num_cells = cells.size();
 
     // get the left state
-    //auto w_left = pack( cells[0], d, v, p, e, T, a );
+    auto w_left = pack( cells[0], d, v, p, e, T, a );
     
     // compute the face flux
     //
     // interior cell
-    //if ( num_cells == 2 ) {
-    //  auto w_right = pack( cells[1], d, v, p, e, T, a );
-    //  flux(f) = flux_function<eqns_t>( w_left, w_right, f->normal() );
-    //} 
+    if ( num_cells == 2 ) {
+      auto w_right = pack( cells[1], d, v, p, e, T, a );
+      flux(f) = flux_function<eqns_t>( w_left, w_right, f->normal() );
+    } 
     // boundary cell
-    //else {
-    //  flux(f) = boundary_flux<eqns_t>( w_left, f->normal() );
-    //}
+    else {
+      flux(f) = boundary_flux<eqns_t>( w_left, f->normal() );
+    }
    
     // scale the flux by the face area
-    //flux(f) *= f->area();
+    flux(f) *= f->area();
 
   }); // for
-  std::cout << "finished!\n";
+  //cudaErrorCheck(__LINE__);
+  //std::cout << "finished!\n";
+  //std::cin.get();
+  
   /*
   #pragma omp parallel for
   for ( counter_t fit = 0; fit < num_faces; ++fit )
@@ -231,8 +238,8 @@ void evaluate_fluxes(
     // scale the flux by the face area
     flux(f) *= f->area();
 
-  } // for
-  */
+  } // for */
+  
   //----------------------------------------------------------------------------
 
 }
@@ -269,6 +276,45 @@ void apply_update(
   const auto & cell_list = mesh.cells( flecsi::owned );
   auto num_cells = cell_list.size();
 
+
+  Kokkos::parallel_for("apply_update", mesh.cells(flecsi::owned).size(), KOKKOS_LAMBDA(const int & cit){
+
+    const auto & c = mesh.cells(flecsi::owned)[cit];
+
+    // initialize the update
+    flux_data_t delta_u( 0 );
+
+    // loop over each connected edge
+    for ( auto f : mesh.faces(c) ) {
+      
+      // get the cell neighbors
+      auto neigh = mesh.cells(f);
+      auto num_neigh = neigh.size();
+
+      // add the contribution to this cell only
+      if ( neigh[0] == c )
+        delta_u -= flux(f);
+      else
+        delta_u += flux(f);
+
+    } // edge
+
+    // now compute the final update
+    delta_u *= delta_t/c->volume();
+
+    // apply the update
+    auto u = pack(c, d, v, p, e, T, a);
+    eqns_t::update_state_from_flux( u, delta_u );
+
+    // update the rest of the quantities
+    eqns_t::update_state_from_energy( u, eos );
+
+    // check the solution quantities
+    //if ( eqns_t::internal_energy(u) < 0 || eqns_t::density(u) < 0 ) 
+    //  THROW_RUNTIME_ERROR( "Negative density or internal energy encountered!" );
+
+  }); // for
+  /* Non-Kokkos implementation
   #pragma omp parallel for
   for ( counter_t cit = 0; cit < num_cells; ++cit )
   {
@@ -308,6 +354,7 @@ void apply_update(
       THROW_RUNTIME_ERROR( "Negative density or internal energy encountered!" );
 
   } // for
+  */
   //----------------------------------------------------------------------------
 }
 
