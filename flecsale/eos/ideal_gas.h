@@ -175,7 +175,7 @@ public:
   //! \param[in] density the density
   //! \param[in] pressure the pressure
   //! \return the internal energy
-  real_t compute_internal_energy_dp( 
+  FLECSI_INLINE_TARGET real_t compute_internal_energy_dp( 
     real_t density, 
     real_t pressure 
   ) const // override
@@ -190,7 +190,7 @@ public:
   //! \param[in] density the density
   //! \param[in] internal_energy the internal energy
   //! \return the pressure
-  real_t compute_pressure_de( 
+  FLECSI_INLINE_TARGET real_t compute_pressure_de( 
     real_t density, 
     real_t internal_energy 
   ) const // override
@@ -203,7 +203,7 @@ public:
   //! \param[in] density the density
   //! \param[in] internal_energy the internal energy
   //! \return the sound speed
-  real_t compute_sound_speed_de( 
+  FLECSI_INLINE_TARGET real_t compute_sound_speed_de( 
     real_t density, 
     real_t internal_energy 
   ) const // override
@@ -217,7 +217,7 @@ public:
   //! \param[in] density the density
   //! \param[in] internal_energy the internal energy
   //! \return the temperature
-  real_t compute_temperature_de( 
+  FLECSI_INLINE_TARGET real_t compute_temperature_de( 
     real_t density, 
     real_t internal_energy 
   ) const // override

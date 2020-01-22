@@ -160,7 +160,7 @@ public:
 
   //! \copydoc density
   template< typename U >
-  inline static decltype(auto) temperature( U && u ) noexcept
+  FLECSI_INLINE_TARGET inline static decltype(auto) temperature( U && u ) noexcept
   { return ristra::math::get<variables::index::temperature>( std::forward<U>(u) ); }
 
   //! \copydoc density
@@ -332,7 +332,7 @@ public:
   //! \tparam E  The type of the equation of state.
   //============================================================================
   template <typename U, typename E>
-  static void update_state_from_pressure( U && u, const E & eos )
+  FLECSI_INLINE_TARGET static void update_state_from_pressure( U && u, const E & eos )
   {
     using ristra::math::get;
 
@@ -358,7 +358,7 @@ public:
   //! \tparam E  The type of the equation of state.
   //============================================================================
   template <typename U, typename E>
-  static void update_state_from_energy( U && u, const E & eos )
+  FLECSI_INLINE_TARGET static void update_state_from_energy( U && u, const E & eos )
   {
     using ristra::math::get;
 
@@ -382,7 +382,7 @@ public:
   //! \param [in]     du  The conservative change in state.
   //============================================================================
   template< typename U, typename F >
-  static void update_state_from_flux( U && u, F && du )
+  FLECSI_INLINE_TARGET static void update_state_from_flux( U && u, F && du )
   {
     using ristra::math::get;
     using ristra::math::abs;
