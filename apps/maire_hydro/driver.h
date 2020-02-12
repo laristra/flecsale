@@ -17,6 +17,8 @@
 #include <flecsi/execution/reduction.h>
 #include <ristra/utils/time_utils.h>
 
+// Need this as we move towards libraryification
+#include <flecsi-sp/burton/mesh_interface.h>
 
 // system includes
 #include <iomanip>

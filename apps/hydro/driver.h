@@ -18,6 +18,8 @@
 #include <ristra/utils/time_utils.h>
 #include <ristra/io/catalyst/adaptor.h>
 
+// Need this as we move towards libraryification
+#include <flecsi-sp/burton/mesh_interface.h>
 
 // system includes
 #include <iomanip>
