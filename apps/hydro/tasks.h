@@ -316,17 +316,22 @@ real_t update_soln_time(
 
   real_t soln_time = initial_soln_time + old_time + delta_t;
 
-  // output the time step
-  cout << std::string(80, '=') << endl;
-  auto ss = cout.precision();
-  cout.setf( std::ios::scientific );
-  cout.precision(6);
-  cout << "|  " << "Step:" << std::setw(10) << time_cnt
-       << "  |  Time:" << std::setw(17) << soln_time 
-       << "  |  Step Size:" << std::setw(17) << delta_t
-       << "  |" << std::endl;
-  cout.unsetf( std::ios::scientific );
-  cout.precision(ss);
+  auto & context = flecsi::execution::context_t::instance();
+  auto rank = context.color();
+
+  if (rank == 0) {
+    // output the time step
+    cout << std::string(80, '=') << endl;
+    auto ss = cout.precision();
+    cout.setf( std::ios::scientific );
+    cout.precision(6);
+    cout << "|  " << "Step:" << std::setw(10) << time_cnt
+        << "  |  Time:" << std::setw(17) << soln_time 
+        << "  |  Step Size:" << std::setw(17) << delta_t
+        << "  |" << std::endl;
+    cout.unsetf( std::ios::scientific );
+    cout.precision(ss);
+  }
  
   color_soln_time = soln_time;
 
@@ -346,14 +351,17 @@ void print_soln_time(
   size_t time_cnt,
   color_handle_rw<real_t> soln_time
 ) {
+  auto & context = flecsi::execution::context_t::instance();
+  auto rank = context.color();
 
-  cout << "Final solution time is " 
+  if (rank == 0) {
+    cout << "Final solution time is " 
        << std::scientific << std::setprecision(2) << soln_time
        << " after " << time_cnt << " steps." << std::endl;
 
-  std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
+    std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
             << tdelta << "s." << std::endl;
-
+  }
 }
 
 
@@ -521,9 +529,9 @@ flecsi_register_task(apply_update, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(output, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(print, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(dump, apps::hydro, loc, index|flecsi::leaf);
-flecsi_register_task(init_soln_time, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(update_soln_time, apps::hydro, loc, single|flecsi::leaf);
-flecsi_register_task(print_soln_time, apps::hydro, loc, single|flecsi::leaf);
+flecsi_register_task(init_soln_time, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(update_soln_time, apps::hydro, loc, index|flecsi::leaf);
+flecsi_register_task(print_soln_time, apps::hydro, loc, index|flecsi::leaf);
 
 } // namespace hydro
 } // namespace apps

@@ -254,7 +254,7 @@ int driver(int argc, char** argv)
   auto solution_time_handle = flecsi_get_color(hydro, solution_time, mesh_t::real_t, 0);
 
   flecsi_execute_task( 
-    init_soln_time, apps::hydro, single, soln_time, solution_time_handle
+    init_soln_time, apps::hydro, index, soln_time, solution_time_handle
   );
 
   for ( 
@@ -294,7 +294,7 @@ int driver(int argc, char** argv)
 
     // update time
     flecsi_execute_task( 
-      update_soln_time, apps::hydro, single, time_cnt, soln_time, 
+      update_soln_time, apps::hydro, index, time_cnt, soln_time, 
       global_future_time_step, solution_time_handle
     );
 
@@ -339,7 +339,7 @@ int driver(int argc, char** argv)
   auto tdelta = ristra::utils::get_wall_time() - tstart;
 
   flecsi_execute_task( 
-    print_soln_time, apps::hydro, single, tdelta, time_cnt, solution_time_handle);
+    print_soln_time, apps::hydro, index, tdelta, time_cnt, solution_time_handle);
   
   // dump solution for verification
   {
