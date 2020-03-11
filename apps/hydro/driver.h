@@ -32,7 +32,7 @@ namespace hydro {
   
 // create some field data.  Fields are registered as struct of arrays.
 // this allows us to access the data in different patterns.
-flecsi_register_global(hydro, solution_time, mesh_t::real_t, 1);
+flecsi_register_color(hydro, solution_time, mesh_t::real_t, 1);
 
 flecsi_register_field(
   mesh_t, 
@@ -251,7 +251,7 @@ int driver(int argc, char** argv)
   // keep track of current solution time with futures and a global handle
   // so that we do not block on the top-level-task
 
-  auto solution_time_handle = flecsi_get_global(hydro, solution_time, mesh_t::real_t, 0);
+  auto solution_time_handle = flecsi_get_color(hydro, solution_time, mesh_t::real_t, 0);
 
   flecsi_execute_task( 
     init_soln_time, apps::hydro, single, soln_time, solution_time_handle

@@ -117,7 +117,7 @@ real_t evaluate_time_step(
   dense_handle_r<real_t> a,
   real_t CFL,
   real_t final_time,
-  global_handle_rw<real_t> solution_time
+  color_handle_rw<real_t> solution_time
 ) {
   real_t max_dt = final_time - solution_time;
  
@@ -290,7 +290,7 @@ void apply_update(
 ////////////////////////////////////////////////////////////////////////////////
 void init_soln_time( 
   real_t initial_soln_time,
-  global_handle_rw<real_t> soln_time
+  color_handle_rw<real_t> soln_time
 ) {
 
   soln_time = initial_soln_time;
@@ -308,11 +308,11 @@ real_t update_soln_time(
   size_t time_cnt,
   real_t initial_soln_time,
   handle_t<real_t> future_delta_t,
-  global_handle_rw<real_t> global_soln_time
+  color_handle_rw<real_t> color_soln_time
 ) {
 
   real_t delta_t = future_delta_t;
-  real_t old_time = global_soln_time;
+  real_t old_time = color_soln_time;
 
   real_t soln_time = initial_soln_time + old_time + delta_t;
 
@@ -328,7 +328,7 @@ real_t update_soln_time(
   cout.unsetf( std::ios::scientific );
   cout.precision(ss);
  
-  global_soln_time = soln_time;
+  color_soln_time = soln_time;
 
   return soln_time;
 }
@@ -344,7 +344,7 @@ real_t update_soln_time(
 void print_soln_time( 
   real_t tdelta,
   size_t time_cnt,
-  global_handle_rw<real_t> soln_time
+  color_handle_rw<real_t> soln_time
 ) {
 
   cout << "Final solution time is " 
@@ -429,7 +429,7 @@ void print(
 void dump(
 	client_handle_r<mesh_t> mesh,
 	size_t iteration,
-  global_handle_rw<real_t> future_time,
+  color_handle_rw<real_t> future_time,
 	dense_handle_r<real_t> d,
 	dense_handle_r<vector_t> v,
 	dense_handle_r<real_t> e,
