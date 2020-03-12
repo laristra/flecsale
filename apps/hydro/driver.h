@@ -179,7 +179,7 @@ int driver(int argc, char** argv)
   //===========================================================================
  
   // the solution time starts at zero
-  real_t soln_time{0};  
+  real_t initial_soln_time{0};  
   size_t time_cnt{0}; 
 
   // now call the main task to set the ics.  Here we set primitive/physical 
@@ -192,7 +192,7 @@ int driver(int argc, char** argv)
 		  index,
 		  mesh,
 		  inputs_t::eos,
-		  soln_time,
+		  initial_soln_time,
 		  filename_char,
 		  d, v, e, p, T, a);
   } else {
@@ -202,7 +202,7 @@ int driver(int argc, char** argv)
 		  index,
 		  mesh,
 		  inputs_t::eos,
-		  soln_time,
+		  initial_soln_time,
 		  d, v, e, p, T, a);
   }
 
@@ -229,7 +229,7 @@ int driver(int argc, char** argv)
  			prefix_char,
  			postfix_char,
 			time_cnt,
-      soln_time,
+      initial_soln_time,
  			d, v, e, p, T, a
     );
     f.wait();
@@ -254,14 +254,14 @@ int driver(int argc, char** argv)
   auto solution_time_handle = flecsi_get_color(hydro, solution_time, mesh_t::real_t, 0);
 
   flecsi_execute_task( 
-    init_soln_time, apps::hydro, index, soln_time, solution_time_handle
+    init_soln_time, apps::hydro, index, initial_soln_time, solution_time_handle
   );
 
   for ( 
     size_t num_steps = 0;
     (num_steps < inputs_t::max_steps
     // we cannot make this comparison without blocking on the top-level-task
-    // && soln_time < inputs_t::final_time
+    // && inital_soln_time < inputs_t::final_time
     ); 
     ++num_steps 
   ) {   
@@ -281,28 +281,25 @@ int driver(int argc, char** argv)
     flecsi_execute_task( evaluate_fluxes, apps::hydro, index, mesh,
         d, v, e, p, T, a, F );
  
+
+    time_cnt++;
+
     // Loop over each cell, scattering the fluxes to the cell
+    // update time
     f = flecsi_execute_task( 
       apply_update, apps::hydro, index, mesh, inputs_t::eos,
-      global_future_time_step, F, d, v, e, p, T, a
+      global_future_time_step, F, d, v, e, p, T, a,
+      time_cnt, initial_soln_time, solution_time_handle
     );
 
     //-------------------------------------------------------------------------
     // Post-process
 
-    time_cnt++;
-
-    // update time
-    flecsi_execute_task( 
-      update_soln_time, apps::hydro, index, time_cnt, soln_time, 
-      global_future_time_step, solution_time_handle
-    );
-
 #ifdef HAVE_CATALYST
     if (!catalyst_scripts.empty()) {
       auto vtk_grid = mesh::to_vtk( mesh );
       insitu.process( 
-        vtk_grid, soln_time, num_steps, (num_steps==inputs_t::max_steps-1)
+        vtk_grid, initial_soln_time, num_steps, (num_steps==inputs_t::max_steps-1)
       );
     }
 #endif
@@ -311,8 +308,9 @@ int driver(int argc, char** argv)
     // now output the solution
     if ( has_output && 
         (time_cnt % inputs_t::output_freq == 0 || 
-         num_steps==inputs_t::max_steps-1 ||
-         std::abs(soln_time-inputs_t::final_time) < epsilon
+         num_steps==inputs_t::max_steps-1
+	 // this condition cannot be tested unless we block in the top-level-task
+	 // || std::abs(inital_soln_time-inputs_t::final_time) < epsilon
         )  
       ) 
     {
@@ -324,7 +322,7 @@ int driver(int argc, char** argv)
 	 			prefix_char,
  				postfix_char,
  				time_cnt,
-        soln_time,
+        initial_soln_time,
  				d, v, e, p, T, a
       );
     }

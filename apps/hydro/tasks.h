@@ -208,6 +208,47 @@ void evaluate_fluxes(
 
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//! \brief Keep a running future of the solution time for final output
+//!
+//! \param [in] initial solution time
+//! \param [in] global time step update
+//! \return future of current solution time
+////////////////////////////////////////////////////////////////////////////////
+real_t update_soln_time( 
+  size_t time_cnt,
+  real_t initial_soln_time,
+  real_t delta_t,
+  color_handle_rw<real_t> color_soln_time
+) {
+
+  real_t old_time = color_soln_time;
+
+  real_t soln_time = initial_soln_time + old_time + delta_t;
+
+  auto & context = flecsi::execution::context_t::instance();
+  auto rank = context.color();
+
+  if (rank == 0) {
+    // output the time step
+    cout << std::string(80, '=') << endl;
+    auto ss = cout.precision();
+    cout.setf( std::ios::scientific );
+    cout.precision(6);
+    cout << "|  " << "Step:" << std::setw(10) << time_cnt
+        << "  |  Time:" << std::setw(17) << soln_time 
+        << "  |  Step Size:" << std::setw(17) << delta_t
+        << "  |" << std::endl;
+    cout.unsetf( std::ios::scientific );
+    cout.precision(ss);
+  }
+ 
+  color_soln_time = soln_time;
+
+  return soln_time;
+}
+
+
 template<typename T>
 using handle_t =
   flecsi::execution::flecsi_future<T, flecsi::execution::launch_type_t::single>;
@@ -228,7 +269,10 @@ void apply_update(
   dense_handle_rw<real_t> e,
   dense_handle_rw<real_t> p,
   dense_handle_rw<real_t> T,
-  dense_handle_rw<real_t> a
+  dense_handle_rw<real_t> a,
+  size_t time_cnt,
+  real_t initial_soln_time,
+  color_handle_rw<real_t> color_soln_time
 ) {
 
   //----------------------------------------------------------------------------
@@ -237,6 +281,9 @@ void apply_update(
 
   //auto delta_t = static_cast<real_t>( time_step );
   real_t delta_t = future_delta_t;
+
+  update_soln_time(time_cnt, initial_soln_time, delta_t, color_soln_time);
+
   const auto & cell_list = mesh.cells( flecsi::owned );
   auto num_cells = cell_list.size();
 
@@ -294,48 +341,6 @@ void init_soln_time(
 ) {
 
   soln_time = initial_soln_time;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-//! \brief Keep a running future of the solution time for final output
-//!
-//! \param [in] initial solution time
-//! \param [in] global time step update
-//! \return future of current solution time
-////////////////////////////////////////////////////////////////////////////////
-real_t update_soln_time( 
-  size_t time_cnt,
-  real_t initial_soln_time,
-  handle_t<real_t> future_delta_t,
-  color_handle_rw<real_t> color_soln_time
-) {
-
-  real_t delta_t = future_delta_t;
-  real_t old_time = color_soln_time;
-
-  real_t soln_time = initial_soln_time + old_time + delta_t;
-
-  auto & context = flecsi::execution::context_t::instance();
-  auto rank = context.color();
-
-  if (rank == 0) {
-    // output the time step
-    cout << std::string(80, '=') << endl;
-    auto ss = cout.precision();
-    cout.setf( std::ios::scientific );
-    cout.precision(6);
-    cout << "|  " << "Step:" << std::setw(10) << time_cnt
-        << "  |  Time:" << std::setw(17) << soln_time 
-        << "  |  Step Size:" << std::setw(17) << delta_t
-        << "  |" << std::endl;
-    cout.unsetf( std::ios::scientific );
-    cout.precision(ss);
-  }
- 
-  color_soln_time = soln_time;
-
-  return soln_time;
 }
 
 
@@ -530,7 +535,6 @@ flecsi_register_task(output, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(print, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(dump, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(init_soln_time, apps::hydro, loc, index|flecsi::leaf);
-flecsi_register_task(update_soln_time, apps::hydro, loc, index|flecsi::leaf);
 flecsi_register_task(print_soln_time, apps::hydro, loc, index|flecsi::leaf);
 
 } // namespace hydro
