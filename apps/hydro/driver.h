@@ -32,6 +32,8 @@ namespace hydro {
   
 // create some field data.  Fields are registered as struct of arrays.
 // this allows us to access the data in different patterns.
+flecsi_register_color(hydro, solution_time, mesh_t::real_t, 1);
+
 flecsi_register_field(
   mesh_t, 
   hydro,  
@@ -177,7 +179,7 @@ int driver(int argc, char** argv)
   //===========================================================================
  
   // the solution time starts at zero
-  real_t soln_time{0};  
+  real_t initial_soln_time{0};  
   size_t time_cnt{0}; 
 
   // now call the main task to set the ics.  Here we set primitive/physical 
@@ -190,7 +192,7 @@ int driver(int argc, char** argv)
 		  index,
 		  mesh,
 		  inputs_t::eos,
-		  soln_time,
+		  initial_soln_time,
 		  filename_char,
 		  d, v, e, p, T, a);
   } else {
@@ -200,7 +202,7 @@ int driver(int argc, char** argv)
 		  index,
 		  mesh,
 		  inputs_t::eos,
-		  soln_time,
+		  initial_soln_time,
 		  d, v, e, p, T, a);
   }
 
@@ -219,7 +221,7 @@ int driver(int argc, char** argv)
   // now output the solution
   auto has_output = (inputs_t::output_freq > 0);
   if (has_output) {
-    flecsi_execute_task(
+    auto f = flecsi_execute_task(
       output,
  			apps::hydro,
  			index,
@@ -227,9 +229,10 @@ int driver(int argc, char** argv)
  			prefix_char,
  			postfix_char,
 			time_cnt,
-      soln_time,
+      initial_soln_time,
  			d, v, e, p, T, a
     );
+    f.wait();
   }
 
 
@@ -244,20 +247,31 @@ int driver(int argc, char** argv)
   //===========================================================================
   // Residual Evaluation
   //===========================================================================
+    
+  // keep track of current solution time with futures and a global handle
+  // so that we do not block on the top-level-task
+
+  auto solution_time_handle = flecsi_get_color(hydro, solution_time, mesh_t::real_t, 0);
+
+  flecsi_execute_task( 
+    init_soln_time, apps::hydro, index, initial_soln_time, solution_time_handle
+  );
 
   for ( 
     size_t num_steps = 0;
-    (num_steps < inputs_t::max_steps && soln_time < inputs_t::final_time); 
+    (num_steps < inputs_t::max_steps
+    // we cannot make this comparison without blocking on the top-level-task
+    // && inital_soln_time < inputs_t::final_time
+    ); 
     ++num_steps 
   ) {   
-
     //-------------------------------------------------------------------------
     // compute the time step
 
     // we dont need the time step yet
     auto global_future_time_step = flecsi_execute_reduction_task(
       evaluate_time_step, apps::hydro, index, min, double, mesh, d, v, e, p, T,
-			a, inputs_t::CFL, inputs_t::final_time - soln_time
+			a, inputs_t::CFL, inputs_t::final_time, solution_time_handle
     );
 
     //-------------------------------------------------------------------------
@@ -267,40 +281,25 @@ int driver(int argc, char** argv)
     flecsi_execute_task( evaluate_fluxes, apps::hydro, index, mesh,
         d, v, e, p, T, a, F );
  
-    auto time_step = global_future_time_step.get();
+
+    time_cnt++;
 
     // Loop over each cell, scattering the fluxes to the cell
-    flecsi_execute_task( 
+    // update time
+    f = flecsi_execute_task( 
       apply_update, apps::hydro, index, mesh, inputs_t::eos,
-      time_step, F, d, v, e, p, T, a
+      global_future_time_step, F, d, v, e, p, T, a,
+      time_cnt, initial_soln_time, solution_time_handle
     );
 
     //-------------------------------------------------------------------------
     // Post-process
 
-    // update time
-    soln_time += time_step;
-    time_cnt++;
-
-    // output the time step
-    if ( rank == 0 ) {
-      cout << std::string(80, '=') << endl;
-      auto ss = cout.precision();
-      cout.setf( std::ios::scientific );
-      cout.precision(6);
-      cout << "|  " << "Step:" << std::setw(10) << time_cnt
-           << "  |  Time:" << std::setw(17) << soln_time 
-           << "  |  Step Size:" << std::setw(17) << time_step
-           << "  |" << std::endl;
-      cout.unsetf( std::ios::scientific );
-      cout.precision(ss);
-    }
-
 #ifdef HAVE_CATALYST
     if (!catalyst_scripts.empty()) {
       auto vtk_grid = mesh::to_vtk( mesh );
       insitu.process( 
-        vtk_grid, soln_time, num_steps, (num_steps==inputs_t::max_steps-1)
+        vtk_grid, initial_soln_time, num_steps, (num_steps==inputs_t::max_steps-1)
       );
     }
 #endif
@@ -309,8 +308,9 @@ int driver(int argc, char** argv)
     // now output the solution
     if ( has_output && 
         (time_cnt % inputs_t::output_freq == 0 || 
-         num_steps==inputs_t::max_steps-1 ||
-         std::abs(soln_time-inputs_t::final_time) < epsilon
+         num_steps==inputs_t::max_steps-1
+	 // this condition cannot be tested unless we block in the top-level-task
+	 // || std::abs(inital_soln_time-inputs_t::final_time) < epsilon
         )  
       ) 
     {
@@ -322,7 +322,7 @@ int driver(int argc, char** argv)
 	 			prefix_char,
  				postfix_char,
  				time_cnt,
-        soln_time,
+        initial_soln_time,
  				d, v, e, p, T, a
       );
     }
@@ -333,25 +333,16 @@ int driver(int argc, char** argv)
   //===========================================================================
   // Post-process
   //===========================================================================
-    
+  f.wait();    
   auto tdelta = ristra::utils::get_wall_time() - tstart;
 
-  if ( rank == 0 ) {
-
-    cout << "Final solution time is " 
-         << std::scientific << std::setprecision(2) << soln_time
-         << " after " << time_cnt << " steps." << std::endl;
-
-    
-    std::cout << "Elapsed wall time is " << std::setprecision(4) << std::fixed 
-              << tdelta << "s." << std::endl;
-
-  }
-
+  flecsi_execute_task( 
+    print_soln_time, apps::hydro, index, tdelta, time_cnt, solution_time_handle);
+  
   // dump solution for verification
   {
     auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+"-solution.txt" );
-    flecsi_execute_task( dump, apps::hydro, index, mesh, time_cnt, soln_time,
+    flecsi_execute_task( dump, apps::hydro, index, mesh, time_cnt, solution_time_handle,
         d, v, e, p, name );
   }
 
