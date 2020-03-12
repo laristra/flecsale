@@ -117,7 +117,7 @@ real_t evaluate_time_step(
   dense_handle_r<real_t> a,
   real_t CFL,
   real_t final_time,
-  color_handle_rw<real_t> solution_time
+  color_handle_r<real_t> solution_time
 ) {
   real_t max_dt = final_time - solution_time;
  
@@ -354,7 +354,7 @@ void init_soln_time(
 void print_soln_time( 
   real_t tdelta,
   size_t time_cnt,
-  color_handle_rw<real_t> soln_time
+  color_handle_r<real_t> soln_time
 ) {
   auto & context = flecsi::execution::context_t::instance();
   auto rank = context.color();
@@ -378,7 +378,7 @@ void output(
   char_array_t prefix,
 	char_array_t postfix,
 	size_t iteration,
-	real_t time,
+  color_handle_r<real_t> time,
   dense_handle_r<real_t> d,
   dense_handle_r<vector_t> v,
   dense_handle_r<real_t> e,
@@ -442,7 +442,7 @@ void print(
 void dump(
 	client_handle_r<mesh_t> mesh,
 	size_t iteration,
-  color_handle_rw<real_t> future_time,
+  color_handle_r<real_t> future_time,
 	dense_handle_r<real_t> d,
 	dense_handle_r<vector_t> v,
 	dense_handle_r<real_t> e,
