@@ -210,6 +210,15 @@ int driver(int argc, char** argv)
     auto insitu = io::catalyst::adaptor_t(catalyst_scripts);
     std::cout << "Catalyst on!" << std::endl;
   #endif
+    
+  // keep track of current solution time with futures and a global handle
+  // so that we do not block on the top-level-task
+
+  auto solution_time_handle = flecsi_get_color(hydro, solution_time, mesh_t::real_t, 0);
+
+  flecsi_execute_task( 
+    init_soln_time, apps::hydro, index, initial_soln_time, solution_time_handle
+  );
 
   //===========================================================================
   // Pre-processing
@@ -229,7 +238,7 @@ int driver(int argc, char** argv)
  			prefix_char,
  			postfix_char,
 			time_cnt,
-      initial_soln_time,
+      			solution_time_handle,
  			d, v, e, p, T, a
     );
     f.wait();
@@ -247,21 +256,12 @@ int driver(int argc, char** argv)
   //===========================================================================
   // Residual Evaluation
   //===========================================================================
-    
-  // keep track of current solution time with futures and a global handle
-  // so that we do not block on the top-level-task
-
-  auto solution_time_handle = flecsi_get_color(hydro, solution_time, mesh_t::real_t, 0);
-
-  flecsi_execute_task( 
-    init_soln_time, apps::hydro, index, initial_soln_time, solution_time_handle
-  );
 
   for ( 
     size_t num_steps = 0;
     (num_steps < inputs_t::max_steps
     // we cannot make this comparison without blocking on the top-level-task
-    // && inital_soln_time < inputs_t::final_time
+    // && soln_time_handle < inputs_t::final_time
     ); 
     ++num_steps 
   ) {   
@@ -310,7 +310,7 @@ int driver(int argc, char** argv)
         (time_cnt % inputs_t::output_freq == 0 || 
          num_steps==inputs_t::max_steps-1
 	 // this condition cannot be tested unless we block in the top-level-task
-	 // || std::abs(inital_soln_time-inputs_t::final_time) < epsilon
+	 // || std::abs(soln_time_handle-inputs_t::final_time) < epsilon
         )  
       ) 
     {
@@ -322,7 +322,7 @@ int driver(int argc, char** argv)
 	 			prefix_char,
  				postfix_char,
  				time_cnt,
-        initial_soln_time,
+        			solution_time_handle,
  				d, v, e, p, T, a
       );
     }
@@ -339,6 +339,23 @@ int driver(int argc, char** argv)
   flecsi_execute_task( 
     print_soln_time, apps::hydro, index, tdelta, time_cnt, solution_time_handle);
   
+  // output the solution if it wasn't on the last time step
+  if ( has_output && 
+      (time_cnt % inputs_t::output_freq != 0)  ) 
+  {
+    flecsi_execute_task(
+      output,
+      apps::hydro,
+      index,
+      mesh,
+      prefix_char,
+      postfix_char,
+      time_cnt,
+      solution_time_handle,
+      d, v, e, p, T, a
+    );
+  }
+
   // dump solution for verification
   {
     auto name = flecsi_sp::utils::to_char_array( inputs_t::prefix+"-solution.txt" );
