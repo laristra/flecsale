@@ -169,7 +169,7 @@ void evaluate_fluxes(
   dense_handle_r<real_t> p,
   dense_handle_r<real_t> T,
   dense_handle_r<real_t> a,
-  dense_handle_w<flux_data_t> flux
+  dense_handle_w_all<flux_data_t> flux
 ) {
 
   const auto & face_list = mesh.faces( flecsi::owned );
@@ -206,6 +206,46 @@ void evaluate_fluxes(
   } // for
   //----------------------------------------------------------------------------
 
+  // calculate ghost faces needed by shared cells
+  // while duplicating shared faces calculations
+  const auto & cell_list = mesh.cells( flecsi::shared );
+  auto ncells = cell_list.size();
+
+  #pragma omp parallel for
+  for ( counter_t cit = 0; cit < ncells; ++cit )
+  {
+
+    const auto & c = cell_list[cit];
+
+    // loop over each connected edge
+    for ( auto f : mesh.faces(c) ) {
+    
+    // get the cell neighbors
+    const auto & cells = mesh.cells(f);
+    auto num_cells = cells.size();
+
+    // get the left state
+    auto w_left = pack( cells[0], d, v, p, e, T, a );
+    
+    // compute the face flux
+    //
+    // interior cell
+    if ( num_cells == 2 ) {
+      auto w_right = pack( cells[1], d, v, p, e, T, a );
+      flux(f) = flux_function<eqns_t>( w_left, w_right, f->normal() );
+    } 
+    // boundary cell
+    else {
+      flux(f) = boundary_flux<eqns_t>( w_left, f->normal() );
+    }
+   
+    // scale the flux by the face area
+    flux(f) *= f->area();
+
+    } // face
+
+  } // for shared cell
+  //----------------------------------------------------------------------------
 }
 
 ////////////////////////////////////////////////////////////////////////////////
