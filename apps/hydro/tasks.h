@@ -308,7 +308,7 @@ void apply_update(
   dense_handle_rw<vector_t> v,
   dense_handle_rw<real_t> e,
   dense_handle_rw<real_t> p,
-  dense_handle_rw<real_t> T,
+  flecsi::dense_accessor<real_t, flecsi::rw, flecsi::rw, flecsi::wo> T,  // ghost never used
   dense_handle_rw<real_t> a,
   size_t time_cnt,
   real_t initial_soln_time,
