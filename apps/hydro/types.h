@@ -58,6 +58,9 @@ template<typename T>
 using dense_handle_r = flecsi_sp::utils::dense_handle_r<T>;
 
 template<typename T>
+using dense_handle_w_all = flecsi::dense_accessor<T, flecsi::wo, flecsi::wo, flecsi::wo>;
+
+template<typename T>
 using global_handle_w = flecsi::global_accessor_u<T, flecsi::wo>;
 
 template<typename T>
