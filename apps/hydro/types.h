@@ -15,6 +15,7 @@
 #include <flecsale/eqns/flux.h>
 #include <flecsale/eos/ideal_gas.h>
 #include <ristra/math/general.h>
+#include <ristra/math/matrix.h>
 
 #include <flecsi-sp/utils/char_array.h>
 #include <flecsi-sp/utils/types.h>
@@ -40,6 +41,8 @@ using eqns_t = typename flecsale::eqns::euler_eqns_t<real_t, mesh_t::num_dimensi
 
 using flux_data_t = eqns_t::flux_data_t;
 
+using matrix_t = ristra::math::matrix< real_t, mesh_t::num_dimensions, mesh_t::num_dimensions >; 
+using array_of_vector_t = std::array< vector_t, mesh_t::num_dimensions >;
 
 // explicitly use some other stuff
 using std::cout;
@@ -143,6 +146,14 @@ decltype(auto) pack( T && loc, ARGS&&... args )
   return 
     std::forward_as_tuple( std::forward<ARGS>(args)(std::forward<T>(loc))... ); 
 }
+
+template< typename T, typename...ARGS >
+auto pack_copy( T && loc, ARGS&&... args )
+{ 
+  return 
+    std::make_tuple( std::forward<ARGS>(args)(std::forward<T>(loc))... ); 
+}
+
 
 } // namespace hydro
 } // namespace apps

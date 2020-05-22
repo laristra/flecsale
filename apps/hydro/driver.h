@@ -106,6 +106,57 @@ flecsi_register_field(
   mesh_t::index_spaces_t::faces
 );
 
+// Gradients
+flecsi_register_field(
+  mesh_t, 
+  hydro,  
+  density_gradient,   
+  mesh_t::vector_t, 
+  dense, 
+  1, 
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t, 
+  hydro, 
+  velocity_gradient,
+  array_of_vector_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t, 
+  hydro,
+  internal_energy_gradient,
+  mesh_t::vector_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t, 
+  hydro, 
+  pressure_gradient,
+  mesh_t::vector_t, 
+  dense, 
+  1, 
+  mesh_t::index_spaces_t::cells
+);
+
+flecsi_register_field(
+  mesh_t,
+  hydro,
+  sound_speed_gradient,
+  mesh_t::vector_t,
+  dense,
+  1,
+  mesh_t::index_spaces_t::cells
+);
+
 ///////////////////////////////////////////////////////////////////////////////
 //! \brief A sample test of the hydro solver
 ///////////////////////////////////////////////////////////////////////////////
@@ -173,6 +224,12 @@ int driver(int argc, char** argv)
   auto a  = flecsi_get_handle(mesh, hydro,     sound_speed, real_t, dense, 0);
 
   auto F = flecsi_get_handle(mesh, hydro, flux, flux_data_t, dense, 0);
+  
+  auto grad_d  = flecsi_get_handle(mesh, hydro,         density_gradient, vector_t, dense, 0);
+  auto grad_v  = flecsi_get_handle(mesh, hydro,        velocity_gradient, array_of_vector_t, dense, 0);
+  auto grad_e  = flecsi_get_handle(mesh, hydro, internal_energy_gradient, vector_t, dense, 0);
+  auto grad_p  = flecsi_get_handle(mesh, hydro,        pressure_gradient, vector_t, dense, 0);
+  auto grad_a  = flecsi_get_handle(mesh, hydro,     sound_speed_gradient, vector_t, dense, 0);
 
   //===========================================================================
   // Initial conditions
@@ -276,12 +333,17 @@ int driver(int argc, char** argv)
 
     //-------------------------------------------------------------------------
     // try a timestep
+ 
+    // Predict
+
+    // reconstruct
+    flecsi_execute_task( evaluate_gradients, apps::hydro, index, mesh,
+        d, v, e, p, a, grad_d, grad_v, grad_e, grad_p, grad_a );
 
     // compute the fluxes
     flecsi_execute_task( evaluate_fluxes, apps::hydro, index, mesh,
-        d, v, e, p, T, a, F );
- 
-
+        d, v, e, p, T, a, grad_d, grad_v, grad_e, grad_p, grad_a, F );
+    
     time_cnt++;
 
     // Loop over each cell, scattering the fluxes to the cell
@@ -289,7 +351,27 @@ int driver(int argc, char** argv)
     f = flecsi_execute_task( 
       apply_update, apps::hydro, index, mesh, inputs_t::eos,
       global_future_time_step, F, d, v, e, p, T, a,
-      time_cnt, initial_soln_time, solution_time_handle
+      time_cnt, initial_soln_time, solution_time_handle,
+      0.5
+    );
+ 
+    // Correct
+
+    // reconstruct
+    flecsi_execute_task( evaluate_gradients, apps::hydro, index, mesh,
+        d, v, e, p, a, grad_d, grad_v, grad_e, grad_p, grad_a );
+
+    // compute the fluxes
+    flecsi_execute_task( evaluate_fluxes, apps::hydro, index, mesh,
+        d, v, e, p, T, a, grad_d, grad_v, grad_e, grad_p, grad_a, F );
+
+    // Loop over each cell, scattering the fluxes to the cell
+    // update time
+    f = flecsi_execute_task( 
+      apply_update, apps::hydro, index, mesh, inputs_t::eos,
+      global_future_time_step, F, d, v, e, p, T, a,
+      time_cnt, initial_soln_time, solution_time_handle,
+      0.5
     );
 
     //-------------------------------------------------------------------------
