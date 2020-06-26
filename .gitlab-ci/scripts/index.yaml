@@ -6,4 +6,3 @@ include:
   - .gitlab-ci/scripts/env-jobs.yml
   - .gitlab-ci/scripts/build-n-test-jobs.yml
   - .gitlab-ci/scripts/schedules/build-n-test-jobs.yml
-  - .gitlab-ci/scripts/schedules/pre-jobs.yml
