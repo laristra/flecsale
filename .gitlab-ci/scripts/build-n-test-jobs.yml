@@ -21,7 +21,6 @@ centOS_openmpi_legion_gcc:
   dependencies: [ openmpi_legion ]
   variables:
     FLECSALE_RUNTIME: "legion"
-  allow_failure: true
 
 centOS_mpich_legion_clang:
   extends: centOS_openmpi_legion_gcc
