@@ -8,7 +8,7 @@ stages:
   - Deploy
 
 include:
-  - .gitlab-ci/scripts/index.yaml
+  - .gitlab-ci/index.yaml
 
 ######################
 # Build_n_Test Stage #
