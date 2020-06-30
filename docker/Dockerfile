@@ -33,7 +33,7 @@ USER laristra
 
 WORKDIR $HOME
 RUN module purge && \
-    $([ ! -d "$HOME/ristra_spackages" ] && git clone https://github.com/laristra/ristra_spackages.git ) && \
+    $([ ! -d "ristra_spackages" ] && git clone https://github.com/laristra/ristra_spackages.git ) && \
     export SPACK_SPEC="flecsalemm-deps%gcc backend=$RUNTIME ^$MPI_PACKAGE" && \
     spack repo add --scope site $HOME/ristra_spackages/spack-repo && \
     spack find && \
