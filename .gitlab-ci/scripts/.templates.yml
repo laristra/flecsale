@@ -61,6 +61,6 @@
     - for f in $(find ./spack-repo/packages/ -type f -name "*.patch"); do rm $f; done
     - cd ${CI_PROJECT_DIR}/ristra_spackages
     - git add spack-repo/packages/*
-    - git commit -m "Gitlab CI Automatic Spackage Update - FleCSALE-mm" || /bin/true
+    - git commit -m "Gitlab CI Automatic Spackage Update - FleCSALE" || /bin/true
     - git push -u origin master
 
