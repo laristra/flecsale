@@ -36,7 +36,7 @@ RUN module purge && \
     rm -rf ristra_spackages || /bin/true && \
     git clone https://github.com/laristra/ristra_spackages.git && \
     export SPACK_SPEC="flecsalemm-deps%gcc backend=$RUNTIME ^$MPI_PACKAGE" && \
-    spack repo add --scope site $HOME/ristra_spackages/spack-repo && \
+    spack repo add --scope site $HOME/ristra_spackages/spack-repo || /bin/true && \
     spack find && \
     export FLECSALE_CMD="spack install --show-log-on-error ${SPACK_SPEC}" && \
     ( echo "$FLECSALE_CMD" && $FLECSALE_CMD ) && \
