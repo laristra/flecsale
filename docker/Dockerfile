@@ -55,7 +55,7 @@ WORKDIR build
 
 
 RUN source $HOME/load_deps.sh && \
-    export CXXFLAGS="${CXXFLAGS} -Wno-deprecated-declarations" \
+    export CXXFLAGS="${CXXFLAGS} -Wno-deprecated-declarations" && \
     cmake -DMPIEXEC_PREFLAGS=$([ "$MPI_PACKAGE" = "openmpi" ] && echo '--oversubscribe') \
           -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
           -DFLECSI_RUNTIME_MODEL=$RUNTIME \
