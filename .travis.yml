@@ -3,7 +3,7 @@ language: cpp
 sudo: required
 
 services:
-- docker
+  - docker
 
 env:
   matrix:
@@ -13,7 +13,13 @@ env:
     - DISTRO=ubuntu18 MPI_PACKAGE=mpich RUNTIME=legion BUILD_TYPE=Release DOCKERHUB=true
 
 before_install:
- - git fetch --unshallow && git fetch --tags #for versioning
+  - sudo fallocate -l 4G /swapfile
+  - sudo chmod 600 /swapfile
+  - sudo mkswap /swapfile
+  - sudo swapon /swapfile
+  - sudo sysctl vm.swappiness=10
+  - sudo sysctl -w vm.max_map_count=1966080
+  - git fetch --unshallow && git fetch --tags #for versioning
 
 script:
   - if [[ ${CC} != gcc ]]; then TAG="_${CC}"; fi
@@ -23,15 +29,16 @@ script:
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker
   - travis_wait 50 docker build --build-arg BUILD_TYPE=${BUILD_TYPE}
-                 --build-arg MPI_PACKAGE=${MPI_PACKAGE}
-                 --build-arg RUNTIME=${RUNTIME}
-                 --build-arg CC=${CC} --build-arg CXX=${CXX}
-                 --build-arg CI=${CI} --build-arg TRAVIS=${TRAVIS} --build-arg TRAVIS_OS_NAME=${DISTRO}
-                 --build-arg TRAVIS_BRANCH=${TRAVIS_BRANCH} --build-arg TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER}
-                 --build-arg TRAVIS_PULL_REQUEST=${TRAVIS_PULL_REQUEST} --build-arg TRAVIS_JOB_ID=${TRAVIS_JOB_ID}
-                 --build-arg TRAVIS_TAG=${TRAVIS_TAG} --build-arg TRAVIS_REPO_SLUG=${TRAVIS_REPO_SLUG}
-                 --build-arg TRAVIS_COMMIT=${TRAVIS_COMMIT}
-                -t ${TRAVIS_REPO_SLUG}:${DISTRO}_${MPI_PACKAGE}_${RUNTIME}${TAG} ${HOME}/docker/ &&
+                                --build-arg MPI_PACKAGE=${MPI_PACKAGE}
+                                --build-arg RUNTIME=${RUNTIME}
+                                --build-arg CC=${CC}
+                                --build-arg CXX=${CXX}
+                                --build-arg CI=${CI} --build-arg TRAVIS=${TRAVIS} --build-arg TRAVIS_OS_NAME=${DISTRO}
+                                --build-arg TRAVIS_BRANCH=${TRAVIS_BRANCH} --build-arg TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER}
+                                --build-arg TRAVIS_PULL_REQUEST=${TRAVIS_PULL_REQUEST} --build-arg TRAVIS_JOB_ID=${TRAVIS_JOB_ID}
+                                --build-arg TRAVIS_TAG=${TRAVIS_TAG} --build-arg TRAVIS_REPO_SLUG=${TRAVIS_REPO_SLUG}
+                                --build-arg TRAVIS_COMMIT=${TRAVIS_COMMIT}
+                                -t ${TRAVIS_REPO_SLUG}:${DISTRO}_${MPI_PACKAGE}_${RUNTIME}${TAG} ${HOME}/docker/ &&
     CON=$(docker run -d ${TRAVIS_REPO_SLUG}:${DISTRO}_${MPI_PACKAGE}_${RUNTIME}${TAG} /bin/bash)
 
 after_success:
