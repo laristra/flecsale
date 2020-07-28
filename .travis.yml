@@ -13,7 +13,7 @@ env:
     - DISTRO=ubuntu18 MPI_PACKAGE=mpich RUNTIME=legion BUILD_TYPE=Release DOCKERHUB=true
 
 before_install:
-  - sudo fallocate -l 4G /swapfile
+  - sudo fallocate -l 2G /swapfile
   - sudo chmod 600 /swapfile
   - sudo mkswap /swapfile
   - sudo swapon /swapfile
