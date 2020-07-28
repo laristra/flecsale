@@ -28,7 +28,7 @@ script:
   - sed -i "1s/fedora30/${DISTRO}_${MPI_PACKAGE}_${RUNTIME}${TAG}/" ${HOME}/docker/Dockerfile
   - cd ../../
   - mv -v ${TRAVIS_REPO_SLUG} $HOME/docker
-  - travis_wait 50 docker build --build-arg BUILD_TYPE=${BUILD_TYPE}
+  - travis_wait 60 docker build --build-arg BUILD_TYPE=${BUILD_TYPE}
                                 --build-arg MPI_PACKAGE=${MPI_PACKAGE}
                                 --build-arg RUNTIME=${RUNTIME}
                                 --build-arg CC=${CC}
