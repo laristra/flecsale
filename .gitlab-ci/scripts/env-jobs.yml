@@ -26,7 +26,7 @@
   script:
     - cd ${CI_PROJECT_DIR}
     - git clone git@gitlab.lanl.gov:laristra/ristra_spackages.git
-    - git clone https://${RISTRA_SPACK_CONFIG_USERNAME}:${RISTRA_SPACK_CONFIG_PASSWORD}@gitlab.lanl.gov/laristra/ristra-spack-configurations.git
+    - git clone git@gitlab.lanl.gov:laristra/ristra-spack-configurations.git
     - echo 'Spack Version:' ${FLECSALE_SPACK_HASH}
     - git clone https://github.com/spack/spack.git
     - cd spack && git checkout ${FLECSALE_SPACK_HASH} && cd ${CI_PROJECT_DIR}
