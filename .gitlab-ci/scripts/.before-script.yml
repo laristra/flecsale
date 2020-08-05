@@ -5,7 +5,7 @@ before_script:
   - unset SPACK_ROOT
   - source ${CI_PROJECT_DIR}/spack/share/spack/setup-env.sh || /bin/true
   - echo ${CI_RUNNER_TAGS}
-  - export FLECSALE_SPACK_SPEC="${FLECSALE_SPACK_SPEC} $([ ${CI_RUNNER_TAGS} == 'laristra-setuid-shared' ] && echo 'arch=linux-centos7-haswell')"
+  - export FLECSALE_SPACK_SPEC="${FLECSALE_SPACK_SPEC} $([ ${CI_RUNNER_TAGS} == 'laristra-setuid-shared' ] && echo 'target=x86_64')"
   - |
     if [[ ${FLECSALE_MPI_PROVIDER} == 'openmpi' ]];
     then
