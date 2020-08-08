@@ -40,7 +40,7 @@
     #- spack repo add --scope site ${CI_PROJECT_DIR}/spack-repo
     - spack repo list
     - mkdir -p ${CI_PROJECT_DIR}/spack_env
-    - spack env create -d ${CI_PROJECT_DIR}/spack_env
+    - spack env create --without-view -d ${CI_PROJECT_DIR}/spack_env
     - spack env activate -d ${CI_PROJECT_DIR}/spack_env
     - export FLECSALE_CMD="spack install --show-log-on-error ${FLECSALE_SPACK_FULL_SPEC}"
     - ( echo "$FLECSALE_CMD" && $FLECSALE_CMD )

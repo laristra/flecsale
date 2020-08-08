@@ -13,3 +13,9 @@ before_script:
     else
       export FLECSALE_SPACK_FULL_SPEC="${FLECSALE_SPACK_SPEC} ^${FLECSALE_MPI_PROVIDER}@${FLECSALE_MPICH_VERSION}%gcc@${FLECSALE_GCC_VERSION} ${FLECSALE_MPICH_SPEC}";
     fi
+  - |
+    if [[ -d ${CI_PROJECT_DIR}/spack ]];
+    then
+      spack reindex;
+      spack module tcl refresh -y;
+    fi
