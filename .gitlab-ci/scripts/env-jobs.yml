@@ -47,7 +47,7 @@
     - spack module tcl refresh -y
     - spack env loads -r
     - export modName="${CI_PROJECT_DIR}/spack_env/loads"
-    - sed -i "1s;^;module load python/${FLECSALE_PYTHON_VERSION}\n;" ${modName}
+    #- sed -i "1s;^;module load python/${FLECSALE_PYTHON_VERSION}\n;" ${modName}
     - sed -i "1s;^;module load gcc/${FLECSALE_GCC_VERSION}\n;" ${modName}
     #- sed -i "1s;^;source ${CI_PROJECT_DIR}/spack/share/spack/setup-env.sh\n;" ${modName}
     - sed -i "1s;^;#%Module\n;" ${modName}
