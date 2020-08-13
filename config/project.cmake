@@ -18,7 +18,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 # cmake module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
 
-# We need C++ 14
+# We need C++ 17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_CXX_EXTENSIONS off)
@@ -31,11 +31,6 @@ endif()
 
 # Changes the Cinch defaults
 option(ENABLE_BOOST_PREPROCESSOR "Enable Boost.Preprocessor" ON)
-option(
-  ENABLE_BOOST
-  "Enable Boost program options for command-line flags"
-  ON
-)
 
 # Set header suffix regular expression
 set(CINCH_HEADER_SUFFIXES "\\.h")
@@ -162,9 +157,11 @@ endif()
 #------------------------------------------------------------------------------#
 
 # find python for running regression tests
-set(PythonInterp_FIND_VERSION TRUE) # unknown hack to search for versions
-find_package (PythonInterp QUIET)
-if (PYTHONINTERP_FOUND)
+if(NOT TARGET Python3::Interpreter)
+  find_package(Python3 COMPONENTS Interpreter)
+endif()
+
+if (Python3_Interpreter_FOUND)
   cmake_dependent_option( 
     ENABLE_REGRESSION_TESTS "Enable regression tests" ON 
     "ENABLE_UNIT_TESTS" OFF 
@@ -173,12 +170,12 @@ else ()
   option(ENABLE_REGRESSION_TESTS "Enable regression tests" OFF)
 endif ()
 
-if(ENABLE_REGRESSION_TESTS AND NOT PYTHONINTERP_FOUND)
+if(ENABLE_REGRESSION_TESTS AND NOT Python3_Interpreter_FOUND)
   message(FATAL_ERROR "Regression tests requested, but python was not found")
 endif()
 
 if (ENABLE_REGRESSION_TESTS)
-  message (STATUS "Found PythonInterp: ${PYTHON_EXECUTABLE}")
+  message (STATUS "Found PythonInterp: ${Python3_EXECUTABLE}")
 endif ()
 
 #------------------------------------------------------------------------------#
@@ -186,18 +183,20 @@ endif ()
 #------------------------------------------------------------------------------#
 
 # find python for embedding
-find_package (PythonLibs QUIET)
+if(NOT TARGET Python3::Python)
+  find_package(Python3 COMPONENTS Development)
+endif()
 
-option(FLECSALE_ENABLE_PYTHON "Enable Python Support" ${PYTHONLIBS_FOUND})
+option(FLECSALE_ENABLE_PYTHON "Enable Python Support" Python3_FOUND)
 
-if (FLECSALE_ENABLE_PYTHON AND NOT PYTHONLIBS_FOUND)
+if (FLECSALE_ENABLE_PYTHON AND NOT Python3_FOUND)
   message(FATAL_ERROR "Python requested, but not found")
 endif()
 
 if (FLECSALE_ENABLE_PYTHON)
-   message (STATUS "Found PythonLibs: ${PYTHON_INCLUDE_DIRS}")
-   include_directories( ${PYTHON_INCLUDE_DIRS} )
-   list( APPEND FLECSALE_LIBRARIES ${PYTHON_LIBRARIES} )
+   message (STATUS "Found PythonLibs: ${Python3_INCLUDE_DIRS}")
+   include_directories( ${Python3_INCLUDE_DIRS} )
+   list( APPEND FLECSALE_LIBRARIES Python3::Python)
 endif ()
 
 # find lua for embedding
@@ -320,20 +319,15 @@ endif()
 # Boost - Right now, only used by portage
 #------------------------------------------------------------------------------#
 
-if (ENABLE_BOOST)
-  find_package(Boost COMPONENTS program_options REQUIRED)
-else()
-  find_package(Boost QUIET)
-endif()
+find_package(Boost 1.59.0 COMPONENTS program_options REQUIRED)
 
 if(Boost_FOUND)
-  message(STATUS "Boost location: ${Boost_INCLUDE_DIRS}")
+  message(STATUS "Boost includes: ${Boost_INCLUDE_DIRS}")
+  message(STATUS "Boost libraries: ${Boost_LIBRARIES}")
   include_directories( ${Boost_INCLUDE_DIRS} )
 endif()
 
-if (ENABLE_BOOST)
-  list(APPEND FLECSALE_LIBRARIES ${Boost_LIBRARIES} )
-endif()
+list(APPEND FLECSALE_LIBRARIES ${Boost_LIBRARIES} Boost::program_options Boost::boost)
 
 #------------------------------------------------------------------------------#
 # Portage
@@ -362,10 +356,10 @@ if (Legion_FOUND)
   include_directories(${Legion_INCLUDE_DIRS})
 endif()
 
-find_package(MPI)
+find_package(MPI COMPONENTS C CXX REQUIRED)
 
 if (MPI_FOUND) 
-  include_directories(${MPI_C_INCLUDE_PATH})
+  list( APPEND FLECSALE_LIBRARIES MPI::MPI_CXX MPI::MPI_C)
 endif()
 
 #------------------------------------------------------------------------------#
