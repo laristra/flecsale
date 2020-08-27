@@ -15,7 +15,7 @@ tabular equation of state (EOS).
 ## Minimal
 
 - [Boost C++ Libraries](boost.org) >= 1.56
-- C++14 compliant compiler  (gcc >= 5.3.0, clang>=3.7.0)
+- C++17 compliant compiler  (gcc >= 7.0, clang>=3.9)
 - [CMake](http://www.cmake.org/) >= 3.0
 - [Exodus](https://github.com/gsjaardema/seacas) to read/write ExodusII formatted files
 - [FleCSI](https://github.com/laristra/flecsi)
@@ -37,7 +37,7 @@ This project uses [Git](https://git-scm.com/) for revision control and
 distribution, and [CMake](https://cmake.org/) for build configuration.
 Below are some general instructions for obtaining and building FleCSALE.
 
-FleCSALE uses git submodules, so it mush be checked out recursively.  Type
+FleCSALE uses git submodules, so it must be checked out recursively.  Type
 
     $ git clone --recursive git@github.com:laristra/flecsale.git
     
@@ -50,7 +50,93 @@ to clone using https.
 **Make sure to include the `--recursive` so that all of the
 submodules are cloned as well.** 
 
-# Installation
+# Getting the dependencies
+
+If you are LANL internal users on LANL machines, please refer to the README on mm.
+
+Make sure you have at least the minimum compiler version in your environment.
+
+Now, you need to download Spack if you don't already have one.
+```
+$ cd ${PROJECT_DIR}
+$ git clone https://github.com/spack/spack.git
+```
+Then do
+```
+$ source ${PROJECT_DIR}/spack/share/spack/setup-env.sh
+$ spack compiler find --scope site
+==> Added 1 new compilers to ${PROJECT_DIR}/spack/etc/spack/compilers.yaml
+    gcc@<compiler-version>
+==> Compilers are defined in the following files:
+    ${PROJECT_DIR}/spack/etc/spack/compilers.yaml
+
+$ spack compiler list
+==> Available compilers
+-- gcc <os>-<target> -------------------------------------------
+gcc@<compiler-version>
+```
+to get Spack into your environment and see what compilers you have that
+Spack can find automatically. 
+
+Next, we need to get `ristra_spackages` and add the folder that contains custom ristra spackages to Spack
+```
+$ git clone https://github.com/laristra/ristra_spackages.git
+$ spack repo add --scope site ristra_spackages/spack-repo
+==> Added repo with namespace 'lanl_ristra'.
+
+$ spack repo list
+==> 2 package repositories.
+lanl_ristra        ${PROJECT_DIR}/ristra_spackages/spack-repo
+builtin            ${PROJECT_DIR}/spack/var/spack/repos/builtin
+```
+Now, assuming you have the compiler you want recognized by Spack
+and added the custom spack-repo, you could just do the install for a mpi backend
+using mpich like this
+```
+$ mkdir spack_env
+$ spack env create --without-view -d spack_env
+$ spack -e spack_env install --show-log-on-error flecsalemm-deps+hdf5%gcc@<compiler-version> backend=mpi ^mpich@3.2.1+slurm
+```
+to get all the dependencies and all their dependencies installed from
+scratch.
+
+But if you want to save time or there is some packages that spack
+has trouble installing, you could let Spack know what
+packages or modules you already have on the system by adding
+`packages.yaml` to your `${PROJECT_DIR}/spack/etc/spack/linux`, which could look something like this:
+```
+packages:
+  perl:
+    paths:
+      perl@5.16.3: /usr
+  numactl:
+    paths:
+      numactl@system: /usr
+  python:
+    modules:
+      python@2.7.3: python/2.7.3
+      python@3.5.1: python/3.5.1
+  mpich:
+    modules:
+      mpich@3.2.1%gcc@7.3.0: mpich/3.2.1-gcc_7.3.0
+  openmpi:
+    modules:
+      openmpi@3.1.4%gcc@7.3.0: openmpi/3.1.4-gcc_7.3.0
+  cmake:
+    modules:
+      cmake@3.12.4: cmake/3.12.4
+```
+Then the installation from Spack will take less time.
+
+After Spack finishes the installation, you can load them into
+your environment by doing
+```
+$ spack -e spack_env module tcl refresh -y
+$ spack -e spack_env env loads -r
+$ source spack_env/loads
+```
+
+# Building
 
 Building the code is simply performed through the following steps
 using [CMake](https://cmake.org/):
