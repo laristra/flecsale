@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.com/laristra/flecsale.svg?branch=master)](https://travis-ci.com/laristra/flecsale)
+[![pipeline status](https://gitlab.lanl.gov/laristra/flecsale/badges/master/pipeline.svg)](https://gitlab.lanl.gov/laristra/flecsale/pipelines)
 
 # FleCSALE
 
