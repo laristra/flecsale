@@ -67,7 +67,8 @@ include:
     #- ccache -s
     - echo 'Start testing'
     - cd ${CI_PROJECT_DIR}/build/
-    - make CTEST_OUTPUT_ON_FAILURE=1 test
+    #- make CTEST_OUTPUT_ON_FAILURE=1 test
+    - ctest -V
     #- gcovr .
 
 #######################################################################################
