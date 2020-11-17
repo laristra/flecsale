@@ -1,0 +1,100 @@
+#############
+# Env Stage #
+#############
+
+.env:
+  extends:
+    - .job
+    - .artifacts
+  stage: Env
+  only:
+    refs:
+      - master
+      - merge_requests
+      - schedules
+  except:
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/spack #/builds/next-generation-codes/laristra/flecsale-mm/spack
+      - ${CI_PROJECT_DIR}/ristra_spackages
+      - ${CI_PROJECT_DIR}/spack_env
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  script:
+    - cd ${CI_PROJECT_DIR}
+    - module load gcc/${FLECSALE_GCC_VERSION}
+    - git clone git@gitlab.lanl.gov:laristra/ristra_spackages.git
+    - git clone git@gitlab.lanl.gov:laristra/ristra-spack-configurations.git
+    - echo 'Spack Version:' ${FLECSALE_SPACK_REF}
+    - git clone ${FLECSALE_SPACK_REPO}
+    - cd spack && git checkout ${FLECSALE_SPACK_REF} && cd ${CI_PROJECT_DIR}
+    - export SPACK_ARCH=`./spack/bin/spack arch`
+    - echo ${SPACK_ARCH}
+    - export PLATFORM="${SPACK_ARCH%%-*}"
+    - echo ${PLATFORM}
+    - mkdir -p ${CI_PROJECT_DIR}/spack/etc/spack/${PLATFORM}
+    - cp ${CI_PROJECT_DIR}/.gitlab-ci/config/*.yaml ${CI_PROJECT_DIR}/spack/etc/spack/${PLATFORM}/
+    - cp ${CI_PROJECT_DIR}/ristra-spack-configurations/Darwin/*.yaml ${CI_PROJECT_DIR}/spack/etc/spack/${PLATFORM}/
+    - . ${CI_PROJECT_DIR}/spack/share/spack/setup-env.sh
+    - spack repo add --scope site ${CI_PROJECT_DIR}/ristra_spackages/spack-repo
+    #- spack repo add --scope site ${CI_PROJECT_DIR}/spack-repo
+    - spack repo list
+    - mkdir -p ${CI_PROJECT_DIR}/spack_env
+    - spack env create --without-view -d ${CI_PROJECT_DIR}/spack_env
+    - spack env activate -d ${CI_PROJECT_DIR}/spack_env
+    - export FLECSALE_CMD="spack install --show-log-on-error ${FLECSALE_SPACK_FULL_SPEC}"
+    - ( echo "$FLECSALE_CMD" && $FLECSALE_CMD )
+    - spack module tcl refresh -y
+    - spack env loads -r
+    - export modName="${CI_PROJECT_DIR}/spack_env/loads"
+    #- sed -i "1s;^;module load python/${FLECSALE_PYTHON_VERSION}\n;" ${modName}
+    - sed -i "1s;^;module load gcc/${FLECSALE_GCC_VERSION}\n;" ${modName}
+    #- sed -i "1s;^;source ${CI_PROJECT_DIR}/spack/share/spack/setup-env.sh\n;" ${modName}
+    - sed -i "1s;^;#%Module\n;" ${modName}
+
+############
+# Env Jobs #
+############
+
+openmpi_mpi:
+  extends:
+    - .env
+  variables:
+    FLECSALE_RUNTIME: "mpi"
+    FLECSALE_BUILD_TYPE: "Debug"
+    FLECSALE_MPI_PROVIDER: "openmpi"
+
+openmpi_legion:
+  extends: openmpi_mpi
+  variables:
+    FLECSALE_RUNTIME: "legion"
+
+mpich_mpi:
+  extends: openmpi_mpi
+  variables:
+    FLECSALE_MPI_PROVIDER: "mpich"
+
+mpich_legion:
+  extends: mpich_mpi
+  variables:
+    FLECSALE_RUNTIME: "legion"
+
+mpich_mpi_p9:
+  extends:
+    - openmpi_mpi
+    - .nightly
+    - .batch_runner
+  variables:
+    FLECSALE_MPI_PROVIDER: "mpich"
+    SCHEDULER_PARAMETERS: "--nodes=1 --partition=power9"
+
+.env_update:
+  extends:
+    - openmpi_mpi
+    - .update_spackage
+  only:
+    refs:
+      - master
+    changes:
+      - spack-repo/*
+  allow_failure: true

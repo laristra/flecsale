@@ -1,0 +1,30 @@
+#####################
+# Build_n_Test Jobs #
+#####################
+
+centOS_openmpi_mpi_gcc:
+  extends: .build_n_test
+  dependencies: [ openmpi_mpi ]
+  variables:
+    FLECSALE_RUNTIME: "mpi"
+    FLECSALE_BUILD_TYPE: "Debug"
+    FLECSALE_MPI_PROVIDER: "openmpi"
+
+centOS_mpich_mpi_clang:
+  extends: centOS_openmpi_mpi_gcc
+  dependencies: [ mpich_mpi ]
+  variables:
+    FLECSALE_MPI_PROVIDER: "mpich"
+
+centOS_openmpi_legion_gcc:
+  extends: centOS_openmpi_mpi_gcc
+  dependencies: [ openmpi_legion ]
+  variables:
+    FLECSALE_RUNTIME: "legion"
+
+centOS_mpich_legion_clang:
+  extends: centOS_openmpi_legion_gcc
+  dependencies: [ mpich_legion ]
+  variables:
+    FLECSALE_MPI_PROVIDER: "mpich"
+

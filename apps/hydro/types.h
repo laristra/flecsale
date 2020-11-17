@@ -15,11 +15,13 @@
 #include <flecsale/eqns/flux.h>
 #include <flecsale/eos/ideal_gas.h>
 #include <ristra/math/general.h>
+#include <ristra/math/matrix.h>
 
 #include <flecsi-sp/utils/char_array.h>
 #include <flecsi-sp/utils/types.h>
 #include <flecsi-sp/burton/burton_mesh.h>
 
+#include <flecsi/data/data.h>
 #include <flecsi/data/global_accessor.h>
 
 #include "../common/utils.h"
@@ -39,6 +41,8 @@ using eqns_t = typename flecsale::eqns::euler_eqns_t<real_t, mesh_t::num_dimensi
 
 using flux_data_t = eqns_t::flux_data_t;
 
+using matrix_t = ristra::math::matrix< real_t, mesh_t::num_dimensions, mesh_t::num_dimensions >; 
+using array_of_vector_t = std::array< vector_t, mesh_t::num_dimensions >;
 
 // explicitly use some other stuff
 using std::cout;
@@ -57,6 +61,9 @@ template<typename T>
 using dense_handle_r = flecsi_sp::utils::dense_handle_r<T>;
 
 template<typename T>
+using dense_handle_w_all = flecsi::dense_accessor<T, flecsi::wo, flecsi::wo, flecsi::wo>;
+
+template<typename T>
 using global_handle_w = flecsi::global_accessor_u<T, flecsi::wo>;
 
 template<typename T>
@@ -64,6 +71,15 @@ using global_handle_rw = flecsi::global_accessor_u<T, flecsi::rw>;
 
 template<typename T>
 using global_handle_r = flecsi::global_accessor_u<T, flecsi::ro>;
+
+template<typename T>
+using color_handle_w = flecsi::color_accessor_u<T, flecsi::wo>;
+
+template<typename T>
+using color_handle_rw = flecsi::color_accessor_u<T, flecsi::rw>;
+
+template<typename T>
+using color_handle_r = flecsi::color_accessor_u<T, flecsi::ro>;
 
 template<typename DC>
 using client_handle_w = flecsi_sp::utils::client_handle_w<DC>;
@@ -130,6 +146,14 @@ decltype(auto) pack( T && loc, ARGS&&... args )
   return 
     std::forward_as_tuple( std::forward<ARGS>(args)(std::forward<T>(loc))... ); 
 }
+
+template< typename T, typename...ARGS >
+auto pack_copy( T && loc, ARGS&&... args )
+{ 
+  return 
+    std::make_tuple( std::forward<ARGS>(args)(std::forward<T>(loc))... ); 
+}
+
 
 } // namespace hydro
 } // namespace apps

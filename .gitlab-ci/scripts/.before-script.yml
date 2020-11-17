@@ -1,0 +1,21 @@
+before_script:
+  - '[ "$(git rev-parse origin/$CI_COMMIT_REF_NAME)" != "$CI_COMMIT_SHA" ] && curl --header "PRIVATE-TOKEN: $MY_CI_API_TOKEN" -X POST https://gitlab.lanl.gov/api/v4/projects/$CI_PROJECT_ID/pipelines/$CI_PIPELINE_ID/cancel'
+  - export HOME=${CI_PROJECT_DIR}
+  - export TMPDIR=${CI_PROJECT_DIR}
+  - unset SPACK_ROOT
+  - source ${CI_PROJECT_DIR}/spack/share/spack/setup-env.sh || /bin/true
+  - echo ${CI_RUNNER_TAGS}
+  - export FLECSALE_SPACK_SPEC="${FLECSALE_SPACK_SPEC} $([ ${CI_RUNNER_TAGS} == 'laristra-setuid-shared' ] && echo 'target=x86_64')"
+  - |
+    if [[ ${FLECSALE_MPI_PROVIDER} == 'openmpi' ]];
+    then
+      export FLECSALE_SPACK_FULL_SPEC="${FLECSALE_SPACK_SPEC} ^${FLECSALE_MPI_PROVIDER}@${FLECSALE_OPENMPI_VERSION}%gcc@${FLECSALE_GCC_VERSION} ${FLECSALE_OPENMPI_SPEC}";
+    else
+      export FLECSALE_SPACK_FULL_SPEC="${FLECSALE_SPACK_SPEC} ^${FLECSALE_MPI_PROVIDER}@${FLECSALE_MPICH_VERSION}%gcc@${FLECSALE_GCC_VERSION} ${FLECSALE_MPICH_SPEC}";
+    fi
+  - |
+    if [[ -d ${CI_PROJECT_DIR}/spack ]];
+    then
+      spack reindex;
+      spack module tcl refresh -y;
+    fi

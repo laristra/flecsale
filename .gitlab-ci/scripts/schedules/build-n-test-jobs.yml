@@ -1,0 +1,63 @@
+#####################
+# Build_n_Test Jobs #
+#####################
+
+centOS_mpich_mpi_gcc:
+  extends:
+    - .build_n_test
+    - .nightly
+  dependencies: [ mpich_mpi ]
+  variables:
+    FLECSALE_RUNTIME: "mpi"
+    FLECSALE_BUILD_TYPE: "Debug"
+    FLECSALE_MPI_PROVIDER: "mpich"
+
+centOS_mpich_mpi_gcc_release:
+  extends: centOS_mpich_mpi_gcc
+  variables:
+    FLECSALE_BUILD_TYPE: "Release"
+
+centOS_mpich_mpi_clang_release:
+  extends: centOS_mpich_mpi_gcc_release
+
+centOS_mpich_mpi_intel:
+  extends: centOS_mpich_mpi_gcc
+  allow_failure: true
+
+centOS_mpich_mpi_intel_release:
+  extends: centOS_mpich_mpi_intel
+  variables:
+    FLECSALE_BUILD_TYPE: "Release"
+
+centOS_openmpi_mpi_gcc_release:
+  extends: centOS_mpich_mpi_gcc
+  dependencies: [ openmpi_mpi ]
+  variables:
+    FLECSALE_BUILD_TYPE: "Release"
+    FLECSALE_MPI_PROVIDER: "openmpi"
+
+centOS_openmpi_mpi_clang_release:
+  extends: centOS_openmpi_mpi_gcc_release
+
+centOS_openmpi_mpi_clang:
+  extends: centOS_openmpi_mpi_clang_release
+  variables:
+    FLECSALE_BUILD_TYPE: "Debug"
+
+centOS_openmpi_mpi_intel_release:
+  extends: centOS_openmpi_mpi_gcc_release
+  allow_failure: true
+
+centOS_openmpi_mpi_intel:
+  extends: centOS_openmpi_mpi_intel_release
+  variables:
+    FLECSALE_BUILD_TYPE: "Debug"
+
+power9_mpich_mpi_gcc:
+  extends:
+    - centOS_mpich_mpi_gcc
+    - .batch_runner
+  dependencies: [ mpich_mpi_p9 ]
+  variables:
+    SCHEDULER_PARAMETERS: "--nodes=1 --partition=power9"
+
