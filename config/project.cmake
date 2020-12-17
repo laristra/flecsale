@@ -76,6 +76,9 @@ set( FLECSALE_RUNTIME_MODEL ${FLECSI_RUNTIME_MODEL} )
 if ( FLECSALE_RUNTIME_MODEL STREQUAL "mpi" )
   set( ENABLE_MPI ON CACHE BOOL "" FORCE)
   set( FLECSALE_UNIT_POLICY MPI )
+elseif ( FLECSALE_RUNTIME_MODEL STREQUAL "hpx" )
+  set( ENABLE_MPI ON CACHE BOOL "" FORCE)
+  set( FLECSALE_UNIT_POLICY HPX )
 elseif ( FLECSALE_RUNTIME_MODEL STREQUAL "legion" )
   set( FLECSALE_UNIT_POLICY LEGION )
 else()
@@ -384,7 +387,7 @@ include_directories(${CMAKE_BINARY_DIR})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 cinch_add_library_target(FleCSALE flecsale EXPORT_TARGET FleCSALETargets)
-cinch_target_link_libraries( FleCSALE ${FLECSALE_LIBRARIES} )
+cinch_target_link_libraries( FleCSALE INTERFACE ${FLECSALE_LIBRARIES} )
 
 #------------------------------------------------------------------------------#
 # Set application directory
