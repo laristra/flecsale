@@ -29,4 +29,4 @@ variables:
   FLECSALE_PYTHON_VERSION: "3.5.1"
   FLECSALE_SPACK_SPEC: "flecsalemm-deps%gcc@${FLECSALE_GCC_VERSION} backend=${FLECSALE_RUNTIME}"
   FLECSALE_SPACK_REPO: "https://github.com/spack/spack.git"
-  FLECSALE_SPACK_REF: "v0.15.3"
+  FLECSALE_SPACK_REF: "v0.15.4"
