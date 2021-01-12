@@ -32,7 +32,7 @@
     paths:
       - ${CI_PROJECT_DIR}/build #/builds/next-generation-codes/laristra/flecsale-mm/build
     when: always
-    expire_in: 1 hour
+    expire_in: 2 hours
   dependencies: []
 
 .shell_runner:
