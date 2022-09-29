@@ -1,6 +1,6 @@
 [submodule "cinch"]
 	path = cinch
-	url = ../../laristra/cinch.git
+	url = ../../laristra/projects/cinch.git
 [submodule "flecsi"]
 	path = flecsi
-	url = ../../laristra/flecsi.git
+	url = ../../laristra/projects/flecsi.git
