@@ -1,12 +1,12 @@
 [submodule "cinch"]
 	path = cinch
-	url = ../../laristra/projects/cinch.git
+	url = ../cinch.git
 [submodule "flecsi"]
 	path = flecsi
-	url = ../../laristra/projects/flecsi.git
+	url = ../flecsi.git
 [submodule "ristra"]
 	path = ristra
-	url = ../../laristra/projects/libristra.git
+	url = ../libristra.git
 [submodule "specializations"]
 	path = specializations
-	url = ../../laristra/projects/flecsi-sp.git
+	url = ../flecsi-sp.git
